@@ -8,10 +8,94 @@ Direct limit of modules, abelian groups, rings, and fields.
 
 import linear_algebra.direct_sum_module
 import linear_algebra.linear_combination
-import ring_theory.free_comm_ring
+import linear_algebra.multivariate_polynomial
 import ring_theory.ideal_operations
+import ring_theory.subring
+import data.real.irrational
 
 universes u v w u₁
+
+namespace mv_polynomial
+
+variables {ι : Type u} [decidable_eq ι]
+
+def is_supported (x : mv_polynomial ι ℤ) (s : set ι) : Prop :=
+x ∈ ring.closure (X '' s : set (mv_polynomial ι ℤ))
+
+theorem is_supported_upwards {x : mv_polynomial ι ℤ} {s t} (hs : is_supported x s) (hst : s ⊆ t) :
+  is_supported x t :=
+ring.closure_mono (set.mono_image hst) hs
+
+theorem is_supported_add {x y : mv_polynomial ι ℤ} {s} (hxs : is_supported x s) (hys : is_supported y s) :
+  is_supported (x + y) s :=
+is_add_submonoid.add_mem hxs hys
+
+theorem is_supported_neg {x : mv_polynomial ι ℤ} {s} (hxs : is_supported x s) :
+  is_supported (-x) s :=
+is_add_subgroup.neg_mem hxs
+
+theorem is_supported_sub {x y : mv_polynomial ι ℤ} {s} (hxs : is_supported x s) (hys : is_supported y s) :
+  is_supported (x - y) s :=
+is_add_subgroup.sub_mem _ _ _ hxs hys
+
+theorem is_supported_mul {x y : mv_polynomial ι ℤ} {s} (hxs : is_supported x s) (hys : is_supported y s) :
+  is_supported (x * y) s :=
+is_submonoid.mul_mem hxs hys
+
+theorem is_supported_zero {s : set ι} : is_supported 0 s :=
+is_add_submonoid.zero_mem _
+
+theorem is_supported_one {s : set ι} : is_supported 1 s :=
+is_submonoid.one_mem _
+
+theorem is_supported_C {n : ℤ} {s : set ι} : is_supported (C n : mv_polynomial ι ℤ) s :=
+int.induction_on n (by rw C_0; exact is_supported_zero)
+  (λ n ih, by rw [C_add, C_1]; exact is_supported_add ih is_supported_one)
+  (λ n ih, by rw [C_sub, C_1]; exact is_supported_sub ih is_supported_one)
+
+def restriction (s : set ι) [decidable_pred s] (x : mv_polynomial ι ℤ) : mv_polynomial s ℤ :=
+eval₂ C (λ p, if H : p ∈ s then X (⟨p, H⟩ : s) else 0) x
+
+section restriction
+variables (s : set ι) [decidable_pred s] (x y : mv_polynomial ι ℤ)
+@[simp] lemma restriction_X (p) : restriction s (X p : mv_polynomial ι ℤ) = if H : p ∈ s then X ⟨p, H⟩ else 0 := eval₂_X _ _ _
+@[simp] lemma restriction_zero : restriction s (0 : mv_polynomial ι ℤ) = 0 := eval₂_zero _ _
+@[simp] lemma restriction_one : restriction s (1 : mv_polynomial ι ℤ) = 1 := eval₂_one _ _
+@[simp] lemma restriction_add : restriction s (x + y) = restriction s x + restriction s y := eval₂_add _ _
+@[simp] lemma restriction_neg : restriction s (-x) = -restriction s x := eval₂_neg _ _ _
+@[simp] lemma restriction_sub : restriction s (x - y) = restriction s x - restriction s y := eval₂_sub _ _ _
+@[simp] lemma restriction_mul : restriction s (x * y) = restriction s x * restriction s y := eval₂_mul _ _
+end restriction
+
+theorem is_supported_X {p} {s : set ι} : is_supported (X p : mv_polynomial ι ℤ) s ↔ p ∈ s :=
+suffices is_supported (X p) s → p ∈ s, from ⟨this, λ hps, ring.subset_closure ⟨p, hps, rfl⟩⟩,
+assume hps : is_supported (X p) s, begin
+  haveI : decidable_pred s := classical.dec_pred s,
+  haveI : is_ring_hom (coe : ℤ → ℝ) := int.cast.is_ring_hom,
+  have : ∀ x : mv_polynomial ι ℤ, is_supported x s → ∃ q : ℚ, eval₂ (coe : ℤ → ℝ) (λ q, if q ∈ s then 0 else real.sqrt 2) x = ↑q,
+  { intros x hx, refine ring.in_closure.rec_on hx _ _ _ _,
+    { use 1, rw [eval₂_one, rat.cast_one] },
+    { use -1, rw [eval₂_neg, eval₂_one, rat.cast_neg, rat.cast_one], },
+    { rintros _ ⟨z, hzs, rfl⟩ _ _, use 0, rw [eval₂_mul, eval₂_X, if_pos hzs, zero_mul, rat.cast_zero] },
+    { rintros x y ⟨q, hq⟩ ⟨r, hr⟩, use q+r, rw [eval₂_add, hq, hr, rat.cast_add] } },
+  specialize this (X p) hps, rw [eval₂_X] at this, split_ifs at this, { exact h },
+  exfalso, exact irr_sqrt_two this
+end
+
+theorem exists_finite_support (x : mv_polynomial ι ℤ) : ∃ s : set ι, set.finite s ∧ is_supported x s :=
+induction_on x
+  (λ n, ⟨∅, set.finite_empty, is_supported_C⟩)
+  (λ x y ⟨s, hfs, hxs⟩ ⟨t, hft, hxt⟩, ⟨s ∪ t, set.finite_union hfs hft, is_supported_add
+    (is_supported_upwards hxs $ set.subset_union_left s t)
+    (is_supported_upwards hxt $ set.subset_union_right s t)⟩)
+  (λ x n ⟨s, hfs, hxs⟩, ⟨insert n s, set.finite_insert n hfs, is_supported_mul
+    (is_supported_upwards hxs $ set.subset_insert n s)
+    (is_supported_X.2 $ set.mem_insert n s)⟩)
+
+theorem exists_finset_support (x : mv_polynomial ι ℤ) : ∃ s : finset ι, is_supported x ↑s :=
+let ⟨s, hfs, hxs⟩ := exists_finite_support x in ⟨hfs.to_finset, by rwa finset.coe_to_finset⟩
+
+end mv_polynomial
 
 open lattice submodule
 
@@ -241,13 +325,13 @@ variables (f : Π i j, i ≤ j → G i → G j)
 variables [Π i j hij, is_ring_hom (f i j hij)]
 variables [directed_system G f]
 
-open free_comm_ring
+open mv_polynomial
 
 def direct_limit : Type (max v w) :=
-(ideal.span { a | (∃ i j H x, of (⟨j, f i j H x⟩ : Σ i, G i) - of ⟨i, x⟩ = a) ∨
-  (∃ i, of (⟨i, 1⟩ : Σ i, G i) - 1 = a) ∨
-  (∃ i x y, of (⟨i, x + y⟩ : Σ i, G i) - (of ⟨i, x⟩ + of ⟨i, y⟩) = a) ∨
-  (∃ i x y, of (⟨i, x * y⟩ : Σ i, G i) - (of ⟨i, x⟩ * of ⟨i, y⟩) = a) }).quotient
+(ideal.span { a : mv_polynomial (Σ i, G i) ℤ | (∃ i j H x, X (⟨j, f i j H x⟩ : Σ i, G i) - X ⟨i, x⟩ = a) ∨
+  (∃ i, X (⟨i, 1⟩ : Σ i, G i) - 1 = a) ∨
+  (∃ i x y, X (⟨i, x + y⟩ : Σ i, G i) - (X ⟨i, x⟩ + X ⟨i, y⟩) = a) ∨
+  (∃ i x y, X (⟨i, x * y⟩ : Σ i, G i) - (X ⟨i, x⟩ * X ⟨i, y⟩) = a) }).quotient
 
 namespace direct_limit
 
@@ -258,7 +342,7 @@ instance : ring (direct_limit G f) :=
 comm_ring.to_ring _
 
 def of (i) (x : G i) : direct_limit G f :=
-ideal.quotient.mk _ $ of ⟨i, x⟩
+ideal.quotient.mk _ $ X ⟨i, x⟩
 
 variables {G f}
 
@@ -280,15 +364,14 @@ ideal.quotient.eq.2 $ subset_span $ or.inl ⟨i, j, hij, x, rfl⟩
 
 theorem exists_of (z : direct_limit G f) : ∃ i x, of G f i x = z :=
 nonempty.elim (by apply_instance) $ assume ind : ι,
-quotient.induction_on' z $ λ x, free_abelian_group.induction_on x
-  ⟨ind, 0, of_zero ind⟩
-  (λ s, multiset.induction_on s
-    ⟨ind, 1, of_one ind⟩
-    (λ a s ih, let ⟨i, x⟩ := a, ⟨j, y, hs⟩ := ih, ⟨k, hik, hjk⟩ := directed_order.directed i j in
-      ⟨k, f i k hik x * f j k hjk y, by rw [of_mul, of_f, of_f, hs]; refl⟩))
-  (λ s ⟨i, x, ih⟩, ⟨i, -x, by rw [of_neg, ih]; refl⟩)
+quotient.induction_on' z $ λ x, induction_on x
+  (λ n, ⟨ind, n, int.induction_on n (by rw [int.cast_zero, of_zero, C_0]; refl)
+    (λ n ih, by rw [int.cast_add, int.cast_one, of_add, ih, of_one, C_add, C_1]; refl)
+    (λ n ih, by rw [int.cast_sub, int.cast_one, of_sub, ih, of_one, C_sub, C_1]; refl)⟩)
   (λ p q ⟨i, x, ihx⟩ ⟨j, y, ihy⟩, let ⟨k, hik, hjk⟩ := directed_order.directed i j in
     ⟨k, f i k hik x + f j k hjk y, by rw [of_add, of_f, of_f, ihx, ihy]; refl⟩)
+  (λ p ⟨j, y⟩ ⟨i, x, ihx⟩, let ⟨k, hik, hjk⟩ := directed_order.directed i j in
+    ⟨k, f i k hik x * f j k hjk y, by rw [of_mul, of_f, of_f, ihx]; refl⟩)
 
 @[elab_as_eliminator] theorem induction_on {C : direct_limit G f → Prop} (z : direct_limit G f)
   (ih : ∀ i x, C (of G f i x)) : C z :=
@@ -297,68 +380,75 @@ let ⟨i, x, hx⟩ := exists_of z in hx ▸ ih i x
 section of_zero_exact_aux
 attribute [instance, priority 0] classical.dec
 variables (G f)
-lemma of.zero_exact_aux2 {x : free_comm_ring Σ i, G i} {s t} (hxs : is_supported x s) {j k}
+lemma of.zero_exact_aux2 {x : mv_polynomial (Σ i, G i) ℤ} {s t} (hxs : is_supported x s) {j k}
   (hj : ∀ z : Σ i, G i, z ∈ s → z.1 ≤ j) (hk : ∀ z : Σ i, G i, z ∈ t → z.1 ≤ k)
   (hjk : j ≤ k) (hst : s ⊆ t) :
-  f j k hjk (lift (λ ix : s, f ix.1.1 j (hj ix ix.2) ix.1.2) (restriction s x)) =
-  lift (λ ix : t, f ix.1.1 k (hk ix ix.2) ix.1.2) (restriction t x) :=
+  f j k hjk (eval₂ coe (λ ix : s, f ix.1.1 j (hj ix ix.2) ix.1.2) (restriction s x)) =
+  eval₂ coe (λ ix : t, f ix.1.1 k (hk ix ix.2) ix.1.2) (restriction t x) :=
 begin
+  haveI : is_ring_hom (coe : ℤ → G j) := int.cast.is_ring_hom,
+  haveI : is_ring_hom (coe : ℤ → G k) := int.cast.is_ring_hom,
   refine ring.in_closure.rec_on hxs _ _ _ _,
-  { rw [restriction_one, lift_one, is_ring_hom.map_one (f j k hjk), restriction_one, lift_one] },
-  { rw [restriction_neg, restriction_one, lift_neg, lift_one,
+  { rw [restriction_one, eval₂_one, is_ring_hom.map_one (f j k hjk), restriction_one, eval₂_one] },
+  { rw [restriction_neg, restriction_one, eval₂_neg, eval₂_one,
       is_ring_hom.map_neg (f j k hjk), is_ring_hom.map_one (f j k hjk),
-      restriction_neg, restriction_one, lift_neg, lift_one] },
+      restriction_neg, restriction_one, eval₂_neg, eval₂_one] },
   { rintros _ ⟨p, hps, rfl⟩ n ih,
-    rw [restriction_mul, lift_mul, is_ring_hom.map_mul (f j k hjk), ih, restriction_mul, lift_mul,
-        restriction_of, dif_pos hps, lift_pure, restriction_of, dif_pos (hst hps), lift_pure],
+    rw [restriction_mul, eval₂_mul, is_ring_hom.map_mul (f j k hjk), ih, restriction_mul, eval₂_mul,
+        restriction_X, dif_pos hps, eval₂_X, restriction_X, dif_pos (hst hps), eval₂_X],
     dsimp only, rw directed_system.map_map f, refl },
   { rintros x y ihx ihy,
-    rw [restriction_add, lift_add, is_ring_hom.map_add (f j k hjk), ihx, ihy, restriction_add, lift_add] }
+    rw [restriction_add, eval₂_add, is_ring_hom.map_add (f j k hjk), ihx, ihy, restriction_add, eval₂_add] }
 end
 variables {G f}
 
-lemma of.zero_exact_aux {x : free_comm_ring Σ i, G i} (H : ideal.quotient.mk _ x = (0 : direct_limit G f)) :
+lemma of.zero_exact_aux {x : mv_polynomial (Σ i, G i) ℤ} (H : ideal.quotient.mk _ x = (0 : direct_limit G f)) :
   ∃ j s, ∃ H : (∀ k : Σ i, G i, k ∈ s → k.1 ≤ j), is_supported x s ∧
-    lift (λ ix : s, f ix.1.1 j (H ix ix.2) ix.1.2) (restriction s x) = (0 : G j) :=
+    eval₂ coe (λ ix : s, f ix.1.1 j (H ix ix.2) ix.1.2) (restriction s x) = (0 : G j) :=
 begin
   refine span_induction (ideal.quotient.eq_zero_iff_mem.1 H) _ _ _ _,
   { rintros x (⟨i, j, hij, x, rfl⟩ | ⟨i, rfl⟩ | ⟨i, x, y, rfl⟩ | ⟨i, x, y, rfl⟩),
     { refine ⟨j, {⟨i, x⟩, ⟨j, f i j hij x⟩}, _,
-        is_supported_sub (is_supported_pure.2 $ or.inl rfl) (is_supported_pure.2 $ or.inr $ or.inl rfl), _⟩,
+        is_supported_sub (is_supported_X.2 $ or.inl rfl) (is_supported_X.2 $ or.inr $ or.inl rfl), _⟩,
       { rintros k (rfl | ⟨rfl | h⟩), refl, exact hij, cases h },
-      { rw [restriction_sub, lift_sub, restriction_of, dif_pos, restriction_of, dif_pos, lift_pure, lift_pure],
+      { haveI : is_ring_hom (coe : ℤ → G j) := int.cast.is_ring_hom,
+        rw [restriction_sub, eval₂_sub, restriction_X, dif_pos, restriction_X, dif_pos, eval₂_X, eval₂_X],
         dsimp only, rw directed_system.map_map f, exact sub_self _,
         { left, refl }, { right, left, refl }, } },
-    { refine ⟨i, {⟨i, 1⟩}, _, is_supported_sub (is_supported_pure.2 $ or.inl rfl) is_supported_one, _⟩,
+    { refine ⟨i, {⟨i, 1⟩}, _, is_supported_sub (is_supported_X.2 $ or.inl rfl) is_supported_one, _⟩,
       { rintros k (rfl | h), refl, cases h },
-      { rw [restriction_sub, lift_sub, restriction_of, dif_pos, restriction_one, lift_pure, lift_one],
+      { haveI : is_ring_hom (coe : ℤ → G i) := int.cast.is_ring_hom,
+        rw [restriction_sub, eval₂_sub, restriction_X, dif_pos, restriction_one, eval₂_X, eval₂_one],
         dsimp only, rw [is_ring_hom.map_one (f i i _), sub_self], exact _inst_7 i i _, { left, refl } } },
     { refine ⟨i, {⟨i, x+y⟩, ⟨i, x⟩, ⟨i, y⟩}, _,
-        is_supported_sub (is_supported_pure.2 $ or.inr $ or.inr $ or.inl rfl)
-          (is_supported_add (is_supported_pure.2 $ or.inr $ or.inl rfl) (is_supported_pure.2 $ or.inl rfl)), _⟩,
+        is_supported_sub (is_supported_X.2 $ or.inr $ or.inr $ or.inl rfl)
+          (is_supported_add (is_supported_X.2 $ or.inr $ or.inl rfl) (is_supported_X.2 $ or.inl rfl)), _⟩,
       { rintros k (rfl | ⟨rfl | ⟨rfl | hk⟩⟩), refl, refl, refl, cases hk },
-      { rw [restriction_sub, restriction_add, restriction_of, restriction_of, restriction_of,
-          dif_pos, dif_pos, dif_pos, lift_sub, lift_add, lift_pure, lift_pure, lift_pure],
+      { haveI : is_ring_hom (coe : ℤ → G i) := int.cast.is_ring_hom,
+        rw [restriction_sub, restriction_add, restriction_X, restriction_X, restriction_X,
+          dif_pos, dif_pos, dif_pos, eval₂_sub, eval₂_add, eval₂_X, eval₂_X, eval₂_X],
         dsimp only, rw is_ring_hom.map_add (f i i _), exact sub_self _,
         { right, right, left, refl }, { apply_instance }, { left, refl }, { right, left, refl } } },
     { refine ⟨i, {⟨i, x*y⟩, ⟨i, x⟩, ⟨i, y⟩}, _,
-        is_supported_sub (is_supported_pure.2 $ or.inr $ or.inr $ or.inl rfl)
-          (is_supported_mul (is_supported_pure.2 $ or.inr $ or.inl rfl) (is_supported_pure.2 $ or.inl rfl)), _⟩,
+        is_supported_sub (is_supported_X.2 $ or.inr $ or.inr $ or.inl rfl)
+          (is_supported_mul (is_supported_X.2 $ or.inr $ or.inl rfl) (is_supported_X.2 $ or.inl rfl)), _⟩,
       { rintros k (rfl | ⟨rfl | ⟨rfl | hk⟩⟩), refl, refl, refl, cases hk },
-      { rw [restriction_sub, restriction_mul, restriction_of, restriction_of, restriction_of,
-          dif_pos, dif_pos, dif_pos, lift_sub, lift_mul, lift_pure, lift_pure, lift_pure],
+      { haveI : is_ring_hom (coe : ℤ → G i) := int.cast.is_ring_hom,
+        rw [restriction_sub, restriction_mul, restriction_X, restriction_X, restriction_X,
+          dif_pos, dif_pos, dif_pos, eval₂_sub, eval₂_mul, eval₂_X, eval₂_X, eval₂_X],
         dsimp only, rw is_ring_hom.map_mul (f i i _), exact sub_self _,
         { right, right, left, refl }, { apply_instance }, { left, refl }, { right, left, refl } } } },
   { refine nonempty.elim (by apply_instance) (assume ind : ι, _),
     refine ⟨ind, ∅, λ _, false.elim, is_supported_zero, _⟩,
-    rw [restriction_zero, lift_zero] },
+    rw [restriction_zero, eval₂_zero] },
   { rintros x y ⟨i, s, hi, hxs, ihs⟩ ⟨j, t, hj, hyt, iht⟩,
     rcases directed_order.directed i j with ⟨k, hik, hjk⟩,
     have : ∀ z : Σ i, G i, z ∈ s ∪ t → z.1 ≤ k,
     { rintros z (hz | hz), exact le_trans (hi z hz) hik, exact le_trans (hj z hz) hjk },
     refine ⟨k, s ∪ t, this, is_supported_add (is_supported_upwards hxs $ set.subset_union_left s t)
       (is_supported_upwards hyt $ set.subset_union_right s t), _⟩,
-    { rw [restriction_add, lift_add,
+    { haveI : is_ring_hom (coe : ℤ → G k) := int.cast.is_ring_hom,
+      rw [restriction_add, eval₂_add,
         ← of.zero_exact_aux2 G f hxs hi this hik (set.subset_union_left s t),
         ← of.zero_exact_aux2 G f hyt hj this hjk (set.subset_union_right s t),
         ihs, is_ring_hom.map_zero (f i k hik), iht, is_ring_hom.map_zero (f j k hjk), zero_add] } },
@@ -370,7 +460,8 @@ begin
     { rintros z (hz | hz), exact le_trans (hi z.1 $ finset.mem_image.2 ⟨z, hz, rfl⟩) hik, exact le_trans (hj z hz) hjk },
     refine ⟨k, ↑s ∪ t, this, is_supported_mul (is_supported_upwards hxs $ set.subset_union_left ↑s t)
       (is_supported_upwards hyt $ set.subset_union_right ↑s t), _⟩,
-    rw [restriction_mul, lift_mul,
+    haveI : is_ring_hom (coe : ℤ → G k) := int.cast.is_ring_hom,
+    rw [restriction_mul, eval₂_mul,
         ← of.zero_exact_aux2 G f hyt hj this hjk (set.subset_union_right ↑s t),
         iht, is_ring_hom.map_zero (f j k hjk), mul_zero] }
 end
@@ -378,8 +469,9 @@ end of_zero_exact_aux
 
 lemma of.zero_exact {i x} (hix : of G f i x = 0) : ∃ j, ∃ hij : i ≤ j, f i j hij x = 0 :=
 let ⟨j, s, H, hxs, hx⟩ := of.zero_exact_aux hix in
-have hixs : (⟨i, x⟩ : Σ i, G i) ∈ s, from is_supported_pure.1 hxs,
-⟨j, H ⟨i, x⟩ hixs, by rw [restriction_of, dif_pos hixs, lift_pure] at hx; exact hx⟩
+have hixs : (⟨i, x⟩ : Σ i, G i) ∈ s, from is_supported_X.1 hxs,
+⟨j, H ⟨i, x⟩ hixs, by haveI : is_ring_hom (coe : ℤ → G j) := int.cast.is_ring_hom;
+rw [restriction_X, dif_pos hixs, eval₂_X] at hx; exact hx⟩
 
 theorem of_inj (hf : ∀ i j hij, function.injective (f i j hij)) (i) :
   function.injective (of G f i) :=
@@ -396,23 +488,24 @@ variables (g : Π i, G i → P) [Π i, is_ring_hom (g i)]
 variables (Hg : ∀ i j hij x, g j (f i j hij x) = g i x)
 include Hg
 
-open free_comm_ring
-
+set_option profiler true
 variables (G f)
 def lift : direct_limit G f → P :=
-ideal.quotient.lift _ (free_comm_ring.lift $ λ x, g x.1 x.2) begin
-  suffices : ideal.span _ ≤
-    ideal.comap (free_comm_ring.lift (λ (x : Σ (i : ι), G i), g (x.fst) (x.snd))) ⊥,
+by haveI : is_ring_hom (coe : ℤ → P) := int.cast.is_ring_hom; exact
+ideal.quotient.lift _ (eval₂ coe $ λ x : Σ i, G i, g x.1 x.2) begin
+  haveI : is_ring_hom (eval₂ (coe : ℤ → P) $ λ x : Σ i, G i, g x.1 x.2) := eval₂.is_ring_hom _ _,
+  suffices : ideal.span _ ≤ ideal.comap (eval₂ (coe : ℤ → P) $ λ x : Σ i, G i, g x.1 x.2) ⊥,
   { intros x hx, exact (mem_bot P).1 (this hx) },
   rw ideal.span_le, intros x hx,
   rw [mem_coe, ideal.mem_comap, mem_bot],
   rcases hx with ⟨i, j, hij, x, rfl⟩ | ⟨i, rfl⟩ | ⟨i, x, y, rfl⟩ | ⟨i, x, y, rfl⟩;
-  simp only [lift_sub, lift_of, Hg, lift_one, lift_add, lift_mul,
+  simp only [eval₂_sub, eval₂_X, Hg, eval₂_one, eval₂_add, eval₂_mul,
       is_ring_hom.map_one (g i), is_ring_hom.map_add (g i), is_ring_hom.map_mul (g i), sub_self]
 end
+set_option profiler false
 variables {G f}
 omit Hg
-
+#print lift
 instance lift.is_ring_hom : is_ring_hom (lift G f P g Hg) :=
 ⟨free_comm_ring.lift_one _,
 λ x y, quotient.induction_on₂' x y $ λ p q, free_comm_ring.lift_mul _ _ _,
