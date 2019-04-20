@@ -2,13 +2,15 @@
 
 ### Summary ###
 
-This document is about the `[ ]` "square bracket" notation that is often seen in Lean code, for example `[group G]`, which turns a type `G` into a group. We'll start by briefly explaining the difference between `[ ]` brackets, `( )` brackets and `{ }` brackets. We'll then go on to talk a little about how the type class inference system (that is, the system which handles all the terms in square brackets) works. We'll see how the type class inference system can cleverly fill in some of these square bracket terms for you, we'll see limits with what it can do, how to use it and how not to use it.
+This (rather long) document is about the `[ ]` "square bracket" notation that is often seen in Lean code, for example `[group G]`, which turns a type `G` into a group. Types in square brackets are managed by Lean's typeclass inference system. This document is an overview of everything, and in particular the first few sections contain plenty of overlap with Theorem Proving In Lean. The later sections are more detailed information about how type class inference works in Lean, and are not covered in any other documents as far as the author knows.
+
+We'll start by briefly explaining the difference between `[ ]` brackets, `( )` brackets and `{ }` brackets. The type class inference system's job is to find terms whose types are in square brackets. We'll give an overview of how the system works, and will then go on to discuss its limitations, how to use it and how not to use it. The earlier sections might be useful for beginners, the later sections for people interested in implementation ideals. The perspective and examples are unashamedly mathematical.
 
 ## Introduction ##
 
-Here is an overview of the bracket system in Lean, concentrating mostly on the square brackets `[ ]`. Everything here is covered in Theorem Proving In Lean, although the write-up here is more geared towards mathematicians.
+Here is an overview of the various kinds of brackets that show up in Lean. This document is mostly concerned with the square brackets `[ ]` but here we give a brief overview of the other main kinds too. Everything here is covered in Theorem Proving In Lean, although the write-up here is more geared towards mathematicians.
 
-When writing a function, if you want to say precisely which type every input term has, you will need brackets. For example
+When writing a function, if you want to say precisely which type every input term has, it's natural to use brackets. For example
 
 ```lean
 def double (n : ℕ) := n + n
@@ -35,7 +37,7 @@ begin
 end
 ```
 
-The function `mem_inter` takes six inputs: a type `X`, two subsets `U` and `V` of `X`, a term `x` of type `X`, and proofs `hU` and `hV` that ` x ∈ U`  and `x ∈ V` respectively. But the first four of these inputs are in squiggly brackets `{ }`, which means that the person who defined this function is saying "Go on Lean, take a look at what the user inputs when you ask for `hU` and `hV`, and then figure out all the other inputs yourself". And indeed one can see that this should be possible; if `B` and `C` are subsets of the natural numbers (that is, terms of type `set ℕ`), and the user inputs proofs that `3 ∈ B` and `3 ∈ C` to this function, then Lean can figure out that `x` must be `3`, `U` must be `B`, `V` must be `C` and `X` must be `ℕ`. This process is called `type unification` and it is what you are asking Lean to do if you use `{ }` squiggly brackets.
+The function `mem_inter` takes six inputs: a type `X`, two subsets `U` and `V` of `X`, a term `x` of type `X`, and proofs `hU` and `hV` that ` x ∈ U`  and `x ∈ V` respectively. But the first four of these inputs are in squiggly brackets `{ }`, which means that the person who defined this function is saying "Go on Lean, take a look at what the user inputs when you ask for `hU` and `hV`, and then figure out all the other inputs yourself just by solving a logic puzzle and thinking about only possible way to make everything have the right type". And indeed one can see that this should be possible; if `B` and `C` are subsets of the natural numbers (that is, terms of type `set ℕ`), and the user inputs proofs that `3 ∈ B` and `3 ∈ C` to this function, then Lean can figure out that `x` must be `3`, `U` must be `B`, `V` must be `C` and `X` must be `ℕ`. This process is called `type unification` and it is what you are asking Lean to do if you use `{ }` squiggly brackets.
 
 But how about this?
 
@@ -51,15 +53,19 @@ def x := (4 : ℤ)
 example : x + (x + (x + x)) = ((x + x) + x) + x := assoc_assoc x
 ```
 
-There are three inputs to `assoc_assoc` -- a type `G`, a term of type `group G` (that is, the definitions of the multiplication, inverse and identity in `G` and the proofs that they satisfy the axioms of a group), and a term `g` of type `G`. The user is asked for `g`, Lean can now guess `G` using type unification -- but how can Lean guess the group structure on `G` just by thinking about the types of everything? It can't. When faced with the term `assoc_assoc x`, Lean can figure out that `x` must be `4` and `G` must be `ℤ` -- but how can it figure out the additive group structure on `ℤ`? Lean needs to come up with an addition function `ℤ → ℤ → ℤ` for example -- it knows the type, but how does it figure out the term?
+There are three inputs to `assoc_assoc` -- a type `G`, a term of type `add_group G` (that is, a term carrying all the definitions of the addition, additive inverse, and additive identity in `G`, and the proofs that they satisfy the axioms of an additive group), and a term `g` of type `G`. The user is asked for `g`, Lean can now guess `G` using type unification -- but how can Lean guess the group structure on `G` just by thinking about the types of everything? It can't. When faced with the term `assoc_assoc x`, Lean can figure out that `x` must be `4` and `G` must be `ℤ` -- but how can it figure out the additive group structure on `ℤ`? Lean needs to come up with an addition function `ℤ → ℤ → ℤ` for example -- it knows the type, but how does it figure out the term? Clearly in this case, the answer is not "try to figure out how to add two integers together just from the user input" -- we need to find the correct definition of addition on the integers from somewhere in Lean's database of definitions and theorems.
 
-The answer is that it "looks it up in a big table". In other words, it uses type class inference.
+So the answer here is that Lean "looks it up in a big table". In other words, it uses type class inference. We'll now explain more about how this look-up works.
 
 ## Type class inference -- the basics. ##
 
 All the material in this section is covered in Theorem Proving In Lean.
 
-If `G` is a type, then `add_group G` is a structure -- it's the structure of groups with group law `+`. To make a term of this structure you will ultimately end up running the constructor for this structure, and the constructor is a function which demands as input an addition map `G → G → G`, a negation map `G → G`, a zero term of type `G`, and a proof of each of the group axioms for an additive group. However `add_group G` is more than a structure -- it is a *class*; we can check this using Lean's `#print` command:
+If `G` is a type, then `add_group G` is a structure. Informally, a term of type `add_group G` is an additive group structure on `G`. To make a term of this type you will ultimately end up running the constructor for this structure, and the constructor is a function which demands as input an addition map `G → G → G`, a negation map `G → G`, a zero term of type `G`, and a proof of each of the group axioms for an additive group.
+
+If you're making your own additive group, then of course you're going to have to make these maps and prove these theorems about them yourself somehow. But what about a completely standard type such as the integers? Addition and negation and zero and all the axioms will have already been done for you. How do we get to those definitions, especially if we are a beginner and don't know our way around the Lean library files?
+
+Here's the trick. `add_group G` is more than a structure -- it is a *class*; we can check this using Lean's `#print` command:
 
 ```lean
 #print add_group
@@ -71,19 +77,19 @@ add_group.add : Π {α : Type u} [c : add_group α], α → α → α
 ...
 -/
 
-We see that `add_group` has been tagged with the `class` attribute. This means that a certain part of Lean's C++ code, the type class inference system, comes into play. At some point in core Lean (in `init/data/int/basic.lean` in fact), Lean defines addition, negation and zero on the integers, and then proves all the axioms for an additive group. We can hence make a term of type `add_group ℤ`. It would however be a mistake to define this term using the standard `def` command:
+We see that `add_group` has been tagged with the `class` attribute. This means that a certain part of Lean's C++ code, the type class inference system, comes into play. At some point in core Lean (in `init/data/int/basic.lean` in fact), Lean defines addition, negation and zero on the integers, and then proves all the axioms for an additive group. At this point we can hence make a term of type `add_group ℤ`. It would however be a mistake to define this term using the standard `def` command:
 
 ```lean
 def int.add_group : add_group ℤ := ... -- bad!
 ```
 
-The way to do it would be to use a modification of `def` used specially for classes, called `instance`.
+Defining it this way would make it hard for users to find. The way to do it would be to use a modification of `def` used specially for classes, called `instance`.
 
 ```lean
 instance int.add_group : add_group ℤ := ... -- good!
 ```
 
-Just like a class is just a structure tagged with the `[class]` tag, an instance is just a definition tagged with the `[instance]` tag.
+Just like a class is just a structure tagged with the `[class]` tag, an instance is nothing more than a definition tagged with the `[instance]` tag.
 
 When Lean sees `assoc_assoc x` above and it knows that `x` is an integer, it sees the square brackets around `[add_group G]`, notes that `add_group` has been tagged with `[class]`, and then says to the type class inference system something like "please can you look through all the definitions tagged with `[instance]` and see if you can find one of type `add_group ℤ`?" If the type class inference system can find a term of type `add_group ℤ`, it returns it, and Lean uses this term as the missing input to the `assoc_assoc` function.
 
@@ -93,9 +99,9 @@ It is possible to actually make this query directly to Lean, like this:
 def ABC : add_group ℤ := by apply_instance -- no errors
 ```
 
-Now the term `ABC` has type `add_group ℤ` -- the type class inference machine found a term of this type and returned it. It is the fact that Lean can magically generate terms like this, that makes the whole type class inference system work.
+Now the term `ABC` has type `add_group ℤ` -- the type class inference machine found a term of this type and returned it. It is the fact that Lean can magically generate terms like this, that makes the whole type class inference system work. Note that we don't need to make `ABC` an instance this time around -- the instance is already in Lean's system. We only use the `instance` command when we're adding new instances to the system, not when we're getting old ones out.
 
-If the type class inference system cannot find a term of the type we're looking for then we get an error. For example the natural numbers are not an additive group, so even though addition on the natural numbers is associative, our `assoc_assoc` function (which asks for an additive group structure) should fail.
+If the type class inference system cannot find a term of the type we're looking for then we get an error. For example the natural numbers are not an additive group, so even though addition on the natural numbers is associative, our `assoc_assoc` function (which asks for an additive group structure on G) should fail.
 
 ```lean
 def assoc_assoc {G : Type} [add_group G] (g : G) : g + (g + (g + g)) = ((g + g) + g) + g :=
@@ -112,7 +118,7 @@ failed to synthesize type class instance for
 ⊢ add_group ℕ
 -/
 ```
-The error means that the type class inference system tried to find a term of type `add_group ℕ` in its database, but failed. This failure is unsurprising -- the addition on the natural numbers does not give it a group structure, as additive inverses do not in general exist. If we wanted to prove this example using `assoc_assoc` we should weaken our demands -- we should only demand that `G` is an additive semigroup; a semigroup doesn't have inverses but it does have associativity, and the natural numbers are an example. Here is a version of assoc_assoc which works for natural numbers:
+The error means that the type class inference system tried to find a term of type `add_group ℕ` in its database, but failed. This failure is unsurprising -- the addition on the natural numbers does not give it a group structure, as additive inverses do not in general exist. If we wanted to prove this example using `assoc_assoc` we should weaken our demands -- we should only demand that `G` is an additive semigroup; an additive semigroup doesn't have additive inverses but it does have associativity of addition, and the natural numbers are an example. Here is a version of assoc_assoc which works for natural numbers. We have changed a few things just to add some variety, but the key one is that `[add_group G]` has become `[add_semigroup G]`. 
 
 ```lean
 example: add_semigroup ℕ := by apply_instance -- works!
@@ -127,6 +133,10 @@ example : y + (y + (y + y)) = ((y + y) + y) + y := assoc_assoc y
 
 ## How does type class inference work?##
 
+The naive model for type class inference is that all the instances you need are definitions which are tagged with the `instance` tag. But this simplistic model cannot be how things work. For example `ℤ^n` is an additive group for all natural numbers `n`, and this works:
+
+```lean
+example: add_group 
 Not just instances.
 
 Example of maps from field to group, or group structure on product.
@@ -141,6 +151,8 @@ Understand Patrick's wrapper stuff.
 
 https://leanprover.zulipchat.com/#narrow/stream/113488-general/topic/how.20does.20type.20class.20inference.20work.3F
 *******************************************************************
+
+TPIL says it's a dreaded prolog-like search
 
 Lean 
 
