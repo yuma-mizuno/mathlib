@@ -1,38 +1,43 @@
+import data.list.basic
+import data.set.finite
 import data.nat.prime
-import algebra.group_power
+import data.nat.choose
 import data.mv_polynomial
+import algebra.group_power
 import group_theory.subgroup
+import ring_theory.multiplicity
 
 universes u v w u₁
 
 -- ### FOR_MATHLIB
 -- everything in this section should move to other files
 
-section ring_hom_commutes_with_stuff
-
-variables {R : Type u} [comm_ring R]
-variables {S : Type v} [comm_ring S]
-variables (i : R → S) [is_ring_hom i]
-
 section finset
 
-open finset
+variables {G : Type u} [comm_group G]
+variables {H : Type v} [comm_group H]
+variables (i : G → H) [is_group_hom i]
+variables {X : Type w} [decidable_eq X] (s : finset X) (f : X → G)
 
-variables {X : Type w} [decidable_eq X] (s : finset X) (f : X → R)
+-- This is finset.sum_hom
 
-lemma ring_hom_sum.finset : i (sum s f) = sum s (i ∘ f) :=
+@[to_additive is_add_group_hom.map_finset_sum]
+lemma is_group_hom.map_finset_prod : i (s.prod f) = s.prod (i ∘ f) :=
 begin
   apply finset.induction_on s,
-  { repeat { rw sum_empty },
-    exact is_ring_hom.map_zero i },
+  { exact is_group_hom.map_one i },
   { intros x s' hx ih,
-    repeat { rw sum_insert hx },
-    rw [is_ring_hom.map_add i, ←ih] }
+    rw [finset.prod_insert hx, finset.prod_insert hx, is_group_hom.map_mul i, ←ih] }
 end
+
+lemma dvd_sum {α : Type*} {β : Type*} [decidable_eq α] [comm_ring β]
+  (s : finset α) (f : α → β) (b : β) (H : ∀ a, b ∣ f a) :
+  b ∣ s.sum f :=
+by apply finset.induction_on s; intros; simp [*, dvd_add]
 
 end finset
 
-end ring_hom_commutes_with_stuff
+namespace mv_polynomial
 
 open mv_polynomial
 
@@ -45,13 +50,177 @@ lemma eval₂_assoc {S : Type*} [decidable_eq S] [comm_ring S]
   eval₂ C (eval₂ C φ ∘ q) p = eval₂ C φ (eval₂ C q p) :=
 by { rw eval₂_comp_left (eval₂ C φ), congr, funext, simp }
 
+variables {R : Type*} {S : Type*} (f : R → S) {ι : Type*}
+variables [decidable_eq R] [comm_ring R]
+variables [decidable_eq S] [comm_ring S]
+variables [is_ring_hom f] [decidable_eq ι]
+
+def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := p.to_fun m
+
+@[simp] lemma coeff_add (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
+  coeff m (p + q) = coeff m p + coeff m q := finsupp.add_apply
+
+@[simp] lemma coeff_sub (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
+  coeff m (p - q) = coeff m p - coeff m q := finsupp.sub_apply
+
+@[simp] lemma coeff_zero (m : ι →₀ ℕ) :
+  coeff m (0 : mv_polynomial ι R) = 0 := rfl
+
+instance coeff.is_add_group_hom (m : ι →₀ ℕ) :
+  is_add_group_hom (coeff m : mv_polynomial ι R → R) :=
+⟨coeff_add m⟩
+
+lemma ext (p q : mv_polynomial ι R) :
+  (∀ m, coeff m p = coeff m q) → p = q := finsupp.ext
+.
+
+@[simp] lemma coeff_zero_X (i : ι) : coeff 0 (X i : mv_polynomial ι R) = 0 := rfl
+
+lemma coeff_sum {X : Type*} (s : finset X) (f : X → mv_polynomial ι R) (m : ι →₀ ℕ) :
+  coeff m (s.sum f) = s.sum (λ x, coeff m (f x)) :=
+begin
+  apply (@finset.sum_hom _ _ _ _ _ _ _ _ _).symm,
+  refine @is_add_group_hom.to_is_add_monoid_hom _ _ _ _ _ _,
+end
+
+lemma monic_monomial_eq (m) : monomial m (1:R) = (m.prod $ λn e, X n ^ e : mv_polynomial ι R) :=
+by simp [monomial_eq]
+
+@[simp] lemma coeff_monomial (m n) (r:R) :
+  coeff m (monomial n r : mv_polynomial ι R) = if n = m then r else 0 :=
+finsupp.single_apply
+
+@[simp] lemma coeff_C_mul (m) (r : R) (p : mv_polynomial ι R) : coeff m (C r * p) = r * coeff m p :=
+begin
+  sorry
+  -- conv in (r * _) { rw [← @finsupp.sum_single _ _ _ _ _ p, coeff_sum] },
+  -- rw [finsupp.mul_def, C, finsupp.sum_single_index],
+  -- { simp [coeff_single, finsupp.mul_sum, coeff_sum],
+  --   apply sum_congr rfl,
+  --   assume i hi, by_cases i = n; simp [h] },
+  -- simp
+end
+
+lemma coeff_map
+  (p : mv_polynomial ι R) (m : ι →₀ ℕ) :
+  coeff m (p.map f) = f (coeff m p) :=
+begin
+  delta map eval₂ finsupp.sum,
+  simp only [coeff_sum, coeff_C_mul],
+  dsimp,
+  sorry
+  -- erw [← @finset.sum_hom (ι →₀ ℕ) _ _ (p.support) (coeff m : mv_polynomial ι R → R)],
+  -- erw finsupp.sum_apply,
+  -- simp [@is_add_group_hom.map_finset_sum (mv_polynomial ι R) _ R _ (coeff m) _ _ _ (p.support) _],
+  -- (λ (a : ι →₀ ℕ), C (f (p a)) * finsupp.prod a (λ (n : ι), pow (X n))),
+end
+
+lemma eval₂_sum' {X : Type*} [decidable_eq X] (s : finset X) (g : ι → S)
+  (i : X → mv_polynomial ι R) :
+  eval₂ f g (s.sum i) = s.sum (λ x, eval₂ f g $ i x) :=
+begin
+  apply finset.induction_on s,
+  { simp },
+  { intros x' s' hx' IH,
+    simp [finset.sum_insert hx', IH] }
+end
+
+@[simp] lemma C_pow (r : R) (n : ℕ) :
+  (C (r^n) : mv_polynomial ι R) = (C r)^n :=
+by induction n; simp [pow_succ, *]
+
+-- lemma eval₂_pow (g : ι → S) (p : mv_polynomial ι R) (n : ℕ) :
+--   eval₂ f g (p^n) = (eval₂ f g p)^n :=
+-- by induction n; simp [pow_succ, eval₂_mul, *]
+
+end mv_polynomial
+
+namespace pnat
+
+instance : has_dvd ℕ+ :=
+⟨λ a b, ∃ c, b = a * c⟩
+
+lemma dvd_iff_coe_dvd (a b : ℕ+) :
+  a ∣ b ↔ (a : ℕ) ∣ b :=
+begin
+  split,
+  { rintros ⟨c, rfl⟩, refine ⟨c, mul_coe _ _⟩ },
+  { rintros ⟨c, hc⟩,
+    refine ⟨⟨c, _⟩, _⟩,
+    { apply pos_of_mul_pos_left,
+      { rw ← hc, exact b.2 },
+      exact nat.zero_le _ },
+    -- todo(jmc): provide ext for pnat
+    cases a, cases b, congr, exact hc }
+end
+
+end pnat
+
 -- ### end FOR_MATHLIB
 
 -- proper start of this file
 
-local attribute [class] nat.prime
+open mv_polynomial set
 
+variables (s : set ℕ+) (α : Type u)
+
+def witt_vectors := s → α
+
+local notation `𝕎` := witt_vectors
+
+def pnat.divisors (n : ℕ+) : set ℕ+ :=
+{d | d ∣ n}
+
+noncomputable instance pnat.divisors.fintype (n : ℕ+) : fintype n.divisors :=
+finite.fintype $ finite_of_finite_image (subtype.val_injective) $ finite_subset (finite_le_nat n) $
+by { rintros _ ⟨_, ⟨c, rfl⟩, rfl⟩, exact nat.le_mul_of_pos_right c.property }
+
+def set.is_truncation_set (s : set ℕ+) : Prop :=
+∀ (n : ℕ+), n ∈ s → n.divisors ⊆ s
+
+def fintype.sum {α : Type*} {β : Type*} (f : α → β) [s : fintype α] [add_comm_monoid β] :=
+s.elems.sum f
+
+variables [decidable_eq α] [comm_ring α]
+
+noncomputable def witt_polynomial (hs : s.is_truncation_set) (n : s) :
+  mv_polynomial s α :=
+fintype.sum (λ (d : (n : ℕ+).divisors),
+  let d_in_s : (d : ℕ+) ∈ s := hs n n.property d.property in
+  C d * (X ⟨d, d_in_s⟩)^((n : ℕ)/d))
+
+local attribute [class] nat.prime
 variables (p : ℕ) [nat.prime p]
+
+lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
+  (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
+begin
+  rcases h with ⟨c, hc⟩,
+  rw sub_eq_iff_eq_add' at hc,
+  replace hc := congr_arg (λ x, x^(p^k)) hc,
+  simp only [sub_eq_add_neg, add_pow] at hc,
+  rw [finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
+    nat.sub_self, pow_zero, mul_one] at hc,
+  rw [hc, add_sub_cancel'], clear hc,
+  apply dvd_sum,
+  intros i,
+  rw mul_assoc,
+  rw mul_pow,
+  conv { congr, skip, congr, skip, congr, rw mul_comm },
+  apply dvd_mul_of_dvd_right,
+  rw mul_assoc,
+  apply dvd_mul_of_dvd_right,
+  clear a b c,
+  by_cases H : (p ^ k) < i,
+  { simp [nat.choose_eq_zero_of_lt H] },
+
+end
+
+lemma foo (a b : α) (h : ∃ c, a = b + c * p) (k : ℕ) :
+  ∃ d, a^(p^k) = b^(p^k) + d * (p^(k+1)) :=
+begin
+  rcases h with ⟨c, rfl⟩,
+end
 
 lemma prime_ne_zero : p ≠ 0 := nat.pos_iff_ne_zero.mp $ nat.prime.pos ‹_›
 
@@ -64,7 +233,7 @@ theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n)
 show _ = @multiset.sum α _ ↑(list.map _ _),
 by rw [list.map_pmap, list.pmap_eq_map]; refl
 
-def witt_polynomial (n : ℕ) : mv_polynomial ℕ R :=
+def witt_polynomial' (n : ℕ) : mv_polynomial ℕ R :=
 (finset.range (n+1)).sum (λ i, (C p ^ i * X i ^ (p^(n-i))))
 
 variables (R)
@@ -167,13 +336,12 @@ begin
   apply nat.strong_induction_on n,
   clear n, intros n H,
   rw [X_in_terms_of_W_eq],
-  simp only [is_ring_hom.map_mul f, is_ring_hom.map_sub f, fC, fX, ring_hom_sum.finset f],
+  simp only [is_ring_hom.map_mul f, is_ring_hom.map_sub f, fC, fX, (finset.sum_hom f).symm],
   rw [finset.sum_congr rfl, (_ : @witt_polynomial p _ ℚ _ _ n -
     (finset.range n).sum (λ i, C p ^ i * X i ^ p ^ (n - i)) = C (p ^ n) * X n)],
   { rw [mul_right_comm, ← C_mul, mul_one_div_cancel, C_1, one_mul],
     exact pow_ne_zero _ (nat.cast_ne_zero.2 $ ne_of_gt (nat.prime.pos ‹_›)) },
   { simp [witt_polynomial, nat.sub_self],
-    rw is_semiring_hom.map_pow (@C ℚ ℕ _ _ _),
     rw finset.sum_range_succ,
     simp },
   { intros i h,
@@ -215,8 +383,8 @@ begin
         from_X_to_W_basis, eval₂_C, eval₂_X, X_in_terms_of_W_eq,
         mul_comm, mul_assoc, ← is_semiring_hom.map_pow C,
         ← C_mul, one_div_mul_cancel, C_1, mul_one,
-        ring_hom_sum.finset (eval₂ C $ X_in_terms_of_W p),
-        sub_add_eq_add_sub, sub_eq_iff_eq_add, function.comp],
+        ← finset.sum_hom (eval₂ C $ X_in_terms_of_W p),
+        sub_add_eq_add_sub, sub_eq_iff_eq_add],
     congr,
     funext i,
     exact this i,
@@ -294,6 +462,35 @@ begin
     exact H k },
 end
 
+lemma witt_structure_rat_rec (Φ : mv_polynomial bool ℚ) (n) :
+  (witt_structure_rat p Φ n) * C (p^n) =
+  Φ.eval₂ C (λ b, ((witt_polynomial p n).eval (λ i, X (b,i)))) -
+  (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p Φ i)^p^(n-i)) :=
+begin
+  have := @X_in_terms_of_W_aux p _ n,
+  replace := congr_arg (eval₂ C (λ k : ℕ,
+  Φ.eval₂ C (λ b, ((witt_polynomial p k).eval (λ i, X (b,i)))))) this,
+  rw [eval₂_mul, eval₂_C] at this,
+  convert this, clear this,
+  simp only [eval₂_sub, eval₂_X],
+  rw sub_left_inj,
+  simp only [eval₂_sum'],
+  apply finset.sum_congr rfl,
+  intros i hi,
+  rw [eval₂_mul, ← C_pow, ← C_pow, eval₂_C, eval₂_pow],
+  refl
+end
+
+def has_integral_coeffs {ι : Type*} [decidable_eq ι] (p : mv_polynomial ι ℚ) : Prop :=
+  ∀ m, (coeff m p).denom = 1
+
+lemma witt_structure_rat_aux (Φ : mv_polynomial bool ℚ) (n : ℕ) :
+  has_integral_coeffs (witt_structure_rat p Φ n) :=
+begin
+  apply nat.strong_induction_on n, clear n,
+  intros n IH,
+end
+
 def witt_structure_int (Φ : mv_polynomial bool ℤ) (n : ℕ) : mv_polynomial (bool × ℕ) ℤ :=
 finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map int.cast Φ) n)
 
@@ -306,7 +503,11 @@ begin
   ext c,
   replace hf := congr_arg finsupp.to_fun hf,
   replace hf := congr_fun hf c,
-  -- dsimp [map, eval₂] at hf,
+  suffices : (f.to_fun c : ℚ) = (0 : ℤ),
+  { rw int.cast_inj at this, convert this, },
+  convert hf,
+  dsimp [map],
+  sorry
 end
 
 -- #exit
