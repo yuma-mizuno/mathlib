@@ -5,7 +5,9 @@ import data.nat.choose
 import data.mv_polynomial
 import algebra.group_power
 import group_theory.subgroup
-import ring_theory.multiplicity
+import data.padics.padic_integers
+
+import tactic.omega
 
 universes u v w u₁
 
@@ -31,9 +33,23 @@ begin
 end
 
 lemma dvd_sum {α : Type*} {β : Type*} [decidable_eq α] [comm_ring β]
-  (s : finset α) (f : α → β) (b : β) (H : ∀ a, b ∣ f a) :
+  (s : finset α) (f : α → β) (b : β) (H : ∀ a ∈ s, b ∣ f a) :
   b ∣ s.sum f :=
-by apply finset.induction_on s; intros; simp [*, dvd_add]
+begin
+  let t := s,
+  replace H : ∀ a ∈ t, b ∣ f a := H,
+  have hs : s ⊆ t := finset.subset.refl s,
+  revert hs,
+  apply finset.induction_on s, {simp},
+  intros a s' ha IH hs',
+  rw finset.insert_subset at hs',
+  cases hs' with has hs',
+  simp [*, dvd_add]
+end
+
+@[elim_cast] lemma coe_nat_dvd {α : Type*} [comm_ring α] (m n : ℕ) (h : m ∣ n) :
+  (m : α) ∣ n :=
+by { rcases h with ⟨k, rfl⟩, refine ⟨k, by norm_cast⟩ }
 
 end finset
 
@@ -192,6 +208,108 @@ fintype.sum (λ (d : (n : ℕ+).divisors),
 local attribute [class] nat.prime
 variables (p : ℕ) [nat.prime p]
 
+lemma nat.prime_ne_zero : p ≠ 0 := nat.pos_iff_ne_zero.mp $ nat.prime.pos ‹_›
+
+section
+open roption multiplicity nat
+
+lemma finite_nat_prime_iff (i : ℕ) :
+  finite p i ↔ i > 0 :=
+begin
+  rw finite_nat_iff, split; intro h,
+  { exact h.2 },
+  { exact ⟨ne_of_gt (prime.gt_one ‹_›), h⟩ }
+end
+
+lemma finite_nat_choose_iff' (k i : ℕ) :
+  finite p (choose (p^k) i) ↔ (i ≤ p^k) :=
+begin
+  rw finite_nat_iff, split; intro h,
+  { by_contradiction H, cases h,
+    simp only [not_le, choose_eq_zero_of_lt, not_lt_zero, *] at * },
+  { split,
+    { exact ne_of_gt (prime.gt_one ‹_›) },
+    { exact choose_pos h } }
+end
+
+lemma multiplicity_choose_prime_pow (k i : ℕ) (ipos : i > 0) (ile : i ≤ p^k) :
+  get (multiplicity p (choose (p^k) i)) ((finite_nat_choose_iff' p k i).mpr ile) =
+  k - get (multiplicity p i) ((finite_nat_prime_iff p i).mpr ipos) :=
+sorry
+
+end
+
+@[simp] lemma enat.get_coe (n : ℕ) (h : (n : enat).dom) : (n : enat).get h = n := rfl
+
+-- lemma nat.pow_le_iff (b m n : ℕ) :
+--   b^m ≤ b^n ↔ m ≤ n :=
+-- begin
+--   library_search
+-- end
+
+lemma multiplicity_le (k n : ℕ) (hk : k ≠ 1) (hn : 0 < n) :
+  (multiplicity k n) ≤ n :=
+begin
+  have fin_mult : multiplicity.finite k n,
+  { rw multiplicity.finite_nat_iff, split; assumption },
+  have pow_dvd := multiplicity.pow_multiplicity_dvd fin_mult,
+  have pow_le := nat.le_of_dvd hn pow_dvd,
+  rw ← @enat.get_le_get (multiplicity k n) n fin_mult trivial,
+  rw [enat.get_coe],
+  refine le_trans _ pow_le,
+  by_cases H : 1 < k,
+  { apply le_of_lt, simpa using nat.lt_pow_self H _ },
+  rw not_lt at H,
+  have duh : 0 ≤ k := zero_le k,
+  have foo : k < 1 := lt_of_le_of_ne H hk,
+  have k0 : k = 0 := by linarith,
+  subst k,
+  rw show (multiplicity 0 n).get fin_mult = 0,
+  { rw [← enat.coe_inj, enat.coe_get, enat.coe_zero],
+    rw multiplicity.multiplicity_eq_zero_of_not_dvd,
+    rintro ⟨m, rfl⟩,
+    rw nat.zero_mul at hn,
+    exact nat.not_lt_zero 0 hn },
+  apply nat.zero_le
+end
+
+lemma multiplicity_add_one_le (k n : ℕ) (hk : k ≠ 1) (hn : 0 < n) :
+  (multiplicity k n) + 1 ≤ n :=
+begin
+  have : multiplicity.finite k n,
+  { rw multiplicity.finite_nat_iff, split; assumption },
+  by_cases H : k < 2,
+  { induction k with k IH,
+    { rw multiplicity.multiplicity_eq_zero_of_not_dvd,
+      { norm_cast, linarith },
+      { rw zero_dvd_iff, exact ne_of_gt hn } },
+    exfalso,
+    induction k, { simpa using hk },
+    simp only [nat.succ_eq_add_one] at *,
+    replace H := nat.lt_of_succ_lt_succ H,
+    replace H := nat.lt_of_succ_lt_succ H,
+    exact nat.not_lt_zero _ H },
+  rw not_lt at H,
+  let foo : _ := _,
+  rw ← @enat.get_le_get _ n foo trivial,
+  { rw [enat.get_coe, enat.get_add, enat.get_one],
+
+  sorry },
+  all_goals { try {split}, try {assumption}, try {exact trivial} },
+end
+
+@[simp] lemma enat.nat_cast_eq_coe (n : ℕ) :
+  (@coe nat enat (@coe_to_lift nat enat (@coe_base nat enat nat.cast_coe)) n) = n :=
+by { induction n with n IH, {refl}, simp [nat.succ_eq_add_one, IH] }
+
+@[simp] lemma nat.choose_comm (n k : ℕ) (h : k ≤ n) :
+  nat.choose n (n - k) = nat.choose n k :=
+begin
+  rw nat.choose_eq_fact_div_fact (nat.sub_le n k),
+  rw nat.choose_eq_fact_div_fact h,
+  rw [mul_comm, nat.sub_sub_self h]
+end
+
 lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
   (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
 begin
@@ -201,30 +319,57 @@ begin
   simp only [sub_eq_add_neg, add_pow] at hc,
   rw [finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
     nat.sub_self, pow_zero, mul_one] at hc,
-  rw [hc, add_sub_cancel'], clear hc,
+  rw [hc, add_sub_cancel'], clear hc a,
   apply dvd_sum,
-  intros i,
-  rw mul_assoc,
+  intros i hi,
+  rw finset.mem_range at hi,
   rw mul_pow,
-  conv { congr, skip, congr, skip, congr, rw mul_comm },
-  apply dvd_mul_of_dvd_right,
-  rw mul_assoc,
-  apply dvd_mul_of_dvd_right,
-  clear a b c,
-  by_cases H : (p ^ k) < i,
-  { simp [nat.choose_eq_zero_of_lt H] },
-
+  conv { congr, skip, congr, congr, skip, rw mul_comm },
+  repeat { rw mul_assoc, apply dvd_mul_of_dvd_right }, clear b c,
+  norm_cast,
+  apply coe_nat_dvd,
+  by_cases H : i = 0,
+  { subst H,
+    suffices : p ^ (k + 1) ∣ p ^ p ^ k, by simpa,
+    apply nat.pow_dvd_pow,
+    exact nat.lt_pow_self (nat.prime.ge_two ‹_›) k },
+  have i_pos := nat.pos_of_ne_zero H, clear H,
+  rw ← nat.choose_comm _ _ (le_of_lt hi),
+  generalize H : p^k - i = j,
+  have hj : _ < p^k := nat.sub_lt_of_pos_le _ _ i_pos (le_of_lt hi),
+  have j_pos : _ > 0 := nat.sub_pos_of_lt hi,
+  rw H at hj j_pos,
+  rw [← int.coe_nat_dvd, int.coe_nat_pow, int.coe_nat_mul, int.coe_nat_pow],
+  convert multiplicity.pow_dvd_of_le_multiplicity _,
+  { apply_instance },
+  have pp : prime (p : ℤ) := nat.prime_iff_prime_int.mp ‹_›,
+  rw multiplicity.mul pp,
+  rw multiplicity.pow pp,
+  rw multiplicity.multiplicity_self pp.2.1 pp.1,
+  rw ← multiplicity.int.coe_nat_multiplicity,
+  simp only [add_monoid.smul_one, enat.nat_cast_eq_coe],
+  replace := multiplicity_choose_prime_pow p k _ j_pos (le_of_lt hj),
+  replace := congr_arg (coe : ℕ → enat) this,
+  rw enat.coe_get at this,
+  rw this,
+  replace := multiplicity_add_one_le p j (ne_of_gt (nat.prime.gt_one ‹_›)) j_pos,
+  have h' := (finite_nat_prime_iff p j).mpr j_pos,
+  let foo : _ := _,
+  rw ← @enat.get_le_get _ j foo trivial at this,
+  { norm_cast,
+    simp only [enat.get_add, enat.get_one, add_comm, enat.get_coe] at this,
+    transitivity, swap,
+    { exact add_le_add_right this _ },
+    rw [add_comm, add_assoc],
+    apply add_le_add_left,
+    rw add_comm,
+    apply nat.le_sub_add },
+  all_goals { try {split}, try {assumption}, try {exact trivial} },
 end
-
-lemma foo (a b : α) (h : ∃ c, a = b + c * p) (k : ℕ) :
-  ∃ d, a^(p^k) = b^(p^k) + d * (p^(k+1)) :=
-begin
-  rcases h with ⟨c, rfl⟩,
-end
-
-lemma prime_ne_zero : p ≠ 0 := nat.pos_iff_ne_zero.mp $ nat.prime.pos ‹_›
 
 open mv_polynomial
+
+#exit
 
 variables {R : Type u} [decidable_eq R] [comm_ring R]
 
