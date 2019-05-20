@@ -5,6 +5,7 @@ import data.nat.choose
 import data.mv_polynomial
 import algebra.group_power
 import group_theory.subgroup
+import ring_theory.multiplicity
 import data.padics.padic_integers
 
 import tactic.omega
@@ -208,10 +209,8 @@ fintype.sum (λ (d : (n : ℕ+).divisors),
 local attribute [class] nat.prime
 variables (p : ℕ) [nat.prime p]
 
-lemma nat.prime_ne_zero : p ≠ 0 := nat.pos_iff_ne_zero.mp $ nat.prime.pos ‹_›
-
 section
-open roption multiplicity nat
+open multiplicity nat
 
 lemma finite_nat_prime_iff (i : ℕ) :
   finite p i ↔ i > 0 :=
@@ -233,9 +232,11 @@ begin
 end
 
 lemma multiplicity_choose_prime_pow (k i : ℕ) (ipos : i > 0) (ile : i ≤ p^k) :
-  get (multiplicity p (choose (p^k) i)) ((finite_nat_choose_iff' p k i).mpr ile) =
-  k - get (multiplicity p i) ((finite_nat_prime_iff p i).mpr ipos) :=
-sorry
+  (multiplicity p (choose (p^k) i)).get ((finite_nat_choose_iff' p k i).mpr ile) =
+  k - (multiplicity p i).get ((finite_nat_prime_iff p i).mpr ipos) :=
+begin
+  sorry
+end
 
 end
 
@@ -247,55 +248,31 @@ end
 --   library_search
 -- end
 
-lemma multiplicity_le (k n : ℕ) (hk : k ≠ 1) (hn : 0 < n) :
-  (multiplicity k n) ≤ n :=
-begin
-  have fin_mult : multiplicity.finite k n,
-  { rw multiplicity.finite_nat_iff, split; assumption },
-  have pow_dvd := multiplicity.pow_multiplicity_dvd fin_mult,
-  have pow_le := nat.le_of_dvd hn pow_dvd,
-  rw ← @enat.get_le_get (multiplicity k n) n fin_mult trivial,
-  rw [enat.get_coe],
-  refine le_trans _ pow_le,
-  by_cases H : 1 < k,
-  { apply le_of_lt, simpa using nat.lt_pow_self H _ },
-  rw not_lt at H,
-  have duh : 0 ≤ k := zero_le k,
-  have foo : k < 1 := lt_of_le_of_ne H hk,
-  have k0 : k = 0 := by linarith,
-  subst k,
-  rw show (multiplicity 0 n).get fin_mult = 0,
-  { rw [← enat.coe_inj, enat.coe_get, enat.coe_zero],
-    rw multiplicity.multiplicity_eq_zero_of_not_dvd,
-    rintro ⟨m, rfl⟩,
-    rw nat.zero_mul at hn,
-    exact nat.not_lt_zero 0 hn },
-  apply nat.zero_le
-end
-
 lemma multiplicity_add_one_le (k n : ℕ) (hk : k ≠ 1) (hn : 0 < n) :
   (multiplicity k n) + 1 ≤ n :=
 begin
   have : multiplicity.finite k n,
   { rw multiplicity.finite_nat_iff, split; assumption },
-  by_cases H : k < 2,
-  { induction k with k IH,
-    { rw multiplicity.multiplicity_eq_zero_of_not_dvd,
-      { norm_cast, linarith },
-      { rw zero_dvd_iff, exact ne_of_gt hn } },
-    exfalso,
-    induction k, { simpa using hk },
-    simp only [nat.succ_eq_add_one] at *,
-    replace H := nat.lt_of_succ_lt_succ H,
-    replace H := nat.lt_of_succ_lt_succ H,
-    exact nat.not_lt_zero _ H },
-  rw not_lt at H,
-  let foo : _ := _,
-  rw ← @enat.get_le_get _ n foo trivial,
+  rw ← @enat.get_le_get (multiplicity k n + 1) n ⟨this, trivial⟩ trivial,
   { rw [enat.get_coe, enat.get_add, enat.get_one],
-
-  sorry },
-  all_goals { try {split}, try {assumption}, try {exact trivial} },
+    by_cases H : k ≤ 1,
+    { have duh : 0 ≤ k := zero_le k,
+      have foo : k < 1 := lt_of_le_of_ne H hk,
+      have k0 : k = 0 := by linarith,
+      subst k,
+      rw show (multiplicity 0 n).get this = 0,
+      { rw [← enat.coe_inj, enat.coe_get, enat.coe_zero],
+        rw multiplicity.multiplicity_eq_zero_of_not_dvd,
+        rintro ⟨m, rfl⟩,
+        rw nat.zero_mul at hn,
+        exact nat.not_lt_zero 0 hn },
+      exact hn },
+  rw not_le at H,
+  show _ < n,
+  refine lt_of_lt_of_le (nat.lt_pow_self H _) (nat.le_of_dvd hn _),
+  have := @multiplicity.pow_dvd_of_le_multiplicity ℕ _ _ k n
+    ((multiplicity k n).get this) (by rw enat.coe_get),
+  simpa }
 end
 
 @[simp] lemma enat.nat_cast_eq_coe (n : ℕ) :
