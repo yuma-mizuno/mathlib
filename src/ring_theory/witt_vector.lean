@@ -132,6 +132,8 @@ begin
   -- (λ (a : ι →₀ ℕ), C (f (p a)) * finsupp.prod a (λ (n : ι), pow (X n))),
 end
 
+#exit
+
 lemma eval₂_sum' {X : Type*} [decidable_eq X] (s : finset X) (g : ι → S)
   (i : X → mv_polynomial ι R) :
   eval₂ f g (s.sum i) = s.sum (λ x, eval₂ f g $ i x) :=
@@ -231,22 +233,9 @@ begin
     { exact choose_pos h } }
 end
 
-lemma multiplicity_choose_prime_pow (k i : ℕ) (ipos : i > 0) (ile : i ≤ p^k) :
-  (multiplicity p (choose (p^k) i)).get ((finite_nat_choose_iff' p k i).mpr ile) =
-  k - (multiplicity p i).get ((finite_nat_prime_iff p i).mpr ipos) :=
-begin
-  sorry
-end
-
 end
 
 @[simp] lemma enat.get_coe (n : ℕ) (h : (n : enat).dom) : (n : enat).get h = n := rfl
-
--- lemma nat.pow_le_iff (b m n : ℕ) :
---   b^m ≤ b^n ↔ m ≤ n :=
--- begin
---   library_search
--- end
 
 lemma multiplicity_add_one_le (k n : ℕ) (hk : k ≠ 1) (hn : 0 < n) :
   (multiplicity k n) + 1 ≤ n :=
@@ -290,58 +279,42 @@ end
 lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
   (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
 begin
-  rcases h with ⟨c, hc⟩,
+  induction k with k ih, { simpa using h }, clear h,
+  simp only [nat.succ_eq_add_one],
+  rcases ih with ⟨c, hc⟩,
   rw sub_eq_iff_eq_add' at hc,
-  replace hc := congr_arg (λ x, x^(p^k)) hc,
-  simp only [sub_eq_add_neg, add_pow] at hc,
-  rw [finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
+  replace hc := congr_arg (λ x, x^p) hc,
+  dsimp only at hc,
+  rw [← pow_mul, add_pow, finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
     nat.sub_self, pow_zero, mul_one] at hc,
-  rw [hc, add_sub_cancel'], clear hc a,
+  conv { congr, skip, rw [nat.pow_succ] },
+  simp only [nat.pow_eq_pow] at hc,
+  rw [hc, pow_mul, add_sub_cancel'], clear hc a,
   apply dvd_sum,
   intros i hi,
   rw finset.mem_range at hi,
   rw mul_pow,
   conv { congr, skip, congr, congr, skip, rw mul_comm },
-  repeat { rw mul_assoc, apply dvd_mul_of_dvd_right }, clear b c,
+  repeat { rw mul_assoc, apply dvd_mul_of_dvd_right }, clear c b,
   norm_cast,
   apply coe_nat_dvd,
   by_cases H : i = 0,
   { subst H,
-    suffices : p ^ (k + 1) ∣ p ^ p ^ k, by simpa,
+    suffices : p ^ (k + 1 + 1) ∣ (p ^ (k + 1)) ^ p, by simpa,
+    rw ← nat.pow_mul,
     apply nat.pow_dvd_pow,
-    exact nat.lt_pow_self (nat.prime.ge_two ‹_›) k },
+    refine le_trans (add_le_add_left' $ le_add_left $ le_refl _ : k + 1 + 1 ≤ k + 1 + (k + 1)) _,
+    refine le_trans (le_of_eq _) (nat.mul_le_mul_left (k+1) $ (nat.prime.ge_two ‹_› : 2 ≤ p)),
+    rw mul_two },
   have i_pos := nat.pos_of_ne_zero H, clear H,
-  rw ← nat.choose_comm _ _ (le_of_lt hi),
-  generalize H : p^k - i = j,
-  have hj : _ < p^k := nat.sub_lt_of_pos_le _ _ i_pos (le_of_lt hi),
-  have j_pos : _ > 0 := nat.sub_pos_of_lt hi,
-  rw H at hj j_pos,
-  rw [← int.coe_nat_dvd, int.coe_nat_pow, int.coe_nat_mul, int.coe_nat_pow],
-  convert multiplicity.pow_dvd_of_le_multiplicity _,
-  { apply_instance },
-  have pp : prime (p : ℤ) := nat.prime_iff_prime_int.mp ‹_›,
-  rw multiplicity.mul pp,
-  rw multiplicity.pow pp,
-  rw multiplicity.multiplicity_self pp.2.1 pp.1,
-  rw ← multiplicity.int.coe_nat_multiplicity,
-  simp only [add_monoid.smul_one, enat.nat_cast_eq_coe],
-  replace := multiplicity_choose_prime_pow p k _ j_pos (le_of_lt hj),
-  replace := congr_arg (coe : ℕ → enat) this,
-  rw enat.coe_get at this,
-  rw this,
-  replace := multiplicity_add_one_le p j (ne_of_gt (nat.prime.gt_one ‹_›)) j_pos,
-  have h' := (finite_nat_prime_iff p j).mpr j_pos,
-  let foo : _ := _,
-  rw ← @enat.get_le_get _ j foo trivial at this,
-  { norm_cast,
-    simp only [enat.get_add, enat.get_one, add_comm, enat.get_coe] at this,
-    transitivity, swap,
-    { exact add_le_add_right this _ },
-    rw [add_comm, add_assoc],
-    apply add_le_add_left,
-    rw add_comm,
-    apply nat.le_sub_add },
-  all_goals { try {split}, try {assumption}, try {exact trivial} },
+  rw nat.pow_succ,
+  apply mul_dvd_mul,
+  { generalize H : (p^(k+1)) = b,
+    have := nat.sub_pos_of_lt hi,
+    conv {congr, rw ← nat.pow_one b},
+    apply nat.pow_dvd_pow,
+    exact this },
+  exact nat.prime.dvd_choose i_pos hi ‹_›
 end
 
 open mv_polynomial
