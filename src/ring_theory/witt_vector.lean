@@ -8,6 +8,7 @@ import group_theory.subgroup
 import ring_theory.multiplicity
 import data.padics.padic_integers
 
+import tactic.tidy
 import tactic.omega
 
 universes u v w u₁
@@ -56,7 +57,7 @@ end finset
 
 namespace mv_polynomial
 
-open mv_polynomial
+open mv_polynomial finsupp
 
 lemma eval₂_assoc {S : Type*} [decidable_eq S] [comm_ring S]
   {σ : Type*} [decidable_eq σ]
@@ -75,10 +76,10 @@ variables [is_ring_hom f] [decidable_eq ι]
 def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := p.to_fun m
 
 @[simp] lemma coeff_add (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
-  coeff m (p + q) = coeff m p + coeff m q := finsupp.add_apply
+  coeff m (p + q) = coeff m p + coeff m q := add_apply
 
 @[simp] lemma coeff_sub (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
-  coeff m (p - q) = coeff m p - coeff m q := finsupp.sub_apply
+  coeff m (p - q) = coeff m p - coeff m q := sub_apply
 
 @[simp] lemma coeff_zero (m : ι →₀ ℕ) :
   coeff m (0 : mv_polynomial ι R) = 0 := rfl
@@ -88,8 +89,7 @@ instance coeff.is_add_group_hom (m : ι →₀ ℕ) :
 ⟨coeff_add m⟩
 
 lemma ext (p q : mv_polynomial ι R) :
-  (∀ m, coeff m p = coeff m q) → p = q := finsupp.ext
-.
+  (∀ m, coeff m p = coeff m q) → p = q := ext
 
 @[simp] lemma coeff_zero_X (i : ι) : coeff 0 (X i : mv_polynomial ι R) = 0 := rfl
 
@@ -105,31 +105,50 @@ by simp [monomial_eq]
 
 @[simp] lemma coeff_monomial (m n) (r:R) :
   coeff m (monomial n r : mv_polynomial ι R) = if n = m then r else 0 :=
-finsupp.single_apply
+single_apply
+
+@[simp] lemma coeff_C (m) (r:R) :
+  coeff m (C r : mv_polynomial ι R) = if 0 = m then r else 0 :=
+single_apply
 
 @[simp] lemma coeff_C_mul (m) (r : R) (p : mv_polynomial ι R) : coeff m (C r * p) = r * coeff m p :=
 begin
-  sorry
-  -- conv in (r * _) { rw [← @finsupp.sum_single _ _ _ _ _ p, coeff_sum] },
-  -- rw [finsupp.mul_def, C, finsupp.sum_single_index],
-  -- { simp [coeff_single, finsupp.mul_sum, coeff_sum],
-  --   apply sum_congr rfl,
-  --   assume i hi, by_cases i = n; simp [h] },
-  -- simp
+  rw [mul_def, C, monomial],
+  simp only [sum_single_index, zero_mul, single_zero, zero_add, sum_zero],
+  convert sum_apply,
+  simp only [single_apply, finsupp.sum],
+  rw finset.sum_eq_single m,
+  { rw if_pos rfl, refl },
+  { intros m' hm' H, apply if_neg, exact H },
+  { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] }
 end
 
-lemma coeff_map
-  (p : mv_polynomial ι R) (m : ι →₀ ℕ) :
-  coeff m (p.map f) = f (coeff m p) :=
+@[simp] lemma coeff_mul_X (m) (i : ι) (p : mv_polynomial ι R) :
+  coeff (m + single i 1) (p * X i) = coeff m p :=
 begin
-  delta map eval₂ finsupp.sum,
-  simp only [coeff_sum, coeff_C_mul],
-  dsimp,
-  sorry
-  -- erw [← @finset.sum_hom (ι →₀ ℕ) _ _ (p.support) (coeff m : mv_polynomial ι R → R)],
-  -- erw finsupp.sum_apply,
-  -- simp [@is_add_group_hom.map_finset_sum (mv_polynomial ι R) _ R _ (coeff m) _ _ _ (p.support) _],
-  -- (λ (a : ι →₀ ℕ), C (f (p a)) * finsupp.prod a (λ (n : ι), pow (X n))),
+  rw [mul_def, X, monomial],
+  simp only [sum_single_index, mul_one, single_zero, mul_zero],
+  convert sum_apply,
+  simp only [single_apply, finsupp.sum],
+  rw finset.sum_eq_single m,
+  { rw if_pos rfl, refl },
+  { intros m' hm' H, apply if_neg, intro h, apply H, ext j,
+    let c : ι →₀ ℕ → (ι → ℕ) := λ f, f, replace h := congr_arg c h, simpa [c] using congr_fun h j },
+  { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] }
+end
+
+lemma coeff_map (p : mv_polynomial ι R) : ∀ (m : ι →₀ ℕ), coeff m (p.map f) = f (coeff m p) :=
+begin
+  apply mv_polynomial.induction_on p; clear p,
+  { intros r m, rw [map_C], simp only [coeff_C], split_ifs, {refl}, rw is_ring_hom.map_zero f },
+  { intros p q hp hq m, simp only [hp, hq, map_add, coeff_add], rw is_ring_hom.map_add f },
+  { intros p i hp m, simp only [hp, map_mul, map_X],
+    simp only [mul_def],
+    -- classical, by_cases hm : ∃ m', m = m' + single i 1,
+    -- { rcases hm with ⟨m, rfl⟩,
+    --   have := coeff_mul_X m i p, replace := congr_arg f this, }
+    sorry
+}
 end
 
 #exit
