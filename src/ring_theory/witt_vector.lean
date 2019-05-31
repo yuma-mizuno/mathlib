@@ -73,7 +73,11 @@ variables [decidable_eq R] [comm_ring R]
 variables [decidable_eq S] [comm_ring S]
 variables [is_ring_hom f] [decidable_eq ι]
 
-def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := p.to_fun m
+def foo : has_coe_to_fun (mv_polynomial ι R) := by delta mv_polynomial; apply_instance
+
+local attribute [instance] foo
+
+def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := (p : (ι →₀ ℕ) → R) m
 
 @[simp] lemma coeff_add (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
   coeff m (p + q) = coeff m p + coeff m q := add_apply
@@ -137,21 +141,43 @@ begin
   { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] }
 end
 
+section need_to_generalize
+
+instance finsupp.has_sub : has_sub (ι →₀ ℕ) := ⟨zip_with (λ m n, m - n) (nat.sub_zero 0)⟩
+
+@[simp] lemma sub_apply {g₁ g₂ : ι →₀ ℕ} {a : ι} : (g₁ - g₂) a = g₁ a - g₂ a :=
+rfl
+
+end need_to_generalize
+
+lemma coeff_mul_X' (m) (i : ι) (p : mv_polynomial ι R) :
+  coeff m (p * X i) = if i ∈ m.support then coeff (m - single i 1) p else 0 :=
+begin
+  split_ifs with h h,
+  { conv_rhs {rw ← coeff_mul_X _ i},
+    congr' 1, ext j,
+    by_cases hj : i = j,
+    { subst j, simp only [sub_apply, add_apply, single_eq_same],
+      refine (nat.sub_add_cancel _).symm, rw mem_support_iff at h,
+      exact nat.pos_of_ne_zero h },
+    { simp [single_eq_of_ne hj] } },
+  { delta coeff, rw ← not_mem_support_iff, intro hm, apply h,
+    have H := support_mul _ _ hm, simp only [finset.mem_bind] at H,
+    rcases H with ⟨j, hj, i', hi', H⟩,
+    delta X monomial at hi', rw mem_support_single at hi', cases hi',
+    simp * at * }
+end
+
 lemma coeff_map (p : mv_polynomial ι R) : ∀ (m : ι →₀ ℕ), coeff m (p.map f) = f (coeff m p) :=
 begin
   apply mv_polynomial.induction_on p; clear p,
   { intros r m, rw [map_C], simp only [coeff_C], split_ifs, {refl}, rw is_ring_hom.map_zero f },
   { intros p q hp hq m, simp only [hp, hq, map_add, coeff_add], rw is_ring_hom.map_add f },
   { intros p i hp m, simp only [hp, map_mul, map_X],
-    simp only [mul_def],
-    -- classical, by_cases hm : ∃ m', m = m' + single i 1,
-    -- { rcases hm with ⟨m, rfl⟩,
-    --   have := coeff_mul_X m i p, replace := congr_arg f this, }
-    sorry
-}
+    simp only [hp, mem_support_iff, coeff_mul_X'],
+    split_ifs, {refl},
+    rw is_ring_hom.map_zero f }
 end
-
-#exit
 
 lemma eval₂_sum' {X : Type*} [decidable_eq X] (s : finset X) (g : ι → S)
   (i : X → mv_polynomial ι R) :
@@ -200,11 +226,24 @@ end pnat
 
 open mv_polynomial set
 
-variables (s : set ℕ+) (α : Type u)
+variables (s : set ℕ+)
 
-def witt_vectors := s → α
+def witt_vectors (α : Type u) := s → α
 
 local notation `𝕎` := witt_vectors
+
+namespace witt_vectors
+
+instance : functor (𝕎 s) :=
+{ map := λ α β f v, f ∘ v,
+  map_const := λ α β a v, λ _, a }
+
+instance : is_lawful_functor (𝕎 s) :=
+{ map_const_eq := λ α β, rfl,
+  id_map := λ α v, rfl,
+  comp_map := λ α β γ f g v, rfl }
+
+end witt_vectors
 
 def pnat.divisors (n : ℕ+) : set ℕ+ :=
 {d | d ∣ n}
@@ -219,7 +258,7 @@ def set.is_truncation_set (s : set ℕ+) : Prop :=
 def fintype.sum {α : Type*} {β : Type*} (f : α → β) [s : fintype α] [add_comm_monoid β] :=
 s.elems.sum f
 
-variables [decidable_eq α] [comm_ring α]
+variables {s} (α : Type u) [decidable_eq α] [comm_ring α]
 
 noncomputable def witt_polynomial (hs : s.is_truncation_set) (n : s) :
   mv_polynomial s α :=
@@ -227,8 +266,66 @@ fintype.sum (λ (d : (n : ℕ+).divisors),
   let d_in_s : (d : ℕ+) ∈ s := hs n n.property d.property in
   C d * (X ⟨d, d_in_s⟩)^((n : ℕ)/d))
 
+noncomputable def witt_polynomial_aux (n : ℕ+) :
+  mv_polynomial ℕ+ α := fintype.sum (λ (d : n.divisors), C d * (X d)^((n : ℕ)/d))
+
+lemma witt_polynomial_compat (hs : s.is_truncation_set) (n : s) :
+  rename subtype.val (witt_polynomial α hs n) = witt_polynomial_aux α n :=
+begin
+  delta witt_polynomial witt_polynomial_aux fintype.sum,
+  rw ← finset.sum_hom (rename (subtype.val : s → ℕ+)),
+  work_on_goal 0 {
+    congr' 1, funext d,
+    rw [is_ring_hom.map_mul (rename (subtype.val : s → ℕ+)),
+        is_monoid_hom.map_pow (rename (subtype.val : s → ℕ+)),
+        rename_C, rename_X] },
+  { norm_cast },
+  all_goals {apply_instance}
+end
+
 local attribute [class] nat.prime
 variables (p : ℕ) [nat.prime p]
+
+lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
+  (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
+begin
+  induction k with k ih, { simpa using h }, clear h,
+  simp only [nat.succ_eq_add_one],
+  rcases ih with ⟨c, hc⟩,
+  rw sub_eq_iff_eq_add' at hc,
+  replace hc := congr_arg (λ x, x^p) hc,
+  dsimp only at hc,
+  rw [← pow_mul, add_pow, finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
+    nat.sub_self, pow_zero, mul_one] at hc,
+  conv { congr, skip, rw [nat.pow_succ] },
+  simp only [nat.pow_eq_pow] at hc,
+  rw [hc, pow_mul, add_sub_cancel'], clear hc a,
+  apply dvd_sum,
+  intros i hi,
+  rw finset.mem_range at hi,
+  rw mul_pow,
+  conv { congr, skip, congr, congr, skip, rw mul_comm },
+  repeat { rw mul_assoc, apply dvd_mul_of_dvd_right }, clear c b,
+  norm_cast,
+  apply coe_nat_dvd,
+  by_cases H : i = 0,
+  { subst H,
+    suffices : p ^ (k + 1 + 1) ∣ (p ^ (k + 1)) ^ p, by simpa,
+    rw ← nat.pow_mul,
+    apply nat.pow_dvd_pow,
+    refine le_trans (add_le_add_left' $ le_add_left $ le_refl _ : k + 1 + 1 ≤ k + 1 + (k + 1)) _,
+    refine le_trans (le_of_eq _) (nat.mul_le_mul_left (k+1) $ (nat.prime.ge_two ‹_› : 2 ≤ p)),
+    rw mul_two },
+  have i_pos := nat.pos_of_ne_zero H, clear H,
+  rw nat.pow_succ,
+  apply mul_dvd_mul,
+  { generalize H : (p^(k+1)) = b,
+    have := nat.sub_pos_of_lt hi,
+    conv {congr, rw ← nat.pow_one b},
+    apply nat.pow_dvd_pow,
+    exact this },
+  exact nat.prime.dvd_choose i_pos hi ‹_›
+end
 
 section
 open multiplicity nat
@@ -293,47 +390,6 @@ begin
   rw nat.choose_eq_fact_div_fact (nat.sub_le n k),
   rw nat.choose_eq_fact_div_fact h,
   rw [mul_comm, nat.sub_sub_self h]
-end
-
-lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
-  (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
-begin
-  induction k with k ih, { simpa using h }, clear h,
-  simp only [nat.succ_eq_add_one],
-  rcases ih with ⟨c, hc⟩,
-  rw sub_eq_iff_eq_add' at hc,
-  replace hc := congr_arg (λ x, x^p) hc,
-  dsimp only at hc,
-  rw [← pow_mul, add_pow, finset.sum_range_succ, nat.choose_self, nat.cast_one, mul_one,
-    nat.sub_self, pow_zero, mul_one] at hc,
-  conv { congr, skip, rw [nat.pow_succ] },
-  simp only [nat.pow_eq_pow] at hc,
-  rw [hc, pow_mul, add_sub_cancel'], clear hc a,
-  apply dvd_sum,
-  intros i hi,
-  rw finset.mem_range at hi,
-  rw mul_pow,
-  conv { congr, skip, congr, congr, skip, rw mul_comm },
-  repeat { rw mul_assoc, apply dvd_mul_of_dvd_right }, clear c b,
-  norm_cast,
-  apply coe_nat_dvd,
-  by_cases H : i = 0,
-  { subst H,
-    suffices : p ^ (k + 1 + 1) ∣ (p ^ (k + 1)) ^ p, by simpa,
-    rw ← nat.pow_mul,
-    apply nat.pow_dvd_pow,
-    refine le_trans (add_le_add_left' $ le_add_left $ le_refl _ : k + 1 + 1 ≤ k + 1 + (k + 1)) _,
-    refine le_trans (le_of_eq _) (nat.mul_le_mul_left (k+1) $ (nat.prime.ge_two ‹_› : 2 ≤ p)),
-    rw mul_two },
-  have i_pos := nat.pos_of_ne_zero H, clear H,
-  rw nat.pow_succ,
-  apply mul_dvd_mul,
-  { generalize H : (p^(k+1)) = b,
-    have := nat.sub_pos_of_lt hi,
-    conv {congr, rw ← nat.pow_one b},
-    apply nat.pow_dvd_pow,
-    exact this },
-  exact nat.prime.dvd_choose i_pos hi ‹_›
 end
 
 open mv_polynomial
