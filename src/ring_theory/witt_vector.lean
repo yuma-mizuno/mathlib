@@ -79,6 +79,9 @@ local attribute [instance] foo
 
 def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := (p : (ι →₀ ℕ) → R) m
 
+lemma ext (p q : mv_polynomial ι R) :
+  (∀ m, coeff m p = coeff m q) → p = q := ext
+
 @[simp] lemma coeff_add (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
   coeff m (p + q) = coeff m p + coeff m q := add_apply
 
@@ -91,9 +94,6 @@ def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := (p : (ι →₀ �
 instance coeff.is_add_group_hom (m : ι →₀ ℕ) :
   is_add_group_hom (coeff m : mv_polynomial ι R → R) :=
 ⟨coeff_add m⟩
-
-lemma ext (p q : mv_polynomial ι R) :
-  (∀ m, coeff m p = coeff m q) → p = q := ext
 
 @[simp] lemma coeff_zero_X (i : ι) : coeff 0 (X i : mv_polynomial ι R) = 0 := rfl
 
