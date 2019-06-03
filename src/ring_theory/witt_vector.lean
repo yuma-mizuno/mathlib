@@ -11,6 +11,7 @@ import data.padics.padic_integers
 
 import tactic.tidy
 import tactic.omega
+import tactic.explode
 
 universes u v w u₁
 
@@ -118,7 +119,7 @@ begin
   apply integral_of_denom_eq_one,
   apply nat.eq_one_of_padic_val_eq_zero,
   intros p hp,
-  suffices : padic_val_rat p (r.denom : ℤ) = 0, { exact_mod_cast this },
+  suffices : padic_val_rat p (r.denom : ℤ) = 0, by exact_mod_cast this,
   have rdnz : (r.denom : ℤ) ≠ 0, by exact_mod_cast ne_of_gt r.3,
   rw padic_val_rat.padic_val_rat_of_int _ hp.ne_one rdnz,
   have key := h p hp,
@@ -134,7 +135,7 @@ begin
   rw [← le_zero_iff_eq, ← not_lt, enat.pos_iff_one_le, ← enat.coe_one,
     ← pow_dvd_iff_le_multiplicity],
   intro oops, apply hp.ne_one,
-  replace key := (key 1 $ by simpa using oops),
+  replace key := key 1 (by simpa using oops),
   rw ← int.dvd_nat_abs at key,
   norm_cast at key,
   rw [← pow_one p, ← nat.dvd_one],
