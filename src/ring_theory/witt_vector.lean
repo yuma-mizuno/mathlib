@@ -105,10 +105,18 @@ begin
   simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
 end
 
-lemma nat.eq_one_of_padic_val_eq_zero (n : ℕ) (h : ∀ p, nat.prime p → padic_val_rat p n = 0) :
+lemma pnat.eq_one_of_padic_val_eq_zero (n : ℕ+) (h : ∀ p, nat.prime p → padic_val_rat p n = 0) :
   n = 1 :=
 begin
-  sorry
+  by_contra H,
+  let p := nat.min_fac n,
+  have hn : (n : ℕ) ≠ 1 := λ oops, H $ subtype.val_injective oops,
+  have hp : nat.prime p := nat.min_fac_prime hn,
+  have key : p ∣ n := nat.min_fac_dvd n,
+  specialize h p hp,
+  rw [show (n : ℚ) = (n : ℤ), by simp] at h,
+  rw padic_val_rat.padic_val_rat_of_int _ hp.ne_one _ at h,
+  -- apply nat.not_lt_zero,
 end
 
 lemma integral_of_padic_val_ge_zero (r : ℚ) (h : ∀ p, nat.prime p → padic_val_rat p r ≥ 0) :
