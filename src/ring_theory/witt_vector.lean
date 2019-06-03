@@ -6,6 +6,7 @@ import data.mv_polynomial
 import algebra.group_power
 import group_theory.subgroup
 import ring_theory.multiplicity
+import ring_theory.unique_factorization_domain
 import data.padics.padic_integers
 
 import tactic.tidy
@@ -73,112 +74,6 @@ variables [decidable_eq R] [comm_ring R]
 variables [decidable_eq S] [comm_ring S]
 variables [is_ring_hom f] [decidable_eq ι]
 
-def foo : has_coe_to_fun (mv_polynomial ι R) := by delta mv_polynomial; apply_instance
-
-local attribute [instance] foo
-
-def coeff (m : ι →₀ ℕ) (p : mv_polynomial ι R) : R := (p : (ι →₀ ℕ) → R) m
-
-lemma ext (p q : mv_polynomial ι R) :
-  (∀ m, coeff m p = coeff m q) → p = q := ext
-
-@[simp] lemma coeff_add (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
-  coeff m (p + q) = coeff m p + coeff m q := add_apply
-
-@[simp] lemma coeff_sub (m : ι →₀ ℕ) (p q : mv_polynomial ι R) :
-  coeff m (p - q) = coeff m p - coeff m q := sub_apply
-
-@[simp] lemma coeff_zero (m : ι →₀ ℕ) :
-  coeff m (0 : mv_polynomial ι R) = 0 := rfl
-
-instance coeff.is_add_group_hom (m : ι →₀ ℕ) :
-  is_add_group_hom (coeff m : mv_polynomial ι R → R) :=
-⟨coeff_add m⟩
-
-@[simp] lemma coeff_zero_X (i : ι) : coeff 0 (X i : mv_polynomial ι R) = 0 := rfl
-
-lemma coeff_sum {X : Type*} (s : finset X) (f : X → mv_polynomial ι R) (m : ι →₀ ℕ) :
-  coeff m (s.sum f) = s.sum (λ x, coeff m (f x)) :=
-begin
-  apply (@finset.sum_hom _ _ _ _ _ _ _ _ _).symm,
-  refine @is_add_group_hom.to_is_add_monoid_hom _ _ _ _ _ _,
-end
-
-lemma monic_monomial_eq (m) : monomial m (1:R) = (m.prod $ λn e, X n ^ e : mv_polynomial ι R) :=
-by simp [monomial_eq]
-
-@[simp] lemma coeff_monomial (m n) (r:R) :
-  coeff m (monomial n r : mv_polynomial ι R) = if n = m then r else 0 :=
-single_apply
-
-@[simp] lemma coeff_C (m) (r:R) :
-  coeff m (C r : mv_polynomial ι R) = if 0 = m then r else 0 :=
-single_apply
-
-@[simp] lemma coeff_C_mul (m) (r : R) (p : mv_polynomial ι R) : coeff m (C r * p) = r * coeff m p :=
-begin
-  rw [mul_def, C, monomial],
-  simp only [sum_single_index, zero_mul, single_zero, zero_add, sum_zero],
-  convert sum_apply,
-  simp only [single_apply, finsupp.sum],
-  rw finset.sum_eq_single m,
-  { rw if_pos rfl, refl },
-  { intros m' hm' H, apply if_neg, exact H },
-  { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] }
-end
-
-@[simp] lemma coeff_mul_X (m) (i : ι) (p : mv_polynomial ι R) :
-  coeff (m + single i 1) (p * X i) = coeff m p :=
-begin
-  rw [mul_def, X, monomial],
-  simp only [sum_single_index, mul_one, single_zero, mul_zero],
-  convert sum_apply,
-  simp only [single_apply, finsupp.sum],
-  rw finset.sum_eq_single m,
-  { rw if_pos rfl, refl },
-  { intros m' hm' H, apply if_neg, intro h, apply H, ext j,
-    let c : ι →₀ ℕ → (ι → ℕ) := λ f, f, replace h := congr_arg c h, simpa [c] using congr_fun h j },
-  { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] }
-end
-
-section need_to_generalize
-
-instance finsupp.has_sub : has_sub (ι →₀ ℕ) := ⟨zip_with (λ m n, m - n) (nat.sub_zero 0)⟩
-
-@[simp] lemma sub_apply {g₁ g₂ : ι →₀ ℕ} {a : ι} : (g₁ - g₂) a = g₁ a - g₂ a :=
-rfl
-
-end need_to_generalize
-
-lemma coeff_mul_X' (m) (i : ι) (p : mv_polynomial ι R) :
-  coeff m (p * X i) = if i ∈ m.support then coeff (m - single i 1) p else 0 :=
-begin
-  split_ifs with h h,
-  { conv_rhs {rw ← coeff_mul_X _ i},
-    congr' 1, ext j,
-    by_cases hj : i = j,
-    { subst j, simp only [sub_apply, add_apply, single_eq_same],
-      refine (nat.sub_add_cancel _).symm, rw mem_support_iff at h,
-      exact nat.pos_of_ne_zero h },
-    { simp [single_eq_of_ne hj] } },
-  { delta coeff, rw ← not_mem_support_iff, intro hm, apply h,
-    have H := support_mul _ _ hm, simp only [finset.mem_bind] at H,
-    rcases H with ⟨j, hj, i', hi', H⟩,
-    delta X monomial at hi', rw mem_support_single at hi', cases hi',
-    simp * at * }
-end
-
-lemma coeff_map (p : mv_polynomial ι R) : ∀ (m : ι →₀ ℕ), coeff m (p.map f) = f (coeff m p) :=
-begin
-  apply mv_polynomial.induction_on p; clear p,
-  { intros r m, rw [map_C], simp only [coeff_C], split_ifs, {refl}, rw is_ring_hom.map_zero f },
-  { intros p q hp hq m, simp only [hp, hq, map_add, coeff_add], rw is_ring_hom.map_add f },
-  { intros p i hp m, simp only [hp, map_mul, map_X],
-    simp only [hp, mem_support_iff, coeff_mul_X'],
-    split_ifs, {refl},
-    rw is_ring_hom.map_zero f }
-end
-
 lemma eval₂_sum' {X : Type*} [decidable_eq X] (s : finset X) (g : ι → S)
   (i : X → mv_polynomial ι R) :
   eval₂ f g (s.sum i) = s.sum (λ x, eval₂ f g $ i x) :=
@@ -198,6 +93,60 @@ by induction n; simp [pow_succ, *]
 -- by induction n; simp [pow_succ, eval₂_mul, *]
 
 end mv_polynomial
+
+section
+open multiplicity
+
+lemma integral_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
+begin
+  rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
+  norm_cast, delta rat.of_int rat.mk_nat, congr,
+  simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
+end
+
+lemma nat.eq_one_of_padic_val_eq_zero (n : ℕ) (h : ∀ p, nat.prime p → padic_val_rat p n = 0) :
+  n = 1 :=
+begin
+  sorry
+end
+
+lemma integral_of_padic_val_ge_zero (r : ℚ) (h : ∀ p, nat.prime p → padic_val_rat p r ≥ 0) :
+  (r.num : ℚ) = r :=
+begin
+  by_cases H : r = 0,
+  { subst r, refl },
+  apply integral_of_denom_eq_one,
+  apply nat.eq_one_of_padic_val_eq_zero,
+  intros p hp,
+  suffices : padic_val_rat p (r.denom : ℤ) = 0, { exact_mod_cast this },
+  have rdnz : (r.denom : ℤ) ≠ 0, by exact_mod_cast ne_of_gt r.3,
+  rw padic_val_rat.padic_val_rat_of_int _ hp.ne_one rdnz,
+  have key := h p hp,
+  have : r ≠ 0 ∧ p ≠ 1 := ⟨H, hp.ne_one⟩,
+  rw [padic_val_rat, dif_pos this] at key,
+  delta ge at key,
+  rw sub_nonneg at key,
+  norm_cast at key,
+  rw [enat.get_le_get, int.coe_nat_multiplicity, multiplicity_le_multiplicity_iff] at key,
+  norm_cast at key,
+  suffices : multiplicity p r.denom = 0,
+  { norm_cast, rw ← enat.coe_inj, simpa using this },
+  rw [← le_zero_iff_eq, ← not_lt, enat.pos_iff_one_le, ← enat.coe_one,
+    ← pow_dvd_iff_le_multiplicity],
+  intro oops, apply hp.ne_one,
+  replace key := (key 1 $ by simpa using oops),
+  rw ← int.dvd_nat_abs at key,
+  norm_cast at key,
+  rw [← pow_one p, ← nat.dvd_one],
+  suffices : p^1 ∣ nat.gcd (int.nat_abs r.num) r.denom,
+  { by simpa [nat.coprime.gcd_eq_one r.4] },
+  apply nat.dvd_gcd key,
+  simpa using oops
+end
+
+end
+
+#exit
 
 namespace pnat
 
