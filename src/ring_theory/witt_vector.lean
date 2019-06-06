@@ -235,8 +235,6 @@ end
 
 end
 
-#exit
-
 namespace pnat
 
 instance : has_dvd ℕ+ :=
@@ -264,64 +262,73 @@ end pnat
 
 open mv_polynomial set
 
-variables (s : set ℕ+)
+-- variables (s : set ℕ+)
 
-def witt_vectors (α : Type u) := s → α
+-- def witt_vectors (α : Type u) := s → α
 
-local notation `𝕎` := witt_vectors
+-- local notation `𝕎` := witt_vectors
 
-namespace witt_vectors
+-- namespace witt_vectors
 
-instance : functor (𝕎 s) :=
-{ map := λ α β f v, f ∘ v,
-  map_const := λ α β a v, λ _, a }
+-- instance : functor (𝕎 s) :=
+-- { map := λ α β f v, f ∘ v,
+--   map_const := λ α β a v, λ _, a }
 
-instance : is_lawful_functor (𝕎 s) :=
-{ map_const_eq := λ α β, rfl,
-  id_map := λ α v, rfl,
-  comp_map := λ α β γ f g v, rfl }
+-- instance : is_lawful_functor (𝕎 s) :=
+-- { map_const_eq := λ α β, rfl,
+--   id_map := λ α v, rfl,
+--   comp_map := λ α β γ f g v, rfl }
 
-end witt_vectors
+-- end witt_vectors
 
-def pnat.divisors (n : ℕ+) : set ℕ+ :=
-{d | d ∣ n}
+-- def pnat.divisors (n : ℕ+) : set ℕ+ :=
+-- {d | d ∣ n}
 
-noncomputable instance pnat.divisors.fintype (n : ℕ+) : fintype n.divisors :=
-finite.fintype $ finite_of_finite_image (subtype.val_injective) $ finite_subset (finite_le_nat n) $
-by { rintros _ ⟨_, ⟨c, rfl⟩, rfl⟩, exact nat.le_mul_of_pos_right c.property }
+-- noncomputable instance pnat.divisors.fintype (n : ℕ+) : fintype n.divisors :=
+-- finite.fintype $ finite_of_finite_image (subtype.val_injective) $ finite_subset (finite_le_nat n) $
+-- by { rintros _ ⟨_, ⟨c, rfl⟩, rfl⟩, exact nat.le_mul_of_pos_right c.property }
 
-def set.is_truncation_set (s : set ℕ+) : Prop :=
-∀ (n : ℕ+), n ∈ s → n.divisors ⊆ s
+-- def set.is_truncation_set (s : set ℕ+) : Prop :=
+-- ∀ (n : ℕ+), n ∈ s → n.divisors ⊆ s
 
-def fintype.sum {α : Type*} {β : Type*} (f : α → β) [s : fintype α] [add_comm_monoid β] :=
-s.elems.sum f
+-- def fintype.sum {α : Type*} {β : Type*} (f : α → β) [s : fintype α] [add_comm_monoid β] :=
+-- s.elems.sum f
 
-variables {s} (α : Type u) [decidable_eq α] [comm_ring α]
+-- variables {s} (α : Type u) [decidable_eq α] [comm_ring α]
 
-noncomputable def witt_polynomial (hs : s.is_truncation_set) (n : s) :
-  mv_polynomial s α :=
-fintype.sum (λ (d : (n : ℕ+).divisors),
-  let d_in_s : (d : ℕ+) ∈ s := hs n n.property d.property in
-  C d * (X ⟨d, d_in_s⟩)^((n : ℕ)/d))
+-- noncomputable def witt_polynomial (hs : s.is_truncation_set) (n : s) :
+--   mv_polynomial s α :=
+-- fintype.sum (λ (d : (n : ℕ+).divisors),
+--   let d_in_s : (d : ℕ+) ∈ s := hs n n.property d.property in
+--   C d * (X ⟨d, d_in_s⟩)^((n : ℕ)/d))
 
-noncomputable def witt_polynomial_aux (n : ℕ+) :
-  mv_polynomial ℕ+ α := fintype.sum (λ (d : n.divisors), C d * (X d)^((n : ℕ)/d))
+-- noncomputable def witt_polynomial_aux (n : ℕ+) :
+--   mv_polynomial ℕ+ α := fintype.sum (λ (d : n.divisors), C d * (X d)^((n : ℕ)/d))
 
-lemma witt_polynomial_compat (hs : s.is_truncation_set) (n : s) :
-  rename subtype.val (witt_polynomial α hs n) = witt_polynomial_aux α n :=
-begin
-  delta witt_polynomial witt_polynomial_aux fintype.sum,
-  rw ← finset.sum_hom (rename (subtype.val : s → ℕ+)),
-  work_on_goal 0 {
-    congr' 1, funext d,
-    rw [is_ring_hom.map_mul (rename (subtype.val : s → ℕ+)),
-        is_monoid_hom.map_pow (rename (subtype.val : s → ℕ+)),
-        rename_C, rename_X] },
-  { norm_cast },
-  all_goals {apply_instance}
-end
+-- lemma witt_polynomial_compat (hs : s.is_truncation_set) (n : s) :
+--   rename subtype.val (witt_polynomial α hs n) = witt_polynomial_aux α n :=
+-- begin
+--   delta witt_polynomial witt_polynomial_aux fintype.sum,
+--   rw ← finset.sum_hom (rename (subtype.val : s → ℕ+)),
+--   work_on_goal 0 {
+--     congr' 1, funext d,
+--     rw [is_ring_hom.map_mul (rename (subtype.val : s → ℕ+)),
+--         is_monoid_hom.map_pow (rename (subtype.val : s → ℕ+)),
+--         rename_C, rename_X] },
+--   { norm_cast },
+--   all_goals {apply_instance}
+-- end
+
+-- -- We need integers to be invertible for the following definitions
+-- def X_in_terms_of_W : ℕ+ → mv_polynomial ℕ+ ℚ
+-- | n := (X n - (fintype.sum (λ d : n.divisors,
+--   have _ := d.2, (C (d : ℚ) * (X_in_terms_of_W d)^((n : ℕ)/d))))) * C (1/(n : ℚ))
+
+
+-- #exit
 
 local attribute [class] nat.prime
+variables (α : Type u) [decidable_eq α] [comm_ring α]
 variables (p : ℕ) [nat.prime p]
 
 lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
@@ -432,8 +439,6 @@ end
 
 open mv_polynomial
 
-#exit
-
 variables {R : Type u} [decidable_eq R] [comm_ring R]
 
 theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n) :
@@ -441,7 +446,7 @@ theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n)
 show _ = @multiset.sum α _ ↑(list.map _ _),
 by rw [list.map_pmap, list.pmap_eq_map]; refl
 
-def witt_polynomial' (n : ℕ) : mv_polynomial ℕ R :=
+def witt_polynomial (n : ℕ) : mv_polynomial ℕ R :=
 (finset.range (n+1)).sum (λ i, (C p ^ i * X i ^ (p^(n-i))))
 
 variables (R)
@@ -670,7 +675,7 @@ begin
     exact H k },
 end
 
-lemma witt_structure_rat_rec (Φ : mv_polynomial bool ℚ) (n) :
+lemma witt_structure_rat_rec_aux (Φ : mv_polynomial bool ℚ) (n) :
   (witt_structure_rat p Φ n) * C (p^n) =
   Φ.eval₂ C (λ b, ((witt_polynomial p n).eval (λ i, X (b,i)))) -
   (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p Φ i)^p^(n-i)) :=
@@ -689,6 +694,123 @@ begin
   refl
 end
 
+lemma witt_structure_rat_rec (Φ : mv_polynomial bool ℚ) (n) :
+  (witt_structure_rat p Φ n) = C (1/p^n) *
+  (Φ.eval₂ C (λ b, ((witt_polynomial p n).eval (λ i, X (b,i)))) -
+  (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p Φ i)^p^(n-i))) :=
+begin
+  rw [← witt_structure_rat_rec_aux p Φ n, mul_comm, mul_assoc,
+      ← C_mul, mul_one_div_cancel, C_1, mul_one],
+  exact pow_ne_zero _ (nat.cast_ne_zero.2 $ ne_of_gt (nat.prime.pos ‹_›))
+end
+
+def witt_structure_int (Φ : mv_polynomial bool ℤ) (n : ℕ) : mv_polynomial (bool × ℕ) ℤ :=
+finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map (coe : ℤ → ℚ) Φ) n)
+.
+
+section
+variables {ι : Type*} [decidable_eq ι]
+
+lemma coeff_X (i : ι) (m) (k : ℕ) :
+  coeff m (X i ^ k : mv_polynomial ι R) = if finsupp.single i k = m then 1 else 0 :=
+begin
+  have := coeff_monomial m (finsupp.single i k) (1:R),
+  rwa [@monomial_eq _ _ (1:R) (finsupp.single i k) _ _ _,
+    C_1, one_mul, finsupp.prod_single_index] at this,
+  exact pow_zero _
+end
+
+lemma mv_polynomial.ext_iff (p q : mv_polynomial ι α) :
+(∀ m, coeff m p = coeff m q) ↔ p = q :=
+⟨mv_polynomial.ext p q, λ h m, by rw h⟩
+
+lemma nat.map_cast {α : Type*} {β : Type*} (f : α → β) [semiring α] [semiring β] [is_semiring_hom f]
+  (n : ℕ) : f (n : α) = n :=
+begin
+  induction n with n ih, {rw_mod_cast is_add_monoid_hom.map_zero f},
+  simp [is_semiring_hom.map_add f, is_semiring_hom.map_one f, ih]
+end
+
+variables {S : Type*} [decidable_eq S] [comm_ring S]
+
+lemma map_witt_polynomial (f : R → S) [is_ring_hom f] (n) :
+  map f (witt_polynomial p n) = witt_polynomial p n :=
+begin
+  apply mv_polynomial.ext,
+  intro m,
+  rw coeff_map,
+  delta witt_polynomial,
+  rw [← finset.sum_hom (coeff m), ← finset.sum_hom (coeff m), ← finset.sum_hom f],
+  { apply finset.sum_congr rfl,
+    intros i hi,
+    repeat {rw [← C_pow, coeff_C_mul m, coeff_X]},
+    rw is_ring_hom.map_mul f,
+    split_ifs;
+    [ rw is_ring_hom.map_one f, rw is_ring_hom.map_zero f ];
+    simp only [mul_one, mul_zero],
+    rw is_semiring_hom.map_pow f, congr,
+    exact nat.map_cast f p },
+  all_goals {apply_instance}
+end
+
+end
+
+lemma mv_polynomial.coe_int_rat_map_injective (I : Type*) [decidable_eq I] :
+  function.injective (map (coe : ℤ → ℚ) : mv_polynomial I ℤ → mv_polynomial I ℚ) :=
+begin
+  rw is_add_group_hom.injective_iff _,
+  all_goals {try {apply_instance}},
+  intros f hf,
+  apply mv_polynomial.ext,
+  intro m,
+  rw ← mv_polynomial.ext_iff at hf,
+  specialize hf m,
+  rw [coeff_map, coeff_zero] at hf,
+  rw coeff_zero,
+  exact_mod_cast hf
+end
+.
+
+lemma duh (a b c d : R) (h1 : a = c) (h2 : b = d) : a - b = c - d :=
+by simp *
+.
+
+-- lemma aux₁ :
+-- eval₂ (map coe ∘ C) (map coe ∘ λ (b : bool), eval (λ (i : ℕ), X (b, i)) (witt_polynomial p n)) Φ =
+--     eval₂ C (λ (b : bool), eval (λ (i : ℕ), X (b, i)) (witt_polynomial p n)) (map coe Φ)
+
+-- lemma foo (Φ : mv_polynomial bool ℤ) (n : ℕ)
+--   (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
+--   map (coe : ℤ → ℚ) (Φ.eval₂ C (λ b, ((witt_polynomial p n).eval (λ i, X (b,i)))) -
+--   (finset.range n).sum (λ i, (C p)^i * (witt_structure_int p Φ i)^p^(n-i))) =
+--   ((map coe Φ).eval₂ C (λ b, ((witt_polynomial p n).eval (λ i, X (b,i)))) -
+--   (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p (map coe Φ) i)^p^(n-i))) :=
+-- begin
+--   rw [is_ring_hom.map_sub (map (coe : ℤ → ℚ)), eval₂_comp_left (map (coe : ℤ → ℚ)),
+--     ← finset.sum_hom (map (coe : ℤ → ℚ))],
+--   all_goals {try {apply_instance}},
+--   work_on_goal 1 { exact @is_add_group_hom.to_is_add_monoid_hom _ _ _ _ _ _ },
+--   apply duh,
+--   work_on_goal 0 {
+--     delta function.comp,
+--     delta map,
+--     -- rw eval₂_comp_left
+--     -- (eval₂ C (λ (b : bool), eval (λ (i : ℕ), X (b, i)) (witt_polynomial p n))),
+--   },
+-- end
+
+#exit
+
+lemma bar (Φ : mv_polynomial bool ℤ) (n : ℕ) :
+  map (coe : ℤ → ℚ) (witt_structure_int p Φ n) = witt_structure_rat p (map (coe : ℤ → ℚ) Φ) n :=
+begin
+  apply nat.strong_induction_on n, clear n,
+  intros n IH,
+  rw witt_structure_rat_rec p _ n,
+  rw ← foo p Φ n,
+  sorry
+end
+
 def has_integral_coeffs {ι : Type*} [decidable_eq ι] (p : mv_polynomial ι ℚ) : Prop :=
   ∀ m, (coeff m p).denom = 1
 
@@ -699,35 +821,7 @@ begin
   intros n IH,
 end
 
-def witt_structure_int (Φ : mv_polynomial bool ℤ) (n : ℕ) : mv_polynomial (bool × ℕ) ℤ :=
-finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map int.cast Φ) n)
-
-lemma mv_polynomial.map_injective (I : Type*) [decidable_eq I] :
-  function.injective (map int.cast : mv_polynomial I ℤ → mv_polynomial I ℚ) :=
-begin
-  rw is_add_group_hom.injective_iff _,
-  all_goals {try {apply_instance}},
-  intros f hf,
-  ext c,
-  replace hf := congr_arg finsupp.to_fun hf,
-  replace hf := congr_fun hf c,
-  suffices : (f.to_fun c : ℚ) = (0 : ℤ),
-  { rw int.cast_inj at this, convert this, },
-  convert hf,
-  dsimp [map],
-  sorry
-end
-
--- #exit
-
-lemma foo (Φ : mv_polynomial bool ℤ) (n : ℕ) :
-  map (int.cast : ℤ → ℚ) (witt_structure_int p Φ n) = witt_structure_rat p (map int.cast Φ) n :=
-begin
-  apply nat.strong_induction_on n, clear n,
-  delta witt_structure_int witt_structure_rat,
-  intros n IH,
-  rw X_in_terms_of_W_eq,
-end
+#exit
 
 lemma witt_structure_int_prop.aux (Φ : mv_polynomial bool ℤ) (n : ℕ) :
   map int.cast ((witt_polynomial p n).eval₂ C (witt_structure_int p Φ)) =
