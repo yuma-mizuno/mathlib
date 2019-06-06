@@ -2,8 +2,10 @@ import data.list.basic
 import data.set.finite
 import data.nat.prime
 import data.nat.choose
+import data.int.gcd
 import data.mv_polynomial
 import algebra.group_power
+import algebra.char_p
 import group_theory.subgroup
 import ring_theory.multiplicity
 import ring_theory.unique_factorization_domain
@@ -95,6 +97,76 @@ by induction n; simp [pow_succ, *]
 
 end mv_polynomial
 
+namespace modp
+variables {α : Type*} [comm_ring α] {p : ℕ} (hp : nat.prime p)
+
+notation x ` modᵢ ` I := (ideal.quotient.mk I x)
+notation x ` modₛ ` s := (ideal.quotient.mk (ideal.span s) x)
+notation x ` modₑ ` a := (ideal.quotient.mk (ideal.span ({a})) x)
+
+lemma char_one.one_eq_zero [char_p α 1] : (1 : α) = 0 :=
+by exact_mod_cast char_p.cast_eq_zero α 1
+
+lemma char_one.elim [char_p α 1] (a b : α) : a = b :=
+by rw [← one_mul a, ← one_mul b, char_one.one_eq_zero, zero_mul, zero_mul]
+
+instance char_one_of_is_unit (h : is_unit (p : α)) :
+  char_p (ideal.span ({p} : set α)).quotient 1 :=
+⟨begin
+  intro n,
+  have helper : ∀ m : ℕ, (m : (ideal.span ({p} : set α)).quotient) =
+    ideal.quotient.mk (ideal.span ({p} : set α)) (m : α),
+  { intro m, induction m with m ih, {refl}, simp [ih] },
+  split,
+  { intro hn, exact one_dvd n },
+  { rintro ⟨c, rfl⟩,
+    rw is_unit_iff_exists_inv at h,
+    rcases h with ⟨b, hb⟩,
+    rw [helper, nat.cast_mul, nat.cast_one, ← hb,
+      ideal.quotient.eq_zero_iff_mem, mul_assoc],
+    exact ideal.mul_mem_right _ (ideal.subset_span $ set.mem_singleton p) }
+end⟩
+
+include hp
+instance (h : ¬ is_unit (p : α)) : char_p (ideal.span ({p} : set α)).quotient p :=
+⟨begin
+  intro n,
+  have helper : ∀ m : ℕ, (m : (ideal.span ({p} : set α)).quotient) =
+    ideal.quotient.mk (ideal.span ({p} : set α)) (m : α),
+  { intro m, induction m with m ih, {refl}, simp [ih] },
+  split,
+  { intro H,
+    rw [helper, ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton] at H,
+    rcases H with ⟨c, hc⟩,
+    cases nat.coprime_or_dvd_of_prime hp n with hn hn,
+    swap, {exact hn},
+    have key := nat.gcd_eq_gcd_ab p n,
+    delta nat.coprime at hn, rw hn at key,
+    replace key := congr_arg (λ k : ℤ, (k : α)) key,
+    simp only [int.cast_coe_nat, int.cast_add, int.coe_nat_zero, int.cast_mul, int.cast_one,
+      int.coe_nat_succ, zero_add, hc] at key,
+    rw [mul_assoc, ← mul_add] at key,
+    exfalso, apply h,
+    rw is_unit_iff_exists_inv,
+    exact ⟨_, key.symm⟩ },
+  { rintro ⟨c, rfl⟩,
+    apply eq_zero_of_zero_dvd,
+    use p,
+    rw [zero_mul, helper (p*c), ideal.quotient.eq_zero_iff_mem, nat.cast_mul],
+    exact ideal.mul_mem_right _ (ideal.subset_span $ set.mem_singleton p) }
+end⟩
+.
+
+example (a b : α) : ((a + b)^p modₑ (p : α)) = (a^p modₑ (p : α)) + (b^p modₑ (p : α)) :=
+begin
+  classical,
+  by_cases H : is_unit (p : α),
+  { haveI := modp.char_one_of_is_unit H, exact char_one.elim _ _ },
+  { haveI := modp.char_p hp H, simpa using add_pow_char _ hp _ _, apply_instance }
+end
+
+end modp
+
 section
 open multiplicity
 
@@ -114,9 +186,15 @@ begin
   have hp : nat.prime p := nat.min_fac_prime hn,
   have key : p ∣ n := nat.min_fac_dvd n,
   specialize h p hp,
-  rw [show (n : ℚ) = (n : ℤ), by simp] at h,
+  rw [show (n : ℚ) = ((n : ℕ) : ℤ), by simp] at h,
   rw padic_val_rat.padic_val_rat_of_int _ hp.ne_one _ at h,
-  -- apply nat.not_lt_zero,
+  swap, { norm_cast, intro oops, exact ne_of_lt n.pos oops.symm },
+  { rw [← pow_one p, multiplicity.pow_dvd_iff_le_multiplicity] at key,
+    rw_mod_cast ← enat.coe_inj at h,
+    norm_cast at h,
+    rw h at key,
+    norm_cast at key,
+    exact nat.not_lt_zero _ key }
 end
 
 lemma integral_of_padic_val_ge_zero (r : ℚ) (h : ∀ p, nat.prime p → padic_val_rat p r ≥ 0) :
@@ -125,7 +203,9 @@ begin
   by_cases H : r = 0,
   { subst r, refl },
   apply integral_of_denom_eq_one,
-  apply nat.eq_one_of_padic_val_eq_zero,
+  suffices : (⟨r.denom, r.pos⟩ : ℕ+) = (1 : ℕ+),
+  { exact congr_arg subtype.val this },
+  apply pnat.eq_one_of_padic_val_eq_zero,
   intros p hp,
   suffices : padic_val_rat p (r.denom : ℤ) = 0, by exact_mod_cast this,
   have rdnz : (r.denom : ℤ) ≠ 0, by exact_mod_cast ne_of_gt r.3,
