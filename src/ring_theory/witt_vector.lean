@@ -29,6 +29,7 @@ variables {X : Type w} [decidable_eq X] (s : finset X) (f : X → G)
 
 -- This is finset.sum_hom
 
+/-
 @[to_additive is_add_group_hom.map_finset_sum]
 lemma is_group_hom.map_finset_prod : i (s.prod f) = s.prod (i ∘ f) :=
 begin
@@ -37,7 +38,10 @@ begin
   { intros x s' hx ih,
     rw [finset.prod_insert hx, finset.prod_insert hx, is_group_hom.map_mul i, ←ih] }
 end
+-/
 
+-- Generalise this to arbitrary property that is respected by addition/multiplication:
+-- example applications: sum_pos, sum_neg, ... others?
 lemma dvd_sum {α : Type*} {β : Type*} [decidable_eq α] [comm_ring β]
   (s : finset α) (f : α → β) (b : β) (H : ∀ a ∈ s, b ∣ f a) :
   b ∣ s.sum f :=
