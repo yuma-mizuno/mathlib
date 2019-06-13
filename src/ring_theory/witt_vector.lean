@@ -716,19 +716,23 @@ end
 --   simp [nat.succ_eq_add_one, ih]
 -- end
 
-lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
-  ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
-begin
-  apply mv_polynomial.induction_on φ,
-  { intro n, rw eval₂_C, sorry },
-  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
-  { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
-end
-
 lemma eq_mod_iff_dvd_sub (a b c : α) :
   (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
 by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
   ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
+
+lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
+  ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
+begin
+  apply mv_polynomial.induction_on φ,
+  { intro n, rw [eval₂_C, eq_mod_iff_dvd_sub, ← C_eq_coe_nat, ← C_pow, ← C_sub],
+    suffices : (p : ℤ) ∣ n - n^p,
+    { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul] },
+
+sorry },
+  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
+  { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
+end
 
 lemma zrum (a b : α) (h : (a modₑ (p : α)) = (b modₑ (p : α))) (k : ℕ) :
   (a^(p^k) modₑ (p^(k+1) : α)) = (b^(p^k) modₑ (p^(k+1) : α)) :=
@@ -966,18 +970,6 @@ begin
 end
 .
 
--- def has_integral_coeffs {ι : Type*} [decidable_eq ι] (p : mv_polynomial ι ℚ) : Prop :=
---   ∀ m, (coeff m p).denom = 1
-
--- lemma witt_structure_rat_aux (Φ : mv_polynomial bool ℚ) (n : ℕ) :
---   has_integral_coeffs (witt_structure_rat p Φ n) :=
--- begin
---   apply nat.strong_induction_on n, clear n,
---   intros n IH,
--- end
-
--- #exit
-
 lemma witt_structure_int_prop.aux (Φ : mv_polynomial bool ℤ) (n : ℕ) :
   map (coe : ℤ → ℚ) ((witt_polynomial p n).eval₂ C (witt_structure_int p Φ)) =
   (witt_polynomial p n).eval₂ C (witt_structure_rat p (map coe Φ)) :=
@@ -1044,82 +1036,123 @@ def witt_mul : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (
 
 def witt_neg : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (-X tt)
 
+include p
 def witt_vectors (α : Type*) := ℕ → α
+omit p
 
 namespace witt_vectors
 
 local notation `𝕎` := witt_vectors -- type as `𝕎`
 
-instance : functor 𝕎 :=
+instance : functor (𝕎 p) :=
 { map := λ α β f v, f ∘ v,
   map_const := λ α β a v, λ _, a }
 
-instance : is_lawful_functor 𝕎 :=
+instance : is_lawful_functor (𝕎 p) :=
 { map_const_eq := λ α β, rfl,
   id_map := λ α v, rfl,
   comp_map := λ α β γ f g v, rfl }
 
 variable (R)
 
-instance : has_zero (𝕎 R) :=
+instance : has_zero (𝕎 p R) :=
 ⟨λ _, 0⟩
 
 variable {R}
 
-def Teichmuller (r : R) : 𝕎 R
+def Teichmuller (r : R) : 𝕎 p R
 | 0 := r
 | (n+1) := 0
 
-@[simp] lemma Teichmuller_zero : Teichmuller (0:R) = 0 :=
+@[simp] lemma Teichmuller_zero : Teichmuller p (0:R) = 0 :=
 funext $ λ n, match n with | 0 := rfl | (n+1) := rfl end
 
 variable (R)
 
-instance : has_one (𝕎 R) :=
-⟨Teichmuller 1⟩
+instance : has_one (𝕎 p R) :=
+⟨Teichmuller p 1⟩
 
-instance : has_add (𝕎 R) :=
+instance : has_add (𝕎 p R) :=
 ⟨λ x y n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
-instance : has_mul (𝕎 R) :=
+instance : has_mul (𝕎 p R) :=
 ⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
-instance : has_neg (𝕎 R) :=
+instance : has_neg (𝕎 p R) :=
 ⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) 0⟩
 
 variable {R}
 
-@[simp] lemma Teichmuller_one : Teichmuller (1:R) = 1 := rfl
+@[simp] lemma Teichmuller_one : Teichmuller p (1:R) = 1 := rfl
 
 lemma Teichmuller_mul (x y : R) :
-  Teichmuller (x * y) = Teichmuller x * Teichmuller y := sorry
+  Teichmuller p (x * y) = Teichmuller p x * Teichmuller p y := sorry
 
-def ghost_component (n : ℕ) (w : 𝕎 R) : R :=
+variable {p}
+
+def ghost_component (n : ℕ) (w : 𝕎 p R) : R :=
 (witt_polynomial p n).eval w
 
 section map
 
-def map (f : R → S) : 𝕎 R → 𝕎 S := λ w, f ∘ w
+def map (f : R → S) : 𝕎 p R → 𝕎 p S := λ w, f ∘ w
 
 variables (f : R → S) [is_ring_hom f]
 
-@[simp] lemma map_zero : map f 0 = 0 :=
+@[simp] lemma map_zero : map f (0 : 𝕎 p R) = 0 :=
 funext $ λ n, is_ring_hom.map_zero f
 
-@[simp] lemma map_one : map f 1 = 1 :=
+@[simp] lemma map_one : map f (1 : 𝕎 p R) = 1 :=
 funext $ λ n,
 match n with
 | 0     := is_ring_hom.map_one f
 | (n+1) := is_ring_hom.map_zero f
 end
 
+@[simp] lemma map_add (x y : 𝕎 p R) :
+  map f (x + y) = map f x + map f y :=
+funext $ λ n,
+begin
+  show f (eval₂ coe _ _) = eval₂ coe _ _,
+  rw eval₂_comp_left f,
+  congr' 1,
+  { exact int.eq_cast' (f ∘ coe) },
+  { funext bn, cases bn with b i,
+    exact match b with | tt := rfl | ff := rfl end },
+  recover, all_goals {apply_instance},
+end
+
+@[simp] lemma map_mul (x y : 𝕎 p R) :
+  map f (x * y) = map f x * map f y :=
+funext $ λ n,
+begin
+  show f (eval₂ coe _ _) = eval₂ coe _ _,
+  rw eval₂_comp_left f,
+  congr' 1,
+  { exact int.eq_cast' (f ∘ coe) },
+  { funext bn, cases bn with b i,
+    exact match b with | tt := rfl | ff := rfl end },
+  recover, all_goals {apply_instance},
+end
+
+@[simp] lemma map_neg (x : 𝕎 p R) :
+  map f (-x) = -map f x :=
+funext $ λ n,
+begin
+  show f (eval₂ coe _ _) = eval₂ coe _ _,
+  rw eval₂_comp_left f,
+  congr' 1,
+  { exact int.eq_cast' (f ∘ coe) },
+  { funext bn, cases bn with b i,
+    exact match b with | tt := rfl | ff := is_ring_hom.map_zero f end },
+  recover, all_goals {apply_instance},
+end
+
 end map
 
-variable (R)
+def ghost_map : 𝕎 p R → (ℕ → R) := λ w n, ghost_component n w
 
-def ghost_map : 𝕎 R → (ℕ → R) := λ w n, ghost_component p n w
-
-@[simp] lemma ghost_map.zero : ghost_map p R 0 = 0 :=
+@[simp] lemma ghost_map.zero : ghost_map (0 : 𝕎 p R) = 0 :=
 funext $ λ n,
 begin
   delta ghost_map ghost_component witt_polynomial eval,
@@ -1129,10 +1162,11 @@ begin
   rw [eval₂_mul, eval₂_pow, eval₂_pow, eval₂_X],
   convert mul_zero _,
   apply zero_pow _,
-  sorry
+  apply nat.pow_pos,
+  apply nat.prime.pos, assumption,
 end
 
-@[simp] lemma ghost_map.one : ghost_map p R 1 = 1 :=
+@[simp] lemma ghost_map.one : ghost_map (1 : 𝕎 p R) = 1 :=
 funext $ λ n,
 begin
   delta ghost_map ghost_component witt_polynomial eval,
@@ -1142,8 +1176,8 @@ end
 
 variable {R}
 
-@[simp] lemma ghost_map.mul (x y : 𝕎 R) :
-  ghost_map p R (x * y) = ghost_map p R x * ghost_map p R y :=
+@[simp] lemma ghost_map.mul (x y : 𝕎 p R) :
+  ghost_map (x * y) = ghost_map x * ghost_map y :=
 funext $ λ n,
 begin
   delta ghost_map ghost_component,
@@ -1156,10 +1190,10 @@ begin
   sorry
 end
 
-lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
-  function.bijective (ghost_map p R) :=
-begin
-  sorry
-end
+-- lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
+--   function.bijective (ghost_map p R) :=
+-- begin
+--   sorry
+-- end
 
 end witt_vectors
