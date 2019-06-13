@@ -855,7 +855,7 @@ def doh {α : Type*} [comm_ring α] : add_comm_monoid α := by apply_instance
 def dah {α : Type*} [comm_ring α] : add_monoid α := by apply_instance
 
 def bah {α : Type*} [comm_ring α] (n : ℕ) :
-  is_add_monoid_hom (ideal.quotient.mk (ideal.span ({(p : α) ^ (n + 1)} : set α))) :=
+  is_add_monoid_hom (ideal.quotient.mk (ideal.span ({((p^(n+1) : ℕ) : α)} : set α))) :=
 by apply_instance
 .
 
@@ -901,7 +901,8 @@ begin
     rw [mul_comm, ← nat.pow_succ],
     rw finset.mem_range at hi,
     congr,
-    omega },
+    replace hi := nat.le_of_lt_succ hi,
+    exact nat.succ_sub hi },
   all_goals { try {apply bah} },
   { refine @boh _ _ _ _ _ _, },
 end
@@ -1158,7 +1159,7 @@ begin
         apply dvd_sub_pow_of_dvd_sub,
         rw ← eq_mod_iff_dvd_sub,
         apply int_pol_mod_p },
-      all_goals {sorry} -- this is so stupid... even these don't work: apply doh, all_goals {apply bah}
+        apply doh, all_goals {apply bah}
      end,
 end
 .
@@ -1220,6 +1221,9 @@ begin
         rw [map_rename, map_witt_polynomial] } },
     { intro n, apply witt_structure_rat_prop } },
 end
+.
+
+-- set_option pp.implicit true
 
 theorem witt_structure_prop (Φ : mv_polynomial bool ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
@@ -1227,9 +1231,11 @@ theorem witt_structure_prop (Φ : mv_polynomial bool ℤ) (n) :
 begin
   have := witt_structure_int_prop p Φ n,
   replace := congr_arg (λ ψ, map (coe : ℤ → R) ψ) this,
-  dsimp at this,
+  dsimp at this ⊢,
   rw [map_eval₂, map_eval₂, map_witt_polynomial] at this,
   simp only [function.comp, map_rename] at this ⊢,
+  -- simp [map_witt_polynomial (coe : ℤ → R) n] at this,
+  -- convert this using 1,
   sorry
 end
 
