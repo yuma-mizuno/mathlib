@@ -658,7 +658,7 @@ def witt_structure_rat (Φ : mv_polynomial bool ℚ) : ℕ → mv_polynomial (bo
 λ n, eval₂ C (λ k : ℕ,
    Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i))))) (X_in_terms_of_W p n)
 
-theorem witt_structure_prop (Φ : mv_polynomial bool ℚ) :
+theorem witt_structure_prop_exists_unique (Φ : mv_polynomial bool ℚ) :
   ∃! (φ : ℕ → mv_polynomial (bool × ℕ) ℚ), ∀ (n : ℕ),
   (witt_polynomial p n).eval₂ C φ =
     Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
@@ -1187,24 +1187,30 @@ begin
   funext i, apply bar
 end
 
-theorem witt_structure_int_prop (Φ : mv_polynomial bool ℤ) :
+theorem witt_structure_int_prop (Φ : mv_polynomial bool ℤ) (n) :
+  (witt_polynomial p n).eval₂ C (witt_structure_int p Φ) =
+    Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+begin
+  apply mv_polynomial.coe_int_rat_map_injective,
+  convert witt_structure_rat_prop p (map coe Φ) n,
+  { rw [map_eval₂, map_witt_polynomial], congr' 1, funext i, apply bar },
+  { rw map_eval₂, congr' 1, funext b, delta function.comp,
+    rw [map_rename, map_witt_polynomial], }
+end
+
+theorem witt_structure_int_exists_unique (Φ : mv_polynomial bool ℤ) :
   ∃! (φ : ℕ → mv_polynomial (bool × ℕ) ℤ),
   ∀ (n : ℕ), (witt_polynomial p n).eval₂ C φ =
     Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
   refine ⟨witt_structure_int p Φ, _, _⟩,
-  { intro n,
-    apply mv_polynomial.coe_int_rat_map_injective,
-    convert witt_structure_rat_prop p (map coe Φ) n,
-    { rw [map_eval₂, map_witt_polynomial], congr' 1, funext i, apply bar },
-    { rw map_eval₂, congr' 1, funext b, delta function.comp,
-      rw [map_rename, map_witt_polynomial], } },
+  { apply witt_structure_int_prop },
   { intros φ H,
     funext i,
     apply mv_polynomial.coe_int_rat_map_injective,
     rw bar,
     refine congr_fun _ i,
-    have := (witt_structure_prop p (map coe Φ)),
+    have := (witt_structure_prop_exists_unique p (map coe Φ)),
     apply unique_of_exists_unique this,
     { clear this, intro n,
       specialize H n,
@@ -1214,3 +1220,118 @@ begin
         rw [map_rename, map_witt_polynomial] } },
     { intro n, apply witt_structure_rat_prop } },
 end
+
+theorem witt_structure_prop (Φ : mv_polynomial bool ℤ) (n) :
+  (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
+  (map coe Φ).eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) :=
+begin
+  have := witt_structure_int_prop p Φ n,
+  replace := congr_arg (λ ψ, map (coe : ℤ → R) ψ) this,
+  dsimp at this,
+  rw [map_eval₂, map_eval₂, map_witt_polynomial] at this,
+  simp only [function.comp, map_rename] at this ⊢,
+  sorry
+end
+
+def witt_add : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (X tt + X ff)
+
+def witt_mul : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (X tt * X ff)
+
+def witt_neg : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (-X tt)
+
+def witt_vectors (α : Type*) := ℕ → α
+
+namespace witt_vectors
+
+local notation `𝕎` := witt_vectors -- type as `𝕎`
+
+instance : functor 𝕎 :=
+{ map := λ α β f v, f ∘ v,
+  map_const := λ α β a v, λ _, a }
+
+instance : is_lawful_functor 𝕎 :=
+{ map_const_eq := λ α β, rfl,
+  id_map := λ α v, rfl,
+  comp_map := λ α β γ f g v, rfl }
+
+variable (R)
+
+instance : has_zero (𝕎 R) :=
+⟨λ _, 0⟩
+
+variable {R}
+
+def Teichmuller (r : R) : 𝕎 R
+| 0 := r
+| (n+1) := 0
+
+@[simp] lemma Teichmuller_zero : Teichmuller (0:R) = 0 :=
+funext $ λ n, match n with | 0 := rfl | (n+1) := rfl end
+
+variable (R)
+
+instance : has_one (𝕎 R) :=
+⟨Teichmuller 1⟩
+
+instance : has_add (𝕎 R) :=
+⟨λ x y n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
+
+instance : has_mul (𝕎 R) :=
+⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
+
+instance : has_neg (𝕎 R) :=
+⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) 0⟩
+
+variable {R}
+
+def ghost_component (n : ℕ) (w : 𝕎 R) : R :=
+(witt_polynomial p n).eval w
+
+variable (R)
+
+def ghost_map : 𝕎 R → (ℕ → R) := λ w n, ghost_component p n w
+
+@[simp] lemma ghost_map.zero : ghost_map p R 0 = 0 :=
+funext $ λ n,
+begin
+  delta ghost_map ghost_component witt_polynomial eval,
+  rw eval₂_sum,
+  apply finset.sum_eq_zero,
+  intros i hi,
+  rw [eval₂_mul, eval₂_pow, eval₂_pow, eval₂_X],
+  convert mul_zero _,
+  apply zero_pow _,
+  sorry
+end
+
+@[simp] lemma ghost_map.one : ghost_map p R 1 = 1 :=
+funext $ λ n,
+begin
+  delta ghost_map ghost_component witt_polynomial eval,
+  rw eval₂_sum,
+  sorry -- need to split the sum in i = 0 and i = 1..n
+end
+
+variable {R}
+
+@[simp] lemma ghost_map.mul (x y : 𝕎 R) :
+  ghost_map p R (x * y) = ghost_map p R x * ghost_map p R y :=
+funext $ λ n,
+begin
+  delta ghost_map ghost_component,
+  have := congr_arg (λ (ψ : mv_polynomial (bool × ℕ) R), ψ.eval $ λ (bn : bool × ℕ), cond bn.1 (x bn.2) (y bn.2)) (witt_structure_prop p (X tt * X ff) n),
+  convert this using 1; clear this,
+  { delta witt_vectors.has_mul witt_mul, dsimp,
+    simp only [eval₂_eq_eval_map],
+    sorry,
+     },
+  sorry
+end
+
+lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
+  function.bijective (ghost_map p R) :=
+begin
+  sorry
+end
+
+end witt_vectors
