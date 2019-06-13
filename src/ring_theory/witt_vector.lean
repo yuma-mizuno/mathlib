@@ -27,19 +27,6 @@ variables {H : Type v} [comm_group H]
 variables (i : G → H) [is_group_hom i]
 variables {X : Type w} [decidable_eq X] (s : finset X) (f : X → G)
 
--- This is finset.sum_hom
-
-/-
-@[to_additive is_add_group_hom.map_finset_sum]
-lemma is_group_hom.map_finset_prod : i (s.prod f) = s.prod (i ∘ f) :=
-begin
-  apply finset.induction_on s,
-  { exact is_group_hom.map_one i },
-  { intros x s' hx ih,
-    rw [finset.prod_insert hx, finset.prod_insert hx, is_group_hom.map_mul i, ←ih] }
-end
--/
-
 -- Generalise this to arbitrary property that is respected by addition/multiplication:
 -- example applications: sum_pos, sum_neg, ... others?
 lemma dvd_sum {α : Type*} {β : Type*} [decidable_eq α] [comm_ring β]
@@ -517,15 +504,6 @@ finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map (coe : 
 section
 variables {ι : Type*} [decidable_eq ι]
 
--- lemma coeff_X (i : ι) (m) (k : ℕ) :
---   coeff m (X i ^ k : mv_polynomial ι R) = if finsupp.single i k = m then 1 else 0 :=
--- begin
---   have := coeff_monomial m (finsupp.single i k) (1:R),
---   rwa [@monomial_eq _ _ (1:R) (finsupp.single i k) _ _ _,
---     C_1, one_mul, finsupp.prod_single_index] at this,
---   exact pow_zero _
--- end
-
 lemma mv_polynomial.ext_iff (p q : mv_polynomial ι α) :
 (∀ m, coeff m p = coeff m q) ↔ p = q :=
 ⟨mv_polynomial.ext p q, λ h m, by rw h⟩
@@ -587,43 +565,6 @@ variables {T : Type*} [decidable_eq T] [comm_ring T]
 
 #check eval₂_comp_left
 -- k (eval₂ f g p) = eval₂ (k ∘ f) (k ∘ g) p
-
--- lemma eval₂_comp_right (f' : S → T) [is_ring_hom f'] (f : R → S) [is_ring_hom f]
---   (g : σ → S) (p : mv_polynomial σ R) :
---   f' (eval₂ f g p) = eval₂ f' (f' ∘ g) (map f p) :=
--- begin
---   apply mv_polynomial.induction_on p,
---   { intro r, rw [eval₂_C, map_C, eval₂_C] },
---   { intros p q hp hq, rw [eval₂_add, is_ring_hom.map_add f', map_add, eval₂_add, hp, hq] },
---   { intros p s hp,
---     rw [eval₂_mul, is_ring_hom.map_mul f', map_mul, eval₂_mul, map_X, hp, eval₂_X, eval₂_X] }
--- end
-
--- lemma map_eval₂ (f : R → S) [is_ring_hom f] (g : σ → mv_polynomial ι R) (p : mv_polynomial σ R) :
---   map f (eval₂ C g p) = eval₂ C (map f ∘ g) (map f p) :=
--- begin
---   apply mv_polynomial.induction_on p,
---   { intro r, rw [eval₂_C, map_C, map_C, eval₂_C] },
---   { intros p q hp hq, rw [eval₂_add, map_add, hp, hq, map_add, eval₂_add] },
---   { intros p s hp,
---     rw [eval₂_mul, map_mul, hp, map_mul, map_X, eval₂_mul, eval₂_X, eval₂_X] }
--- end
--- .
-
--- lemma map_rename (f : R → S) [is_ring_hom f] (g : σ → ι) (p : mv_polynomial σ R) :
---   map f (rename g p) = rename g (map f p) :=
--- begin
---   apply mv_polynomial.induction_on p,
---   { intro r, rw [map_C, rename_C, map_C, rename_C] },
---   { intros p q hp hq,
---     rw [is_ring_hom.map_add (rename g), map_add, hp, hq, map_add, is_ring_hom.map_add (rename g)],
---     all_goals {apply_instance} },
---   { intros p s hp,
---     rw [is_ring_hom.map_mul (rename g), map_mul, hp, map_mul, map_X,
---         is_ring_hom.map_mul (rename g), rename_X, map_X, rename_X],
---     all_goals {apply_instance} }
--- end
--- .
 
 lemma foo (Φ : mv_polynomial bool ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
@@ -709,12 +650,6 @@ begin
   { refine @boh _ _ _ _ _ _, },
 end
 .
-
--- lemma C_eq_coe_int (n : ℤ) : (C n : mv_polynomial ι ℤ) = (n : mv_polynomial ι ℤ) :=
--- begin
---   induction n with n ih, {simp},
---   simp [nat.succ_eq_add_one, ih]
--- end
 
 lemma eq_mod_iff_dvd_sub (a b c : α) :
   (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
