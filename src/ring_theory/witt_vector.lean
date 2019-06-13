@@ -67,6 +67,19 @@ namespace mv_polynomial
 
 open mv_polynomial finsupp
 
+lemma eval₂_assoc'
+  {R : Type*} [decidable_eq R] [comm_semiring R]
+  {S : Type*} [decidable_eq S] [comm_semiring S]
+  {T : Type*} [decidable_eq T] [comm_semiring T]
+  {σ : Type*} [decidable_eq σ]
+  {τ : Type*} [decidable_eq τ]
+  {ι : Type*} [decidable_eq ι]
+  (f : S → T) [is_semiring_hom f]
+  (φ : σ → T) (q : τ → mv_polynomial σ S)
+  (p : mv_polynomial τ S) :
+  eval₂ f (λ t, eval₂ f φ (q t)) p = eval₂ f φ (eval₂ C q p) :=
+by { rw eval₂_comp_left (eval₂ f φ), congr, funext, simp }
+
 lemma eval₂_assoc {S : Type*} [decidable_eq S] [comm_ring S]
   {σ : Type*} [decidable_eq σ]
   {τ : Type*} [decidable_eq τ]
@@ -94,10 +107,6 @@ end
 @[simp] lemma C_pow (r : R) (n : ℕ) :
   (C (r^n) : mv_polynomial ι R) = (C r)^n :=
 by induction n; simp [pow_succ, *]
-
--- lemma eval₂_pow (g : ι → S) (p : mv_polynomial ι R) (n : ℕ) :
---   eval₂ f g (p^n) = (eval₂ f g p)^n :=
--- by induction n; simp [pow_succ, eval₂_mul, *]
 
 end mv_polynomial
 
@@ -239,97 +248,11 @@ end
 
 end
 
-namespace pnat
-
--- instance : has_dvd ℕ+ :=
--- ⟨λ a b, ∃ c, b = a * c⟩
-
--- lemma dvd_iff_coe_dvd (a b : ℕ+) :
---   a ∣ b ↔ (a : ℕ) ∣ b :=
--- begin
---   split,
---   { rintros ⟨c, rfl⟩, refine ⟨c, mul_coe _ _⟩ },
---   { rintros ⟨c, hc⟩,
---     refine ⟨⟨c, _⟩, _⟩,
---     { apply pos_of_mul_pos_left,
---       { rw ← hc, exact b.2 },
---       exact nat.zero_le _ },
---     -- todo(jmc): provide ext for pnat
---     cases a, cases b, congr, exact hc }
--- end
-
-end pnat
-
 -- ### end FOR_MATHLIB
 
 -- proper start of this file
 
 open mv_polynomial set
-
--- variables (s : set ℕ+)
-
--- def witt_vectors (α : Type u) := s → α
-
--- local notation `𝕎` := witt_vectors
-
--- namespace witt_vectors
-
--- instance : functor (𝕎 s) :=
--- { map := λ α β f v, f ∘ v,
---   map_const := λ α β a v, λ _, a }
-
--- instance : is_lawful_functor (𝕎 s) :=
--- { map_const_eq := λ α β, rfl,
---   id_map := λ α v, rfl,
---   comp_map := λ α β γ f g v, rfl }
-
--- end witt_vectors
-
--- def pnat.divisors (n : ℕ+) : set ℕ+ :=
--- {d | d ∣ n}
-
--- noncomputable instance pnat.divisors.fintype (n : ℕ+) : fintype n.divisors :=
--- finite.fintype $ finite_of_finite_image (subtype.val_injective) $ finite_subset (finite_le_nat n) $
--- by { rintros _ ⟨_, ⟨c, rfl⟩, rfl⟩, exact nat.le_mul_of_pos_right c.property }
-
--- def set.is_truncation_set (s : set ℕ+) : Prop :=
--- ∀ (n : ℕ+), n ∈ s → n.divisors ⊆ s
-
--- def fintype.sum {α : Type*} {β : Type*} (f : α → β) [s : fintype α] [add_comm_monoid β] :=
--- s.elems.sum f
-
--- variables {s} (α : Type u) [decidable_eq α] [comm_ring α]
-
--- noncomputable def witt_polynomial (hs : s.is_truncation_set) (n : s) :
---   mv_polynomial s α :=
--- fintype.sum (λ (d : (n : ℕ+).divisors),
---   let d_in_s : (d : ℕ+) ∈ s := hs n n.property d.property in
---   C d * (X ⟨d, d_in_s⟩)^((n : ℕ)/d))
-
--- noncomputable def witt_polynomial_aux (n : ℕ+) :
---   mv_polynomial ℕ+ α := fintype.sum (λ (d : n.divisors), C d * (X d)^((n : ℕ)/d))
-
--- lemma witt_polynomial_compat (hs : s.is_truncation_set) (n : s) :
---   rename subtype.val (witt_polynomial α hs n) = witt_polynomial_aux α n :=
--- begin
---   delta witt_polynomial witt_polynomial_aux fintype.sum,
---   rw ← finset.sum_hom (rename (subtype.val : s → ℕ+)),
---   work_on_goal 0 {
---     congr' 1, funext d,
---     rw [is_ring_hom.map_mul (rename (subtype.val : s → ℕ+)),
---         is_monoid_hom.map_pow (rename (subtype.val : s → ℕ+)),
---         rename_C, rename_X] },
---   { norm_cast },
---   all_goals {apply_instance}
--- end
-
--- -- We need integers to be invertible for the following definitions
--- def X_in_terms_of_W : ℕ+ → mv_polynomial ℕ+ ℚ
--- | n := (X n - (fintype.sum (λ d : n.divisors,
---   have _ := d.2, (C (d : ℚ) * (X_in_terms_of_W d)^((n : ℕ)/d))))) * C (1/(n : ℚ))
-
-
--- #exit
 
 local attribute [class] nat.prime
 variables (α : Type u) [decidable_eq α] [comm_ring α]
@@ -1287,8 +1210,31 @@ instance : has_neg (𝕎 R) :=
 
 variable {R}
 
+@[simp] lemma Teichmuller_one : Teichmuller (1:R) = 1 := rfl
+
+lemma Teichmuller_mul (x y : R) :
+  Teichmuller (x * y) = Teichmuller x * Teichmuller y := sorry
+
 def ghost_component (n : ℕ) (w : 𝕎 R) : R :=
 (witt_polynomial p n).eval w
+
+section map
+
+def map (f : R → S) : 𝕎 R → 𝕎 S := λ w, f ∘ w
+
+variables (f : R → S) [is_ring_hom f]
+
+@[simp] lemma map_zero : map f 0 = 0 :=
+funext $ λ n, is_ring_hom.map_zero f
+
+@[simp] lemma map_one : map f 1 = 1 :=
+funext $ λ n,
+match n with
+| 0     := is_ring_hom.map_one f
+| (n+1) := is_ring_hom.map_zero f
+end
+
+end map
 
 variable (R)
 
