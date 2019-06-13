@@ -1111,6 +1111,38 @@ end
 
 variable {R}
 
+lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
+begin
+  apply mv_polynomial.induction_on φ,
+  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
+  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
+  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
+end
+
+lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
+eval₂_rename_prodmk id _ _ _
+
+@[simp] lemma ghost_map.add (x y : 𝕎 p R) :
+  ghost_map (x + y) = ghost_map x + ghost_map y :=
+funext $ λ n,
+begin
+  delta ghost_map ghost_component,
+  have := congr_arg (λ (ψ : mv_polynomial (bool × ℕ) R), ψ.eval $ λ (bn : bool × ℕ), cond bn.1 (x bn.2) (y bn.2)) (witt_structure_prop p (X tt + X ff) n),
+  convert this using 1; clear this,
+  { delta witt_vectors.has_add witt_add, dsimp [eval],
+    rw ← eval₂_assoc' _ _ _ _,
+    work_on_goal 0 { congr' 1, funext i, apply eval₂_eq_eval_map },
+    all_goals {try {assumption}, try {apply_instance}} },
+  { dsimp,
+    rw [mv_polynomial.map_add, eval₂_add, eval_add],
+    congr' 1,
+    all_goals {
+      erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
+      congr } }
+end
+
 @[simp] lemma ghost_map.mul (x y : 𝕎 p R) :
   ghost_map (x * y) = ghost_map x * ghost_map y :=
 funext $ λ n,
@@ -1118,11 +1150,16 @@ begin
   delta ghost_map ghost_component,
   have := congr_arg (λ (ψ : mv_polynomial (bool × ℕ) R), ψ.eval $ λ (bn : bool × ℕ), cond bn.1 (x bn.2) (y bn.2)) (witt_structure_prop p (X tt * X ff) n),
   convert this using 1; clear this,
-  { delta witt_vectors.has_mul witt_mul, dsimp,
-    simp only [eval₂_eq_eval_map],
-    sorry,
-     },
-  sorry
+  { delta witt_vectors.has_mul witt_mul, dsimp [eval],
+    rw ← eval₂_assoc' _ _ _ _,
+    work_on_goal 0 { congr' 1, funext i, apply eval₂_eq_eval_map },
+    all_goals {try {assumption}, try {apply_instance}} },
+  { dsimp,
+    rw [mv_polynomial.map_mul, eval₂_mul, eval_mul],
+    congr' 1,
+    all_goals {
+      erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
+      congr } }
 end
 
 -- lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
