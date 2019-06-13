@@ -1149,7 +1149,7 @@ begin
         rw [← C_pow, show (p:ℤ)^i = (p^i : ℕ), by simp, C_eq_coe_nat],
         rw [eq_mod_iff_dvd_sub, ← mul_sub],
         rw show p^(n+1) = p^i * p^(n+1-i),
-        { rw ← nat.pow_add, congr' 1, sorry },
+        { rw ← nat.pow_add, congr' 1, clear IH, revert hi i n, omega manual nat },
         rw nat.cast_mul,
         apply mul_dvd_mul_left,
         rw show n + 1 - i = n - i + 1,
@@ -1163,9 +1163,6 @@ begin
      end,
 end
 .
-
-#check eval₂_comp_left
-#check eval₂_comp_right
 
 -- def has_integral_coeffs {ι : Type*} [decidable_eq ι] (p : mv_polynomial ι ℚ) : Prop :=
 --   ∀ m, (coeff m p).denom = 1
