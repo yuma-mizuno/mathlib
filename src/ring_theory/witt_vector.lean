@@ -1273,7 +1273,10 @@ def comm_ring_of_injective (f : α' → β) (inj : injective f)
   comm_ring α' :=
 begin
   refine_struct { ..‹has_zero α'›, ..‹has_one α'›, ..‹has_add α'›, ..‹has_mul α'›, ..‹has_neg α'› },
-  all_goals {sorry}
+  all_goals { intros, apply inj,
+    repeat { erw zero <|> erw one <|> erw add <|> erw mul <|> erw neg },
+    try {simp [mul_assoc, mul_add, add_mul] } },
+  rw mul_comm
 end
 
 def comm_ring_of_surjective (f : β → α') (sur : surjective f)
@@ -1282,7 +1285,13 @@ def comm_ring_of_surjective (f : β → α') (sur : surjective f)
   comm_ring α' :=
 begin
   refine_struct { ..‹has_zero α'›, ..‹has_one α'›, ..‹has_add α'›, ..‹has_mul α'›, ..‹has_neg α'› },
-  all_goals {sorry}
+  all_goals {
+    try { intro a, rcases sur a with ⟨a, rfl⟩ },
+    try { intro b, rcases sur b with ⟨b, rfl⟩ },
+    try { intro c, rcases sur c with ⟨c, rfl⟩ },
+    repeat { erw ← zero <|> erw ← one <|> erw ← add <|> erw ← mul <|> erw ← neg },
+    try {simp [mul_assoc, mul_add, add_mul] } },
+  rw mul_comm
 end
 
 variable (R)
@@ -1312,8 +1321,6 @@ begin
   apply ne_of_gt,
   exact nat.prime.pos ‹_›
 end
-
-#check yup
 
 variable (R)
 
