@@ -10,6 +10,7 @@ import group_theory.subgroup
 import ring_theory.multiplicity
 import ring_theory.unique_factorization_domain
 import data.padics.padic_integers
+import data.zmod.quadratic_reciprocity
 
 import tactic.tidy
 import tactic.omega
@@ -443,14 +444,16 @@ def to_W_basis : mv_polynomial ℕ ℚ ≃r mv_polynomial ℕ ℚ :=
   right_inv := λ _, from_X_to_W_basis_comp_from_W_to_X_basis _ _,
   hom       := by apply_instance }
 
-def witt_structure_rat (Φ : mv_polynomial bool ℚ) : ℕ → mv_polynomial (bool × ℕ) ℚ :=
+variables {idx : Type*} [decidable_eq idx]
+
+def witt_structure_rat (Φ : mv_polynomial idx ℚ) : ℕ → mv_polynomial (idx × ℕ) ℚ :=
 λ n, eval₂ C (λ k : ℕ,
    Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i))))) (X_in_terms_of_W p n)
 
-theorem witt_structure_prop_exists_unique (Φ : mv_polynomial bool ℚ) :
-  ∃! (φ : ℕ → mv_polynomial (bool × ℕ) ℚ), ∀ (n : ℕ),
+theorem witt_structure_prop_exists_unique (Φ : mv_polynomial idx ℚ) :
+  ∃! (φ : ℕ → mv_polynomial (idx × ℕ) ℚ), ∀ (n : ℕ),
   (witt_polynomial p n).eval₂ C φ =
-    Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
   refine ⟨witt_structure_rat p Φ, _, _⟩,
   { intro n,
@@ -468,7 +471,7 @@ begin
     exact H k },
 end
 
-lemma witt_structure_rat_rec_aux (Φ : mv_polynomial bool ℚ) (n) :
+lemma witt_structure_rat_rec_aux (Φ : mv_polynomial idx ℚ) (n) :
   (witt_structure_rat p Φ n) * C (p^n) =
   Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
   (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p Φ i)^p^(n-i)) :=
@@ -487,7 +490,7 @@ begin
   refl
 end
 
-lemma witt_structure_rat_rec (Φ : mv_polynomial bool ℚ) (n) :
+lemma witt_structure_rat_rec (Φ : mv_polynomial idx ℚ) (n) :
   (witt_structure_rat p Φ n) = C (1/p^n) *
   (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
   (finset.range n).sum (λ i, (C p)^i * (witt_structure_rat p Φ i)^p^(n-i))) :=
@@ -497,7 +500,7 @@ begin
   exact pow_ne_zero _ (nat.cast_ne_zero.2 $ ne_of_gt (nat.prime.pos ‹_›))
 end
 
-def witt_structure_int (Φ : mv_polynomial bool ℤ) (n : ℕ) : mv_polynomial (bool × ℕ) ℤ :=
+def witt_structure_int (Φ : mv_polynomial idx ℤ) (n : ℕ) : mv_polynomial (idx × ℕ) ℤ :=
 finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map (coe : ℤ → ℚ) Φ) n)
 .
 
@@ -566,7 +569,7 @@ variables {T : Type*} [decidable_eq T] [comm_ring T]
 #check eval₂_comp_left
 -- k (eval₂ f g p) = eval₂ (k ∘ f) (k ∘ g) p
 
-lemma foo (Φ : mv_polynomial bool ℤ) (n : ℕ)
+lemma foo (Φ : mv_polynomial idx ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
   map (coe : ℤ → ℚ) (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
   (finset.range n).sum (λ i, (C p)^i * (witt_structure_int p Φ i)^p^(n-i))) =
@@ -656,6 +659,19 @@ lemma eq_mod_iff_dvd_sub (a b c : α) :
 by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
   ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
 
+lemma fermat_little' (a : zmodp p ‹_›) : a^p = a :=
+begin
+  have ppos : p > 0 := nat.prime.pos ‹_›,
+  by_cases h : a = 0,
+  { subst a, apply zero_pow ppos },
+  { have := zmodp.fermat_little ‹_› h,
+    replace := congr_arg (λ x, a * x) this,
+    simp at this,
+    convert this,
+    rw ← pow_succ, congr, clear this h a _inst_3,
+    revert ppos p, omega manual nat }
+end
+
 lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
   ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
 begin
@@ -663,8 +679,9 @@ begin
   { intro n, rw [eval₂_C, eq_mod_iff_dvd_sub, ← C_eq_coe_nat, ← C_pow, ← C_sub],
     suffices : (p : ℤ) ∣ n - n^p,
     { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul] },
-
-sorry },
+      rw ← zmodp.eq_zero_iff_dvd_int ‹_›,
+      rw [int.cast_sub, int.cast_pow, sub_eq_zero],
+      symmetry, apply fermat_little' },
   { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
   { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
 end
@@ -760,9 +777,9 @@ begin
   rwa [← rename_C g, rename_mod], assumption
 end
 
-theorem witt_structure_rat_prop (Φ : mv_polynomial bool ℚ) (n) :
+theorem witt_structure_rat_prop (Φ : mv_polynomial idx ℚ) (n) :
   (witt_polynomial p n).eval₂ C (witt_structure_rat p Φ) =
-    Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
   delta witt_structure_rat,
   rw [← function.comp, eval₂_assoc, X_in_terms_of_W_prop₂ p n, eval₂_X]
@@ -813,9 +830,9 @@ begin
   rwa finsupp.mem_support_iff at hc
 end
 
-lemma blur (Φ : mv_polynomial bool ℤ) (n : ℕ)
+lemma blur (Φ : mv_polynomial idx ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < (n + 1) → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
-  Φ.eval₂ C (λ (b : bool), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
+  Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
   (witt_polynomial p n).eval₂ C (λ (i : ℕ), (witt_structure_int p Φ i).eval₂ C $ λ bi, (X bi)^p) :=
 begin
   apply mv_polynomial.coe_int_rat_map_injective,
@@ -852,7 +869,7 @@ begin
   intros s Y hs, simp [*, finset.sum_insert],
 end
 
-lemma bar (Φ : mv_polynomial bool ℤ) (n : ℕ) :
+lemma bar (Φ : mv_polynomial idx ℤ) (n : ℕ) :
   map (coe : ℤ → ℚ) (witt_structure_int p Φ n) = witt_structure_rat p (map (coe : ℤ → ℚ) Φ) n :=
 begin
   apply nat.strong_induction_on n, clear n,
@@ -869,8 +886,8 @@ begin
   work_on_goal 1 { suffices : (p ^ n.succ : ℤ) ≠ 0, { exact_mod_cast this },
     apply pow_ne_zero, exact_mod_cast ne_of_gt (nat.prime.pos ‹_›) },
   rw ← eq_mod_iff_dvd_sub,
-  calc _ = (Φ.eval₂ C (λ (b : bool), rename (λ (i : ℕ), (b, i)) (witt_polynomial p (nat.succ n))) modₑ ↑(p^(n+1))) : rfl
-     ... = (Φ.eval₂ C (λ (b : bool), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) modₑ ↑(p^(n+1))) :
+  calc _ = (Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (witt_polynomial p (nat.succ n))) modₑ ↑(p^(n+1))) : rfl
+     ... = (Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) modₑ ↑(p^(n+1))) :
      begin
       apply eval₂_mod, intro b,
       rw [← C_eq_coe_nat], apply rename_mod_C, rw C_eq_coe_nat,
@@ -905,7 +922,7 @@ begin
 end
 .
 
-lemma witt_structure_int_prop.aux (Φ : mv_polynomial bool ℤ) (n : ℕ) :
+lemma witt_structure_int_prop.aux (Φ : mv_polynomial idx ℤ) (n : ℕ) :
   map (coe : ℤ → ℚ) ((witt_polynomial p n).eval₂ C (witt_structure_int p Φ)) =
   (witt_polynomial p n).eval₂ C (witt_structure_rat p (map coe Φ)) :=
 begin
@@ -914,9 +931,9 @@ begin
   funext i, apply bar
 end
 
-theorem witt_structure_int_prop (Φ : mv_polynomial bool ℤ) (n) :
+theorem witt_structure_int_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (witt_structure_int p Φ) =
-    Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
   apply mv_polynomial.coe_int_rat_map_injective,
   convert witt_structure_rat_prop p (map coe Φ) n,
@@ -925,10 +942,10 @@ begin
     rw [map_rename, map_witt_polynomial], }
 end
 
-theorem witt_structure_int_exists_unique (Φ : mv_polynomial bool ℤ) :
-  ∃! (φ : ℕ → mv_polynomial (bool × ℕ) ℤ),
+theorem witt_structure_int_exists_unique (Φ : mv_polynomial idx ℤ) :
+  ∃! (φ : ℕ → mv_polynomial (idx × ℕ) ℤ),
   ∀ (n : ℕ), (witt_polynomial p n).eval₂ C φ =
-    Φ.eval₂ C (λ b : bool, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
   refine ⟨witt_structure_int p Φ, _, _⟩,
   { apply witt_structure_int_prop },
@@ -949,9 +966,22 @@ begin
 end
 .
 
+lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
+begin
+  apply mv_polynomial.induction_on φ,
+  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
+  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
+  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
+end
+
+lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
+eval₂_rename_prodmk id _ _ _
+
 -- set_option pp.implicit true
 
-theorem witt_structure_prop (Φ : mv_polynomial bool ℤ) (n) :
+theorem witt_structure_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
   (map coe Φ).eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) :=
 begin
@@ -969,7 +999,7 @@ def witt_add : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (
 
 def witt_mul : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (X tt * X ff)
 
-def witt_neg : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (-X tt)
+def witt_neg : ℕ → mv_polynomial (unit × ℕ) ℤ := witt_structure_int p (-X unit.star)
 
 include p
 def witt_vectors (α : Type*) := ℕ → α
@@ -1014,7 +1044,7 @@ instance : has_mul (𝕎 p R) :=
 ⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
 instance : has_neg (𝕎 p R) :=
-⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) 0⟩
+⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, x bn.2⟩
 
 variable {R}
 
@@ -1078,8 +1108,6 @@ begin
   rw eval₂_comp_left f,
   congr' 1,
   { exact int.eq_cast' (f ∘ coe) },
-  { funext bn, cases bn with b i,
-    exact match b with | tt := rfl | ff := is_ring_hom.map_zero f end },
   recover, all_goals {apply_instance},
 end
 
@@ -1111,18 +1139,27 @@ end
 
 variable {R}
 
-lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
-begin
-  apply mv_polynomial.induction_on φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
-  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
-end
+-- Unfortunately the following lemma doesn't typecheck,
+-- because we don't know that (𝕎 p R) is a comm_semiring
 
-lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
-eval₂_rename_prodmk id _ _ _
+-- @[simp] lemma ghost_map.compat (x : idx → 𝕎 p R) (φ : mv_polynomial (idx × ℕ) ℤ) :
+--   ghost_map (φ.eval₂ coe (λ bn, x bn.1)) = φ.eval₂ coe (λ bn, ghost_map (x bn.1)) :=
+-- funext $ λ n,
+-- begin
+--   delta ghost_map ghost_component,
+--   have := congr_arg (λ (ψ : mv_polynomial (bool × ℕ) R), ψ.eval $ λ (bn : bool × ℕ), cond bn.1 (x bn.2) (y bn.2)) (witt_structure_prop p (X tt + X ff) n),
+--   convert this using 1; clear this,
+--   { delta witt_vectors.has_add witt_add, dsimp [eval],
+--     rw ← eval₂_assoc' _ _ _ _,
+--     work_on_goal 0 { congr' 1, funext i, apply eval₂_eq_eval_map },
+--     all_goals {try {assumption}, try {apply_instance}} },
+--   { dsimp,
+--     rw [mv_polynomial.map_add, eval₂_add, eval_add],
+--     congr' 1,
+--     all_goals {
+--       erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
+--       congr } }
+-- end
 
 @[simp] lemma ghost_map.add (x y : 𝕎 p R) :
   ghost_map (x + y) = ghost_map x + ghost_map y :=
