@@ -979,7 +979,7 @@ lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R)
   (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
 eval₂_rename_prodmk id _ _ _
 
--- set_option pp.implicit true
+set_option pp.implicit true
 
 theorem witt_structure_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
@@ -990,9 +990,13 @@ begin
   dsimp at this ⊢,
   rw [map_eval₂, map_eval₂, map_witt_polynomial] at this,
   simp only [function.comp, map_rename] at this ⊢,
-  -- simp [map_witt_polynomial (coe : ℤ → R) n] at this,
-  -- convert this using 1,
-  sorry
+  erw this, clear this,
+  dsimp,
+  suffices : (λ (x : idx), rename (prod.mk x) (map (coe : ℤ → R) (witt_polynomial p n))) =
+    (λ (b : idx), rename (prod.mk b) (witt_polynomial p n)),
+  { replace := congr_arg (λ g, eval₂ C g (map coe Φ)) this,
+    dsimp at this, exact this },
+  funext i, rw map_witt_polynomial
 end
 
 def witt_add : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (X tt + X ff)
@@ -1050,8 +1054,9 @@ variable {R}
 
 @[simp] lemma Teichmuller_one : Teichmuller p (1:R) = 1 := rfl
 
-lemma Teichmuller_mul (x y : R) :
-  Teichmuller p (x * y) = Teichmuller p x * Teichmuller p y := sorry
+-- TODO(jmc): Prove this
+-- lemma Teichmuller_mul (x y : R) :
+--   Teichmuller p (x * y) = Teichmuller p x * Teichmuller p y := sorry
 
 variable {p}
 
@@ -1204,5 +1209,21 @@ end
 -- begin
 --   sorry
 -- end
+
+section
+open function
+variables {α} [has_zero α] [has_one α] [has_add α] [has_mul α] [has_neg α]
+variables {β : Type*} [comm_ring β]
+
+def comm_ring_of_injective (f : α → β) (inj : injective f)
+  (zero : f 0 = 0) (one : f 1 = 1) (add : ∀ {x y}, f (x + y) = f x + f y)
+  (mul : ∀ {x y}, f (x * y) = f x * f y) (neg : ∀ {x}, f (-x) = - f x) :
+  comm_ring α :=
+begin
+  refine_struct { ..‹has_zero α›, ..‹has_one α›, ..‹has_add α›, ..‹has_mul α›, ..‹has_neg α› },
+  all_goals {sorry}
+end
+
+end
 
 end witt_vectors
