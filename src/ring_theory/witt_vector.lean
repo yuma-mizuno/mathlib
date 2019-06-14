@@ -612,7 +612,7 @@ def boh {α : Type*} {β : Type*} [comm_semiring α] [comm_semiring β] (f : α 
 -- def aahrg (k : ℕ) (φ) : ((C (p : ℤ) ^ k * φ : mv_polynomial ι ℤ) modₑ ↑p) =
 --   (0 : ideal.quotient (ideal.span {(p : mv_polynomial ι ℤ)})) := _
 
-lemma C_eq_coe_nat (n : ℕ) : (C ↑n : mv_polynomial ι ℤ) = n :=
+lemma C_eq_coe_nat (n : ℕ) : (C ↑n : mv_polynomial ι R) = n :=
 begin
   induction n with n ih, {simp},
   simp [nat.succ_eq_add_one, ih]
@@ -639,7 +639,7 @@ begin
       rw mem_singleton_iff,
       rw [← C_eq_coe_nat, ← C_pow],
       congr,
-      norm_cast, simp, },
+      norm_cast },
     apply finset.sum_congr rfl,
     intros i hi,
     rw [eval₂_mul, ← C_pow, eval₂_C, eval₂_pow, eval₂_X, ← pow_mul],
@@ -678,7 +678,7 @@ begin
   apply mv_polynomial.induction_on φ,
   { intro n, rw [eval₂_C, eq_mod_iff_dvd_sub, ← C_eq_coe_nat, ← C_pow, ← C_sub],
     suffices : (p : ℤ) ∣ n - n^p,
-    { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul] },
+    { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul, int.nat_cast_eq_coe_nat] },
       rw ← zmodp.eq_zero_iff_dvd_int ‹_›,
       rw [int.cast_sub, int.cast_pow, sub_eq_zero],
       symmetry, apply fermat_little' },
@@ -738,14 +738,14 @@ lemma droj (φ : mv_polynomial ι ℤ) (n : ℕ) (hn : n ≠ 0) :
   (n : mv_polynomial ι ℤ) ∣ φ ↔ ∀ c, (n : ℤ) ∣ coeff c φ :=
 begin
   split,
-  { rintros ⟨d, rfl⟩ c, rw [← C_eq_coe_nat, coeff_C_mul], apply dvd_mul_right },
+  { rintros ⟨d, rfl⟩ c, rw [← C_eq_coe_nat, coeff_C_mul, int.nat_cast_eq_coe_nat], apply dvd_mul_right },
   { intro h, refine ⟨finsupp.map_range (λ k, k/n) (by simp) φ, _⟩,
     apply mv_polynomial.ext,
     intro c,
     rw [← C_eq_coe_nat, coeff_C_mul],
     dsimp [coeff] at h ⊢,
     rcases h c with ⟨d, h⟩,
-    rw [h, int.mul_div_cancel_left],
+    rw [h, int.mul_div_cancel_left, int.nat_cast_eq_coe_nat],
     exact_mod_cast hn }
 end
 
@@ -904,7 +904,7 @@ begin
         intros i hi,
         rw finset.mem_range at hi, replace hi := nat.le_of_lt_succ hi,
         rw [eval₂_mul, ← C_pow, eval₂_C, eval₂_pow, eval₂_X],
-        rw [← C_pow, show (p:ℤ)^i = (p^i : ℕ), by simp, C_eq_coe_nat],
+        rw [← C_pow, show (p:ℤ)^i = (p^i : ℕ), by simp, ← int.nat_cast_eq_coe_nat, C_eq_coe_nat],
         rw [eq_mod_iff_dvd_sub, ← mul_sub],
         rw show p^(n+1) = p^i * p^(n+1-i),
         { rw ← nat.pow_add, congr' 1, clear IH, revert hi i n, omega manual nat },
@@ -978,8 +978,6 @@ end
 lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
   (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
 eval₂_rename_prodmk id _ _ _
-
-set_option pp.implicit true
 
 theorem witt_structure_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
@@ -1064,8 +1062,19 @@ def ghost_component (n : ℕ) (w : 𝕎 p R) : R :=
 (witt_polynomial p n).eval w
 
 section map
+open function
+variables {α} {β : Type*}
 
-def map (f : R → S) : 𝕎 p R → 𝕎 p S := λ w, f ∘ w
+def map (f : α → β) : 𝕎 p α → 𝕎 p β := λ w, f ∘ w
+
+lemma map_injective (f : α → β) (hf : injective f) :
+  injective (map f : 𝕎 p α → 𝕎 p β) :=
+λ x y h, funext $ λ n, hf $ by exact congr_fun h n
+
+lemma map_surjective (f : α → β) (hf : surjective f) :
+  surjective (map f : 𝕎 p α → 𝕎 p β) :=
+λ x, ⟨λ n, classical.some $ hf $ x n,
+by { funext n, dsimp [map], rw classical.some_spec (hf (x n)) }⟩
 
 variables (f : R → S) [is_ring_hom f]
 
@@ -1139,7 +1148,24 @@ funext $ λ n,
 begin
   delta ghost_map ghost_component witt_polynomial eval,
   rw eval₂_sum,
-  sorry -- need to split the sum in i = 0 and i = 1..n
+  have : 0 ∈ finset.range (n+1),
+  { rw finset.mem_range, exact nat.succ_pos n },
+  rw ← finset.insert_erase this,
+  rw finset.sum_insert (finset.not_mem_erase 0 (finset.range (n + 1))),
+  convert add_zero _,
+  { apply finset.sum_eq_zero, intros i hi,
+    rw [eval₂_mul, eval₂_pow, eval₂_pow, eval₂_X],
+    rw finset.mem_erase at hi,
+    suffices H : (1 : 𝕎 p R) i = 0,
+    { rw [H, zero_pow, mul_zero], apply nat.pow_pos, exact nat.prime.pos ‹_› },
+    rw ← Teichmuller_one, cases hi with hi bla, revert hi,
+    exact match i with
+    | 0 := λ H, false.elim (H rfl)
+    | (n+1) := λ H, rfl
+    end },
+  { rw [eval₂_mul, eval₂_pow, eval₂_pow, eval₂_X, eval₂_C],
+    dsimp, rw one_mul, symmetry,
+    apply one_pow }
 end
 
 variable {R}
@@ -1204,26 +1230,114 @@ begin
       congr } }
 end
 
--- lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
---   function.bijective (ghost_map p R) :=
--- begin
---   sorry
--- end
+@[simp] lemma ghost_map.neg (x : 𝕎 p R) :
+  ghost_map (-x) = - ghost_map x :=
+funext $ λ n,
+begin
+  delta ghost_map ghost_component,
+  have := congr_arg (λ (ψ : mv_polynomial (unit × ℕ) R), ψ.eval $ λ (bn : unit × ℕ), (x bn.2)) (witt_structure_prop p (-X unit.star) n),
+  convert this using 1; clear this,
+  { delta witt_vectors.has_neg witt_neg, dsimp [eval],
+    rw ← eval₂_assoc' _ _ _ _,
+    work_on_goal 0 { congr' 1, funext i, apply eval₂_eq_eval_map },
+    all_goals {try {assumption}, try {apply_instance}} },
+  { dsimp,
+    rw [mv_polynomial.map_neg, map_X],
+    conv_rhs {
+      congr, skip,
+      -- simp [eval₂_neg]
+       },
+       sorry
+    -- erw [mv_polynomial.map_neg, eval₂_neg, eval_neg],
+--     -- congr' 1,
+--     -- all_goals {
+--     --   erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
+--     --   congr }
+}
+end
+
+lemma ghost_map.bijective_of_is_unit (h : is_unit (p:R)) :
+  function.bijective (ghost_map : 𝕎 p R → ℕ → R) :=
+begin
+  sorry
+end
 
 section
 open function
-variables {α} [has_zero α] [has_one α] [has_add α] [has_mul α] [has_neg α]
+variables {α' : Type*} [has_zero α'] [has_one α'] [has_add α'] [has_mul α'] [has_neg α']
 variables {β : Type*} [comm_ring β]
 
-def comm_ring_of_injective (f : α → β) (inj : injective f)
+def comm_ring_of_injective (f : α' → β) (inj : injective f)
   (zero : f 0 = 0) (one : f 1 = 1) (add : ∀ {x y}, f (x + y) = f x + f y)
   (mul : ∀ {x y}, f (x * y) = f x * f y) (neg : ∀ {x}, f (-x) = - f x) :
-  comm_ring α :=
+  comm_ring α' :=
 begin
-  refine_struct { ..‹has_zero α›, ..‹has_one α›, ..‹has_add α›, ..‹has_mul α›, ..‹has_neg α› },
+  refine_struct { ..‹has_zero α'›, ..‹has_one α'›, ..‹has_add α'›, ..‹has_mul α'›, ..‹has_neg α'› },
   all_goals {sorry}
 end
 
+def comm_ring_of_surjective (f : β → α') (sur : surjective f)
+  (zero : f 0 = 0) (one : f 1 = 1) (add : ∀ {x y}, f (x + y) = f x + f y)
+  (mul : ∀ {x y}, f (x * y) = f x * f y) (neg : ∀ {x}, f (-x) = - f x) :
+  comm_ring α' :=
+begin
+  refine_struct { ..‹has_zero α'›, ..‹has_one α'›, ..‹has_add α'›, ..‹has_mul α'›, ..‹has_neg α'› },
+  all_goals {sorry}
 end
+
+variable (R)
+
+def mv_polynomial.counit : mv_polynomial R ℤ → R :=
+eval₂ coe id
+
+instance mv_polynomial.counit.is_ring_hom : is_ring_hom (mv_polynomial.counit R) :=
+by delta mv_polynomial.counit; apply_instance
+
+lemma counit_surjective : surjective (mv_polynomial.counit R) :=
+λ r, ⟨X r, eval₂_X _ _ _⟩
+
+end
+
+variable (ι)
+
+lemma yup : is_unit (p : mv_polynomial ι ℚ) :=
+begin
+  apply is_unit_of_dvd_one,
+  use C (1/p : ℚ),
+  rw [← C_eq_coe_nat, ← C_mul],
+  symmetry,
+  convert C_1,
+  apply mul_one_div_cancel,
+  norm_cast,
+  apply ne_of_gt,
+  exact nat.prime.pos ‹_›
+end
+
+#check yup
+
+variable (R)
+
+instance : comm_ring (𝕎 p R) :=
+@comm_ring_of_surjective _ _ _ _ _ _ _
+  (have hom : is_ring_hom (mv_polynomial.map coe : mv_polynomial R ℤ → mv_polynomial R ℚ), by apply_instance,
+    @comm_ring_of_injective _ _ _ _ _ _ _
+      (@comm_ring_of_injective _ _ _ _ _ _ _ _
+        (ghost_map) (ghost_map.bijective_of_is_unit (yup R)).1
+        (@ghost_map.zero p _ (mv_polynomial R ℚ) _ _)
+        (ghost_map.one) (ghost_map.add) (ghost_map.mul) (ghost_map.neg))
+    (map $ mv_polynomial.map (coe : ℤ → ℚ))
+    (map_injective _ $ mv_polynomial.coe_int_rat_map_injective _)
+      (@map_zero _ _ _ _ _ _ _ _ _ hom)
+      (@map_one _ _ _ _ _ _ _ _ _ hom)
+      (@map_add _ _ _ _ _ _ _ _ _ hom)
+      (@map_mul _ _ _ _ _ _ _ _ _ hom)
+      (@map_neg _ _ _ _ _ _ _ _ _ hom))
+(map $ mv_polynomial.counit _) (map_surjective _ $ counit_surjective _)
+  (@map_zero _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  _
+  -- (@map_one _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_add _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_mul _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_neg _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
 
 end witt_vectors
