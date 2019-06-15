@@ -1255,7 +1255,7 @@ lemma ghost_map.equiv_of_unit (pu : units R) (hp : (pu : R) = p) :
     dsimp [ghost_map, ghost_component, eval],
     rw eval₂_assoc' (id : R → R),
     { convert eval_X _,
-      { simp only [from_X_to_W_basis, eval₂_X, X_in_terms_of_W_prop₂] },
+      { simp only [eval₂_X, X_in_terms_of_W_prop₂] },
       { apply_instance } },
     all_goals { assumption <|> apply_instance }
   end }
@@ -1310,42 +1310,36 @@ lemma counit_surjective : surjective (mv_polynomial.counit R) :=
 
 end
 
-variable (ι)
-
-lemma yup : is_unit (p : mv_polynomial ι ℚ) :=
-begin
-  apply is_unit_of_dvd_one,
-  use C (1/p : ℚ),
-  rw [← C_eq_coe_nat, ← C_mul],
-  symmetry,
-  convert C_1,
-  apply mul_one_div_cancel,
-  norm_cast,
-  apply ne_of_gt,
-  exact nat.prime.pos ‹_›
-end
-
 variable (R)
 
+def aux₁ : comm_ring (𝕎 p (mv_polynomial R ℚ)) :=
+comm_ring_of_injective (ghost_map)
+  (ghost_map.bijective_of_unit ((rat.pu p).map C)
+  (by rw ← C_eq_coe_nat; refl)).1
+  (@ghost_map.zero p _ (mv_polynomial R ℚ) _ _)
+  (ghost_map.one) (ghost_map.add) (ghost_map.mul) (ghost_map.neg)
+
+local attribute [instance] aux₁
+.
+
+def aux₂ : comm_ring (𝕎 p (mv_polynomial R ℤ)) :=
+have hom : is_ring_hom (mv_polynomial.map coe : mv_polynomial R ℤ → mv_polynomial R ℚ), by apply_instance,
+comm_ring_of_injective (map $ mv_polynomial.map (coe : ℤ → ℚ))
+  (map_injective _ $ mv_polynomial.coe_int_rat_map_injective _)
+  (@map_zero _ _ _ _ _ _ _ _ _ hom)
+  (@map_one _ _ _ _ _ _ _ _ _ hom)
+  (@map_add _ _ _ _ _ _ _ _ _ hom)
+  (@map_mul _ _ _ _ _ _ _ _ _ hom)
+  (@map_neg _ _ _ _ _ _ _ _ _ hom)
+
+local attribute [instance] aux₂
+.
+
 instance : comm_ring (𝕎 p R) :=
-@comm_ring_of_surjective _ _ _ _ _ _ _
-  (have hom : is_ring_hom (mv_polynomial.map coe : mv_polynomial R ℤ → mv_polynomial R ℚ), by apply_instance,
-    @comm_ring_of_injective _ _ _ _ _ _ _
-      (@comm_ring_of_injective _ _ _ _ _ _ _ _
-        (ghost_map) (ghost_map.bijective_of_unit (rat.pu p) rfl).1
-        (@ghost_map.zero p _ (mv_polynomial R ℚ) _ _)
-        (ghost_map.one) (ghost_map.add) (ghost_map.mul) (ghost_map.neg))
-    (map $ mv_polynomial.map (coe : ℤ → ℚ))
-    (map_injective _ $ mv_polynomial.coe_int_rat_map_injective _)
-      (@map_zero _ _ _ _ _ _ _ _ _ hom)
-      (@map_one _ _ _ _ _ _ _ _ _ hom)
-      (@map_add _ _ _ _ _ _ _ _ _ hom)
-      (@map_mul _ _ _ _ _ _ _ _ _ hom)
-      (@map_neg _ _ _ _ _ _ _ _ _ hom))
+comm_ring_of_surjective
 (map $ mv_polynomial.counit _) (map_surjective _ $ counit_surjective _)
   (@map_zero _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
-  _
-  -- (@map_one _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_one _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
   (@map_add _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
   (@map_mul _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
   (@map_neg _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
