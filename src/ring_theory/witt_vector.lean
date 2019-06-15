@@ -1224,18 +1224,19 @@ begin
     all_goals {try {assumption}, try {apply_instance}} },
   { dsimp,
     rw [mv_polynomial.map_neg, map_X],
-    -- rw eval₂_neg,
-       sorry
-    -- erw [mv_polynomial.map_neg, eval₂_neg, eval_neg],
---     -- congr' 1,
---     -- all_goals {
---     --   erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
---     --   congr }
-}
+    have := eval_rename_prodmk (λ i : unit × ℕ, x i.2) () (witt_polynomial p n),
+    dsimp at this,
+    rw ← this, clear this,
+    rw ← eval_neg,
+    congr' 1,
+    have := eval₂_neg (X ()) C (λ (b : unit), rename (prod.mk b) (witt_polynomial p n : mv_polynomial ℕ R)),
+    rw eval₂_X at this,
+    dsimp at this ⊢,
+    exact this.symm }
 end
 .
 
--- eval₂ C (X_in_terms_of_W p pu hp)
+#print eval₂_neg
 
 lemma ghost_map.equiv_of_unit (pu : units R) (hp : (pu : R) = p) :
   𝕎 p R ≃ (ℕ → R) :=
