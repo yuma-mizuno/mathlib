@@ -984,6 +984,12 @@ def witt_mul : ℕ → mv_polynomial (bool × ℕ) ℤ := witt_structure_int p (
 
 def witt_neg : ℕ → mv_polynomial (unit × ℕ) ℤ := witt_structure_int p (-X unit.star)
 
+@[simp] lemma witt_add_zero : witt_add p 0 = X (tt, 0) + X (ff, 0) :=
+dec_trivial
+
+@[simp] lemma witt_mul_zero : witt_mul p 0 = X (tt, 0) * X (ff, 0) :=
+dec_trivial
+
 include p
 def witt_vectors (α : Type*) := ℕ → α
 omit p
@@ -1023,19 +1029,24 @@ instance : has_one (𝕎 p R) :=
 instance : has_add (𝕎 p R) :=
 ⟨λ x y n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
+lemma add_def (x y : 𝕎 p R) :
+  x + y = λ n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
+
 instance : has_mul (𝕎 p R) :=
 ⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
+
+lemma mul_def (x y : 𝕎 p R) :
+  x * y = λ n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
 
 instance : has_neg (𝕎 p R) :=
 ⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, x bn.2⟩
 
+lemma neg_def (x : 𝕎 p R) :
+  -x = λ n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, x bn.2 := rfl
+
 variable {R}
 
 @[simp] lemma Teichmuller_one : Teichmuller p (1:R) = 1 := rfl
-
--- TODO(jmc): Prove this
--- lemma Teichmuller_mul (x y : R) :
---   Teichmuller p (x * y) = Teichmuller p x * Teichmuller p y := sorry
 
 variable {p}
 
@@ -1236,8 +1247,6 @@ begin
 end
 .
 
-#print eval₂_neg
-
 lemma ghost_map.equiv_of_unit (pu : units R) (hp : (pu : R) = p) :
   𝕎 p R ≃ (ℕ → R) :=
 { to_fun := ghost_map,
@@ -1344,5 +1353,43 @@ comm_ring_of_surjective
   (@map_add _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
   (@map_mul _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
   (@map_neg _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+
+namespace map
+
+instance (f : R → S) [is_ring_hom f] : is_ring_hom (map f : 𝕎 p R → 𝕎 p S) :=
+{ map_one := map_one f,
+  map_mul := map_mul f,
+  map_add := map_add f }
+
+end map
+
+namespace ghost_map
+
+instance : is_ring_hom (ghost_map : 𝕎 p R → ℕ → R) :=
+{ map_one := one,
+  map_mul := mul,
+  map_add := add }
+
+end ghost_map
+
+variable {R}
+
+def Verschiebung : 𝕎 p R → 𝕎 p R :=
+λ x n, match n with
+| 0     := 0
+| (n+1) := x n
+end
+
+@[simp] lemma Verschiebung_zero : Verschiebung (0 : 𝕎 p R) = 0 :=
+funext $ λ n, match n with | 0 := rfl | (n+1) := rfl end
+
+-- TODO(jmc): prove these
+-- lemma Teichmuller_mul (x y : R) :
+--   Teichmuller p (x * y) = Teichmuller p x * Teichmuller p y :=
+-- sorry
+
+-- lemma Verschiebung_add (x y : R) :
+--   Verschiebung (x + y) = Verschiebung x + Verschiebung y :=
+-- sorry
 
 end witt_vectors
