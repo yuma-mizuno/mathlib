@@ -18,6 +18,10 @@ import tactic.explode
 
 universes u v w u₁
 
+local attribute [class] nat.prime
+variables (α : Type u) [decidable_eq α] [comm_ring α]
+variables (p : ℕ) [nat.prime p]
+
 -- ### FOR_MATHLIB
 -- everything in this section should move to other files
 
@@ -57,129 +61,84 @@ end
 by { rcases h with ⟨k, rfl⟩, refine ⟨k, by norm_cast⟩ }
 
 end finset
-/-
+
+lemma rat.coe_num_eq_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
+begin
+  rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
+  norm_cast, delta rat.of_int rat.mk_nat, congr,
+  simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
+end
+
 namespace mv_polynomial
+variables {σ : Type*} [decidable_eq σ]
 
-open mv_polynomial finsupp
-
-lemma eval₂_assoc
-  {S : Type*} [decidable_eq S] [comm_semiring S]
-  {T : Type*} [decidable_eq T] [comm_semiring T]
-  {σ : Type*} [decidable_eq σ]
-  {τ : Type*} [decidable_eq τ]
-  (f : S → T) [is_semiring_hom f]
-  (φ : σ → T) (q : τ → mv_polynomial σ S)
-  (p : mv_polynomial τ S) :
-  eval₂ f (λ t, eval₂ f φ (q t)) p = eval₂ f φ (eval₂ C q p) :=
-by { rw eval₂_comp_left (eval₂ f φ), congr, funext, simp }
-
-variables {R : Type*} {S : Type*} (f : R → S) {ι : Type*}
-variables [decidable_eq R] [comm_ring R]
-variables [decidable_eq S] [comm_ring S]
-variables [is_ring_hom f] [decidable_eq ι]
-
-lemma eval₂_sum {X : Type*} [decidable_eq X] (s : finset X) (g : ι → S)
-  (i : X → mv_polynomial ι R) :
-  eval₂ f g (s.sum i) = s.sum (λ x, eval₂ f g $ i x) :=
+lemma int_dvd_iff_dvd_coeff (p : mv_polynomial σ ℤ) (n : ℤ) (h : n ≠ 0) :
+  C n ∣ p ↔ ∀ c, n ∣ coeff c p :=
 begin
-  apply finset.induction_on s, {simp},
-  { intros x' s' hx' IH,
-    simp [finset.sum_insert hx', IH] }
+  split,
+  { rintros ⟨d, rfl⟩ c, rw coeff_C_mul, apply dvd_mul_right },
+  { intro H,
+    refine ⟨finsupp.map_range (λ k, k/n) (by simp) p, _⟩,
+    apply mv_polynomial.ext,
+    intro c,
+    rw coeff_C_mul,
+    dsimp [coeff] at H ⊢,
+    rcases H c with ⟨d, H⟩,
+    rw [H, int.mul_div_cancel_left _ h] }
 end
 
-lemma eval₂_rename (f : R → S) [is_semiring_hom f] (k : ι → σ) (g : σ → S) (Φ : mv_polynomial ι R) :
-  (Φ.rename k).eval₂ f g = Φ.eval₂ f (g ∘ k) :=
+variables {β : Type*} [decidable_eq β] [comm_semiring β]
+variables {γ : Type*} (s : finset γ) (g : γ → mv_polynomial σ α)
+
+@[simp] lemma map_sum (f : α → β) [is_semiring_hom f] :
+  map f (s.sum g) = s.sum (λ c, map f (g c)) :=
+(finset.sum_hom (map f)).symm
+
+lemma is_integral_iff (p : mv_polynomial σ ℚ) :
+  map (coe : ℤ → ℚ) (finsupp.map_range rat.num (rat.coe_int_num 0) p) = p ↔
+  ∀ m, (coeff m p).denom = 1 :=
 begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [rename_mul, eval₂_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma rename_eval₂ (k : ι → σ) (g : σ → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
-  (Φ.eval₂ C (g ∘ k)).rename k = (Φ.rename k).eval₂ C (rename k ∘ g) :=
-begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C, rename_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, rename_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [rename_mul, eval₂_mul, rename_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma rename_prodmk_eval₂ (s : σ) (g : ι → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
-  (Φ.eval₂ C g).rename (prod.mk s) = Φ.eval₂ C (λ x, (g x).rename (prod.mk s)) :=
-begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [eval₂_C, eval₂_C, rename_C] },
-  { intros p q hp hq, rw [eval₂_add, rename_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [eval₂_mul, rename_mul, hp, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
-begin
-  apply mv_polynomial.induction_on φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
-  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
-end
-
-lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
-eval₂_rename_prodmk id _ _ _
-
-lemma eval₂_congr (f : R → S) [is_semiring_hom f] (g₁ g₂ : ι → S) (φ : mv_polynomial ι R)
-  (h : ∀ {i : ι} {c : ι →₀ ℕ}, i ∈ c.support → coeff c φ ≠ 0 → g₁ i = g₂ i) :
-  φ.eval₂ f g₁ = φ.eval₂ f g₂ :=
-begin
-  apply finset.sum_congr rfl,
-  intros c hc,
-  dsimp, congr' 1,
-  apply finset.prod_congr rfl,
-  intros i hi,
-  dsimp, congr' 1,
-  apply h hi,
-  rwa finsupp.mem_support_iff at hc
-end
-
-lemma mv_polynomial.ext_iff (p q : mv_polynomial ι α) :
-(∀ m, coeff m p = coeff m q) ↔ p = q :=
-⟨mv_polynomial.ext p q, λ h m, by rw h⟩
-
-lemma C_eq_coe_nat (n : ℕ) : (C ↑n : mv_polynomial ι R) = n :=
-begin
-  induction n with n ih, {simp},
-  simp [nat.succ_eq_add_one, ih]
-end
-
--- Change this into map_injective
-lemma mv_polynomial.coe_int_rat_map_injective (I : Type*) [decidable_eq I] :
-  function.injective (map (coe : ℤ → ℚ) : mv_polynomial I ℤ → mv_polynomial I ℚ) :=
-begin
-  rw is_add_group_hom.injective_iff _,
-  all_goals {try {apply_instance}},
-  intros f hf,
-  apply mv_polynomial.ext,
+  rw ← ext_iff,
+  apply forall_congr,
   intro m,
-  rw ← mv_polynomial.ext_iff at hf,
-  specialize hf m,
-  rw [coeff_map, coeff_zero] at hf,
-  rw coeff_zero,
-  exact_mod_cast hf
+  rw coeff_map,
+  split; intro h,
+  { rw ← h, apply rat.coe_int_denom },
+  { apply rat.coe_num_eq_of_denom_eq_one, exact h }
 end
-.
 
-@[simp] lemma map_pow (f : R → S) [is_semiring_hom f] (Φ : mv_polynomial ι R) (n : ℕ) :
-  (Φ^n).map f = (Φ.map f)^n :=
-is_semiring_hom.map_pow _ _ _
+-- lemma dvd_iff_dvd_coeff (p : mv_polynomial σ α) (a : α) (h : a ≠ 0) :
+--   C a ∣ p ↔ ∀ c, a ∣ coeff c p :=
+-- begin
+--   split,
+--   { rintros ⟨d, rfl⟩ c, rw coeff_C_mul, apply dvd_mul_right },
+--   { intro h,
+--     sorry }
+--     -- refine ⟨finsupp.map_range (λ k, k/n) (by simp) φ, _⟩,
+--     -- apply mv_polynomial.ext,
+--     -- intro c,
+--     -- rw [← C_eq_coe_nat, coeff_C_mul],
+--     -- dsimp [coeff] at h ⊢,
+--     -- rcases h c with ⟨d, h⟩,
+--     -- rw [h, int.mul_div_cancel_left, int.nat_cast_eq_coe_nat],
+--     -- exact_mod_cast hn }
+-- end
+
 
 end mv_polynomial
--/
+
 namespace modp
-variables {α : Type*} [comm_ring α] {p : ℕ} (hp : nat.prime p)
+variables {α}
 
 notation x ` modᵢ ` I := (ideal.quotient.mk I x)
 notation x ` modₛ ` s := (ideal.quotient.mk (ideal.span s) x)
 notation x ` modₑ ` a := (ideal.quotient.mk (ideal.span ({a})) x)
+
+@[simp] lemma mod_self (a : α) : (a modₑ a) = 0 :=
+begin
+  rw ideal.quotient.eq_zero_iff_mem,
+  exact ideal.subset_span (set.mem_singleton a)
+end
 
 lemma char_one.one_eq_zero [char_p α 1] : (1 : α) = 0 :=
 by exact_mod_cast char_p.cast_eq_zero α 1
@@ -187,24 +146,21 @@ by exact_mod_cast char_p.cast_eq_zero α 1
 lemma char_one.elim [char_p α 1] (a b : α) : a = b :=
 by rw [← one_mul a, ← one_mul b, char_one.one_eq_zero, zero_mul, zero_mul]
 
-instance char_one_of_is_unit (h : is_unit (p : α)) :
-  char_p (ideal.span ({p} : set α)).quotient 1 :=
+instance char_one_of_is_unit (a : α) (h : is_unit a) :
+  char_p (ideal.span ({a} : set α)).quotient 1 :=
 ⟨begin
+  rcases h with ⟨⟨a, b, hab, hba⟩, rfl⟩,
   intro n,
-  have helper : ∀ m : ℕ, (m : (ideal.span ({p} : set α)).quotient) =
-    ideal.quotient.mk (ideal.span ({p} : set α)) (m : α),
+  have helper : ∀ m : ℕ, (m : (ideal.span ({a} : set α)).quotient) =
+    ideal.quotient.mk (ideal.span ({a} : set α)) m,
   { intro m, induction m with m ih, {refl}, simp [ih] },
   split,
   { intro hn, exact one_dvd n },
   { rintro ⟨c, rfl⟩,
-    rw is_unit_iff_exists_inv at h,
-    rcases h with ⟨b, hb⟩,
-    rw [helper, nat.cast_mul, nat.cast_one, ← hb,
-      ideal.quotient.eq_zero_iff_mem, mul_assoc],
-    exact ideal.mul_mem_right _ (ideal.subset_span $ set.mem_singleton p) }
+    rw [helper, nat.cast_mul, nat.cast_one, ← hab, mul_assoc, ideal.quotient.mk_mul, mod_self, zero_mul],
+    refl, }
 end⟩
 
-include hp
 instance (h : ¬ is_unit (p : α)) : char_p (ideal.span ({p} : set α)).quotient p :=
 ⟨begin
   intro n,
@@ -215,7 +171,7 @@ instance (h : ¬ is_unit (p : α)) : char_p (ideal.span ({p} : set α)).quotient
   { intro H,
     rw [helper, ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton] at H,
     rcases H with ⟨c, hc⟩,
-    cases nat.coprime_or_dvd_of_prime hp n with hn hn,
+    cases nat.coprime_or_dvd_of_prime ‹_› n with hn hn,
     swap, {exact hn},
     have key := nat.gcd_eq_gcd_ab p n,
     delta nat.coprime at hn, rw hn at key,
@@ -227,10 +183,7 @@ instance (h : ¬ is_unit (p : α)) : char_p (ideal.span ({p} : set α)).quotient
     rw is_unit_iff_exists_inv,
     exact ⟨_, key.symm⟩ },
   { rintro ⟨c, rfl⟩,
-    apply eq_zero_of_zero_dvd,
-    use p,
-    rw [zero_mul, helper (p*c), ideal.quotient.eq_zero_iff_mem, nat.cast_mul],
-    exact ideal.mul_mem_right _ (ideal.subset_span $ set.mem_singleton p) }
+    rw [nat.cast_mul, helper, mod_self, zero_mul] }
 end⟩
 .
 
@@ -238,15 +191,24 @@ lemma add_pow (a b : α) : ((a + b)^p modₑ (p : α)) = (a^p modₑ (p : α)) +
 begin
   classical,
   by_cases H : is_unit (p : α),
-  { haveI := modp.char_one_of_is_unit H, exact char_one.elim _ _ },
-  { haveI := modp.char_p hp H, simpa using add_pow_char _ hp _ _, apply_instance }
+  { haveI := modp.char_one_of_is_unit _ H, exact char_one.elim _ _ },
+  { haveI := modp.char_p ‹_› H, simpa using add_pow_char _ ‹_› _ _, apply_instance }
 end
 
 end modp
 
-lemma eval₂_mod (φ : mv_polynomial ι R) (f : R → S) [is_semiring_hom f] (g₁ : ι → S) (g₂ : ι → S) (s : S)
-  (h : ∀ i, (g₁ i modₑ s) = (g₂ i modₑ s)) :
-  ((φ.eval₂ f g₁) modₑ s) = (φ.eval₂ f g₂ modₑ s) :=
+lemma eq_mod_iff_dvd_sub (a b c : α) :
+  (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
+by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
+  ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
+
+variables {β : Type*} [decidable_eq β] [comm_ring β]
+variables {σ : Type*} {τ : Type*} [decidable_eq σ] [decidable_eq τ]
+open mv_polynomial
+
+lemma eval₂_mod (p : mv_polynomial σ α) (f : α → β) [is_semiring_hom f] (g₁ : σ → β) (g₂ : σ → β) (b : β)
+  (h : ∀ i, (g₁ i modₑ b) = (g₂ i modₑ b)) :
+  ((p.eval₂ f g₁) modₑ b) = (p.eval₂ f g₂ modₑ b) :=
 begin
   rw [eval₂_comp_right (ideal.quotient.mk _) f g₁, eval₂_comp_right (ideal.quotient.mk _) f g₂,
     function.comp, function.comp],
@@ -254,9 +216,9 @@ begin
   congr, funext i, rw h i,
 end
 
-lemma rename_mod (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : mv_polynomial ι R)
-  (h : (φ₁ modₑ r) = (φ₂ modₑ r)) :
-  ((φ₁.rename g) modₑ (r.rename g)) = (φ₂.rename g modₑ (r.rename g)) :=
+lemma rename_mod (p q : mv_polynomial σ α) (g : σ → τ) (r : mv_polynomial σ α)
+  (h : (p modₑ r) = (q modₑ r)) :
+  ((p.rename g) modₑ (r.rename g)) = (q.rename g modₑ (r.rename g)) :=
 begin
   rw eq_mod_iff_dvd_sub at h ⊢,
   rcases h with ⟨d, h⟩,
@@ -265,18 +227,11 @@ begin
   congr, exact h,
 end
 
-lemma rename_mod_C (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : R)
-  (h : (φ₁ modₑ (C r)) = (φ₂ modₑ (C r))) :
-  ((φ₁.rename g) modₑ (C r)) = (φ₂.rename g modₑ (C r)) :=
+lemma rename_mod_C (p q : mv_polynomial σ α) (g : σ → τ) (a : α)
+  (h : (p modₑ (C a)) = (q modₑ (C a))) :
+  ((p.rename g) modₑ (C a)) = (q.rename g modₑ (C a)) :=
 begin
   rwa [← rename_C g, rename_mod], assumption
-end
-
-lemma rat.coe_num_eq_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
-begin
-  rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
-  norm_cast, delta rat.of_int rat.mk_nat, congr,
-  simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
 end
 
 def rat.unit_of_prime : units ℚ :=
@@ -288,11 +243,6 @@ theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n)
   (finset.range n).sum f = finset.univ.sum (λ i : fin n, f i.1) :=
 show _ = @multiset.sum α _ ↑(list.map _ _),
 by rw [list.map_pmap, list.pmap_eq_map]; refl
-
-lemma eq_mod_iff_dvd_sub (a b c : α) :
-  (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
-by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
-  ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
 
 lemma fermat_little' (a : zmodp p ‹_›) : a^p = a :=
 begin
@@ -307,7 +257,7 @@ begin
     revert ppos p, omega manual nat }
 end
 
-lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
+lemma int_pol_mod_p (φ : mv_polynomial σ ℤ) :
   ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
 begin
   apply mv_polynomial.induction_on φ,
@@ -317,15 +267,11 @@ begin
       rw ← zmodp.eq_zero_iff_dvd_int ‹_›,
       rw [int.cast_sub, int.cast_pow, sub_eq_zero],
       symmetry, apply fermat_little' },
-  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
+  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow] },
   { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
 end
 
 open mv_polynomial set
-
-local attribute [class] nat.prime
-variables (α : Type u) [decidable_eq α] [comm_ring α]
-variables (p : ℕ) [nat.prime p]
 
 lemma dvd_sub_pow_of_dvd_sub (a b : α) (h : (p : α) ∣ a - b) (k : ℕ) :
   (p^(k+1) : α) ∣ a^(p^k) - b^(p^k) :=
@@ -462,7 +408,7 @@ lemma X_in_terms_of_W_prop₂ (k : ℕ) : (witt_polynomial p k).eval₂ C (X_in_
 begin
   suffices : from_X_to_W_basis p pu hp (C (p^k) * X k) +
     from_X_to_W_basis p pu hp (finset.sum (finset.range k) (λ (i : ℕ), C (p^i) * (X i)^p^(k-i))) = X k,
-  { simpa [witt_polynomial, finset.sum_range_succ] },
+  { simpa [witt_polynomial, finset.sum_range_succ, from_X_to_W_basis] },
   suffices : ∀ i, from_X_to_W_basis p pu hp (C (p^i) * (X i)^p^(k-i)) =
     C (p^i) * (X_in_terms_of_W p pu hp i)^p^(k-i),
   { rw [from_X_to_W_basis, eval₂_mul, eval₂_C, eval₂_X, X_in_terms_of_W_eq,
@@ -480,12 +426,12 @@ variables {idx : Type*} [decidable_eq idx]
 
 def witt_structure_rat (Φ : mv_polynomial idx ℚ) : ℕ → mv_polynomial (idx × ℕ) ℚ :=
 λ n, eval₂ C (λ k : ℕ,
-   Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i)))))
+   Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (prod.mk b))))
      (X_in_terms_of_W p (rat.unit_of_prime p) rfl n)
 
 theorem witt_structure_rat_prop (Φ : mv_polynomial idx ℚ) (n) :
   (witt_polynomial p n).eval₂ C (witt_structure_rat p Φ) =
-    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (prod.mk b))) :=
 begin
   delta witt_structure_rat,
   rw [eval₂_assoc (C : ℚ → mv_polynomial (idx × ℕ) ℚ), X_in_terms_of_W_prop₂ p _ _ n, eval₂_X]
@@ -494,7 +440,7 @@ end
 theorem witt_structure_prop_exists_unique (Φ : mv_polynomial idx ℚ) :
   ∃! (φ : ℕ → mv_polynomial (idx × ℕ) ℚ), ∀ (n : ℕ),
   (witt_polynomial p n).eval₂ C φ =
-    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
+    Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (prod.mk b))) :=
 begin
   refine ⟨witt_structure_rat p Φ, _, _⟩,
   { intro n, apply witt_structure_rat_prop },
@@ -511,12 +457,12 @@ end
 
 lemma witt_structure_rat_rec_aux (Φ : mv_polynomial idx ℚ) (n) :
   C (p^n : ℚ) * (witt_structure_rat p Φ n) =
-  Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
+  Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (prod.mk b))) -
   (finset.range n).sum (λ i, C (p^i) * (witt_structure_rat p Φ i)^p^(n-i)) :=
 begin
   have := @X_in_terms_of_W_aux p _ _ _ _ (rat.unit_of_prime p) rfl n,
   replace := congr_arg (eval₂ C (λ k : ℕ,
-    Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i)))))) this,
+    Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (prod.mk b))))) this,
   rw [eval₂_mul, eval₂_C] at this,
   convert this, clear this,
   conv_rhs { simp only [eval₂_sub, eval₂_X] },
@@ -530,7 +476,7 @@ end
 
 lemma witt_structure_rat_rec (Φ : mv_polynomial idx ℚ) (n) :
   (witt_structure_rat p Φ n) = C (1/p^n) *
-  (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
+  (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (prod.mk b))) -
   (finset.range n).sum (λ i, C (p^i) * (witt_structure_rat p Φ i)^p^(n-i))) :=
 begin
   rw [← witt_structure_rat_rec_aux p Φ n, ← mul_assoc,
@@ -543,8 +489,6 @@ finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map (coe : 
 .
 
 section
-variables {ι : Type*} [decidable_eq ι]
-
 variables {S : Type*} [decidable_eq S] [comm_ring S]
 
 lemma map_witt_polynomial (f : R → S) [is_ring_hom f] (n) :
@@ -569,36 +513,19 @@ end
 
 end
 
-lemma duh (a b c d : R) (h1 : a = c) (h2 : b = d) : a - b = c - d :=
-by simp *
-.
-
-variables {ι : Type*} {σ : Type*} [decidable_eq ι] [decidable_eq σ]
-variables {S : Type*} [decidable_eq S] [comm_ring S]
-variables {T : Type*} [decidable_eq T] [comm_ring T]
-
-lemma foo (Φ : mv_polynomial idx ℤ) (n : ℕ)
-  (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
-  map (coe : ℤ → ℚ) (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
-  (finset.range n).sum (λ i, C (p^i) * (witt_structure_int p Φ i)^p^(n-i))) =
-  ((map coe Φ).eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
-  (finset.range n).sum (λ i, C (p^i) * (witt_structure_rat p (map coe Φ) i)^p^(n-i))) :=
+lemma coeff_witt_polynomial {i n : ℕ} (c : ℕ →₀ ℕ) (hi : i ∈ c.support)
+  (hc : coeff c (witt_polynomial p n : mv_polynomial ℕ R) ≠ 0) : i < n + 1 :=
 begin
-  rw [is_ring_hom.map_sub (map (coe : ℤ → ℚ)), ← finset.sum_hom (map (coe : ℤ → ℚ))],
-  all_goals {try {apply_instance}},
-  work_on_goal 1 { exact @is_add_group_hom.to_is_add_monoid_hom _ _ _ _ _ _ },
-  apply duh,
-  { rw map_eval₂, congr' 1, funext b, dsimp, rw map_rename,
-    erw map_witt_polynomial,
-    refl },
-  apply finset.sum_congr rfl,
-  intros i hi,
-  rw finset.mem_range at hi,
-  specialize IH i hi,
-  rw [map_mul, map_C, map_pow, IH],
-  norm_cast
+  rw [witt_polynomial, ← finset.sum_hom (coeff c)] at hc,
+  work_on_goal 0 {
+    rcases finset.exists_ne_zero_of_sum_ne_zero hc with ⟨j, hj, hcj⟩,
+    simp only [X_pow_eq_single, C_mul_monomial, coeff_monomial] at hcj,
+    split_ifs at hcj,
+    { subst c, rw finsupp.mem_support_single at hi,
+      cases hi, subst i, rwa finset.mem_range at hj },
+    { contradiction } },
+  exact coeff.is_add_monoid_hom c
 end
-.
 
 def doh {α : Type*} [comm_ring α] : add_comm_monoid α := by apply_instance
 def dah {α : Type*} [comm_ring α] : add_monoid α := by apply_instance
@@ -610,58 +537,57 @@ by apply_instance
 
 def boh {α : Type*} {β : Type*} [comm_semiring α] [comm_semiring β] (f : α → β) [is_semiring_hom f] :
   is_add_monoid_hom f := by apply_instance
--- set_option class.instance_max_depth 50
 
--- def aahrg (k : ℕ) (φ) : ((C (p : ℤ) ^ k * φ : mv_polynomial ι ℤ) modₑ ↑p) =
---   (0 : ideal.quotient (ideal.span {(p : mv_polynomial ι ℤ)})) := _
-
-lemma quux (n : ℕ) :
-  ((witt_polynomial p (n + 1) : mv_polynomial ℕ ℤ) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) =
-  ((eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n)) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) :=
+lemma witt_polynomial_mod_pow_p (n : ℕ) :
+  ((witt_polynomial p (n+1) : mv_polynomial ℕ ℤ) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) =
+  (((witt_polynomial p n).eval₂ C (λ i, ((X i)^p))) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) :=
 begin
   delta witt_polynomial,
+  rw [finset.sum_range_succ, ideal.quotient.mk_add, ideal.quotient.mk_mul],
+  rw [← nat.cast_pow, ← C_eq_coe_nat, modp.mod_self],
   rw [← finset.sum_hom (ideal.quotient.mk _),
-      ← finset.sum_hom (eval₂ C (λ (i : ℕ), X i ^ p)),
-      ← finset.sum_hom (ideal.quotient.mk _),
-      finset.sum_range_succ],
+      eval₂_sum,
+      ← finset.sum_hom (ideal.quotient.mk _)],
   all_goals {try { apply doh }},
-  work_on_goal 0 {
-    convert zero_add _ using 1,
-    work_on_goal 1 { apply dah },
-    congr' 1,
-    work_on_goal 0 {
-      apply ideal.quotient.eq_zero_iff_mem.mpr,
-      apply ideal.mul_mem_right _ _,
-      apply ideal.subset_span,
-      rw [mem_singleton_iff, ← C_eq_coe_nat],
-      norm_cast },
+  convert zero_add _ using 1,
+  congr' 1,
+  work_on_goal 2 {
     apply finset.sum_congr rfl,
     intros i hi,
+    rw finset.mem_range at hi, replace hi := nat.le_of_lt_succ hi,
     rw [eval₂_mul, eval₂_C, eval₂_pow, eval₂_X, ← pow_mul],
     congr,
     rw [mul_comm, ← nat.pow_succ],
-    rw finset.mem_range at hi,
     congr,
-    replace hi := nat.le_of_lt_succ hi,
     exact nat.succ_sub hi },
-  all_goals { try {apply bah} },
-  { refine @boh _ _ _ _ _ _, },
+  all_goals { try {apply dah} },
+  -- { refine @boh _ _ _ _ _ _, },
 end
 .
 
-lemma xyzzy (p : mv_polynomial ι ℚ) :
-  map (coe : ℤ → ℚ) (finsupp.map_range rat.num (rat.coe_int_num 0) p) = p ↔
-  ∀ m, (coeff m p).denom = 1 :=
+namespace witt_structure_int_prop_aux
+
+variables {ι : Type*} [decidable_eq ι]
+variables {S : Type*} [decidable_eq S] [comm_ring S]
+variables {T : Type*} [decidable_eq T] [comm_ring T]
+
+lemma induction_step (Φ : mv_polynomial idx ℤ) (n : ℕ)
+  (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
+  map (coe : ℤ → ℚ) (Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (prod.mk b))) -
+  (finset.range n).sum (λ i, C (p^i) * (witt_structure_int p Φ i)^p^(n-i))) =
+  ((map coe Φ).eval₂ C (λ b, ((witt_polynomial p n).rename (prod.mk b))) -
+  (finset.range n).sum (λ i, C (p^i) * (witt_structure_rat p (map coe Φ) i)^p^(n-i))) :=
 begin
-  split; intro h,
-  { rw ← mv_polynomial.ext_iff at h, intro m,
-    rw [← h m, coeff_map],
-    apply rat.coe_int_denom },
-  { apply mv_polynomial.ext, intro m,
-    rw coeff_map,
-    apply rat.coe_num_eq_of_denom_eq_one,
-    exact h m }
+  simp only [map_sub, map_eval₂, function.comp, map_rename, map_witt_polynomial, map_sum],
+  congr' 1,
+  apply finset.sum_congr rfl,
+  intros i hi,
+  rw finset.mem_range at hi,
+  specialize IH i hi,
+  rw [map_mul, map_C, map_pow, IH],
+  norm_cast
 end
+.
 
 lemma baz (φ : mv_polynomial ι ℤ) (c) (n : ℤ) (hn : n ≠ 0) :
   (coeff c (C (1 / (n : ℚ)) * map (coe : ℤ → ℚ) φ)).denom = 1 ↔ n ∣ coeff c φ :=
@@ -691,122 +617,107 @@ end
 -/
 .
 
-lemma droj (φ : mv_polynomial ι ℤ) (n : ℕ) (hn : n ≠ 0) :
-  (n : mv_polynomial ι ℤ) ∣ φ ↔ ∀ c, (n : ℤ) ∣ coeff c φ :=
-begin
-  split,
-  { rintros ⟨d, rfl⟩ c, rw [← C_eq_coe_nat, coeff_C_mul, int.nat_cast_eq_coe_nat], apply dvd_mul_right },
-  { intro h, refine ⟨finsupp.map_range (λ k, k/n) (by simp) φ, _⟩,
-    apply mv_polynomial.ext,
-    intro c,
-    rw [← C_eq_coe_nat, coeff_C_mul],
-    dsimp [coeff] at h ⊢,
-    rcases h c with ⟨d, h⟩,
-    rw [h, int.mul_div_cancel_left, int.nat_cast_eq_coe_nat],
-    exact_mod_cast hn }
-end
-
 lemma blur (Φ : mv_polynomial idx ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < (n + 1) → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
-  Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
-  (witt_polynomial p n).eval₂ C (λ (i : ℕ), (witt_structure_int p Φ i).eval₂ C $ λ bi, (X bi)^p) :=
-begin
-  apply mv_polynomial.coe_int_rat_map_injective,
-  have := witt_structure_rat_prop p (map coe Φ) n,
-  replace := congr_arg (λ ψ, eval₂ C (λ bi, (X bi)^p) ψ) this,
-  simp only [map_eval₂, function.comp, map_rename, map_witt_polynomial, map_pow, map_X] at this ⊢,
-  rw [← eval₂_assoc, ← eval₂_assoc] at this,
-  simp only [function.comp, eval₂_rename] at this,
-  simp only [rename_prodmk_eval₂, rename_pow, rename_X],
-  rw ← this, clear this,
+  Φ.eval₂ C (λ (i : idx), rename (prod.mk i) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
+  (witt_polynomial p n).eval₂ C (λ (i : ℕ), (witt_structure_int p Φ i).eval₂ C $ λ i, (X i)^p) :=
+calc Φ.eval₂ C (λ (i : idx), rename (prod.mk i) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
+  (Φ.eval₂ C (λ (b : idx), rename (prod.mk b) (witt_polynomial p n))).eval₂ C (λ k, X k ^ p) :
+    begin
+      rw ← eval₂_assoc,
+      simp only [rename_prodmk_eval₂, eval₂_rename, rename_pow, rename_X]
+    end
+  ... = _ :
+  begin
+  apply mv_polynomial.map_injective (coe : ℤ → ℚ) (λ m n h, by exact_mod_cast h),
+  simp only [map_eval₂, function.comp, map_rename, rename_prodmk_eval₂, map_witt_polynomial],
+  rw [← witt_structure_rat_prop, eval₂_assoc],
+  dsimp,
+  suffices : eval₂ C (witt_structure_rat p (map coe Φ)) (witt_polynomial p n) =
+    eval₂ C (λ (t : ℕ), map coe (witt_structure_int p Φ t)) (witt_polynomial p n),
+  { sorry },
   apply eval₂_congr,
   intros i c hi hc,
   rw IH,
-  delta witt_polynomial at hc,
-  rw ← finset.sum_hom (coeff c) at hc,
-  work_on_goal 0 {
-    rcases finset.exists_ne_zero_of_sum_ne_zero hc with ⟨j, hj, hcj⟩,
-    dsimp only at hcj,
-    rw [X_pow_eq_single, C_mul_monomial, coeff_monomial] at hcj,
-    split_ifs at hcj,
-    { subst c,
-      rw finsupp.mem_support_single at hi,
-      cases hi, subst i, rwa finset.mem_range at hj, },
-    { contradiction }
-  },
-  exact coeff.is_add_monoid_hom c
-end
+  exact coeff_witt_polynomial p c hi hc,
+  end
 .
 
-lemma bar (Φ : mv_polynomial idx ℤ) (n : ℕ) :
+lemma rec_step (Φ : mv_polynomial idx ℤ) (n : ℕ)
+  (IH : ∀ m < (n+1), map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
+  (eval₂ C (λ i, rename (prod.mk i) (witt_polynomial p (n+1))) Φ modₑ ↑(p^(n+1))) =
+    (finset.sum (finset.range (nat.succ n))
+         (λ (i : ℕ), C (p^i) * witt_structure_int p Φ i ^ p ^ (n+1 - i)) modₑ ↑(p^(n+1))) :=
+calc _ = (Φ.eval₂ C (λ i, rename (prod.mk i) (witt_polynomial p (n+1))) modₑ ↑(p^(n+1))) : rfl
+  ...  = (Φ.eval₂ C (λ i, rename (prod.mk i) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) modₑ ↑(p^(n+1))) :
+  begin
+    apply eval₂_mod, intro i,
+    rw ← C_eq_coe_nat,
+    apply rename_mod_C,
+    rw C_eq_coe_nat,
+    exact witt_polynomial_mod_pow_p p n,
+  end
+  ... = _ :
+  begin
+    rw blur p Φ n IH,
+    delta witt_polynomial,
+    conv_lhs { congr, simp [eval₂_sum] },
+    rw [← finset.sum_hom (ideal.quotient.mk _), ← finset.sum_hom (ideal.quotient.mk _)],
+    { apply finset.sum_congr rfl,
+      intros i hi,
+      rw finset.mem_range at hi, replace hi := nat.le_of_lt_succ hi,
+      rw [← C_pow],
+      rw [show (p:ℤ)^i = (p^i : ℕ), by simp, ← int.nat_cast_eq_coe_nat, C_eq_coe_nat],
+      rw [eq_mod_iff_dvd_sub, ← mul_sub],
+      rw show p^(n+1) = p^i * p^(n+1-i),
+      { rw ← nat.pow_add, congr' 1, clear IH, revert hi i n, omega manual nat },
+      rw nat.cast_mul,
+      apply mul_dvd_mul_left,
+      rw show n + 1 - i = n - i + 1,
+      { exact nat.succ_sub hi },
+      rw nat.cast_pow,
+      rw [nat.pow_succ, mul_comm, pow_mul],
+      apply dvd_sub_pow_of_dvd_sub,
+      rw ← eq_mod_iff_dvd_sub,
+      apply int_pol_mod_p },
+      apply doh, all_goals {apply bah}
+  end
+
+lemma map_witt_structure_int (Φ : mv_polynomial idx ℤ) (n : ℕ) :
   map (coe : ℤ → ℚ) (witt_structure_int p Φ n) = witt_structure_rat p (map (coe : ℤ → ℚ) Φ) n :=
 begin
   apply nat.strong_induction_on n, clear n,
   intros n IH,
-  erw xyzzy,
+  erw mv_polynomial.is_integral_iff,
   intro c,
   rw witt_structure_rat_rec p _ n,
-  rw ← foo p Φ n IH,
+  rw ← induction_step p Φ n IH,
   rw show (p : ℚ)^n = ((p^n : ℕ) : ℤ), by simp,
   rw baz,
   work_on_goal 1 { rw int.coe_nat_pow, apply pow_ne_zero, exact_mod_cast ne_of_gt (nat.prime.pos ‹_›) },
   induction n with n ih, {simp}, clear ih, revert c,
-  rw ← droj,
+  rw ← int_dvd_iff_dvd_coeff,
   work_on_goal 1 { suffices : (p ^ n.succ : ℤ) ≠ 0, { exact_mod_cast this },
     apply pow_ne_zero, exact_mod_cast ne_of_gt (nat.prime.pos ‹_›) },
+  rw show (C ↑(p ^ n.succ) : mv_polynomial (idx × ℕ) ℤ) = ↑(p^(n+1)),
+  { rw [← C_eq_coe_nat, int.nat_cast_eq_coe_nat] },
   rw ← eq_mod_iff_dvd_sub,
-  calc _ = (Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (witt_polynomial p (nat.succ n))) modₑ ↑(p^(n+1))) : rfl
-     ... = (Φ.eval₂ C (λ (b : idx), rename (λ (i : ℕ), (b, i)) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) modₑ ↑(p^(n+1))) :
-     begin
-      apply eval₂_mod, intro b,
-      rw [← C_eq_coe_nat], apply rename_mod_C, rw C_eq_coe_nat,
-      rw [nat.succ_eq_add_one],
-      exact quux p n,
-     end
-     ... = _ : by rw blur p Φ n IH
-     ... = _ :
-     begin
-      delta witt_polynomial,
-      conv_lhs { congr, simp [eval₂_sum] },
-      rw [← finset.sum_hom (ideal.quotient.mk _), ← finset.sum_hom (ideal.quotient.mk _)],
-      { apply finset.sum_congr rfl,
-        intros i hi,
-        rw finset.mem_range at hi, replace hi := nat.le_of_lt_succ hi,
-        rw [eval₂_mul, ← C_pow, eval₂_C, eval₂_pow, eval₂_X],
-        rw [show (p:ℤ)^i = (p^i : ℕ), by simp, ← int.nat_cast_eq_coe_nat, C_eq_coe_nat],
-        rw [eq_mod_iff_dvd_sub, ← mul_sub],
-        rw show p^(n+1) = p^i * p^(n+1-i),
-        { rw ← nat.pow_add, congr' 1, clear IH, revert hi i n, omega manual nat },
-        rw nat.cast_mul,
-        apply mul_dvd_mul_left,
-        rw show n + 1 - i = n - i + 1,
-        { exact nat.succ_sub hi },
-        rw nat.cast_pow,
-        rw [nat.pow_succ, mul_comm, pow_mul],
-        apply dvd_sub_pow_of_dvd_sub,
-        rw ← eq_mod_iff_dvd_sub,
-        apply int_pol_mod_p },
-        apply doh, all_goals {apply bah}
-     end,
+  apply rec_step p Φ n IH
 end
 .
 
-lemma witt_structure_int_prop.aux (Φ : mv_polynomial idx ℤ) (n : ℕ) :
-  map (coe : ℤ → ℚ) ((witt_polynomial p n).eval₂ C (witt_structure_int p Φ)) =
-  (witt_polynomial p n).eval₂ C (witt_structure_rat p (map coe Φ)) :=
-begin
-  rw [map_eval₂, map_witt_polynomial],
-  congr' 1,
-  funext i, apply bar
-end
+end witt_structure_int_prop_aux
+
+section
+open witt_structure_int_prop_aux
 
 theorem witt_structure_int_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (witt_structure_int p Φ) =
     Φ.eval₂ C (λ b : idx, ((witt_polynomial p n).rename (λ i : ℕ, (b,i)))) :=
 begin
-  apply mv_polynomial.coe_int_rat_map_injective,
+  apply mv_polynomial.map_injective (coe : ℤ → ℚ) (λ m n h, by exact_mod_cast h),
   convert witt_structure_rat_prop p (map coe Φ) n,
-  { rw [map_eval₂, map_witt_polynomial], congr' 1, funext i, apply bar },
+  { rw [map_eval₂, map_witt_polynomial], congr' 1, funext i, apply map_witt_structure_int },
   { rw map_eval₂, congr' 1, funext b, delta function.comp,
     rw [map_rename, map_witt_polynomial], }
 end
@@ -820,8 +731,8 @@ begin
   { apply witt_structure_int_prop },
   { intros φ H,
     funext i,
-    apply mv_polynomial.coe_int_rat_map_injective,
-    rw bar,
+    apply mv_polynomial.map_injective (coe : ℤ → ℚ) (λ m n h, by exact_mod_cast h),
+    rw map_witt_structure_int,
     refine congr_fun _ i,
     have := (witt_structure_prop_exists_unique p (map coe Φ)),
     apply unique_of_exists_unique this,
@@ -834,6 +745,8 @@ begin
     { intro n, apply witt_structure_rat_prop } },
 end
 .
+
+end
 
 theorem witt_structure_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
@@ -869,9 +782,12 @@ include p
 def witt_vectors (α : Type*) := ℕ → α
 omit p
 
-namespace witt_vectors
-
 local notation `𝕎` := witt_vectors -- type as `𝕎`
+
+namespace witt_vectors
+section map
+open function
+variables {α' : Type*} {β' : Type*} {S : Type*} [comm_ring S]
 
 instance : functor (𝕎 p) :=
 { map := λ α β f v, f ∘ v,
@@ -882,64 +798,64 @@ instance : is_lawful_functor (𝕎 p) :=
   id_map := λ α v, rfl,
   comp_map := λ α β γ f g v, rfl }
 
-variable (R)
+section ring_data
 
-instance : has_zero (𝕎 p R) :=
+variables (α') [comm_ring α']
+
+instance : has_zero (𝕎 p α') :=
 ⟨λ _, 0⟩
 
-variable {R}
+variable {α'}
 
-def Teichmuller (r : R) : 𝕎 p R
-| 0 := r
+def Teichmuller (a : α') : 𝕎 p α'
+| 0 := a
 | (n+1) := 0
 
-@[simp] lemma Teichmuller_zero : Teichmuller p (0:R) = 0 :=
+@[simp] lemma Teichmuller_zero : Teichmuller p (0:α') = 0 :=
 funext $ λ n, match n with | 0 := rfl | (n+1) := rfl end
 
-variable (R)
+variable (α')
 
-instance : has_one (𝕎 p R) :=
+instance : has_one (𝕎 p α') :=
 ⟨Teichmuller p 1⟩
 
-instance : has_add (𝕎 p R) :=
-⟨λ x y n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
+instance : has_add (𝕎 p α') :=
+⟨λ x y n, (witt_add p n).eval₂ (coe : ℤ → α') $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
-lemma add_def (x y : 𝕎 p R) :
-  x + y = λ n, (witt_add p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
+lemma add_def (x y : 𝕎 p α') :
+  x + y = λ n, (witt_add p n).eval₂ (coe : ℤ → α') $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
 
-instance : has_mul (𝕎 p R) :=
-⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
+instance : has_mul (𝕎 p α') :=
+⟨λ x y n, (witt_mul p n).eval₂ (coe : ℤ → α') $ λ bn, cond bn.1 (x bn.2) (y bn.2)⟩
 
-lemma mul_def (x y : 𝕎 p R) :
-  x * y = λ n, (witt_mul p n).eval₂ (coe : ℤ → R) $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
+lemma mul_def (x y : 𝕎 p α') :
+  x * y = λ n, (witt_mul p n).eval₂ (coe : ℤ → α') $ λ bn, cond bn.1 (x bn.2) (y bn.2) := rfl
 
-instance : has_neg (𝕎 p R) :=
-⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, x bn.2⟩
+instance : has_neg (𝕎 p α') :=
+⟨λ x n, (witt_neg p n).eval₂ (coe : ℤ → α') $ λ n, x n.2⟩
 
-lemma neg_def (x : 𝕎 p R) :
-  -x = λ n, (witt_neg p n).eval₂ (coe : ℤ → R) $ λ bn, x bn.2 := rfl
+lemma neg_def (x : 𝕎 p α') :
+  -x = λ n, (witt_neg p n).eval₂ (coe : ℤ → α') $ λ n, x n.2 := rfl
 
 variable {R}
 
 @[simp] lemma Teichmuller_one : Teichmuller p (1:R) = 1 := rfl
+
+end ring_data
 
 variable {p}
 
 def ghost_component (n : ℕ) (w : 𝕎 p R) : R :=
 (witt_polynomial p n).eval w
 
-section map
-open function
-variables {α} {β : Type*}
+def map (f : α' → β') : 𝕎 p α' → 𝕎 p β' := λ w, f ∘ w
 
-def map (f : α → β) : 𝕎 p α → 𝕎 p β := λ w, f ∘ w
-
-lemma map_injective (f : α → β) (hf : injective f) :
-  injective (map f : 𝕎 p α → 𝕎 p β) :=
+lemma map_injective (f : α' → β') (hf : injective f) :
+  injective (map f : 𝕎 p α' → 𝕎 p β') :=
 λ x y h, funext $ λ n, hf $ by exact congr_fun h n
 
-lemma map_surjective (f : α → β) (hf : surjective f) :
-  surjective (map f : 𝕎 p α → 𝕎 p β) :=
+lemma map_surjective (f : α' → β') (hf : surjective f) :
+  surjective (map f : 𝕎 p α' → 𝕎 p β') :=
 λ x, ⟨λ n, classical.some $ hf $ x n,
 by { funext n, dsimp [map], rw classical.some_spec (hf (x n)) }⟩
 
@@ -993,6 +909,8 @@ begin
 end
 
 end map
+
+variable {p}
 
 def ghost_map : 𝕎 p R → (ℕ → R) := λ w n, ghost_component n w
 
@@ -1088,7 +1006,7 @@ begin
     all_goals {try {assumption}, try {apply_instance}} },
   { dsimp,
     rw [mv_polynomial.map_neg, map_X],
-    have := eval_rename_prodmk (λ i : unit × ℕ, x i.2) () (witt_polynomial p n),
+    have := eval_rename_prodmk (witt_polynomial p n) (λ i : unit × ℕ, x i.2) (),
     dsimp at this,
     rw ← this, clear this,
     rw ← eval_neg,
@@ -1131,9 +1049,9 @@ by { convert H using 1, delta ghost_map.equiv_of_unit, refl }
 section
 open function
 variables {α' : Type*} [has_zero α'] [has_one α'] [has_add α'] [has_mul α'] [has_neg α']
-variables {β : Type*} [comm_ring β]
+variables {β' : Type*} [comm_ring β']
 
-def comm_ring_of_injective (f : α' → β) (inj : injective f)
+def comm_ring_of_injective (f : α' → β') (inj : injective f)
   (zero : f 0 = 0) (one : f 1 = 1) (add : ∀ {x y}, f (x + y) = f x + f y)
   (mul : ∀ {x y}, f (x * y) = f x * f y) (neg : ∀ {x}, f (-x) = - f x) :
   comm_ring α' :=
@@ -1145,7 +1063,7 @@ begin
   rw mul_comm
 end
 
-def comm_ring_of_surjective (f : β → α') (sur : surjective f)
+def comm_ring_of_surjective (f : β' → α') (sur : surjective f)
   (zero : f 0 = 0) (one : f 1 = 1) (add : ∀ {x y}, f (x + y) = f x + f y)
   (mul : ∀ {x y}, f (x * y) = f x * f y) (neg : ∀ {x}, f (-x) = - f x) :
   comm_ring α' :=
@@ -1188,12 +1106,12 @@ local attribute [instance] aux₁
 def aux₂ : comm_ring (𝕎 p (mv_polynomial R ℤ)) :=
 have hom : is_ring_hom (mv_polynomial.map coe : mv_polynomial R ℤ → mv_polynomial R ℚ), by apply_instance,
 comm_ring_of_injective (map $ mv_polynomial.map (coe : ℤ → ℚ))
-  (map_injective _ $ mv_polynomial.coe_int_rat_map_injective _)
-  (@map_zero _ _ _ _ _ _ _ _ _ hom)
-  (@map_one _ _ _ _ _ _ _ _ _ hom)
-  (@map_add _ _ _ _ _ _ _ _ _ hom)
-  (@map_mul _ _ _ _ _ _ _ _ _ hom)
-  (@map_neg _ _ _ _ _ _ _ _ _ hom)
+  (map_injective _ $ mv_polynomial.map_injective (coe : ℤ → ℚ) (λ m n h, by exact_mod_cast h))
+  (@map_zero _ _ _ _ _ _ _ _ hom)
+  (@map_one _ _ _ _ _ _ _ _ hom)
+  (@map_add _ _ _ _ _ _ _ _ hom)
+  (@map_mul _ _ _ _ _ _ _ _ hom)
+  (@map_neg _ _ _ _ _ _ _ _ hom)
 
 local attribute [instance] aux₂
 .
@@ -1201,13 +1119,14 @@ local attribute [instance] aux₂
 instance : comm_ring (𝕎 p R) :=
 comm_ring_of_surjective
 (map $ mv_polynomial.counit _) (map_surjective _ $ counit_surjective _)
-  (@map_zero _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
-  (@map_one _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
-  (@map_add _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
-  (@map_mul _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
-  (@map_neg _ _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_zero _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_one _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_add _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_mul _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
+  (@map_neg _ _ _ _ _ _ _ _ (mv_polynomial.counit.is_ring_hom R))
 
 namespace map
+variables {S : Type*} [decidable_eq S] [comm_ring S]
 
 instance (f : R → S) [is_ring_hom f] : is_ring_hom (map f : 𝕎 p R → 𝕎 p S) :=
 { map_one := map_one f,
