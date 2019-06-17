@@ -57,7 +57,7 @@ end
 by { rcases h with ⟨k, rfl⟩, refine ⟨k, by norm_cast⟩ }
 
 end finset
-
+/-
 namespace mv_polynomial
 
 open mv_polynomial finsupp
@@ -173,7 +173,7 @@ end
 is_semiring_hom.map_pow _ _ _
 
 end mv_polynomial
-
+-/
 namespace modp
 variables {α : Type*} [comm_ring α] {p : ℕ} (hp : nat.prime p)
 
