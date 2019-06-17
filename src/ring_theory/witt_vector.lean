@@ -21,6 +21,13 @@ universes u v w u₁
 -- ### FOR_MATHLIB
 -- everything in this section should move to other files
 
+lemma nat.map_cast {α : Type*} {β : Type*} (f : α → β) [semiring α] [semiring β] [is_semiring_hom f]
+  (n : ℕ) : f (n : α) = n :=
+begin
+  induction n with n ih, {rw_mod_cast is_add_monoid_hom.map_zero f},
+  simp [is_semiring_hom.map_add f, is_semiring_hom.map_one f, ih]
+end
+
 section finset
 
 variables {G : Type u} [comm_group G]
@@ -80,9 +87,90 @@ begin
     simp [finset.sum_insert hx', IH] }
 end
 
-@[simp] lemma C_pow (r : R) (n : ℕ) :
-  (C (r^n) : mv_polynomial ι R) = (C r)^n :=
-by induction n; simp [pow_succ, *]
+lemma eval₂_rename (f : R → S) [is_semiring_hom f] (k : ι → σ) (g : σ → S) (Φ : mv_polynomial ι R) :
+  (Φ.rename k).eval₂ f g = Φ.eval₂ f (g ∘ k) :=
+begin
+  apply mv_polynomial.induction_on Φ,
+  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
+  { intros p q hp hq, rw [rename_add, eval₂_add, hp, hq, eval₂_add] },
+  { intros p i hp, rw [rename_mul, eval₂_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
+end
+
+lemma rename_eval₂ (k : ι → σ) (g : σ → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
+  (Φ.eval₂ C (g ∘ k)).rename k = (Φ.rename k).eval₂ C (rename k ∘ g) :=
+begin
+  apply mv_polynomial.induction_on Φ,
+  { intro r, rw [rename_C, eval₂_C, eval₂_C, rename_C] },
+  { intros p q hp hq, rw [rename_add, eval₂_add, rename_add, hp, hq, eval₂_add] },
+  { intros p i hp, rw [rename_mul, eval₂_mul, rename_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
+end
+
+lemma rename_prodmk_eval₂ (s : σ) (g : ι → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
+  (Φ.eval₂ C g).rename (prod.mk s) = Φ.eval₂ C (λ x, (g x).rename (prod.mk s)) :=
+begin
+  apply mv_polynomial.induction_on Φ,
+  { intro r, rw [eval₂_C, eval₂_C, rename_C] },
+  { intros p q hp hq, rw [eval₂_add, rename_add, hp, hq, eval₂_add] },
+  { intros p i hp, rw [eval₂_mul, rename_mul, hp, eval₂_X, eval₂_mul, eval₂_X] }
+end
+
+lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
+begin
+  apply mv_polynomial.induction_on φ,
+  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
+  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
+  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
+end
+
+lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
+  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
+eval₂_rename_prodmk id _ _ _
+
+lemma eval₂_congr (f : R → S) [is_semiring_hom f] (g₁ g₂ : ι → S) (φ : mv_polynomial ι R)
+  (h : ∀ {i : ι} {c : ι →₀ ℕ}, i ∈ c.support → coeff c φ ≠ 0 → g₁ i = g₂ i) :
+  φ.eval₂ f g₁ = φ.eval₂ f g₂ :=
+begin
+  apply finset.sum_congr rfl,
+  intros c hc,
+  dsimp, congr' 1,
+  apply finset.prod_congr rfl,
+  intros i hi,
+  dsimp, congr' 1,
+  apply h hi,
+  rwa finsupp.mem_support_iff at hc
+end
+
+lemma mv_polynomial.ext_iff (p q : mv_polynomial ι α) :
+(∀ m, coeff m p = coeff m q) ↔ p = q :=
+⟨mv_polynomial.ext p q, λ h m, by rw h⟩
+
+lemma C_eq_coe_nat (n : ℕ) : (C ↑n : mv_polynomial ι R) = n :=
+begin
+  induction n with n ih, {simp},
+  simp [nat.succ_eq_add_one, ih]
+end
+
+-- Change this into map_injective
+lemma mv_polynomial.coe_int_rat_map_injective (I : Type*) [decidable_eq I] :
+  function.injective (map (coe : ℤ → ℚ) : mv_polynomial I ℤ → mv_polynomial I ℚ) :=
+begin
+  rw is_add_group_hom.injective_iff _,
+  all_goals {try {apply_instance}},
+  intros f hf,
+  apply mv_polynomial.ext,
+  intro m,
+  rw ← mv_polynomial.ext_iff at hf,
+  specialize hf m,
+  rw [coeff_map, coeff_zero] at hf,
+  rw coeff_zero,
+  exact_mod_cast hf
+end
+.
+
+@[simp] lemma map_pow (f : R → S) [is_semiring_hom f] (Φ : mv_polynomial ι R) (n : ℕ) :
+  (Φ^n).map f = (Φ.map f)^n :=
+is_semiring_hom.map_pow _ _ _
 
 end mv_polynomial
 
@@ -156,16 +244,82 @@ end
 
 end modp
 
-lemma integral_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
+lemma eval₂_mod (φ : mv_polynomial ι R) (f : R → S) [is_semiring_hom f] (g₁ : ι → S) (g₂ : ι → S) (s : S)
+  (h : ∀ i, (g₁ i modₑ s) = (g₂ i modₑ s)) :
+  ((φ.eval₂ f g₁) modₑ s) = (φ.eval₂ f g₂ modₑ s) :=
+begin
+  rw [eval₂_comp_right (ideal.quotient.mk _) f g₁, eval₂_comp_right (ideal.quotient.mk _) f g₂,
+    function.comp, function.comp],
+  all_goals {try {apply_instance}},
+  congr, funext i, rw h i,
+end
+
+lemma rename_mod (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : mv_polynomial ι R)
+  (h : (φ₁ modₑ r) = (φ₂ modₑ r)) :
+  ((φ₁.rename g) modₑ (r.rename g)) = (φ₂.rename g modₑ (r.rename g)) :=
+begin
+  rw eq_mod_iff_dvd_sub at h ⊢,
+  rcases h with ⟨d, h⟩,
+  refine ⟨d.rename g, _⟩,
+  rw [← rename_sub, ← rename_mul],
+  congr, exact h,
+end
+
+lemma rename_mod_C (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : R)
+  (h : (φ₁ modₑ (C r)) = (φ₂ modₑ (C r))) :
+  ((φ₁.rename g) modₑ (C r)) = (φ₂.rename g modₑ (C r)) :=
+begin
+  rwa [← rename_C g, rename_mod], assumption
+end
+
+lemma rat.coe_num_eq_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
 begin
   rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
   norm_cast, delta rat.of_int rat.mk_nat, congr,
   simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
 end
 
--- ### end FOR_MATHLIB
+def rat.unit_of_prime : units ℚ :=
+⟨p, 1/p,
+mul_one_div_cancel (by exact_mod_cast ne_of_gt (nat.prime.pos ‹_›)),
+one_div_mul_cancel (by exact_mod_cast ne_of_gt (nat.prime.pos ‹_›))⟩
 
--- proper start of this file
+theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n) :
+  (finset.range n).sum f = finset.univ.sum (λ i : fin n, f i.1) :=
+show _ = @multiset.sum α _ ↑(list.map _ _),
+by rw [list.map_pmap, list.pmap_eq_map]; refl
+
+lemma eq_mod_iff_dvd_sub (a b c : α) :
+  (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
+by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
+  ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
+
+lemma fermat_little' (a : zmodp p ‹_›) : a^p = a :=
+begin
+  have ppos : p > 0 := nat.prime.pos ‹_›,
+  by_cases h : a = 0,
+  { subst a, apply zero_pow ppos },
+  { have := zmodp.fermat_little ‹_› h,
+    replace := congr_arg (λ x, a * x) this,
+    simp at this,
+    convert this,
+    rw ← pow_succ, congr, clear this h a _inst_3,
+    revert ppos p, omega manual nat }
+end
+
+lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
+  ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
+begin
+  apply mv_polynomial.induction_on φ,
+  { intro n, rw [eval₂_C, eq_mod_iff_dvd_sub, ← C_eq_coe_nat, ← C_pow, ← C_sub],
+    suffices : (p : ℤ) ∣ n - n^p,
+    { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul, int.nat_cast_eq_coe_nat] },
+      rw ← zmodp.eq_zero_iff_dvd_int ‹_›,
+      rw [int.cast_sub, int.cast_pow, sub_eq_zero],
+      symmetry, apply fermat_little' },
+  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
+  { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
+end
 
 open mv_polynomial set
 
@@ -214,14 +368,19 @@ begin
   exact nat.prime.dvd_choose i_pos hi ‹_›
 end
 
-open mv_polynomial
+lemma zrum (a b : α) (h : (a modₑ (p : α)) = (b modₑ (p : α))) (k : ℕ) :
+  (a^(p^k) modₑ (p^(k+1) : α)) = (b^(p^k) modₑ (p^(k+1) : α)) :=
+begin
+  rw eq_mod_iff_dvd_sub at h ⊢,
+  apply dvd_sub_pow_of_dvd_sub,
+  exact h
+end
+
+-- ### end FOR_MATHLIB
+
+-- proper start of this file
 
 variables {R : Type u} [decidable_eq R] [comm_ring R]
-
-theorem range_sum_eq_fin_univ_sum {α} [add_comm_monoid α] (f : ℕ → α) (n) :
-  (finset.range n).sum f = finset.univ.sum (λ i : fin n, f i.1) :=
-show _ = @multiset.sum α _ ↑(list.map _ _),
-by rw [list.map_pmap, list.pmap_eq_map]; refl
 
 def witt_polynomial (n : ℕ) : mv_polynomial ℕ R :=
 (finset.range (n+1)).sum (λ i, (C (p^i) * X i ^ (p^(n-i))))
@@ -255,6 +414,7 @@ lemma X_in_terms_of_W_eq {n : ℕ} :
     (X n - (finset.range n).sum (λ i, C (p^i) * X_in_terms_of_W p pu hp i ^ p ^ (n - i))) :=
 by { rw [X_in_terms_of_W, range_sum_eq_fin_univ_sum], refl }
 
+/-
 lemma X_in_terms_of_W_zero : X_in_terms_of_W p pu hp 0 = witt_polynomial p 0 :=
 begin
   rw X_in_terms_of_W_eq,
@@ -263,8 +423,9 @@ begin
   rw witt_polynomial_zero,
   simp
 end
+-/
 
-lemma X_in_terms_of_W_aux {n} : C (p^n : R) * X_in_terms_of_W p pu hp n =
+lemma X_in_terms_of_W_aux (n) : C (p^n : R) * X_in_terms_of_W p pu hp n =
   X n - (finset.range n).sum (λ i, C (p^i) * (X_in_terms_of_W p pu hp i)^p^(n-i)) :=
 by rw [X_in_terms_of_W_eq, ← mul_assoc, ← C_mul, ← mul_pow, ← hp, pu.mul_inv, one_pow, C_1, one_mul]
 
@@ -317,15 +478,10 @@ end
 
 variables {idx : Type*} [decidable_eq idx]
 
-def rat.pu : units ℚ :=
-⟨p, 1/p,
-mul_one_div_cancel (by exact_mod_cast ne_of_gt (nat.prime.pos ‹_›)),
-one_div_mul_cancel (by exact_mod_cast ne_of_gt (nat.prime.pos ‹_›))⟩
-
 def witt_structure_rat (Φ : mv_polynomial idx ℚ) : ℕ → mv_polynomial (idx × ℕ) ℚ :=
 λ n, eval₂ C (λ k : ℕ,
    Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i)))))
-     (X_in_terms_of_W p (rat.pu p) rfl n)
+     (X_in_terms_of_W p (rat.unit_of_prime p) rfl n)
 
 theorem witt_structure_rat_prop (Φ : mv_polynomial idx ℚ) (n) :
   (witt_polynomial p n).eval₂ C (witt_structure_rat p Φ) =
@@ -345,7 +501,7 @@ begin
   { intros φ H,
     unfold witt_structure_rat,
     funext n,
-    rw show φ n = ((X_in_terms_of_W p (rat.pu p) rfl n).eval₂ C (witt_polynomial p)).eval₂ C φ,
+    rw show φ n = ((X_in_terms_of_W p (rat.unit_of_prime p) rfl n).eval₂ C (witt_polynomial p)).eval₂ C φ,
     { rw [X_in_terms_of_W_prop p, eval₂_X] },
     rw ← eval₂_assoc,
     congr,
@@ -358,7 +514,7 @@ lemma witt_structure_rat_rec_aux (Φ : mv_polynomial idx ℚ) (n) :
   Φ.eval₂ C (λ b, ((witt_polynomial p n).rename (λ i, (b,i)))) -
   (finset.range n).sum (λ i, C (p^i) * (witt_structure_rat p Φ i)^p^(n-i)) :=
 begin
-  have := @X_in_terms_of_W_aux p _ _ _ _ (rat.pu p) rfl n,
+  have := @X_in_terms_of_W_aux p _ _ _ _ (rat.unit_of_prime p) rfl n,
   replace := congr_arg (eval₂ C (λ k : ℕ,
     Φ.eval₂ C (λ b, ((witt_polynomial p k).rename (λ i, (b,i)))))) this,
   rw [eval₂_mul, eval₂_C] at this,
@@ -389,17 +545,6 @@ finsupp.map_range rat.num (rat.coe_int_num 0) (witt_structure_rat p (map (coe : 
 section
 variables {ι : Type*} [decidable_eq ι]
 
-lemma mv_polynomial.ext_iff (p q : mv_polynomial ι α) :
-(∀ m, coeff m p = coeff m q) ↔ p = q :=
-⟨mv_polynomial.ext p q, λ h m, by rw h⟩
-
-lemma nat.map_cast {α : Type*} {β : Type*} (f : α → β) [semiring α] [semiring β] [is_semiring_hom f]
-  (n : ℕ) : f (n : α) = n :=
-begin
-  induction n with n ih, {rw_mod_cast is_add_monoid_hom.map_zero f},
-  simp [is_semiring_hom.map_add f, is_semiring_hom.map_one f, ih]
-end
-
 variables {S : Type*} [decidable_eq S] [comm_ring S]
 
 lemma map_witt_polynomial (f : R → S) [is_ring_hom f] (n) :
@@ -424,22 +569,6 @@ end
 
 end
 
-lemma mv_polynomial.coe_int_rat_map_injective (I : Type*) [decidable_eq I] :
-  function.injective (map (coe : ℤ → ℚ) : mv_polynomial I ℤ → mv_polynomial I ℚ) :=
-begin
-  rw is_add_group_hom.injective_iff _,
-  all_goals {try {apply_instance}},
-  intros f hf,
-  apply mv_polynomial.ext,
-  intro m,
-  rw ← mv_polynomial.ext_iff at hf,
-  specialize hf m,
-  rw [coeff_map, coeff_zero] at hf,
-  rw coeff_zero,
-  exact_mod_cast hf
-end
-.
-
 lemma duh (a b c d : R) (h1 : a = c) (h2 : b = d) : a - b = c - d :=
 by simp *
 .
@@ -447,10 +576,6 @@ by simp *
 variables {ι : Type*} {σ : Type*} [decidable_eq ι] [decidable_eq σ]
 variables {S : Type*} [decidable_eq S] [comm_ring S]
 variables {T : Type*} [decidable_eq T] [comm_ring T]
-
-@[simp] lemma map_pow (f : R → S) [is_semiring_hom f] (Φ : mv_polynomial ι R) (n : ℕ) :
-  (Φ^n).map f = (Φ.map f)^n :=
-is_semiring_hom.map_pow _ _ _
 
 lemma foo (Φ : mv_polynomial idx ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < n → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
@@ -490,12 +615,6 @@ def boh {α : Type*} {β : Type*} [comm_semiring α] [comm_semiring β] (f : α 
 -- def aahrg (k : ℕ) (φ) : ((C (p : ℤ) ^ k * φ : mv_polynomial ι ℤ) modₑ ↑p) =
 --   (0 : ideal.quotient (ideal.span {(p : mv_polynomial ι ℤ)})) := _
 
-lemma C_eq_coe_nat (n : ℕ) : (C ↑n : mv_polynomial ι R) = n :=
-begin
-  induction n with n ih, {simp},
-  simp [nat.succ_eq_add_one, ih]
-end
-
 lemma quux (n : ℕ) :
   ((witt_polynomial p (n + 1) : mv_polynomial ℕ ℤ) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) =
   ((eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n)) modₑ (↑(p^(n+1)) : mv_polynomial ℕ ℤ)) :=
@@ -530,46 +649,6 @@ begin
 end
 .
 
-lemma eq_mod_iff_dvd_sub (a b c : α) :
-  (a modₑ c) = (b modₑ c) ↔ c ∣ a - b :=
-by rw [← sub_eq_zero, ← ideal.quotient.mk_sub,
-  ideal.quotient.eq_zero_iff_mem, ideal.mem_span_singleton]
-
-lemma fermat_little' (a : zmodp p ‹_›) : a^p = a :=
-begin
-  have ppos : p > 0 := nat.prime.pos ‹_›,
-  by_cases h : a = 0,
-  { subst a, apply zero_pow ppos },
-  { have := zmodp.fermat_little ‹_› h,
-    replace := congr_arg (λ x, a * x) this,
-    simp at this,
-    convert this,
-    rw ← pow_succ, congr, clear this h a _inst_3,
-    revert ppos p, omega manual nat }
-end
-
-lemma int_pol_mod_p (φ : mv_polynomial ι ℤ) :
-  ((φ.eval₂ C (λ i, (X i)^p)) modₑ ↑p) = (φ^p modₑ ↑p) :=
-begin
-  apply mv_polynomial.induction_on φ,
-  { intro n, rw [eval₂_C, eq_mod_iff_dvd_sub, ← C_eq_coe_nat, ← C_pow, ← C_sub],
-    suffices : (p : ℤ) ∣ n - n^p,
-    { rcases this with ⟨d, h⟩, refine ⟨C d, _⟩, rw [h, C_mul, int.nat_cast_eq_coe_nat] },
-      rw ← zmodp.eq_zero_iff_dvd_int ‹_›,
-      rw [int.cast_sub, int.cast_pow, sub_eq_zero],
-      symmetry, apply fermat_little' },
-  { intros f g hf hg, rw [eval₂_add, ideal.quotient.mk_add, hf, hg, modp.add_pow], assumption },
-  { intros f i hf, rw [eval₂_mul, ideal.quotient.mk_mul, hf, eval₂_X, mul_pow, ideal.quotient.mk_mul] }
-end
-
-lemma zrum (a b : α) (h : (a modₑ (p : α)) = (b modₑ (p : α))) (k : ℕ) :
-  (a^(p^k) modₑ (p^(k+1) : α)) = (b^(p^k) modₑ (p^(k+1) : α)) :=
-begin
-  rw eq_mod_iff_dvd_sub at h ⊢,
-  apply dvd_sub_pow_of_dvd_sub,
-  exact h
-end
-
 lemma xyzzy (p : mv_polynomial ι ℚ) :
   map (coe : ℤ → ℚ) (finsupp.map_range rat.num (rat.coe_int_num 0) p) = p ↔
   ∀ m, (coeff m p).denom = 1 :=
@@ -580,7 +659,7 @@ begin
     apply rat.coe_int_denom },
   { apply mv_polynomial.ext, intro m,
     rw coeff_map,
-    apply integral_of_denom_eq_one,
+    apply rat.coe_num_eq_of_denom_eq_one,
     exact h m }
 end
 
@@ -593,7 +672,7 @@ begin
     refine ⟨((1 : ℚ) / n * ↑(coeff c φ)).num, _⟩,
     suffices : (↑(coeff c φ) : ℚ) = (_ : ℤ),
     { rwa int.cast_inj at this },
-    replace h := integral_of_denom_eq_one _ h,
+    replace h := rat.coe_num_eq_of_denom_eq_one _ h,
     rw [int.cast_mul, h, ← mul_assoc, mul_one_div_cancel, one_mul],
     exact_mod_cast hn },
   { rintros ⟨d, h⟩,
@@ -602,12 +681,14 @@ begin
     { exact_mod_cast hn } }
 end
 
+/-
 lemma baz_nat (φ : mv_polynomial ι ℤ) (c) (n : ℕ) (hn : n ≠ 0) :
   (coeff c (C (1 / (n : ℚ)) * map (coe : ℤ → ℚ) φ)).denom = 1 ↔ (n : ℤ) ∣ coeff c φ :=
 begin
   have := baz φ c n (by exact_mod_cast hn),
   rwa [show ((n : ℤ) : ℚ) = n, by simp] at this,
 end
+-/
 .
 
 lemma droj (φ : mv_polynomial ι ℤ) (n : ℕ) (hn : n ≠ 0) :
@@ -623,75 +704,6 @@ begin
     rcases h c with ⟨d, h⟩,
     rw [h, int.mul_div_cancel_left, int.nat_cast_eq_coe_nat],
     exact_mod_cast hn }
-end
-
-lemma eval₂_mod (φ : mv_polynomial ι R) (f : R → S) [is_semiring_hom f] (g₁ : ι → S) (g₂ : ι → S) (s : S)
-  (h : ∀ i, (g₁ i modₑ s) = (g₂ i modₑ s)) :
-  ((φ.eval₂ f g₁) modₑ s) = (φ.eval₂ f g₂ modₑ s) :=
-begin
-  rw [eval₂_comp_right (ideal.quotient.mk _) f g₁, eval₂_comp_right (ideal.quotient.mk _) f g₂,
-    function.comp, function.comp],
-  all_goals {try {apply_instance}},
-  congr, funext i, rw h i,
-end
-
-lemma rename_mod (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : mv_polynomial ι R)
-  (h : (φ₁ modₑ r) = (φ₂ modₑ r)) :
-  ((φ₁.rename g) modₑ (r.rename g)) = (φ₂.rename g modₑ (r.rename g)) :=
-begin
-  rw eq_mod_iff_dvd_sub at h ⊢,
-  rcases h with ⟨d, h⟩,
-  refine ⟨d.rename g, _⟩,
-  rw [← rename_sub, ← rename_mul],
-  congr, exact h,
-end
-
-lemma rename_mod_C (φ₁ φ₂ : mv_polynomial ι R) (g : ι → σ) (r : R)
-  (h : (φ₁ modₑ (C r)) = (φ₂ modₑ (C r))) :
-  ((φ₁.rename g) modₑ (C r)) = (φ₂.rename g modₑ (C r)) :=
-begin
-  rwa [← rename_C g, rename_mod], assumption
-end
-
-lemma eval₂_rename (f : R → S) [is_semiring_hom f] (k : ι → σ) (g : σ → S) (Φ : mv_polynomial ι R) :
-  (Φ.rename k).eval₂ f g = Φ.eval₂ f (g ∘ k) :=
-begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [rename_mul, eval₂_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma rename_eval₂ (k : ι → σ) (g : σ → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
-  (Φ.eval₂ C (g ∘ k)).rename k = (Φ.rename k).eval₂ C (rename k ∘ g) :=
-begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C, rename_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, rename_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [rename_mul, eval₂_mul, rename_mul, hp, rename_X, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma rename_prodmk_eval₂ (s : σ) (g : ι → mv_polynomial ι R) (Φ : mv_polynomial ι R) :
-  (Φ.eval₂ C g).rename (prod.mk s) = Φ.eval₂ C (λ x, (g x).rename (prod.mk s)) :=
-begin
-  apply mv_polynomial.induction_on Φ,
-  { intro r, rw [eval₂_C, eval₂_C, rename_C] },
-  { intros p q hp hq, rw [eval₂_add, rename_add, hp, hq, eval₂_add] },
-  { intros p i hp, rw [eval₂_mul, rename_mul, hp, eval₂_X, eval₂_mul, eval₂_X] }
-end
-
-lemma eval₂_congr (f : R → S) [is_semiring_hom f] (g₁ g₂ : ι → S) (φ : mv_polynomial ι R)
-  (h : ∀ {i : ι} {c : ι →₀ ℕ}, i ∈ c.support → coeff c φ ≠ 0 → g₁ i = g₂ i) :
-  φ.eval₂ f g₁ = φ.eval₂ f g₂ :=
-begin
-  apply finset.sum_congr rfl,
-  intros c hc,
-  dsimp, congr' 1,
-  apply finset.prod_congr rfl,
-  intros i hi,
-  dsimp, congr' 1,
-  apply h hi,
-  rwa finsupp.mem_support_iff at hc
 end
 
 lemma blur (Φ : mv_polynomial idx ℤ) (n : ℕ)
@@ -822,19 +834,6 @@ begin
     { intro n, apply witt_structure_rat_prop } },
 end
 .
-
-lemma eval₂_rename_prodmk (f : R → S) [is_semiring_hom f] (g : σ × ι → S) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval₂ f g = eval₂ f (λ i, g (s, i)) φ :=
-begin
-  apply mv_polynomial.induction_on φ,
-  { intro r, rw [rename_C, eval₂_C, eval₂_C] },
-  { intros p q hp hq, rw [rename_add, eval₂_add, eval₂_add, hp, hq] },
-  { intros p i hp, rw [rename_mul, rename_X, eval₂_mul, eval₂_mul, eval₂_X, eval₂_X, hp] }
-end
-
-lemma eval_rename_prodmk (g : σ × ι → R) (s : σ) (φ : mv_polynomial ι R) :
-  (rename (prod.mk s) φ).eval g = eval (λ i, g (s, i)) φ :=
-eval₂_rename_prodmk id _ _ _
 
 theorem witt_structure_prop (Φ : mv_polynomial idx ℤ) (n) :
   (witt_polynomial p n).eval₂ C (λ i, map (coe : ℤ → R) (witt_structure_int p Φ i)) =
@@ -1038,28 +1037,6 @@ end
 
 variable {R}
 
--- Unfortunately the following lemma doesn't typecheck,
--- because we don't know that (𝕎 p R) is a comm_semiring
-
--- @[simp] lemma ghost_map.compat (x : idx → 𝕎 p R) (φ : mv_polynomial (idx × ℕ) ℤ) :
---   ghost_map (φ.eval₂ coe (λ bn, x bn.1)) = φ.eval₂ coe (λ bn, ghost_map (x bn.1)) :=
--- funext $ λ n,
--- begin
---   delta ghost_map ghost_component,
---   have := congr_arg (λ (ψ : mv_polynomial (bool × ℕ) R), ψ.eval $ λ (bn : bool × ℕ), cond bn.1 (x bn.2) (y bn.2)) (witt_structure_prop p (X tt + X ff) n),
---   convert this using 1; clear this,
---   { delta witt_vectors.has_add witt_add, dsimp [eval],
---     rw ← eval₂_assoc _ _ _ _,
---     work_on_goal 0 { congr' 1, funext i, apply eval₂_eq_eval_map },
---     all_goals {try {assumption}, try {apply_instance}} },
---   { dsimp,
---     rw [mv_polynomial.map_add, eval₂_add, eval_add],
---     congr' 1,
---     all_goals {
---       erw [mv_polynomial.map_X (coe : ℤ → R), eval₂_X, eval_rename_prodmk],
---       congr } }
--- end
-
 @[simp] lemma ghost_map.add (x y : 𝕎 p R) :
   ghost_map (x + y) = ghost_map x + ghost_map y :=
 funext $ λ n,
@@ -1200,7 +1177,7 @@ variable (R)
 
 def aux₁ : comm_ring (𝕎 p (mv_polynomial R ℚ)) :=
 comm_ring_of_injective (ghost_map)
-  (ghost_map.bijective_of_unit ((rat.pu p).map C)
+  (ghost_map.bijective_of_unit ((rat.unit_of_prime p).map C)
   (by rw ← C_eq_coe_nat; refl)).1
   (@ghost_map.zero p _ (mv_polynomial R ℚ) _ _)
   (ghost_map.one) (ghost_map.add) (ghost_map.mul) (ghost_map.neg)
