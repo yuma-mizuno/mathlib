@@ -64,18 +64,9 @@ end finset
 
 lemma rat.coe_num_eq_iff (r : ℚ) : (r.num : ℚ) = r ↔ r.denom = 1 :=
 begin
-  split,
-  { intro h,
-    rw [rat.coe_int_eq_mk, rat.num_denom r, rat.mk_eq] at h,
-    { cases r with n d p c, show d = 1,
-      change (rat.mk n d).num * d = n * 1 at h,
-      sorry },
-    { exact one_ne_zero },
-    { apply ne_of_gt, exact_mod_cast r.pos } },
-  { intro h,
-    rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
-    norm_cast, delta rat.of_int rat.mk_nat, congr,
-    simp only [nat.gcd_one_right, int.nat_abs, nat.div_one] },
+  split; intro h,
+  { rw ← h, apply rat.coe_int_denom },
+  { rw_mod_cast [← rat.cast_of_int, rat.of_int], cases r with n d p c, congr, exact h.symm },
 end
 
 lemma rat.denom_coe_div_eq_one_iff (d n : ℤ) (hd : d ≠ 0) :
@@ -583,6 +574,7 @@ begin
     congr,
     exact nat.succ_sub hi },
   all_goals { try {apply dah} },
+  all_goals {sorry}
   -- { refine @boh _ _ _ _ _ _, },
 end
 .
@@ -611,23 +603,6 @@ begin
 end
 .
 
-lemma baz (φ : mv_polynomial ι ℤ) (c) (n : ℤ) (hn : n ≠ 0) :
-  (coeff c (C (1 / (n : ℚ)) * map (coe : ℤ → ℚ) φ)).denom = 1 ↔ n ∣ coeff c φ :=
-begin
-  rw [coeff_C_mul, coeff_map, mul_comm, ← div_eq_mul_one_div],
-  apply rat.denom_coe_div_eq_one_iff _ _ hn
-end
-
-/-
-lemma baz_nat (φ : mv_polynomial ι ℤ) (c) (n : ℕ) (hn : n ≠ 0) :
-  (coeff c (C (1 / (n : ℚ)) * map (coe : ℤ → ℚ) φ)).denom = 1 ↔ (n : ℤ) ∣ coeff c φ :=
-begin
-  have := baz φ c n (by exact_mod_cast hn),
-  rwa [show ((n : ℤ) : ℚ) = n, by simp] at this,
-end
--/
-.
-
 lemma blur (Φ : mv_polynomial idx ℤ) (n : ℕ)
   (IH : ∀ m : ℕ, m < (n + 1) → map coe (witt_structure_int p Φ m) = witt_structure_rat p (map coe Φ) m) :
   Φ.eval₂ C (λ (i : idx), rename (prod.mk i) (eval₂ C (λ i, ((X i)^p)) (witt_polynomial p n))) =
@@ -646,7 +621,8 @@ calc Φ.eval₂ C (λ (i : idx), rename (prod.mk i) (eval₂ C (λ i, ((X i)^p))
   dsimp,
   suffices : eval₂ C (witt_structure_rat p (map coe Φ)) (witt_polynomial p n) =
     eval₂ C (λ (t : ℕ), map coe (witt_structure_int p Φ t)) (witt_polynomial p n),
-  { sorry },
+  { -- rw this, fails
+    sorry },
   apply eval₂_congr,
   intros i c hi hc,
   rw IH,
@@ -704,7 +680,8 @@ begin
   rw witt_structure_rat_rec p _ n,
   rw ← induction_step p Φ n IH,
   rw show (p : ℚ)^n = ((p^n : ℕ) : ℤ), by simp,
-  rw baz,
+  rw [coeff_C_mul, coeff_map, mul_comm, ← div_eq_mul_one_div],
+  rw rat.denom_coe_div_eq_one_iff _ _,
   work_on_goal 1 { rw int.coe_nat_pow, apply pow_ne_zero, exact_mod_cast ne_of_gt (nat.prime.pos ‹_›) },
   induction n with n ih, {simp}, clear ih, revert c,
   rw ← int_dvd_iff_dvd_coeff,
