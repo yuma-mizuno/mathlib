@@ -62,11 +62,35 @@ by { rcases h with ⟨k, rfl⟩, refine ⟨k, by norm_cast⟩ }
 
 end finset
 
-lemma rat.coe_num_eq_of_denom_eq_one (r : ℚ) (h : r.denom = 1) : (r.num : ℚ) = r :=
+lemma rat.coe_num_eq_iff (r : ℚ) : (r.num : ℚ) = r ↔ r.denom = 1 :=
 begin
-  rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
-  norm_cast, delta rat.of_int rat.mk_nat, congr,
-  simp only [nat.gcd_one_right, int.nat_abs, nat.div_one]
+  split,
+  { intro h,
+    rw [rat.coe_int_eq_mk, rat.num_denom r, rat.mk_eq] at h,
+    { cases r with n d p c, show d = 1,
+      change (rat.mk n d).num * d = n * 1 at h,
+      sorry },
+    { exact one_ne_zero },
+    { apply ne_of_gt, exact_mod_cast r.pos } },
+  { intro h,
+    rw [← rat.cast_of_int, rat.num_denom r, h, ← rat.mk_nat_eq],
+    norm_cast, delta rat.of_int rat.mk_nat, congr,
+    simp only [nat.gcd_one_right, int.nat_abs, nat.div_one] },
+end
+
+lemma rat.denom_coe_div_eq_one_iff (d n : ℤ) (hd : d ≠ 0) :
+  ((n : ℚ) / d).denom = 1 ↔ d ∣ n :=
+begin
+  split,
+  { intro h, refine ⟨(n/d : ℚ).num, _⟩,
+    suffices : (n : ℚ) = ↑(d * (n/d : ℚ).num),
+    { rwa int.cast_inj at this },
+    rw ← rat.coe_num_eq_iff at h,
+    rw [int.cast_mul, h, mul_div_cancel'],
+    exact_mod_cast hd },
+  { rintros ⟨c, rfl⟩, rw [int.cast_mul, mul_div_cancel_left],
+    { exact rat.coe_int_denom c },
+    { exact_mod_cast hd } }
 end
 
 namespace mv_polynomial
@@ -101,10 +125,8 @@ begin
   rw ← ext_iff,
   apply forall_congr,
   intro m,
-  rw coeff_map,
-  split; intro h,
-  { rw ← h, apply rat.coe_int_denom },
-  { apply rat.coe_num_eq_of_denom_eq_one, exact h }
+  rw [coeff_map, ← rat.coe_num_eq_iff],
+  exact iff.rfl
 end
 
 -- lemma dvd_iff_dvd_coeff (p : mv_polynomial σ α) (a : α) (h : a ≠ 0) :
@@ -592,19 +614,8 @@ end
 lemma baz (φ : mv_polynomial ι ℤ) (c) (n : ℤ) (hn : n ≠ 0) :
   (coeff c (C (1 / (n : ℚ)) * map (coe : ℤ → ℚ) φ)).denom = 1 ↔ n ∣ coeff c φ :=
 begin
-  split,
-  { intro h,
-    rw [coeff_C_mul, coeff_map] at h,
-    refine ⟨((1 : ℚ) / n * ↑(coeff c φ)).num, _⟩,
-    suffices : (↑(coeff c φ) : ℚ) = (_ : ℤ),
-    { rwa int.cast_inj at this },
-    replace h := rat.coe_num_eq_of_denom_eq_one _ h,
-    rw [int.cast_mul, h, ← mul_assoc, mul_one_div_cancel, one_mul],
-    exact_mod_cast hn },
-  { rintros ⟨d, h⟩,
-    rw [coeff_C_mul, coeff_map, h, int.cast_mul, ← mul_assoc, one_div_mul_cancel, one_mul],
-    { apply rat.coe_int_denom },
-    { exact_mod_cast hn } }
+  rw [coeff_C_mul, coeff_map, mul_comm, ← div_eq_mul_one_div],
+  apply rat.denom_coe_div_eq_one_iff _ _ hn
 end
 
 /-
