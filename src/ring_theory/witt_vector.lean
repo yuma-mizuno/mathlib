@@ -65,7 +65,7 @@ end finset
 lemma rat.coe_num_eq_iff (r : ℚ) : (r.num : ℚ) = r ↔ r.denom = 1 :=
 begin
   split; intro h,
-  { rw ← h, apply rat.coe_int_denom },
+  { rw_mod_cast ← h, refl },
   { rw_mod_cast [← rat.cast_of_int, rat.of_int], cases r with n d p c, congr, exact h.symm },
 end
 
@@ -574,6 +574,7 @@ begin
     congr,
     exact nat.succ_sub hi },
   all_goals { try {apply dah} },
+  { refl },
   all_goals {sorry}
   -- { refine @boh _ _ _ _ _ _, },
 end
