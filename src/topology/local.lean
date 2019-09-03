@@ -13,10 +13,6 @@ def local_pred {τ : Type*} (P : Π {α : Type*} [topological_space α], (α →
   by exactI (∀ (x : α), ∃ (U : opens α) (m : x ∈ U), P (f ∘ (subtype.val : U → α))) →
   P f
 
-/-- A subset of a subtype can be thought of as a subset of the type. -/
-def set_of_subtype_set {α : Type*} {P : α → Prop} (x : set {a : α // P a}) : set α :=
-{a : α | ∃ (h : P a), (⟨a,h⟩ : {a : α // P a}) ∈ x}
-
 /-- Continuity is a local predicate (on functions with any fixed target topological space). -/
 theorem continuous_local {τ : Type*} [topological_space τ] :
   local_pred (λ α _ (f : α → τ), by exactI continuous f) :=
@@ -28,7 +24,7 @@ begin
   let U := λ x : α, classical.some (h x),
   -- We define `V x` to be the preimage of s under the restriction of `f` to `U x`.
   let V' := λ x : α, (f ∘ (subtype.val : U x → α)) ⁻¹' s,
-  let V := λ x : α, set_of_subtype_set (V' x),
+  let V := λ x : α, subtype.val '' (V' x),
   -- Now we show that each `V x` is open (being an open subset of `U x`, by the promised continuity).
   have V_open : ∀ x, is_open (V x), sorry,
   -- And finally that `f ⁻¹' s` is the union of the `V x`.
