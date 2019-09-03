@@ -3,13 +3,13 @@ import topology.opens
 
 open topological_space
 
-/-- We say a predicate on functions between topological spaces is "local" if it suffices to
+/-- We say a predicate on functions on some topological space is "local" if it suffices to
 check it on the restriction of the function to some open neighbourhood of each point.
 
 The collections of functions satisfying some local predicate automatically form a sheaf.
 -/
-def local_pred (P : Π {α β : Type*} [topological_space α] [topological_space β], (α → β) → Prop) : Prop :=
-∀ (α β : Type*) [topological_space α] [topological_space β] (f : α → β),
+def local_pred {τ : Type*} (P : Π {α : Type*} [topological_space α], (α → τ) → Prop) : Prop :=
+∀ (α : Type*) [topological_space α] (f : α → τ),
   by exactI (∀ (x : α), ∃ (U : opens α) (m : x ∈ U), P (f ∘ (subtype.val : U → α))) →
   P f
 
@@ -17,9 +17,10 @@ def local_pred (P : Π {α β : Type*} [topological_space α] [topological_space
 def set_of_subtype_set {α : Type*} {P : α → Prop} (x : set {a : α // P a}) : set α :=
 {a : α | ∃ (h : P a), (⟨a,h⟩ : {a : α // P a}) ∈ x}
 
-/-- Continuity is a local predicate. -/
-theorem continuous_local : local_pred @continuous :=
-λ α β _ _ f h,
+/-- Continuity is a local predicate (on functions with any fixed target topological space). -/
+theorem continuous_local {τ : Type*} [topological_space τ] :
+  local_pred (λ α _ (f : α → τ), by exactI continuous f) :=
+λ α _ f h,
 begin
   resetI,
   intros s o,
