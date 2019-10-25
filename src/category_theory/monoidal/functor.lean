@@ -86,14 +86,12 @@ open monoidal_category
 namespace monoidal_functor
 
 section
--- In order to express the tensorator as a natural isomorphism,
--- we need to be in at least `Type 0`, so we have products.
-variables {C : Type u₁} [category.{v₁+1} C] [𝒞 : monoidal_category.{v₁+1} C]
-variables {D : Type u₂} [category.{v₂+1} D] [𝒟 : monoidal_category.{v₂+1} D]
+variables {C : Type u₁} [category.{v₁} C] [𝒞 : monoidal_category.{v₁} C]
+variables {D : Type u₂} [category.{v₂} D] [𝒟 : monoidal_category.{v₂} D]
 include 𝒞 𝒟
 
 /-- The tensorator as a natural isomorphism. -/
-def μ_nat_iso (F : monoidal_functor.{v₁+1 v₂+1} C D) :
+def μ_nat_iso (F : monoidal_functor.{v₁ v₂} C D) :
   (functor.prod F.to_functor F.to_functor) ⋙ (tensor D) ≅ (tensor C) ⋙ F.to_functor :=
 nat_iso.of_components
   (by { intros, apply F.μ_iso })
@@ -105,15 +103,10 @@ variables (C : Type u₁) [category.{v₁} C] [𝒞 : monoidal_category.{v₁} C
 include 𝒞
 
 /-- The identity monoidal functor. -/
-def id : monoidal_functor.{v₁ v₁} C C :=
+@[simps] def id : monoidal_functor.{v₁ v₁} C C :=
 { ε := 𝟙 _,
   μ := λ X Y, 𝟙 _,
   .. 𝟭 C }
-
-@[simp] lemma id_obj (X : C) : (monoidal_functor.id C).obj X = X := rfl
-@[simp] lemma id_map {X X' : C} (f : X ⟶ X') : (monoidal_functor.id C).map f = f := rfl
-@[simp] lemma id_ε : (monoidal_functor.id C).ε = 𝟙 _ := rfl
-@[simp] lemma id_μ (X Y) : (monoidal_functor.id C).μ X Y = 𝟙 _ := rfl
 
 end
 
@@ -130,7 +123,7 @@ variables (F : lax_monoidal_functor.{v₁ v₂} C D) (G : lax_monoidal_functor.{
 
 -- The proofs here are horrendous; rewrite_search helps a lot.
 /-- The composition of two lax monoidal functors is again lax monoidal. -/
-def comp : lax_monoidal_functor.{v₁ v₃} C E :=
+@[simps] def comp : lax_monoidal_functor.{v₁ v₃} C E :=
 { ε                := G.ε ≫ (G.map F.ε),
   μ                := λ X Y, G.μ (F.obj X) (F.obj Y) ≫ G.map (F.μ X Y),
   μ_natural'       := λ _ _ _ _ f g,
@@ -168,12 +161,6 @@ def comp : lax_monoidal_functor.{v₁ v₃} C E :=
         ←lax_monoidal_functor.μ_natural, nat_trans.id_app, map_id, ←category.assoc, map_comp],
   end,
   .. (F.to_functor) ⋙ (G.to_functor) }.
-
-@[simp] lemma comp_obj (X : C) : (F.comp G).obj X = G.obj (F.obj X) := rfl
-@[simp] lemma comp_map {X X' : C} (f : X ⟶ X') :
-  (F.comp G).map f = (G.map (F.map f) : G.obj (F.obj X) ⟶ G.obj (F.obj X')) := rfl
-@[simp] lemma comp_ε : (F.comp G).ε = G.ε ≫ (G.map F.ε) := rfl
-@[simp] lemma comp_μ (X Y : C) : (F.comp G).μ X Y = G.μ (F.obj X) (F.obj Y) ≫ G.map (F.μ X Y) := rfl
 
 end lax_monoidal_functor
 

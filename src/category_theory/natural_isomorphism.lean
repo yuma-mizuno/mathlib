@@ -94,12 +94,12 @@ def of_components (app : ∀ X : C, (F.obj X) ≅ (G.obj X))
   F ≅ G :=
 as_iso { app := λ X, (app X).hom }
 
-@[simp] def of_components.app (app' : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
+@[simp] lemma of_components.app (app' : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
   (of_components app' naturality).app X = app' X :=
 by tidy
-@[simp] def of_components.hom_app (app : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
+@[simp] lemma of_components.hom_app (app : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
   (of_components app naturality).hom.app X = (app X).hom := rfl
-@[simp] def of_components.inv_app (app : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
+@[simp] lemma of_components.inv_app (app : ∀ X : C, (F.obj X) ≅ (G.obj X)) (naturality) (X) :
   (of_components app naturality).inv.app X = (app X).inv := rfl
 
 include ℰ
@@ -110,8 +110,8 @@ begin
   ext, rw [←nat_trans.exchange], simp, refl
 end
 omit ℰ
--- suggested local notation for nat_iso.hcomp. Currently unused.
-local infix ` ■ `:80 := hcomp
+-- declare local notation for nat_iso.hcomp
+localized "infix ` ■ `:80 := category_theory.nat_iso.hcomp" in category
 
 
 end nat_iso

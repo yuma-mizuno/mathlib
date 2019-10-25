@@ -8,11 +8,11 @@ Theory of Cauchy filters in uniform spaces. Complete uniform spaces. Totally bou
 import topology.uniform_space.basic
 
 open filter topological_space lattice set classical
-local attribute [instance, priority 0] prop_decidable
+open_locale classical
 variables {α : Type*} {β : Type*} [uniform_space α]
 universe u
 
-local notation `𝓤` := uniformity
+open_locale uniformity
 
 /-- A filter `f` is Cauchy if for every entourage `r`, there exists an
   `s ∈ f` such that `s × s ⊆ r`. This is a generalization of Cauchy
@@ -72,7 +72,7 @@ calc f ≤ f.lift' (λs:set α, {y | x ∈ closure s ∧ y ∈ closure s}) :
     rw [prod_same_eq],
     rw [lift'_lift'_assoc],
     exact monotone_prod monotone_id monotone_id,
-    exact monotone_comp (assume s t h x h', closure_mono h h') monotone_preimage
+    exact monotone_preimage.comp (assume s t h x h', closure_mono h h')
   end
   ... ≤ (𝓤 α).lift' (λs:set (α×α), {y | (x, y) ∈ closure s}) : lift'_mono hf.right (le_refl _)
   ... = ((𝓤 α).lift' closure).lift' (λs:set (α×α), {y | (x, y) ∈ s}) :
