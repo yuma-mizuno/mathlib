@@ -29,25 +29,28 @@ variables {M : Type u} {N : Type v} {G : Type w} {H : Type x} {A : Type y} {B : 
   {R : Type u₁} {S : Type u₂}
 
 /-- The power operation in a monoid. `a^n = a*a*...*a` n times. -/
-def monoid.pow [has_mul M] [has_one M] (a : M) : ℕ → M
+def monoid.pow [has_one M] [has_mul M] (a : M) : ℕ → M
 | 0     := 1
 | (n+1) := a * monoid.pow n
 
 /-- The scalar multiplication in an additive monoid.
 `n • a = a+a+...+a` n times. -/
-def add_monoid.smul [has_add A] [has_zero A] (n : ℕ) (a : A) : A :=
-@monoid.pow (multiplicative A) _ { one := (0 : A) } a n
+def add_monoid.smul [has_zero A] [has_add A] (n : ℕ) (a : A) : A :=
+@monoid.pow (multiplicative A) { one := (0 : A) } _ a n
 
 precedence `•`:70
 localized "infix ` • ` := add_monoid.smul" in add_monoid
 
-@[priority 5] instance monoid.has_pow [monoid M] : has_pow M ℕ := ⟨monoid.pow⟩
+@[priority 5] instance monoid.has_pow [has_one M] [has_mul M] : has_pow M ℕ := ⟨monoid.pow⟩
 
 /-!
 ### (Additive) monoid
 -/
 section monoid
-variables [monoid M] [monoid N] [add_monoid A] [add_monoid B]
+
+section
+variables [has_one M] [has_mul M] [has_one N] [has_mul N]
+variables [has_zero A] [has_add A] [has_zero B] [has_add B]
 
 @[simp] theorem pow_zero (a : M) : a^0 = 1 := rfl
 @[simp] theorem add_monoid.zero_smul (a : A) : 0 • a = 0 := rfl
@@ -55,8 +58,20 @@ variables [monoid M] [monoid N] [add_monoid A] [add_monoid B]
 theorem pow_succ (a : M) (n : ℕ) : a^(n+1) = a * a^n := rfl
 theorem succ_smul (a : A) (n : ℕ) : (n+1)•a = a + n•a := rfl
 
-@[simp] theorem pow_one (a : M) : a^1 = a := mul_one _
-@[simp] theorem add_monoid.one_smul (a : A) : 1•a = a := add_zero _
+theorem monoid_hom.map_pow (f : M →* N) (a : M) : ∀ (n : ℕ), f (a ^ n) = (f a) ^ n
+| 0     := f.map_one
+| (n+1) := by rw [pow_succ, pow_succ, f.map_mul, monoid_hom.map_pow]
+
+theorem monoid_hom.iterate_map_pow (f : M →* M) (a) (n m : ℕ) : f^[n] (a^m) = (f^[n] a)^m :=
+show f^[n] ((λ x, x^m) a) = (λ x, x^m) (f^[n] a),
+from nat.iterate₁ $ λ x, f.map_pow x m
+
+theorem add_monoid_hom.map_smul (f : A →+ B) (a : A) (n : ℕ) : f (n • a) = n • f a :=
+f.to_multiplicative.map_pow a n
+
+theorem add_monoid_hom.iterate_map_smul (f : A →+ A) (a : A) (n m : ℕ) :
+  f^[n] (m • a) = m • (f^[n] a) :=
+f.to_multiplicative.iterate_map_pow a n m
 
 @[simp] lemma pow_ite (P : Prop) [decidable P] (a : M) (b c : ℕ) :
   a ^ (if P then b else c) = if P then a ^ b else a ^ c :=
@@ -65,6 +80,13 @@ by split_ifs; refl
 @[simp] lemma ite_pow (P : Prop) [decidable P] (a b : M) (c : ℕ) :
   (if P then a else b) ^ c = if P then a ^ c else b ^ c :=
 by split_ifs; refl
+
+end
+
+variables [monoid M] [monoid N] [add_monoid A] [add_monoid B]
+
+@[simp] theorem pow_one (a : M) : a^1 = a := mul_one _
+@[simp] theorem add_monoid.one_smul (a : A) : 1•a = a := add_zero _
 
 @[simp] lemma pow_boole (P : Prop) [decidable P] (a : M) :
   a ^ (if P then 1 else 0) = if P then a else 1 :=
@@ -131,21 +153,6 @@ by induction n with n ih; [refl, rw [list.repeat_succ, list.prod_cons, ih]]; ref
 @[simp, priority 500]
 theorem list.sum_repeat : ∀ (a : A) (n : ℕ), (list.repeat a n).sum = n • a :=
 @list.prod_repeat (multiplicative A) _
-
-theorem monoid_hom.map_pow (f : M →* N) (a : M) : ∀(n : ℕ), f (a ^ n) = (f a) ^ n
-| 0     := f.map_one
-| (n+1) := by rw [pow_succ, pow_succ, f.map_mul, monoid_hom.map_pow]
-
-theorem monoid_hom.iterate_map_pow (f : M →* M) (a) (n m : ℕ) : f^[n] (a^m) = (f^[n] a)^m :=
-show f^[n] ((λ x, x^m) a) = (λ x, x^m) (f^[n] a),
-from nat.iterate₁ $ λ x, f.map_pow x m
-
-theorem add_monoid_hom.map_smul (f : A →+ B) (a : A) (n : ℕ) : f (n • a) = n • f a :=
-f.to_multiplicative.map_pow a n
-
-theorem add_monoid_hom.iterate_map_smul (f : A →+ A) (a : A) (n m : ℕ) :
-  f^[n] (m • a) = m • (f^[n] a) :=
-f.to_multiplicative.iterate_map_pow a n m
 
 theorem is_monoid_hom.map_pow (f : M → N) [is_monoid_hom f] (a : M) :
   ∀(n : ℕ), f (a ^ n) = (f a) ^ n :=

@@ -167,10 +167,13 @@ instance [add_comm_group α] : comm_group (multiplicative α) :=
 { .. multiplicative.group, .. multiplicative.comm_monoid }
 
 /-- Reinterpret `f : α →+ β` as `multiplicative α →* multiplicative β`. -/
-def add_monoid_hom.to_multiplicative [add_monoid α] [add_monoid β] (f : α →+ β) :
+def add_monoid_hom.to_multiplicative
+  {α0 : has_zero α} {αa : has_add α} {β0 : has_zero β} {βa : has_add β} (f : α →+ β) :
   multiplicative α →* multiplicative β :=
 ⟨f.1, f.2, f.3⟩
 
 /-- Reinterpret `f : α →* β` as `additive α →+ additive β`. -/
-def monoid_hom.to_additive [monoid α] [monoid β] (f : α →* β) : additive α →+ additive β :=
+def monoid_hom.to_additive
+  {α1 : has_one α} {αm : has_mul α} {β1 : has_one β} {βm : has_mul β} (f : α →* β) :
+  additive α →+ additive β :=
 ⟨f.1, f.2, f.3⟩

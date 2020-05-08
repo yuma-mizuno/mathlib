@@ -49,7 +49,7 @@ variables {M : Type*} {N : Type*} {P : Type*} -- monoids
   {G : Type*} {H : Type*} -- groups
 
 /-- Bundled add_monoid homomorphisms; use this for bundled add_group homomorphisms too. -/
-structure add_monoid_hom (M : Type*) (N : Type*) [add_monoid M] [add_monoid N] :=
+structure add_monoid_hom (M : Type*) (N : Type*) [has_zero M] [has_add M] [has_zero N] [has_add N] :=
 (to_fun : M → N)
 (map_zero' : to_fun 0 = 0)
 (map_add' : ∀ x y, to_fun (x + y) = to_fun x + to_fun y)
@@ -58,7 +58,7 @@ infixr ` →+ `:25 := add_monoid_hom
 
 /-- Bundled monoid homomorphisms; use this for bundled group homomorphisms too. -/
 @[to_additive add_monoid_hom]
-structure monoid_hom (M : Type*) (N : Type*) [monoid M] [monoid N] :=
+structure monoid_hom (M : Type*) (N : Type*) [has_one M] [has_mul M] [has_one N] [has_mul N] :=
 (to_fun : M → N)
 (map_one' : to_fun 1 = 1)
 (map_mul' : ∀ x y, to_fun (x * y) = to_fun x * to_fun y)
@@ -66,15 +66,20 @@ structure monoid_hom (M : Type*) (N : Type*) [monoid M] [monoid N] :=
 infixr ` →* `:25 := monoid_hom
 
 @[to_additive]
-instance {M : Type*} {N : Type*} {mM : monoid M} {mN : monoid N} : has_coe_to_fun (M →* N) :=
+instance {M : Type*} {N : Type*} {M1 : has_one M} {Mm : has_mul M}
+  {N1 : has_one N} {Nm : has_mul N} : has_coe_to_fun (M →* N) :=
 ⟨_, monoid_hom.to_fun⟩
 
 
 namespace monoid_hom
-variables {mM : monoid M} {mN : monoid N} {mP : monoid P}
+variables {M1 : has_one M} {Mm : has_mul M}
+variables {N1 : has_one N} {Nm : has_mul N}
+variables {P1 : has_one P} {Pm : has_mul P}
+
+-- {mM : monoid M} {mN : monoid N} {mP : monoid P}
 variables [group G] [comm_group H]
 
-include mM mN
+include M1 Mm N1 Nm
 
 @[simp, to_additive]
 lemma coe_mk (f : M → N) (h1 hmul) : ⇑(monoid_hom.mk f h1 hmul) = f := rfl
@@ -122,19 +127,21 @@ lemma map_exists_left_inv (f : M →* N) {x : M} (hx : ∃ y, y * x = 1) :
   ∃ y, y * f x = 1 :=
 let ⟨y, hy⟩ := hx in ⟨f y, f.map_mul_eq_one hy⟩
 
-omit mN mM
+omit Nm N1 Mm M1
 
 /-- The identity map from a monoid to itself. -/
 @[to_additive]
-def id (M : Type*) [monoid M] : M →* M :=
+def id (M : Type*) [has_one M] [has_mul M] : M →* M :=
 { to_fun := id,
   map_one' := rfl,
   map_mul' := λ _ _, rfl }
 
-@[simp, to_additive] lemma id_apply {M : Type*} [monoid M] (x : M) :
+include M1 Mm
+
+@[simp, to_additive] lemma id_apply (x : M) :
   id M x = x := rfl
 
-include mM mN mP
+include N1 Nm P1 Pm
 
 /-- Composition of monoid morphisms is a monoid morphism. -/
 @[to_additive]
@@ -160,12 +167,16 @@ lemma cancel_left {g : N →* P} {f₁ f₂ : M →* N} (hg : function.injective
   g.comp f₁ = g.comp f₂ ↔ f₁ = f₂ :=
 ⟨λ h, monoid_hom.ext $ λ x, hg $ by rw [← comp_apply, h, comp_apply], λ h, h ▸ rfl⟩
 
-omit mP
+omit Pm P1
 
 @[simp, to_additive] lemma comp_id (f : M →* N) : f.comp (id M) = f := ext $ λ x, rfl
 @[simp, to_additive] lemma id_comp (f : M →* N) : (id N).comp f = f := ext $ λ x, rfl
 
-variables [mM] [mN]
+omit Nm N1 Mm M1
+
+section
+
+variables [monoid M] [monoid N]
 
 @[to_additive]
 protected def one : M →* N :=
@@ -181,10 +192,11 @@ instance : has_one (M →* N) := ⟨monoid_hom.one⟩
 @[to_additive]
 instance : inhabited (M →* N) := ⟨1⟩
 
-omit mM mN
+end
 
 /-- The product of two monoid morphisms is a monoid morphism if the target is commutative. -/
-@[to_additive]
+@[to_additive "The sum of two additive monoid morphisms is a monoid morphism
+  if the target is commutative"]
 protected def mul {M N} {mM : monoid M} [comm_monoid N] (f g : M →* N) : M →* N :=
 { to_fun := λ m, f m * g m,
   map_one' := show f 1 * g 1 = 1, by simp,
@@ -240,15 +252,12 @@ lemma injective_iff {G H} [group G] [group H] (f : G →* H) :
       ← f.map_mul] at hxy;
     simpa using inv_eq_of_mul_eq_one (h _ hxy)⟩
 
-include mM
-/-- Makes a group homomomorphism from a proof that the map preserves multiplication. -/
-@[to_additive]
-def mk' (f : M → G) (map_mul : ∀ a b : M, f (a * b) = f a * f b) : M →* G :=
+/-- Make a group homomomorphism from a proof that the map preserves multiplication. -/
+@[to_additive "Make an additive group homomomorphism from a proof that the map preserves additiion."]
+def mk' {hM : monoid M} (f : M → G) (map_mul : ∀ a b : M, f (a * b) = f a * f b) : M →* G :=
 { to_fun := f,
   map_mul' := map_mul,
   map_one' := mul_self_iff_eq_one.1 $ by rw [←map_mul, mul_one] }
-
-omit mM
 
 /-- The inverse of a monoid homomorphism is a monoid homomorphism if the target is
     a commutative group.-/
