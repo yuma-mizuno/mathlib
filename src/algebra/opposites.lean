@@ -5,22 +5,13 @@ Authors: Kenny Lau
 
 Opposites.
 -/
+import data.opposite
+import algebra.field
 
+namespace opposite
 universes u
 
 variables (α : Type u)
-
-def opposite : Type u := α
-
-namespace opposite
-variables {α}
-def op : α → opposite α := id
-def unop : opposite α → α := id
-theorem op_inj : function.injective (op : α → opposite α) := λ _ _, id
-theorem unop_inj : function.injective (unop : opposite α → α) := λ _ _, id
-theorem op_unop (x : opposite α) : op (unop x) = x := rfl
-theorem unop_op (x : α) : unop (op x) = x := rfl
-variables (α)
 
 instance [has_add α] : has_add (opposite α) :=
 { add := λ x y, op (unop x + unop y) }
@@ -123,14 +114,34 @@ instance [zero_ne_one_class α] : zero_ne_one_class (opposite α) :=
   .. opposite.has_zero α, .. opposite.has_one α }
 
 instance [integral_domain α] : integral_domain (opposite α) :=
-{ eq_zero_or_eq_zero_of_mul_eq_zero := λ x y (H : op _ = op (0:α)),
+{ eq_zero_or_eq_zero_of_mul_eq_zero := λ x y (H : op (_ * _) = op (0:α)),
     or.cases_on (eq_zero_or_eq_zero_of_mul_eq_zero $ op_inj H)
       (λ hy, or.inr $ unop_inj $ hy) (λ hx, or.inl $ unop_inj $ hx),
   .. opposite.comm_ring α, .. opposite.zero_ne_one_class α }
 
 instance [field α] : field (opposite α) :=
 { mul_inv_cancel := λ x hx, unop_inj $ inv_mul_cancel $ λ hx', hx $ unop_inj hx',
-  inv_mul_cancel := λ x hx, unop_inj $ mul_inv_cancel $ λ hx', hx $ unop_inj hx',
+  inv_zero := unop_inj inv_zero,
   .. opposite.comm_ring α, .. opposite.zero_ne_one_class α, .. opposite.has_inv α }
+
+@[simp] lemma op_zero [has_zero α] : op (0 : α) = 0 := rfl
+@[simp] lemma unop_zero [has_zero α] : unop (0 : αᵒᵖ) = 0 := rfl
+
+@[simp] lemma op_one [has_one α] : op (1 : α) = 1 := rfl
+@[simp] lemma unop_one [has_one α] : unop (1 : αᵒᵖ) = 1 := rfl
+
+variable {α}
+
+@[simp] lemma op_add [has_add α] (x y : α) : op (x + y) = op x + op y := rfl
+@[simp] lemma unop_add [has_add α] (x y : αᵒᵖ) : unop (x + y) = unop x + unop y := rfl
+
+@[simp] lemma op_neg [has_neg α] (x : α) : op (-x) = -op x := rfl
+@[simp] lemma unop_neg [has_neg α] (x : αᵒᵖ) : unop (-x) = -unop x := rfl
+
+@[simp] lemma op_mul [has_mul α] (x y : α) : op (x * y) = op y * op x := rfl
+@[simp] lemma unop_mul [has_mul α] (x y : αᵒᵖ) : unop (x * y) = unop y * unop x := rfl
+
+@[simp] lemma op_inv [has_inv α] (x : α) : op (x⁻¹) = (op x)⁻¹ := rfl
+@[simp] lemma unop_inv [has_inv α] (x : αᵒᵖ) : unop (x⁻¹) = (unop x)⁻¹ := rfl
 
 end opposite

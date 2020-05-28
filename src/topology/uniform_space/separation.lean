@@ -7,9 +7,8 @@ Hausdorff properties of uniform spaces. Separation quotient.
 -/
 import topology.uniform_space.basic
 
-
-open filter topological_space lattice set classical
-local attribute [instance, priority 0] prop_decidable
+open filter topological_space set classical
+open_locale classical topological_space
 noncomputable theory
 set_option eqn_compiler.zeta true
 
@@ -17,7 +16,7 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 variables [uniform_space α] [uniform_space β] [uniform_space γ]
 
-local notation `𝓤` := uniformity
+open_locale uniformity
 
 /- separated uniformity -/
 
@@ -52,14 +51,15 @@ theorem separated_def' {α : Type u} [uniform_space α] :
 separated_def.trans $ forall_congr $ λ x, forall_congr $ λ y,
 by rw ← not_imp_not; simp [classical.not_forall]
 
+@[priority 100] -- see Note [lower instance priority]
 instance separated_t2 [s : separated α] : t2_space α :=
 ⟨assume x y, assume h : x ≠ y,
 let ⟨d, hd, (hxy : (x, y) ∉ d)⟩ := separated_def'.1 s x y h in
 let ⟨d', hd', (hd'd' : comp_rel d' d' ⊆ d)⟩ := comp_mem_uniformity_sets hd in
-have {y | (x, y) ∈ d'} ∈ nhds x,
+have {y | (x, y) ∈ d'} ∈ 𝓝 x,
   from mem_nhds_left x hd',
 let ⟨u, hu₁, hu₂, hu₃⟩ := mem_nhds_sets_iff.mp this in
-have {x | (x, y) ∈ d'} ∈ nhds y,
+have {x | (x, y) ∈ d'} ∈ 𝓝 y,
   from mem_nhds_right y hd',
 let ⟨v, hv₁, hv₂, hv₃⟩ := mem_nhds_sets_iff.mp this in
 have u ∩ v = ∅, from
@@ -69,12 +69,13 @@ have u ∩ v = ∅, from
   hxy $ hd'd' this,
 ⟨u, v, hu₂, hv₂, hu₃, hv₃, this⟩⟩
 
+@[priority 100] -- see Note [lower instance priority]
 instance separated_regular [separated α] : regular_space α :=
 { regular := λs a hs ha,
-    have -s ∈ nhds a,
+    have -s ∈ 𝓝 a,
       from mem_nhds_sets hs ha,
     have {p : α × α | p.1 = a → p.2 ∈ -s} ∈ 𝓤 α,
-      from mem_nhds_uniformity_iff.mp this,
+      from mem_nhds_uniformity_iff_right.mp this,
     let ⟨d, hd, h⟩ := comp_mem_uniformity_sets this in
     let e := {y:α| (a, y) ∈ d} in
     have hae : a ∈ closure e, from subset_closure $ refl_mem_uniformity hd,
@@ -89,8 +90,8 @@ instance separated_regular [separated α] : regular_space α :=
         let ⟨x, (hx : (a, x) ∈ d), y, ⟨hx₁, hx₂⟩, (hy : (y, _) ∈ d)⟩ := @this ⟨a, a'⟩ ⟨hae, ha'⟩ in
         have (a, a') ∈ comp_rel d d, from ⟨y, hx₂, hy⟩,
         h this rfl,
-    have closure e ∈ nhds a, from (nhds a).sets_of_superset (mem_nhds_left a hd) subset_closure,
-    have nhds a ⊓ principal (-closure e) = ⊥,
+    have closure e ∈ 𝓝 a, from (𝓝 a).sets_of_superset (mem_nhds_left a hd) subset_closure,
+    have 𝓝 a ⊓ principal (-closure e) = ⊥,
       from (@inf_eq_bot_iff_le_compl _ _ _ (principal (- closure e)) (principal (closure e))
         (by simp [principal_univ, union_comm]) (by simp)).mpr (by simp [this]),
     ⟨- closure e, is_closed_closure, assume x h₁ h₂, @e_subset x h₂ h₁, this⟩,
@@ -103,12 +104,13 @@ def separation_setoid (α : Type u) [uniform_space α] : setoid α :=
 
 local attribute [instance] separation_setoid
 
-instance {α : Type u} [u : uniform_space α] : uniform_space (quotient (separation_setoid α)) :=
+instance separation_setoid.uniform_space {α : Type u} [u : uniform_space α] :
+  uniform_space (quotient (separation_setoid α)) :=
 { to_topological_space := u.to_topological_space.coinduced (λx, ⟦x⟧),
   uniformity := map (λp:(α×α), (⟦p.1⟧, ⟦p.2⟧)) u.uniformity,
   refl := le_trans (by simp [quotient.exists_rep]) (filter.map_mono refl_le_uniformity),
   symm := tendsto_map' $
-    by simp [prod.swap, (∘)]; exact tendsto_swap_uniformity.comp tendsto_map,
+    by simp [prod.swap, (∘)]; exact tendsto_map.comp tendsto_swap_uniformity,
   comp := calc (map (λ (p : α × α), (⟦p.fst⟧, ⟦p.snd⟧)) u.uniformity).lift' (λs, comp_rel s s) =
           u.uniformity.lift' ((λs, comp_rel s s) ∘ image (λ (p : α × α), (⟦p.fst⟧, ⟦p.snd⟧))) :
       map_lift'_eq2 $ monotone_comp_rel monotone_id monotone_id
@@ -162,7 +164,7 @@ lemma uniform_continuous_quotient_lift
   (hf : uniform_continuous f) : uniform_continuous (λa, quotient.lift f h a) :=
 uniform_continuous_quotient hf
 
-lemma uniform_continuous_quotient_lift₂ [uniform_space γ]
+lemma uniform_continuous_quotient_lift₂
   {f : α → β → γ} {h : ∀a c b d, (a, b) ∈ separation_rel α → (c, d) ∈ separation_rel β → f a c = f b d}
   (hf : uniform_continuous (λp:α×β, f p.1 p.2)) :
   uniform_continuous (λp:_×_, quotient.lift₂ f h p.1 p.2) :=
@@ -199,7 +201,7 @@ set.ext $ assume ⟨a, b⟩, quotient.induction_on₂ a b $ assume a b,
       have s ∈ (𝓤 $ quotient $ separation_setoid α).comap (λp:(α×α), (⟦p.1⟧, ⟦p.2⟧)),
         from comap_quotient_le_uniformity hs,
       let ⟨t, ht, hts⟩ := this in
-      hts begin dsimp, exact h t ht end,
+      hts begin dsimp [preimage], exact h t ht end,
     show ⟦a⟧ = ⟦b⟧, from quotient.sound this,
 
   assume heq : ⟦a⟧ = ⟦b⟧, assume h hs,
@@ -218,6 +220,8 @@ def separation_quotient (α : Type*) [uniform_space α] := quotient (separation_
 namespace separation_quotient
 instance : uniform_space (separation_quotient α) := by dunfold separation_quotient ; apply_instance
 instance : separated (separation_quotient α) := by dunfold separation_quotient ; apply_instance
+instance [inhabited α] : inhabited (separation_quotient α) :=
+by unfold separation_quotient; apply_instance
 
 def lift [separated β] (f : α → β) : (separation_quotient α → β) :=
 if h : uniform_continuous f then
@@ -239,9 +243,9 @@ def map (f : α → β) : separation_quotient α → separation_quotient β :=
 lift (quotient.mk ∘ f)
 
 lemma map_mk {f : α → β} (h : uniform_continuous f) (a : α) : map f ⟦a⟧ = ⟦f a⟧ :=
-by rw [map, lift_mk (h.comp uniform_continuous_quotient_mk)]
+by rw [map, lift_mk (uniform_continuous_quotient_mk.comp h)]
 
-lemma uniform_continuous_map (f : α → β): uniform_continuous (map f) :=
+lemma uniform_continuous_map (f : α → β) : uniform_continuous (map f) :=
 uniform_continuous_lift (quotient.mk ∘ f)
 
 lemma map_unique {f : α → β} (hf : uniform_continuous f)
@@ -256,7 +260,7 @@ map_unique uniform_continuous_id rfl
 
 lemma map_comp {f : α → β} {g : β → γ} (hf : uniform_continuous f) (hg : uniform_continuous g) :
   map g ∘ map f = map (g ∘ f) :=
-(map_unique (hf.comp hg) $ by simp only [(∘), map_mk, hf, hg]).symm
+(map_unique (hg.comp hf) $ by simp only [(∘), map_mk, hf, hg]).symm
 
 end separation_quotient
 

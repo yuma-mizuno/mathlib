@@ -7,14 +7,15 @@ An efficient binary implementation of a (sqrt n) function that
 returns s s.t.
     s*s ≤ n ≤ s*s + s + s
 -/
-import data.nat.basic algebra.ordered_group algebra.ring tactic
+import data.nat.cast
+import init_.data.int.order
 
 namespace nat
 
 theorem sqrt_aux_dec {b} (h : b ≠ 0) : shiftr b 2 < b :=
 begin
   simp [shiftr_eq_div_pow],
-  apply (nat.div_lt_iff_lt_mul' (dec_trivial : 4 > 0)).2,
+  apply (nat.div_lt_iff_lt_mul' (dec_trivial : 0 < 4)).2,
   have := nat.mul_lt_mul_of_pos_left
     (dec_trivial : 1 < 4) (nat.pos_of_ne_zero h),
   rwa mul_one at this
@@ -72,7 +73,8 @@ begin
   have lb : n - r * r < 2 * r * 2^m + 2^m * 2^m ↔
             n < (r+2^m)*(r+2^m), {
     rw [nat.sub_lt_right_iff_lt_add h₁],
-    simp [left_distrib, right_distrib, two_mul, mul_comm, mul_assoc] },
+    simp [left_distrib, right_distrib, two_mul, mul_comm, mul_assoc,
+      add_comm, add_assoc, add_left_comm] },
   have re : div2 (2 * r * 2^m) = r * 2^m, {
     rw [div2_val, mul_assoc,
         nat.mul_div_cancel_left _ (dec_trivial:2>0)] },
@@ -85,7 +87,7 @@ begin
     apply eq.symm, apply nat.sub_eq_of_eq_add,
     rw [← add_assoc, (_ : r*r + _ = _)],
     exact (nat.add_sub_cancel' hl).symm,
-    simp [left_distrib, right_distrib, two_mul, mul_comm, mul_assoc] },
+    simp [left_distrib, right_distrib, two_mul, mul_comm, mul_assoc, add_assoc] },
 end
 
 private lemma sqrt_aux_is_sqrt (n) : ∀ m r,
@@ -158,12 +160,12 @@ theorem le_three_of_sqrt_eq_one {n : ℕ} (h : sqrt n = 1) : n ≤ 3 :=
 le_of_lt_succ $ (@sqrt_lt n 2).1 $
 by rw [h]; exact dec_trivial
 
-theorem sqrt_lt_self {n : ℕ} (h : n > 1) : sqrt n < n :=
+theorem sqrt_lt_self {n : ℕ} (h : 1 < n) : sqrt n < n :=
 sqrt_lt.2 $ by
   have := nat.mul_lt_mul_of_pos_left h (lt_of_succ_lt h);
   rwa [mul_one] at this
 
-theorem sqrt_pos {n : ℕ} : sqrt n > 0 ↔ n > 0 := le_sqrt
+theorem sqrt_pos {n : ℕ} : 0 < sqrt n ↔ 0 < n := le_sqrt
 
 theorem sqrt_add_eq (n : ℕ) {a : ℕ} (h : a ≤ n + n) : sqrt (n*n + a) = n :=
 le_antisymm
