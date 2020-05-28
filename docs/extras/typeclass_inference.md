@@ -2,21 +2,21 @@
 
 ### Summary ###
 
-This (rather long) document is about the `[ ]` "square bracket" notation that is often seen in Lean code, for example `[group G]`, which turns a type `G` into a group. Types in square brackets are managed by Lean's typeclass inference system. This document is an overview of everything, and in particular the first few sections contain plenty of overlap with Theorem Proving In Lean. The later sections are more detailed information about how type class inference works in Lean, and are not covered in any other documents as far as the author knows.
+This document is about the `[ ]` "square bracket" notation that is often seen in Lean code, for example `[group G]`, which somehow turns a type `G` into a group. Things in square brackets are managed by Lean's typeclass inference system. This document is an overview of everything, and in particular the first few sections contain plenty of overlap with Theorem Proving In Lean. The later sections are more detailed information about how type class inference works in Lean.
 
-We'll start by briefly explaining the difference between `[ ]` brackets, `( )` brackets and `{ }` brackets. The type class inference system's job is to find terms whose types are in square brackets. We'll give an overview of how the system works, and will then go on to discuss its limitations, how to use it and how not to use it. The earlier sections might be useful for beginners, the later sections for people interested in implementation ideals. The perspective and examples are unashamedly mathematical.
+We'll start by briefly explaining the difference between `[ ]` brackets, `( )` brackets and `{ }` brackets. The type class inference system's job is to find terms whose types are in square brackets. We'll give an overview of how the system works, and will then go on to discuss its limitations, how to use it and how not to use it. The earlier sections might be useful for beginners, the later sections for people interested in implementation issues (*TODO* rewrite once finished). The perspective and examples are unashamedly mathematical.
 
 ## Introduction ##
 
-Here is an overview of the various kinds of brackets that show up in Lean. This document is mostly concerned with the square brackets `[ ]` but here we give a brief overview of the other main kinds too. Everything here is covered in Theorem Proving In Lean, although the write-up here is more geared towards mathematicians.
+Here is an overview of the various kinds of brackets that show up when defining function inputs in Lean. This document is mostly concerned with the square brackets `[ ]` but here we give a brief overview of the other main kinds too. Everything here is covered in Theorem Proving In Lean, although the write-up here is more geared towards mathematicians.
 
-When writing a function, if you want to say precisely which type every input term has, it's natural to use brackets. For example
+When defining a function in Lean, we use brackets to denote the inputs. For example
 
 ```lean
 def double (n : ℕ) := n + n
 ```
 
-Round brackets `( )` are easiest to understand; these are arguments which Lean expects you to supply. For example
+defines a function `double` with one input `n`. These tound brackets `( )` are easiest to understand; these are arguments which Lean expects the user to supply. For example
 
 ```lean
 #reduce double 4 -- 8
@@ -35,13 +35,27 @@ begin
   { exact hU },
   { exact hV }
 end
+
+variables (B C : set ℕ)
+
+example (h1 : 37 ∈ B) (h2 : 37 ∈ C) : 37 ∈ B ∩ C := mem_inter h1 h2
 ```
 
-The function `mem_inter` takes six inputs: a type `X`, two subsets `U` and `V` of `X`, a term `x` of type `X`, and proofs `hU` and `hV` that ` x ∈ U`  and `x ∈ V` respectively. But the first four of these inputs are in squiggly brackets `{ }`, which means that the person who defined this function is saying "Go on Lean, take a look at what the user inputs when you ask for `hU` and `hV`, and then figure out all the other inputs yourself just by solving a logic puzzle and thinking about only possible way to make everything have the right type". And indeed one can see that this should be possible; if `B` and `C` are subsets of the natural numbers (that is, terms of type `set ℕ`), and the user inputs proofs that `3 ∈ B` and `3 ∈ C` to this function, then Lean can figure out that `x` must be `3`, `U` must be `B`, `V` must be `C` and `X` must be `ℕ`. This process is called `type unification` and it is what you are asking Lean to do if you use `{ }` squiggly brackets.
+The function `mem_inter` takes six inputs: a type `X`, two subsets `U` and `V` of `X`, a term `x` of type `X`, and proofs `hU` and `hV`
+that ` x ∈ U`  and `x ∈ V` respectively. But the first four of these inputs are in squiggly brackets `{ }`, which means that Lean does
+not expect the user to supply them. As you can see in the example, the user just supplies the last two inputs `hU` and `hV`, the ones in
+`()` brackets. The person who defined this function is saying "Go on Lean, just ask for `hU` and `hV`, take a look at what the user inputs,
+and figure out the other four inputs yourself by solving a logic puzzle and considering the only possible way to make everything have the
+right type". And indeed one can see that this should be possible; if `B` and `C` are subsets of the natural numbers (that is, terms of
+type `set ℕ`), and the user inputs proofs that `37 ∈ B` and `37 ∈ C` to this function when Lean is expecting `hU` and `hV`, then Lean can
+figure out that `x` must be `37`, `U` must be `B`, `V` must be `C` and `X` must be `ℕ`. This process is called `type unification` and it is what
+you are asking Lean to do if you use `{ }` squiggly brackets.
 
 But how about this?
 
 ```lean
+import tactic
+
 def assoc_assoc {G : Type} [add_group G] (g : G) : g + (g + (g + g)) = ((g + g) + g) + g :=
 begin
   rw add_assoc,
@@ -53,9 +67,24 @@ def x := (4 : ℤ)
 example : x + (x + (x + x)) = ((x + x) + x) + x := assoc_assoc x
 ```
 
-There are three inputs to `assoc_assoc` -- a type `G`, a term of type `add_group G` (that is, a term carrying all the definitions of the addition, additive inverse, and additive identity in `G`, and the proofs that they satisfy the axioms of an additive group), and a term `g` of type `G`. The user is asked for `g`, Lean can now guess `G` using type unification -- but how can Lean guess the group structure on `G` just by thinking about the types of everything? It can't. When faced with the term `assoc_assoc x`, Lean can figure out that `x` must be `4` and `G` must be `ℤ` -- but how can it figure out the additive group structure on `ℤ`? Lean needs to come up with an addition function `ℤ → ℤ → ℤ` for example -- it knows the type, but how does it figure out the term? Clearly in this case, the answer is not "try to figure out how to add two integers together just from the user input" -- we need to find the correct definition of addition on the integers from somewhere in Lean's database of definitions and theorems.
+There are three inputs to `assoc_assoc` -- a type `G` (think of `G` as a set if you are more used to this way of thinking), a term of type
+`add_group G` (that is, a term carrying all the definitions of the addition, additive inverse, and additive identity in `G`, and also
+all the proofs that they satisfy the axioms of an additive group), and a term `g` of type `G` (i.e. an element `g` of `G`, if you
+are used to thinking set-theoretically). The user is only asked to input `g`, Lean can now guess `G` using type unification (it's the
+type of `g`) -- but how can Lean guess the group structure on `G` just by thinking about the types of everything? It can't. Indeed,
+if you feed in a random element `x` of a random set `X` into `assoc_assoc` you will get an error
 
-So the answer here is that Lean "looks it up in a big table". In other words, it uses type class inference. We'll now explain more about how this look-up works.
+```
+failed to synthesize type class instance for
+X : Type,
+x : X
+⊢ add_group X
+```
+
+However, in the example above we fed in the integer `x` into `assoc_assoc`, and `x` was defined to be the integer `4`. Lean can then
+figure out using unification `G` must be `ℤ` -- and now it realises that it needs to find an additive group structure on `ℤ`. Because
+`[add_group G]` is in square brackets, Lean looks up the definition of of the additive group structure on the integers in a big database of definitions and theorems called the type class inference system. In Lean, when the integers are defined and made into an additive group,
+the definition of the group structure was added into the database, and that's why the example succeeds.
 
 ## Type class inference -- the basics. ##
 
@@ -76,6 +105,7 @@ fields:
 add_group.add : Π {α : Type u} [c : add_group α], α → α → α
 ...
 -/
+```
 
 We see that `add_group` has been tagged with the `class` attribute. This means that a certain part of Lean's C++ code, the type class inference system, comes into play. At some point in core Lean (in `init/data/int/basic.lean` in fact), Lean defines addition, negation and zero on the integers, and then proves all the axioms for an additive group. At this point we can hence make a term of type `add_group ℤ`. It would however be a mistake to define this term using the standard `def` command:
 
@@ -89,9 +119,9 @@ Defining it this way would make it hard for users to find. The way to do it woul
 instance int.add_group : add_group ℤ := ... -- good!
 ```
 
-Just like a class is just a structure tagged with the `[class]` tag, an instance is nothing more than a definition tagged with the `[instance]` tag.
+Just like a class is just a structure tagged with the `[class]` attribute, an instance is nothing more than a definition tagged with the `[instance]` attribute.
 
-When Lean sees `assoc_assoc x` above and it knows that `x` is an integer, it sees the square brackets around `[add_group G]`, notes that `add_group` has been tagged with `[class]`, and then says to the type class inference system something like "please can you look through all the definitions tagged with `[instance]` and see if you can find one of type `add_group ℤ`?" If the type class inference system can find a term of type `add_group ℤ`, it returns it, and Lean uses this term as the missing input to the `assoc_assoc` function.
+When Lean sees `assoc_assoc x` above and it knows that `x` is an integer, it sees the square brackets around `[add_group G]`, notes that `add_group` has been tagged with `[class]`, and then says to the type class inference system something like "please can you look through all the definitions tagged with `[instance]` and see if you can find or make one of type `add_group ℤ`?" If the type class inference system can find a term of type `add_group ℤ`, it returns it, and Lean uses this term as the missing input to the `assoc_assoc` function.
 
 It is possible to actually make this query directly to Lean, like this:
 
@@ -118,7 +148,7 @@ failed to synthesize type class instance for
 ⊢ add_group ℕ
 -/
 ```
-The error means that the type class inference system tried to find a term of type `add_group ℕ` in its database, but failed. This failure is unsurprising -- the addition on the natural numbers does not give it a group structure, as additive inverses do not in general exist. If we wanted to prove this example using `assoc_assoc` we should weaken our demands -- we should only demand that `G` is an additive semigroup; an additive semigroup doesn't have additive inverses but it does have associativity of addition, and the natural numbers are an example. Here is a version of assoc_assoc which works for natural numbers. We have changed a few things just to add some variety, but the key one is that `[add_group G]` has become `[add_semigroup G]`. 
+The error means that the type class inference system tried to find a term of type `add_group ℕ` in its database, but failed. This failure is unsurprising -- the addition on the natural numbers does not give it a group structure, as additive inverses do not in general exist. If we wanted to prove this example using `assoc_assoc` we should weaken our demands -- we should only demand that `G` is an additive semigroup; an additive semigroup doesn't have additive inverses but it does have associativity of addition, and the natural numbers are an example. Here is a version of assoc_assoc which works for natural numbers. We have shortened the proof just to add some variety, but the key change is that `[add_group G]` has become `[add_semigroup G]`. 
 
 ```lean
 example: add_semigroup ℕ := by apply_instance -- works!
@@ -131,7 +161,7 @@ variable (y : ℕ)
 example : y + (y + (y + y)) = ((y + y) + y) + y := assoc_assoc y
 ```
 
-## How does type class inference work?##
+## How does type class inference work?
 
 The naive model for type class inference is that all the instances you need are definitions which are tagged with the `instance` tag. But this simplistic model cannot be how things work. For example `ℤ^n` is an additive group for all natural numbers `n`, and this works:
 
@@ -156,144 +186,3 @@ TPIL says it's a dreaded prolog-like search
 
 Lean 
 
-
-
-To define functions and proofs recursively you can use the equation compiler, if you have a well founded relation on that type
-
-For example the definition of gcd on naturals uses well founded recursion
-
-```lean
-def gcd : nat → nat → nat
-| 0        y := y
-| (succ x) y := have y % succ x < succ x, from mod_lt _ $ succ_pos _,
-                gcd (y % succ x) (succ x)
-```
-
-Because < is a well founded relation on naturals, and because `y % succ x < succ x` this recursive function is well_founded.
-
-Whenever you use the equation compiler there will be a default well founded relation on the type being recursed on and the equation compiler will automatically attempt to prove the function is well founded.
-
-If the equation compiler fails, there are two main reasons for this. The first is that it has failed to prove the required inequality. The second is that it is not using the correct well founded relation.
-
-### Proving required inequality ###
-
-If we modify the gcd example above, by removing the `have`, we get an error.
-
-```lean
-def gcd : nat → nat → nat
-| 0        y := y
-| (succ x) y := gcd (y % succ x) (succ x)
-```
-```
-failed to prove recursive application is decreasing, well founded relation
-  @has_well_founded.r (Σ' (a : ℕ), ℕ)
-    (@psigma.has_well_founded ℕ (λ (a : ℕ), ℕ) (@has_well_founded_of_has_sizeof ℕ nat.has_sizeof)
-       (λ (a : ℕ), @has_well_founded_of_has_sizeof ℕ nat.has_sizeof))
-Possible solutions:
-  - Use 'using_well_founded' keyword in the end of your definition to specify tactics for synthesizing well founded relations and decreasing proofs.
-  - The default decreasing tactic uses the 'assumption' tactic, thus hints (aka local proofs) can be provided using 'have'-expressions.
-The nested exception contains the failure state for the decreasing tactic.
-nested exception message:
-failed
-state:
-gcd : (Σ' (a : ℕ), ℕ) → ℕ,
-x y : ℕ
-⊢ y % succ x < succ x
-```
-
-The error message has given us a goal, `y % succ x < succ x`. Including a proof of this goal as part of our definition using `have` removes the error.
-
-```lean
-def gcd : nat → nat → nat
-| 0        y := y
-| (succ x) y := have y % succ x < succ x, from mod_lt _ $ succ_pos _,
-                gcd (y % succ x) (succ x)
-```
-
-Note that the `have` must not be in tactics mode, i.e. inside any `begin` `end`. If you are in tactics mode, there is the option of putting the `have` statement inside the exact statement, as in the following example.
-
-```lean
-def gcd : nat → nat → nat
-| 0        y := y
-| (succ x) y :=
-begin
-  exact have y % succ x < succ x := mod_lt _ (succ_pos _),
-  gcd (y % succ x) (succ x)
-end
-```
-
-### order of arguments ###
-
-Sometimes the default relation the equation compiler uses is not the correct one. For example swapping the order of x and y in the above example causes a failure
-
-```lean
-def gcd : nat → nat → nat
-| y 0        := y
-| y (succ x) := have y % succ x < succ x, from mod_lt _ $ succ_pos _,
-                gcd (succ x) (y % succ x)
-```
-
-Now the error message is asking us to prove `succ x < y`. This is because by default the equation compiler tries to recurse on the first argument. More precisely, the relation that the equation compiler tries to use in this example is on the type of pairs of natural numbers `Σ' (a : ℕ), ℕ`, and it uses a lexicographical relation where the pair `⟨a, b⟩ ≺ ⟨c, d⟩` iff `a < c ∨ (a = c ∧ b < d)` This situation can be resolved, either by changing the order of the arguments or by specifying a `rel_tac` as decribed later in this doc.
-
-Sometimes moving an argument outside of the equation compiler, can help the equation compiler prove a recursion is well_founded. For example the following proof from `data.nat.prime` fails.
-
-```lean
-lemma prod_factors : ∀ (n), 0 < n → list.prod (factors n) = n
-| 0       h := (lt_irrefl _).elim h
-| 1       h := rfl
-| n@(k+2) h :=
-  let m := min_fac n in have n / m < n := factors_lemma,
-  show list.prod (m :: factors (n / m)) = n, from
-  have h₁ : 0 < n / m :=
-    nat.pos_of_ne_zero $ λ h,
-    have n = 0 * m := (nat.div_eq_iff_eq_mul_left (min_fac_pos _) (min_fac_dvd _)).1 h,
-    by rw zero_mul at this; exact (show k + 2 ≠ 0, from dec_trivial) this,
-  by rw [list.prod_cons, prod_factors _ h₁, nat.mul_div_cancel' (min_fac_dvd _)]
-```
-
-But moving the `h` into a lambda after the `:=` makes it work
-
-```lean
-lemma prod_factors : ∀ (n), 0 < n → list.prod (factors n) = n
-| 0       := λ h, (lt_irrefl _).elim h
-| 1       := λ h, rfl
-| n@(k+2) := λ h,
-  let m := min_fac n in have n / m < n := factors_lemma,
-  show list.prod (m :: factors (n / m)) = n, from
-  have h₁ : 0 < n / m :=
-    nat.pos_of_ne_zero $ λ h,
-    have n = 0 * m := (nat.div_eq_iff_eq_mul_left (min_fac_pos _) (min_fac_dvd _)).1 h,
-    by rw zero_mul at this; exact (show k + 2 ≠ 0, from dec_trivial) this,
-  by rw [list.prod_cons, prod_factors _ h₁, nat.mul_div_cancel' (min_fac_dvd _)]
-```
-
-This is because for some reason, in the first example, the equation compiler tries to use the always false relation.
-
-Conjecture : this is because the type of `h` depends on `n` and the equation compiler can only synthesize useful relations on non dependent products
-
-### using_well_founded rel_tac ###
-
-Sometimes you need to change the well founded relation to prove that a recursion is well founded. To do this you need a `has_well_founded` instance. This is a structure with two fields, a relation and a proof that this relation is well founded. The easiest way to define a well founded relation is using a function to the natural numbers. For example on multisets the relation `λ s t, card s < card t` is a well founded relation.
-
-The following proof in `data.multiset` uses this relation.
-
-```lean
-@[elab_as_eliminator] lemma strong_induction_on {p : multiset α → Sort*} :
-  ∀ (s : multiset α), (∀ s, (∀t < s, p t) → p s) → p s
-| s := λ ih, ih s $ λ t h,
-  have card t < card s, from card_lt_of_lt h,
-  strong_induction_on t ih
-using_well_founded {rel_tac := λ _ _, `[exact ⟨_, measure_wf card⟩]}
-```
-
-The final line tells the equation compiler to use this relation. It is not necessary to fully understand the final line to be able to use well_founded tactics. The most important part is `⟨_, measure_wf card⟩` This is the well_founded instance. `measure_wf` is a proof that any relation generated from a function to the natural numbers, i.e. for a function `f : α → ℕ`, the relation `λ x y, f x < f y`. The underscore is a placeholder for the relation, as it can be inferred from the type of the proof. Note that the well founded relation must be on a `psigma` type corresponding to the product of the types of the arguments after the vertical bar, if there are multiple arguments after the vertical bar.
-
-In the gcd example the `psigma` type is `Σ' (a : ℕ), ℕ`. In order to solve the problem in the example where the order of the arguments was flipped, you could define a well founded relation on `Σ' (a : ℕ), ℕ` using the function `psigma.snd`, the function giving the second element of the pair, and then the error disappears.
-
-```lean
-def gcd : nat → nat → nat
-| y 0        := y
-| y (succ x) := have y % succ x < succ x, from mod_lt _ $ succ_pos _,
-                gcd (succ x) (y % succ x)
-using_well_founded {rel_tac := λ _ _, `[exact ⟨_, measure_wf psigma.snd⟩]}
-```
