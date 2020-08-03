@@ -28,8 +28,7 @@ def arity'_constant {α β : Type u} : ∀{n : ℕ}, β → arity' α β n
 | (l + 1) f x := arity'_app (f (x 0)) (fin.tail x)
 
 @[simp] lemma arity'_app_zero {α β : Type u} (f : arity' α β 0) (xs : fin 0 → α) :
-  arity'_app f xs = f :=
-by cases xs; refl
+  arity'_app f xs = f := rfl
 
 def arity'_postcompose {α β γ : Type u} (g : β → γ) : ∀{n} (f : arity' α β n), arity' α γ n
 | 0     b := g b

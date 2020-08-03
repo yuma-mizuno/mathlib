@@ -9,8 +9,11 @@ variables {α : Type u} {β : Type u}
 --move to fin
 namespace fin
 
-def sum_uncurry {m n : ℕ} (x : fin m → α) (y : fin n → α) (i : fin (m + n)) : α := sorry
---ite (i < ↑m) (x ↑(↑i : ℕ)) (y ↑(↑i - m))
+def sum_uncurry {m n : ℕ} (x : fin m → α) (y : fin n → α) (i : fin (m + n)) : α :=
+dite (↑i < m) (λ h, x ⟨i.val, h⟩) (λ h, y ⟨↑i - m,
+  nat.lt_of_add_lt_add_left
+  (lt_of_le_of_lt (le_of_eq (nat.add_sub_of_le (le_of_not_gt h)))
+  (lt_of_le_of_lt (le_of_eq (fin.coe_eq_val i)) i.is_lt) )⟩)
 
 def set.prod {m n : ℕ} (s : set (fin m → α)) (t : set (fin n → α)) : set (fin (m + n) → α) :=
 { z | ∃ (x: fin m → α) (y : fin n → α), x ∈ s ∧ y ∈ t ∧ z = fin.sum_uncurry x y }
