@@ -55,79 +55,63 @@ by { intro n, apply pempty.elim }
 def Language.algebraic_of_empty {symb : ℕ → Type u}  : Language.algebraic ⟨symb, empty_symbols⟩ :=
 by { intro n, apply pempty.elim }
 
-variable (L)
+variables (L) (μ : Type u)
 
-structure Structure  :=
-(carrier : Type u)
-(fun_map : ∀{n}, L.functions n → (fin n → carrier) → carrier)
-(rel_map : ∀{n}, L.relations n → (fin n → carrier) → Prop)
+structure Structure :=
+(fun_map : ∀{n}, L.functions n → (fin n → μ) → μ)
+(rel_map : ∀{n}, L.relations n → (fin n → μ) → Prop)
 
-variable {L}
+variables {L} {μ} (M : Structure L μ)
 
-instance has_coe_Structure : has_coe_to_sort (Structure L) :=
-⟨Type u, Structure.carrier⟩
-
-variable (M : Structure L)
-
-structure substructure :=
-(carrier : set M)
-(fun_mem : ∀{n}, ∀ (f : L.functions n) (x : fin n → M),
-  (∀ (i : fin n), x i ∈ carrier) → M.fun_map f x ∈ carrier)
-
-variable {M}
-
-def substructure_of_relational (rel : L.relational) (s : set M) : substructure M :=
-⟨s, by { intros n f x h, exfalso, apply rel n f }⟩
-
-inductive definable_params (params : set M) : Π n : ℕ, set (fin n → M) → Prop
-| param {a : M} : a ∈ params → definable_params 1 {λ i : fin 1, a}
+inductive definable_params (params : set μ) : Π n : ℕ, set (fin n → μ) → Prop
+| param {a : μ} : a ∈ params → definable_params 1 {λ i : fin 1, a}
 | univ (n : ℕ) : definable_params n set.univ
 | eq (n : ℕ) (i j : fin n) : definable_params n {x | x i = x j}
-| times {n : ℕ} {s : set (fin n → M)} :
+| times {n : ℕ} {s : set (fin n → μ)} :
   definable_params n s → definable_params (n + 1) {x | tail x ∈ s}
-| compl {n : ℕ} {s : set (fin n → M)} : definable_params n s → definable_params n s.compl
-| inter {n : ℕ} {s t : set (fin n → M)} :
+| compl {n : ℕ} {s : set (fin n → μ)} : definable_params n s → definable_params n s.compl
+| inter {n : ℕ} {s t : set (fin n → μ)} :
   definable_params n s → definable_params n t → definable_params n (s ∩ t)
-| union {n : ℕ} {s t : set (fin n → M)} :
+| union {n : ℕ} {s t : set (fin n → μ)} :
   definable_params n s → definable_params n t → definable_params n (s ∪ t)
-| prod {m n : ℕ} {s : set (fin m → M)} {t : set (fin n → M)} :
+| prod {m n : ℕ} {s : set (fin m → μ)} {t : set (fin n → μ)} :
   definable_params m s → definable_params n t → definable_params (m + n) (fin.set.prod s t)
 | func {n : ℕ} {f : L.functions n} : definable_params (n + 1) {x | x 0 = M.fun_map f (tail x) }
 | rel {n : ℕ} {f : L.relations n} : definable_params n {x | M.rel_map f x }
-| proj {n : ℕ} {s : set (fin (n + 1) → M)} :
+| proj {n : ℕ} {s : set (fin (n + 1) → μ)} :
   definable_params (n + 1) s → definable_params n {x | ∃ y ∈ s, x = tail y}
 
 namespace definable_params
-variables (params : set M) (n : ℕ)
+variables  (params : set μ) (n : ℕ)
 
-def empty : definable_params params n ∅ :=
+def empty : definable_params M params n ∅ :=
 by { rw ← set.compl_univ, apply definable_params.compl, apply definable_params.univ }
 
-def bot : definable_params params n ⊥ :=
+def bot : definable_params M params n ⊥ :=
 by {apply definable_params.empty}
 
-def top : definable_params params n ⊤ :=
+def top : definable_params M params n ⊤ :=
 by {apply definable_params.univ}
 
-variables {s t : set (fin n → M)}
+variables {s t : set (fin n → μ)}
 
-def inf : definable_params params n s → definable_params params n t →
-  definable_params params n (s ⊓ t) :=
+def inf : definable_params M params n s → definable_params M params n t →
+  definable_params M params n (s ⊓ t) :=
 by { rw set.inf_eq_inter, apply definable_params.inter, }
 
-def sup : definable_params params n s → definable_params params n t →
-  definable_params params n (s ⊔ t) :=
+def sup : definable_params M params n s → definable_params M params n t →
+  definable_params M params n (s ⊔ t) :=
 by { rw set.sup_eq_union, apply definable_params.union, }
 
 end definable_params
 
 variable (M)
 
-def definable := definable_params (set.univ : set M)
+def definable := definable_params M (set.univ : set μ)
 
 variable (n : ℕ)
 
-def definable_set := {s : set (fin n → M) // definable M n s}
+def definable_set := {s : set (fin n → μ) // definable M n s}
 
 instance : bounded_lattice (definable_set M n) :=
 begin
@@ -140,24 +124,24 @@ end
 
 section maps
 
-variables {n} {M} (L) (M) (N : Structure L)
+variables {n} {ν : Type u} (L) (N : Structure L ν)
 
-structure first_order_map :=
-(to_fun : M → N)
+structure first_order_hom :=
+(to_fun : μ → ν)
 (map_fun : ∀{n}, ∀ f : L.functions n, to_fun ∘ M.fun_map f = N.fun_map f ∘ (function.comp to_fun))
-(map_rel : ∀{n}, ∀ (r : L.relations n) (x : fin n → M),
+(map_rel : ∀{n}, ∀ (r : L.relations n) (x : fin n → μ),
   M.rel_map r x → N.rel_map r (function.comp to_fun x))
 
-notation A ` →[`:25 L `] ` B := first_order_map L A B
+notation A ` →[`:25 L `] ` B := first_order_hom L A B
 
-structure first_order_embedding extends M ↪ N :=
+structure first_order_embedding extends μ ↪ ν :=
 (map_fun : ∀{n}, ∀ f : L.functions n,
   to_embedding ∘ M.fun_map f = N.fun_map f ∘ (function.comp to_embedding))
 (map_rel : ∀{n}, ∀ (r : L.relations n), M.rel_map r = N.rel_map r ∘ (function.comp to_embedding))
 
 notation A ` ↪[`:25 L `] ` B := first_order_embedding L A B
 
-structure first_order_equiv extends M ≃ N :=
+structure first_order_equiv extends μ ≃ ν :=
 (map_fun : ∀{n}, ∀ f : L.functions n, to_fun ∘ M.fun_map f = N.fun_map f ∘ (function.comp to_fun))
 (map_rel : ∀{n}, ∀ (r : L.relations n), M.rel_map r = N.rel_map r ∘ (function.comp to_fun))
 
@@ -172,5 +156,25 @@ notation A ` ↪ₑ[`:25 L `] ` B := elementary_embedding L A B
 structure elementary_equiv extends M ≃[L] N := sorry
 
 notation A ` ≃ₑ[`:25 L `] ` B := elementary_equiv L A B
+
+variables {L M N}
+namespace first_order_hom
+
+instance has_coe_to_fun : has_coe_to_fun (M →[L] N) :=
+⟨(λ _, μ → ν), first_order_hom.to_fun⟩
+
+@[simp] lemma to_fun_eq_coe (f : M →[L] N) : f.to_fun = f := rfl
+
+lemma coe_inj ⦃f g : M →[L] N⦄ (h : (f : μ → ν) = g) : f = g :=
+by cases f; cases g; cases h; refl
+
+@[ext]
+lemma ext ⦃f g : M →[L] N⦄ (h : ∀ x, f x = g x) : f = g :=
+coe_inj (funext h)
+
+lemma ext_iff {f g : M →[L] N} : f = g ↔ ∀ x, f x = g x :=
+⟨λ h x, h ▸ rfl, λ h, ext h⟩
+
+end first_order_hom
 
 end maps
