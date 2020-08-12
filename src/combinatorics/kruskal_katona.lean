@@ -634,7 +634,7 @@ begin
   have disjs: ∀ x ∈ 𝒜, ∀ y ∈ 𝒜, x ≠ y → disjoint (f x) (f y),
     intros A hA B hB k,
     simp [not_or_distrib, and_assoc], refine ⟨_, _, _, _⟩,
-      { intro z, apply k, ext a, simp [ext] at z, replace z := z a, tauto },
+      { intro z, apply k, ext a, simp [ext_iff] at z, replace z := z a, tauto },
       intro a, rw ← a at hA, apply h _ hB _ hA disjoint_sdiff,
       intro a, rw ← a at hB, apply h _ hB _ hA sdiff_disjoint,
       exact k.symm,
@@ -645,7 +645,7 @@ begin
   rw card_bind disjs at q, dsimp at q,
   have: ∀ u ∈ 𝒜, card (f u) = 2,
     intros u _, rw [card_insert_of_not_mem, card_singleton],
-    rw not_mem_singleton, intro, simp [ext] at a, apply a, exact ⟨0, hn⟩,
+    rw not_mem_singleton, intro, simp [ext_iff] at a, apply a, exact ⟨0, hn⟩,
   rw [sum_const_nat this, ← nat.le_div_iff_mul_le' zero_lt_two] at q,
   conv_rhs at q {rw ← nat.sub_add_cancel hn}, rw nat.pow_add at q, simp at q,
   assumption,
@@ -681,7 +681,7 @@ begin
   -- We know the size of 𝒜bar since it's the same size as 𝒜
   have z: 𝒜bar.card > nat.choose (n-1) (n-r),
     convert size using 1, rw card_image_of_inj_on, intros A _ B _ k,
-      replace k := inter_eq_inter_of_sdiff_eq_sdiff k, simp [ext] at k, rwa ext,
+      replace k := inter_eq_inter_of_sdiff_eq_sdiff k, simp [ext_iff] at k, rwa ext_iff,
     apply choose_symm_of_eq_add, rw [← nat.add_sub_assoc ‹r ≥ 1›,
                                      nat.sub_add_cancel ‹r ≤ n›],
   -- and everything in 𝒜bar has size n-r.

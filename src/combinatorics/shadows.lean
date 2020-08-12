@@ -8,6 +8,7 @@ import data.finset
 import data.fintype.basic
 import data.nat.choose
 import combinatorics.basic
+import logic.function.iterate
 
 /-!
 # Shadows
@@ -98,7 +99,7 @@ section shadow
   lemma iter_shadow_empty (k : ℕ) : shadow^[k] (∅ : finset (finset α)) = ∅ :=
   begin
     induction k with k ih, refl,
-    rwa [iterate_succ, shadow_empty]
+    rwa [function.iterate_succ_apply, shadow_empty]
   end
 
   /-- The shadow is monotonic (though not strictly so). -/
@@ -529,7 +530,7 @@ begin
     swap, norm_cast, apply choose_pos, apply nat.div_le_self,
   norm_cast at this, rw ← card_bind at this,
     convert this,
-    simp only [ext, mem_slice, mem_bind, exists_prop, mem_range, lt_succ_iff],
+    simp only [ext_iff, mem_slice, mem_bind, exists_prop, mem_range, lt_succ_iff],
     intro a, split,
       intro ha, refine ⟨a.card, card_le_of_subset (subset_univ _), ha, rfl⟩,
     rintro ⟨_, _, q, _⟩, exact q,
