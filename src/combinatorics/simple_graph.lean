@@ -5,6 +5,7 @@ Author: Aaron Anderson, Jalex Stark, Kyle Miller.
 -/
 import data.fintype.basic
 import data.sym2
+import data.zmod.basic
 /-!
 # Simple graphs
 
@@ -41,7 +42,6 @@ simple graph.
 
 -/
 open finset
-universe u
 
 /--
 A simple graph is an irreflexive symmetric relation `adj` on a vertex type `V`.
@@ -49,7 +49,7 @@ The relation describes which pairs of vertices are adjacent.
 There is exactly one edge for every pair of adjacent edges;
 see `simple_graph.E` for the corresponding type of edges.
 -/
-structure simple_graph (V : Type u) :=
+@[ext] structure simple_graph (V : Type*) :=
 (adj : V → V → Prop)
 (sym : symmetric adj . obviously)
 (loopless : irreflexive adj . obviously)
@@ -57,18 +57,18 @@ structure simple_graph (V : Type u) :=
 /--
 The complete graph on a type `V` is the simple graph with all pairs of distinct vertices adjacent.
 -/
-def complete_graph (V : Type u) : simple_graph V :=
+def complete_graph (V : Type*) : simple_graph V :=
 { adj := ne }
 
-instance (V : Type u) : inhabited (simple_graph V) :=
+instance (V : Type*) : inhabited (simple_graph V) :=
 ⟨complete_graph V⟩
 
-instance complete_graph_adj_decidable (V : Type u) [decidable_eq V] :
+instance complete_graph_adj_decidable (V : Type*) [decidable_eq V] :
   decidable_rel (complete_graph V).adj :=
 by { dsimp [complete_graph], apply_instance }
 
 namespace simple_graph
-variables {V : Type u} (G : simple_graph V)
+variables {V : Type*} (G : simple_graph V)
 
 /-- `G.neighbor_set v` is the set of vertices adjacent to `v` in `G`. -/
 def neighbor_set (v : V) : set V := set_of (G.adj v)
@@ -80,7 +80,7 @@ by { rintro rfl, exact G.loopless a hab }
 The edges of G consist of the unordered pairs of vertices related by
 `G.adj`.  It is given as a subtype of the symmetric square.
 -/
-def E : Type u := {x : sym2 V // x ∈ sym2.from_rel G.sym}
+def E : Type* := {x : sym2 V // x ∈ sym2.from_rel G.sym}
 
 /-- Allows us to refer to a vertex being a member of an edge. -/
 instance has_mem : has_mem V G.E := { mem := λ v e, v ∈ e.val }
@@ -180,7 +180,13 @@ end finite_at
 
 section locally_finite
 
-variable [∀ (v : V), fintype (G.neighbor_set v)]
+class locally_finite :=
+(neighbor_set_fintype' : Π (v : V), fintype (G.neighbor_set v))
+
+variable [locally_finite G]
+
+instance neighbor_set_fintype (v : V) : fintype (G.neighbor_set v) :=
+locally_finite.neighbor_set_fintype' v
 
 /--
 A locally finite simple graph is regular of degree `d` if every vertex has degree `d`.
@@ -193,8 +199,8 @@ section finite
 
 variables [fintype V]
 
-instance neighbor_set_fintype [decidable_rel G.adj] (v : V) : fintype (G.neighbor_set v) :=
-  @subtype.fintype _ _ (by { simp_rw mem_neighbor_set, apply_instance }) _
+instance fintype.locally_finite [decidable_rel G.adj] : locally_finite G :=
+⟨λ v, @subtype.fintype _ _ (by { simp_rw mem_neighbor_set, apply_instance }) _⟩
 
 lemma neighbor_finset_eq_filter {v : V} [decidable_rel G.adj] :
   G.neighbor_finset v = finset.univ.filter (G.adj v) :=
@@ -213,5 +219,193 @@ lemma complete_graph_is_regular [decidable_eq V] :
 by { intro v, simp }
 
 end finite
+
+section maps
+
+variables {W : Type*} (G) (H : simple_graph W)
+
+abbreviation embedding := rel_embedding G.adj H.adj
+
+infix ` ↪g ` : 50 := embedding
+
+abbreviation isomorphism := rel_iso G.adj H.adj
+
+infix ` ≃g ` : 50 := isomorphism
+
+structure homomorphism :=
+(to_fun : V → W)
+(map_adj' : ∀ i j : V, G.adj i j → H.adj (to_fun i) (to_fun j))
+
+infix ` →g ` : 50 := homomorphism
+
+namespace homomorphism
+
+instance : has_coe_to_fun (G →g H) := ⟨λ _, V → W, to_fun⟩
+
+variables {G} {H} {f : G →g H}
+
+lemma map_adj {i j : V} : G.adj i j → H.adj (f i) (f j) := f.map_adj' i j
+
+end homomorphism
+
+end maps
+
+/-- A constructor that turns a not-necessarily-symmetric, but irreflexive relation into a graph -/
+def symmetrize {V : Type*} (r : V → V → Prop) (h : irreflexive r) : simple_graph V :=
+{ adj := λ v w, r v w ∨ r w v,
+  sym := λ v w h2, by tauto, }
+
+end simple_graph
+
+section examples
+
+
+
+/-- The graph with no edges-/
+def empty_graph (V : Type*) : simple_graph V := { adj := λ i j, false }
+
+/-- A graph on `n` vertices with `n` edges in a cycle -/
+def cycle_graph (n : ℕ) (three_le : 3 ≤ n) : simple_graph (zmod n) :=
+simple_graph.symmetrize (λ i j, i = j + 1) (λ v h, begin
+  simp only [or_self] at h, symmetry' at h, rw ← sub_eq_zero at h,
+    simp only [add_sub_cancel'] at h,
+    haveI : fact (1 < n) := lt_of_lt_of_le (by linarith) three_le,
+    apply zero_ne_one h.symm,
+end)
+
+/-- The complete partite graph on a specified family of types  -/
+def complete_partite_graph {ι : Type*} (f : ι → Type*) : simple_graph (Σ i : ι, f i) :=
+{ adj := λ v w, v.1 ≠ w.1 }
+
+/-- The complete bipartite graph on a specified family of types -/
+def complete_equiv_complete_partite (V : Type*) :
+  complete_graph V ≃g complete_partite_graph (λ v : V, punit) := sorry
+
+def single_edge_graph {V : Type*} {v w : V} (hne : v ≠ w) : simple_graph V :=
+{ adj := λ i j, (i = v ∧ j = w) ∨ (i = w ∧ j = v) }
+
+end examples
+
+namespace simple_graph
+section coloring -- ## Coloring
+
+
+variables {V : Type*} (k : ℕ) (G : simple_graph V)
+
+def coloring := G →g (empty_graph (fin k))
+
+def colorable : Prop := nonempty (coloring k G)
+
+variables {k} {G}
+
+lemma colorable_of_colorable_of_le {j : ℕ} (hle : j ≤ k) : colorable j G → colorable k G := sorry
+
+theorem colorable_of_degree_le [fintype V] [decidable_rel G.adj]
+  (deg_le : ∀ (v : V), G.degree v ≤ k) : colorable (k+1) G := sorry
+
+theorem colorable_complete_partite [fintype V] (f : V → Type*) :
+  colorable (fintype.card V) (complete_partite_graph f) := sorry
+
+end coloring
+
+section graph_operations -- ## Graph Operations
+
+variables {V : Type*}
+
+instance : has_union (simple_graph V) :=
+⟨λ G H, { adj := λ v w, G.adj v w ∨ H.adj v w,
+          sym := λ v w h, by { cases h, { left, exact G.sym h, }, right, exact H.sym h } }⟩
+
+instance : has_inter (simple_graph V) :=
+⟨λ G H, { adj := λ v w, G.adj v w ∧ H.adj v w,
+          sym := λ v w h, ⟨G.sym h.1, H.sym h.2⟩ }⟩
+
+instance : has_subset (simple_graph V) :=
+⟨λ G H, ∀ v w, G.adj v w → H.adj v w⟩
+
+instance : bounded_lattice (simple_graph V) :=
+{ le := (⊆),
+  sup := (∪),
+  inf := (∩),
+  bot := empty_graph V,
+  top := complete_graph V,
+  le_refl := by obviously,
+  le_trans := by obviously,
+  le_antisymm := by obviously,
+  le_inf := by obviously,
+  sup_le := by obviously,
+  inf_le_left := by obviously,
+  inf_le_right := by obviously,
+  le_sup_left := λ G H, λ v w h, by { unfold has_sup.sup, unfold has_union.union, left, apply h, },
+  le_sup_right := λ G H, λ v w h, by { unfold has_sup.sup, unfold has_union.union, right, apply h, },
+  bot_le := by obviously,
+  le_top := by obviously, }
+
+/-- Erase an edge of a graph to get a smaller graph -/
+def erase_edge (G : simple_graph V) (e : G.E) : simple_graph V :=
+{ adj := λ v w, G.adj v w ∧ ¬ (v ∈ e ∧ w ∈ e),
+  sym := λ v w h, ⟨G.sym h.1, by { rw and_comm, exact h.2, }⟩, }
+
+/-- Add an edge between two distinct vertices -/
+def insert_edge (G : simple_graph V) {v w : V} (hne : v ≠ w) := G ∪ single_edge_graph hne
+
+/-- Contracts an edge by identifying its endpoints -/
+def contract (G : simple_graph V) (e : G.E) : simple_graph sorry := sorry
+
+open sum
+
+def subdivide_adj (G : simple_graph V) (e : G.E) : (V ⊕ punit) → (V ⊕ punit) → Prop
+| (inl a) (inl b) := (G.erase_edge e).adj a b
+| (inl a) _ := a ∈ e
+| _ (inl a) := a ∈ e
+| _ _ := false
+
+/-- Subdivides an edge by turning it into two edges, with a new vertex in between -/
+def subdivide (G : simple_graph V) (e : G.E) : simple_graph (V ⊕ punit) :=
+{ adj := G.subdivide_adj e,
+  sym := λ v w h, by { cases v; cases w; unfold simple_graph.subdivide_adj at *,
+    {apply (G.erase_edge e).sym h}, repeat { assumption }, }, }
+
+end graph_operations
+
+section walking -- ## Walking
+
+def path_graph (n : ℕ) : simple_graph (zmod (n + 1)) :=
+simple_graph.symmetrize (λ i j, (i = j + 1 ∧ i ≠ 0))
+(λ i, by { by_cases i = 0, {simp [h]},
+    simp only [h, and_true, ne.def, not_false_iff, or_self],
+    intro con, symmetry' at con, rw ← sub_eq_zero at con,
+    simp only [add_sub_cancel'] at con,
+    sorry, } )
+
+end walking
+
+
+section connectivity -- ## Connectivity
+
+variables {V : Type*} (G : simple_graph V)
+
+/-- Determines if two vertices are connected -/
+def are_connected : V → V → Prop := eqv_gen G.adj
+
+/-- Quotient of the vertex type by connectivity -/
+def connected_components := quotient (eqv_gen.setoid (are_connected G))
+
+/-- Determines if a graph is connected -/
+def is_connected : Prop := ∀ v w, G.are_connected v w
+
+end connectivity
+
+section trees
+
+/-- The graph does not contain a cycle -/
+def is_acyclic {V : Type*} (G : simple_graph V) : Prop :=
+∀ (n : ℕ) (h : 3 ≤ n), (cycle_graph n h ↪g G) → false
+
+/-- A tree is an acyclic connected graph -/
+def is_tree {V : Type*} (G : simple_graph V) : Prop := G.is_connected ∧ G.is_acyclic
+
+end trees
+
 
 end simple_graph
