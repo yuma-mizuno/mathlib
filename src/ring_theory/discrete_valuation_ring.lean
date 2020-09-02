@@ -26,8 +26,6 @@ Let R be an integral domain, assumed to be a principal ideal ring and a local ri
 
 * `discrete_valuation_ring R` : a predicate expressing that R is a DVR
 
-### Definitions
-
 ## Implementation notes
 
 It's a theorem that an element of a DVR is a uniformizer if and only if it's irreducible.
