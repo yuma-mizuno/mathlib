@@ -392,8 +392,6 @@ instance : linear_ordered_comm_group_with_zero (with_zero (multiplicative ℤ)) 
 noncomputable def add_val (R : Type u) [comm_ring R] (I : ideal R) (x : R) : enat :=
 multiplicity (ideal.span {x}) I
 
-#check roption.rec_on
-
 open_locale classical
 
 local notation `Z0` := with_zero (multiplicative ℤ)
