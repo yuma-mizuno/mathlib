@@ -403,7 +403,7 @@ def aux_fun2 : option ℕ → with_zero (multiplicative ℤ)
 
 noncomputable def aux_fun : enat → Z0 := aux_fun2 ∘ aux_fun1
 
-def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
+noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
   valuation R (with_zero (multiplicative ℤ)) :=
 { to_fun := λ x, aux_fun (add_val R (maximal_ideal R) x), -- sorrying data,
   map_one' := sorry,
