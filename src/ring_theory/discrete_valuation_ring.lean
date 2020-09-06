@@ -381,12 +381,10 @@ instance : comm_group_with_zero (with_zero (multiplicative ℤ)) := by apply_ins
 --instance {α : Type} [lin]
 
 instance : linear_ordered_comm_group_with_zero (with_zero (multiplicative ℤ)) :=
-{
-  mul_le_mul_left := sorry,-- ∀ {a b : α}, a ≤ b → ∀ c : α, c * a ≤ c * b)
-  zero_le_one := sorry,--: (0:α) ≤ 1)
+{ mul_le_mul_left := with_zero.mul_le_mul_left,
+  zero_le_one := with_zero.zero_le 1,
   ..(by apply_instance : comm_group_with_zero (with_zero (multiplicative ℤ))),
-  ..(by apply_instance : linear_order (with_zero (multiplicative ℤ)))
-}
+  ..(by apply_instance : linear_order (with_zero (multiplicative ℤ))) }
 
 -- the function we're missing
 noncomputable def add_val (R : Type u) [comm_ring R] (I : ideal R) (x : R) : enat :=
@@ -403,7 +401,7 @@ def aux_fun2 : option ℕ → with_zero (multiplicative ℤ)
 
 noncomputable def aux_fun : enat → Z0 := aux_fun2 ∘ aux_fun1
 
-def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
+noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
   valuation R (with_zero (multiplicative ℤ)) :=
 { to_fun := λ x, aux_fun (add_val R (maximal_ideal R) x), -- sorrying data,
   map_one' := sorry,
