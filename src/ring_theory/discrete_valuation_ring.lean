@@ -387,23 +387,45 @@ instance : linear_ordered_comm_group_with_zero (with_zero (multiplicative ℤ)) 
   ..(by apply_instance : linear_order (with_zero (multiplicative ℤ))) }
 
 -- the function we're missing
-noncomputable def add_val (R : Type u) [comm_ring R] (I : ideal R) (x : R) : enat :=
+noncomputable def add_val {A : Type u} [comm_ring A] (I : ideal A) (x : A) : enat :=
 multiplicity (ideal.span {x}) I
+
+-- missing
+
+variables {A : Type u} [comm_ring A]
+lemma add_val_zero (I : ideal A) : add_val I 0 = ⊤ :=
+begin
+  unfold add_val,
+  have h : multiplicity (0 : ideal A) I = ⊤,
+    sorry,
+  rw ← h,
+  sorry,
+--  convert h,
+  --show multiplicity ⊥ I = ⊤,
+  -- rw span_sin,
+end
+
 
 open_locale classical
 
 local notation `Z0` := with_zero (multiplicative ℤ)
-noncomputable def aux_fun1 : enat → option ℕ := (λ x, @roption.to_option ℕ x _)
+
+noncomputable def aux_fun1 : enat → option ℕ := λ en, roption.to_option en
 
 def aux_fun2 : option ℕ → with_zero (multiplicative ℤ)
 | none := 0
 | (some n) := (multiplicative.of_add (-n) : multiplicative ℤ)
 
-noncomputable def aux_fun : enat → Z0 := aux_fun2 ∘ aux_fun1
+--noncomputable def aux_fun : enat → Z0 := λ en, (aux_fun2 (aux_fun1 en))
+
+noncomputable def aux_fun : enat → Z0 := λ en, option.rec 0 (λ n, ((multiplicative.of_add (-n) : multiplicative ℤ) : Z0))
+  (roption.to_option en)
+
+
 
 noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
   valuation R (with_zero (multiplicative ℤ)) :=
-{ to_fun := λ x, aux_fun (add_val R (maximal_ideal R) x), -- sorrying data,
+{ to_fun := λ x, aux_fun (add_val (maximal_ideal R) x),
   map_one' := sorry,
   map_mul' := sorry,
   map_zero' := sorry,
