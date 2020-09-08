@@ -43,7 +43,7 @@ def forget_colimit_is_colimit (F : J ⥤ over X) [has_colimit (F ⋙ forget)] :
   is_colimit (forget.map_cocone (colimit F)) :=
 is_colimit.of_iso_colimit (colimit.is_colimit (F ⋙ forget)) (cocones.ext (iso.refl _) (by tidy))
 
-instance : reflects_colimits (forget : over X ⥤ C) :=
+instance forget.reflects_colimits : reflects_colimits (forget : over X ⥤ C) :=
 { reflects_colimits_of_shape := λ J 𝒥,
   { reflects_colimit := λ F,
     by constructor; exactI λ t ht,
@@ -108,7 +108,7 @@ def forget_limit_is_limit (F : J ⥤ under X) [has_limit (F ⋙ forget)] :
   is_limit (forget.map_cone (limit F)) :=
 is_limit.of_iso_limit (limit.is_limit (F ⋙ forget)) (cones.ext (iso.refl _) (by tidy))
 
-instance : reflects_limits (forget : under X ⥤ C) :=
+instance forget.reflects_limits : reflects_limits (forget : under X ⥤ C) :=
 { reflects_limits_of_shape := λ J 𝒥,
   { reflects_limit := λ F,
     by constructor; exactI λ t ht,

@@ -16,7 +16,7 @@ def Preorder := bundled preorder
 
 namespace Preorder
 
-instance : bundled_hom @preorder_hom :=
+instance : bundled_hom preorder_hom :=
 { to_fun := @preorder_hom.to_fun,
   id := @preorder_hom.id,
   comp := @preorder_hom.comp,

@@ -1866,17 +1866,17 @@ begin
     exact seq_mem_seq_sets (image_mem_map ht) hu }
 end
 
-instance : is_lawful_functor (filter : Type u → Type u) :=
+instance is_lawful_functor : is_lawful_functor (filter : Type u → Type u) :=
 { id_map   := assume α f, map_id,
   comp_map := assume α β γ f g a, map_map.symm }
 
-instance : is_lawful_applicative (filter : Type u → Type u) :=
+instance is_lawful_applicative : is_lawful_applicative (filter : Type u → Type u) :=
 { pure_seq_eq_map := assume α β, pure_seq_eq_map,
   map_pure        := assume α β, map_pure,
   seq_pure        := assume α β, seq_pure,
   seq_assoc       := assume α β γ, seq_assoc }
 
-instance : is_comm_applicative (filter : Type u → Type u) :=
+instance is_comm_applicative : is_comm_applicative (filter : Type u → Type u) :=
 ⟨assume α β f g, prod_map_seq_comm f g⟩
 
 lemma {l} seq_eq_filter_seq {α β : Type l} (f : filter (α → β)) (g : filter α) :

@@ -43,7 +43,7 @@ def map {α β : Type*} (f : α → β) : P.obj α → P.obj β :=
 
 instance obj.inhabited [inhabited P.A] [inhabited α] : inhabited (P.obj α) :=
 ⟨ ⟨ default _, λ _, default _ ⟩ ⟩
-instance : functor P.obj := {map := @map P}
+instance obj.functor : functor P.obj := {map := @map P}
 
 protected theorem map_eq {α β : Type*} (f : α → β) (a : P.A) (g : P.B a → α) :
   @functor.map P.obj _ _ _ f ⟨a, g⟩ = ⟨a, f ∘ g⟩ :=
@@ -56,7 +56,7 @@ protected theorem comp_map {α β γ : Type*} (f : α → β) (g : β → γ) :
   ∀ x : P.obj α, (g ∘ f) <$> x = g <$> (f <$> x) :=
 λ ⟨a, b⟩, rfl
 
-instance : is_lawful_functor P.obj :=
+instance obj.is_lawful_functor : is_lawful_functor P.obj :=
 {id_map := @pfunctor.id_map P, comp_map := @pfunctor.comp_map P}
 
 /-- re-export existing definition of W-types and

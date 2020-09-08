@@ -399,7 +399,7 @@ begin
   simpa [-mul_re] using re_le_abs (z * conj w)
 end
 
-instance : is_absolute_value absK :=
+instance abs.is_absolute_value : is_absolute_value absK :=
 { abv_nonneg  := abs_nonneg,
   abv_eq_zero := λ _, abs_eq_zero,
   abv_add     := abs_add,

@@ -58,7 +58,8 @@ def Ring : Type (u+1) := bundled ring
 
 namespace Ring
 
-instance : bundled_hom.parent_projection @ring.to_semiring := ⟨⟩
+instance ring.to_semiring.bundled_hom.parent_projection :
+  bundled_hom.parent_projection @ring.to_semiring := ⟨⟩
 
 attribute [derive [has_coe_to_sort, large_category, concrete_category]] Ring
 
@@ -85,7 +86,8 @@ def CommSemiRing : Type (u+1) := bundled comm_semiring
 
 namespace CommSemiRing
 
-instance : bundled_hom.parent_projection @comm_semiring.to_semiring := ⟨⟩
+instance comm_semiring.to_semiring.bundled_hom.parent_projection :
+  bundled_hom.parent_projection @comm_semiring.to_semiring := ⟨⟩
 
 attribute [derive [has_coe_to_sort, large_category, concrete_category]] CommSemiRing
 
@@ -113,7 +115,8 @@ def CommRing : Type (u+1) := bundled comm_ring
 
 namespace CommRing
 
-instance : bundled_hom.parent_projection @comm_ring.to_ring := ⟨⟩
+instance comm_ring.to_ring.bundled_hom.parent_projection :
+  bundled_hom.parent_projection @comm_ring.to_ring := ⟨⟩
 
 attribute [derive [has_coe_to_sort, large_category, concrete_category]] CommRing
 

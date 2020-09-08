@@ -990,7 +990,7 @@ instance : is_lawful_monad set :=
   bind_pure_comp_eq_map := assume α β f s, set.ext $ by simp [set.image, eq_comm],
   bind_map_eq_seq       := assume α β s t, by simp [seq_def] }
 
-instance : is_comm_applicative (set : Type u → Type u) :=
+instance set.is_comm_applicative : is_comm_applicative (set : Type u → Type u) :=
 ⟨ assume α β s t, prod_image_seq_comm s t ⟩
 
 section pi

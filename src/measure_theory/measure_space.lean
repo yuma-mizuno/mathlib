@@ -917,7 +917,7 @@ eventually_of_forall
 @[mono] lemma ae_mono {μ ν : measure α} (h : μ ≤ ν) : μ.ae ≤ ν.ae :=
 λ s hs, bot_unique $ trans_rel_left (≤) (measure.le_iff'.1 h _) hs
 
-instance : countable_Inter_filter μ.ae :=
+instance ae.countable_Inter_filter : countable_Inter_filter μ.ae :=
 ⟨begin
   intros S hSc hS,
   simp only [mem_ae_iff, compl_sInter, sUnion_image, bUnion_eq_Union] at hS ⊢,

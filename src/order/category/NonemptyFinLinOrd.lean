@@ -66,7 +66,7 @@ def NonemptyFinLinOrd := bundled nonempty_fin_lin_ord
 
 namespace NonemptyFinLinOrd
 
-instance : bundled_hom.parent_projection
+instance bundled_hom.parent_projection : bundled_hom.parent_projection
   (λ α i, @decidable_linear_order.to_linear_order _
   (@nonempty_fin_lin_ord.to_decidable_linear_order α i)) := ⟨⟩
 

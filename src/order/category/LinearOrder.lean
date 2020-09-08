@@ -15,7 +15,7 @@ def LinearOrder := bundled linear_order
 
 namespace LinearOrder
 
-instance : bundled_hom.parent_projection @linear_order.to_partial_order := ⟨⟩
+instance : bundled_hom.parent_projection linear_order.to_partial_order := ⟨⟩
 
 attribute [derive [has_coe_to_sort, large_category, concrete_category]] LinearOrder
 

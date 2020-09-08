@@ -347,7 +347,7 @@ variables {I : Type u} {fg : I → Type v} [∀ i, add_group (fg i)] {fp : I →
 open add_action add_torsor
 
 /-- A product of `add_torsor`s is an `add_torsor`. -/
-instance [T : ∀ i, add_torsor (fg i) (fp i)] : add_torsor (Π i, fg i) (Π i, fp i) :=
+instance add_torsor [T : ∀ i, add_torsor (fg i) (fp i)] : add_torsor (Π i, fg i) (Π i, fp i) :=
 {
   vadd := λ g p, λ i, g i +ᵥ p i,
   zero_vadd' := λ p, funext $ λ i, zero_vadd (fg i) (p i),

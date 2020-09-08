@@ -25,9 +25,9 @@ theorem mk_eq {f g} : mk f = mk g ↔ f ≈ g := quotient.eq
 
 def of_rat (x : β) : Cauchy := mk (const abv x)
 
-instance : has_zero Cauchy := ⟨of_rat 0⟩
-instance : has_one Cauchy := ⟨of_rat 1⟩
-instance : inhabited Cauchy := ⟨0⟩
+instance has_zero : has_zero Cauchy := ⟨of_rat 0⟩
+instance has_one : has_one Cauchy := ⟨of_rat 1⟩
+instance inhabited : inhabited Cauchy := ⟨0⟩
 
 theorem of_rat_zero : of_rat 0 = 0 := rfl
 theorem of_rat_one : of_rat 1 = 1 := rfl
@@ -36,7 +36,7 @@ theorem of_rat_one : of_rat 1 = 1 := rfl
 by have : mk f = 0 ↔ lim_zero (f - 0) := quotient.eq;
    rwa sub_zero at this
 
-instance : has_add Cauchy :=
+instance has_add : has_add Cauchy :=
 ⟨λ x y, quotient.lift_on₂ x y (λ f g, mk (f + g)) $
   λ f₁ g₁ f₂ g₂ hf hg, quotient.sound $
   by simpa [(≈), setoid.r, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
@@ -44,14 +44,14 @@ instance : has_add Cauchy :=
 
 @[simp] theorem mk_add (f g : cau_seq β abv) : mk f + mk g = mk (f + g) := rfl
 
-instance : has_neg Cauchy :=
+instance has_neg : has_neg Cauchy :=
 ⟨λ x, quotient.lift_on x (λ f, mk (-f)) $
   λ f₁ f₂ hf, quotient.sound $
   by simpa [(≈), setoid.r] using neg_lim_zero hf⟩
 
 @[simp] theorem mk_neg (f : cau_seq β abv) : -mk f = mk (-f) := rfl
 
-instance : has_mul Cauchy :=
+instance has_mul : has_mul Cauchy :=
 ⟨λ x y, quotient.lift_on₂ x y (λ f g, mk (f * g)) $
   λ f₁ g₁ f₂ g₂ hf hg, quotient.sound $
   by simpa [(≈), setoid.r, mul_add, mul_comm, add_assoc, sub_eq_add_neg] using
@@ -72,7 +72,7 @@ private lemma zero_def : 0 = mk 0 := rfl
 
 private lemma one_def : 1 = mk 1 := rfl
 
-instance : comm_ring Cauchy :=
+instance comm_ring : comm_ring Cauchy :=
 by refine { neg := has_neg.neg,
     add := (+), zero := 0, mul := (*), one := 1, .. };
   { repeat {refine λ a, quotient.induction_on a (λ _, _)},
@@ -90,7 +90,7 @@ parameters {α : Type*} [discrete_linear_ordered_field α]
 parameters {β : Type*} [field β] {abv : β → α} [is_absolute_value abv]
 local notation `Cauchy` := @Cauchy _ _ _ _ abv _
 
-noncomputable instance : has_inv Cauchy :=
+noncomputable instance has_inv : has_inv Cauchy :=
 ⟨λ x, quotient.lift_on x
   (λ f, mk $ if h : lim_zero f then 0 else inv f h) $
 λ f g fg, begin

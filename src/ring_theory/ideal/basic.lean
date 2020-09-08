@@ -272,9 +272,9 @@ def quotient (I : ideal α) := I.quotient
 namespace quotient
 variables {I} {x y : α}
 
-instance (I : ideal α) : has_one I.quotient := ⟨submodule.quotient.mk 1⟩
+instance has_one (I : ideal α) : has_one I.quotient := ⟨submodule.quotient.mk 1⟩
 
-instance (I : ideal α) : has_mul I.quotient :=
+instance has_mul (I : ideal α) : has_mul I.quotient :=
 ⟨λ a b, quotient.lift_on₂' a b (λ a b, submodule.quotient.mk (a * b)) $
  λ a₁ a₂ b₁ b₂ h₁ h₂, quot.sound $ begin
   refine calc a₁ * a₂ - b₁ * b₂ = a₂ * (a₁ - b₁) + (a₂ - b₂) * b₁ : _
@@ -282,7 +282,7 @@ instance (I : ideal α) : has_mul I.quotient :=
   rw [mul_sub, sub_mul, sub_add_sub_cancel, mul_comm, mul_comm b₁]
  end⟩
 
-instance (I : ideal α) : comm_ring I.quotient :=
+instance comm_ring (I : ideal α) : comm_ring I.quotient :=
 { mul := (*),
   one := 1,
   mul_assoc := λ a b c, quotient.induction_on₃' a b c $
@@ -324,7 +324,7 @@ protected theorem nontrivial {I : ideal α} (hI : I ≠ ⊤) : nontrivial I.quot
 lemma mk_surjective : function.surjective (mk I) :=
 λ y, quotient.induction_on' y (λ x, exists.intro x rfl)
 
-instance (I : ideal α) [hI : I.is_prime] : integral_domain I.quotient :=
+instance integral_domain (I : ideal α) [hI : I.is_prime] : integral_domain I.quotient :=
 { eq_zero_or_eq_zero_of_mul_eq_zero := λ a b,
     quotient.induction_on₂' a b $ λ a b hab,
       (hI.mem_or_mem (eq_zero_iff_mem.1 hab)).elim

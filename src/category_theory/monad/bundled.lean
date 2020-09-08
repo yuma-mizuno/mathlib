@@ -43,7 +43,7 @@ variable {C}
 
 instance : inhabited (Monad C) := ⟨initial C⟩
 
-instance {M : Monad C} : monad M.func := M.str
+instance func.monad {M : Monad C} : monad M.func := M.str
 
 /-- Morphisms of bundled monads. -/
 def hom (M N : Monad C) := monad_hom M.func N.func
@@ -81,7 +81,7 @@ variable {C}
 
 instance : inhabited (Comonad C) := ⟨terminal C⟩
 
-instance {M : Comonad C} : comonad M.func := M.str
+instance func.comonad {M : Comonad C} : comonad M.func := M.str
 
 /-- Morphisms of bundled comonads. -/
 def hom (M N : Comonad C) := comonad_hom M.func N.func

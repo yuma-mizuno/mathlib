@@ -44,7 +44,7 @@ instance obj.inhabited {α : typevec n} [inhabited P.A] [Π i, inhabited (α i)]
   inhabited (P.obj α) :=
 ⟨ ⟨default _, λ _ _, default _⟩ ⟩
 
-instance : mvfunctor P.obj :=
+instance obj.mvfunctor : mvfunctor P.obj :=
 ⟨@mvpfunctor.map n P⟩
 
 theorem map_eq {α β : typevec n} (g : α ⟹ β) (a : P.A) (f : P.B a ⟹ α) :
@@ -58,7 +58,7 @@ theorem comp_map {α β γ : typevec n} (f : α ⟹ β) (g : β ⟹ γ) :
   ∀ x : P.obj α, (g ⊚ f) <$$> x = g <$$> (f <$$> x)
 | ⟨a, h⟩ := rfl
 
-instance : is_lawful_mvfunctor P.obj :=
+instance obj.is_lawful_mvfunctor : is_lawful_mvfunctor P.obj :=
 { id_map := @id_map _ P,
   comp_map := @comp_map _ P }
 

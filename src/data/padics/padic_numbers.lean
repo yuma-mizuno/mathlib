@@ -609,7 +609,7 @@ calc
 protected lemma mul' (q r : ℚ_[p]) : padic_norm_e (q * r) = (padic_norm_e q) * (padic_norm_e r) :=
 quotient.induction_on₂ q r $ norm_mul
 
-instance : is_absolute_value (@padic_norm_e p _) :=
+instance is_absolute_value : is_absolute_value (@padic_norm_e p _) :=
 { abv_nonneg := padic_norm_e.nonneg,
   abv_eq_zero := zero_iff,
   abv_add := padic_norm_e.add,
@@ -763,7 +763,7 @@ instance : normed_field ℚ_[p] :=
 { dist_eq := λ _ _, rfl,
   norm_mul' := by simp [has_norm.norm, padic_norm_e.mul'] }
 
-instance : is_absolute_value (λ a : ℚ_[p], ∥a∥) :=
+instance norm.is_absolute_value : is_absolute_value (λ a : ℚ_[p], ∥a∥) :=
 { abv_nonneg := norm_nonneg,
   abv_eq_zero := λ _, norm_eq_zero,
   abv_add := norm_add_le,

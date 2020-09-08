@@ -1706,7 +1706,7 @@ end
 
 namespace to_finsupp
 
-instance : is_add_monoid_hom (to_finsupp : multiset α → α →₀ ℕ) :=
+instance is_add_monoid_hom : is_add_monoid_hom (to_finsupp : multiset α → α →₀ ℕ) :=
 { map_zero := to_finsupp_zero,
   map_add  := to_finsupp_add }
 

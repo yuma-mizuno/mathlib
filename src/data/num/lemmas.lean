@@ -1217,7 +1217,7 @@ theorem dvd_iff_mod_eq_zero {m n : znum} : m ∣ n ↔ n % m = 0 :=
 by rw [← dvd_to_int, int.dvd_iff_mod_eq_zero,
   ← to_int_inj, mod_to_int]; refl
 
-instance : decidable_rel ((∣) : znum → znum → Prop)
+instance dvd.decidable_rel : decidable_rel ((∣) : znum → znum → Prop)
 | a b := decidable_of_iff' _ dvd_iff_mod_eq_zero
 
 end znum

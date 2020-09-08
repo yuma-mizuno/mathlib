@@ -46,7 +46,7 @@ def of (F : C → D) [I : functorial.{v₁ v₂} F] : C ⥤ D :=
 
 end functor
 
-instance (F : C ⥤ D) : functorial.{v₁ v₂} (F.obj) := { .. F }
+instance functor.functorial (F : C ⥤ D) : functorial.{v₁ v₂} (F.obj) := { .. F }
 
 @[simp]
 lemma map_functorial_obj (F : C ⥤ D) {X Y : C} (f : X ⟶ Y) : map F.obj f = F.map f := rfl

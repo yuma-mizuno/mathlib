@@ -84,7 +84,7 @@ def derivative_hom (R : Type*) [semiring R] : polynomial R →+ polynomial R :=
   derivative (f - g) = derivative f - derivative g :=
 (derivative_hom R).map_sub f g
 
-instance : is_add_monoid_hom (derivative : polynomial R → polynomial R) :=
+instance derivative.is_add_monoid_hom : is_add_monoid_hom (derivative : polynomial R → polynomial R) :=
 (derivative_hom R).is_add_monoid_hom
 
 @[simp] lemma derivative_sum {s : finset ι} {f : ι → polynomial R} :

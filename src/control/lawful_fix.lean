@@ -199,7 +199,7 @@ open sigma
 
 namespace pi
 
-noncomputable instance {β} : lawful_fix (α → roption β) := ⟨λ f, roption.fix_eq⟩
+noncomputable instance lawful_fix {β} : lawful_fix (α → roption β) := ⟨λ f, roption.fix_eq⟩
 
 variables {γ : Π a : α, β a → Type*}
 
@@ -235,7 +235,7 @@ end monotone
 
 open has_fix
 
-instance [has_fix $ Π x : sigma β, γ x.1 x.2] : has_fix (Π x (y : β x), γ x y) :=
+instance has_fix [has_fix $ Π x : sigma β, γ x.1 x.2] : has_fix (Π x (y : β x), γ x y) :=
 ⟨ λ f, curry (fix $ uncurry ∘ f ∘ curry) ⟩
 
 variables [∀ x y, omega_complete_partial_order $ γ x y]

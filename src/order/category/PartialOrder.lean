@@ -15,7 +15,7 @@ def PartialOrder := bundled partial_order
 
 namespace PartialOrder
 
-instance : bundled_hom.parent_projection @partial_order.to_preorder := ⟨⟩
+instance : bundled_hom.parent_projection partial_order.to_preorder := ⟨⟩
 
 attribute [derive [has_coe_to_sort, large_category, concrete_category]] PartialOrder
 

@@ -130,8 +130,9 @@ instances on `S` induced by `f` can 'know` the map needed to induce the instance
 @[nolint unused_arguments has_inhabited_instance]
 def codomain (f : localization_map M S) := S
 
-instance : comm_ring f.codomain := by assumption
-instance {K : Type*} [field K] (f : localization_map M K) : field f.codomain := by assumption
+instance codomain.comm_ring : comm_ring f.codomain := by assumption
+instance codomain.field {K : Type*} [field K] (f : localization_map M K) : field f.codomain :=
+by assumption
 
 /-- Short for `to_ring_hom`; used for applying a localization map as a function. -/
 abbreviation to_map := f.to_ring_hom
@@ -912,12 +913,12 @@ Defines the `R`-algebra instance on a copy of `S` carrying the data of the local
 
 /-- We use a copy of the localization map `f`'s codomain `S` carrying the data of `f` so that the
 `R`-algebra instance on `S` can 'know' the map needed to induce the `R`-algebra structure. -/
-instance : algebra R f.codomain := f.to_map.to_algebra
+instance codomain.algebra : algebra R f.codomain := f.to_map.to_algebra
 
 end localization_map
 namespace localization
 
-instance : algebra R (localization M) := localization_map.algebra (of M)
+instance : algebra R (localization M) := localization_map.codomain.algebra (of M)
 
 end localization
 namespace localization_map

@@ -130,7 +130,8 @@ instance Module.monoidal_category : monoidal_category (Module.{u} R) :=
   triangle'                := λ M N, triangle M N, }
 
 /-- Remind ourselves that the monoidal unit, being just `R`, is still a commutative ring. -/
-instance : comm_ring ((𝟙_ (Module.{u} R) : Module.{u} R) : Type u) := (by apply_instance : comm_ring R)
+instance tensor_unit.comm_ring : comm_ring (𝟙_ _ : Module.{u} R) :=
+(by apply_instance : comm_ring R)
 
 namespace monoidal_category
 

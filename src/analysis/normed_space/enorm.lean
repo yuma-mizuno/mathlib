@@ -159,7 +159,7 @@ def finite_subspace : subspace 𝕜 V :=
 
 /-- Metric space structure on `e.finite_subspace`. We use `emetric_space.to_metric_space_of_dist`
 to ensure that this definition agrees with `e.emetric_space`. -/
-instance : metric_space e.finite_subspace :=
+instance finite_subspace.metric_space : metric_space e.finite_subspace :=
 begin
   letI := e.emetric_space,
   refine emetric_space.to_metric_space_of_dist _ (λ x y, _) (λ x y, rfl),
@@ -173,14 +173,14 @@ lemma finite_dist_eq (x y : e.finite_subspace) : dist x y = (e (x - y)).to_real 
 lemma finite_edist_eq (x y : e.finite_subspace) : edist x y = e (x - y) := rfl
 
 /-- Normed group instance on `e.finite_subspace`. -/
-instance : normed_group e.finite_subspace :=
+instance finite_subspace.normed_group : normed_group e.finite_subspace :=
 { norm := λ x, (e x).to_real,
   dist_eq := λ x y, rfl }
 
 lemma finite_norm_eq (x : e.finite_subspace) : ∥x∥ = (e x).to_real := rfl
 
 /-- Normed space instance on `e.finite_subspace`. -/
-instance : normed_space 𝕜 e.finite_subspace :=
+instance finite_subspace.normed_space : normed_space 𝕜 e.finite_subspace :=
 { norm_smul_le := λ c x, le_of_eq $ by simp [finite_norm_eq, ← ennreal.to_real_mul_to_real] }
 
 end enorm

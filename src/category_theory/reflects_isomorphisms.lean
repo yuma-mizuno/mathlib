@@ -31,7 +31,8 @@ def is_iso_of_reflects_iso {A B : C} (f : A ⟶ B) (F : C ⥤ D)
 reflects_isomorphisms.reflects F f
 
 @[priority 100]
-instance (F : C ⥤ D) [full F] [faithful F] : reflects_isomorphisms F :=
+instance reflects_isomorphisms_of_full_faithful (F : C ⥤ D) [full F] [faithful F] :
+  reflects_isomorphisms F :=
 { reflects := λ X Y f i, by exactI
   { inv := F.preimage (inv (F.map f)),
     hom_inv_id' := F.map_injective (by simp),

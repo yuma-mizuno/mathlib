@@ -15,7 +15,7 @@ variables {G : Type u} [group G] (N : subgroup G) [nN : N.normal] {H : Type v} [
 include nN
 
 @[to_additive quotient_add_group.add_group]
-instance : group (quotient N) :=
+instance group : group (quotient N) :=
 { one := (1 : G),
   mul := quotient.map₂' (*)
   (λ a₁ b₁ hab₁ a₂ b₂ hab₂,

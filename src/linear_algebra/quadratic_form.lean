@@ -495,7 +495,7 @@ variables {Q₁ : quadratic_form R M₁} {Q₂ : quadratic_form R M₂} {Q₃ : 
 
 instance : has_coe (Q₁.isometry Q₂) (M₁ ≃ₗ[R] M₂) := ⟨isometry.to_linear_equiv⟩
 
-instance : has_coe_to_fun (Q₁.isometry Q₂) :=
+instance isometry.has_coe_to_fun : has_coe_to_fun (Q₁.isometry Q₂) :=
 { F := λ _, M₁ → M₂, coe := λ f, ⇑(f : M₁ ≃ₗ[R] M₂) }
 
 @[simp] lemma map_app (f : Q₁.isometry Q₂) (m : M₁) : Q₂ (f m) = Q₁ m := f.map_app' m

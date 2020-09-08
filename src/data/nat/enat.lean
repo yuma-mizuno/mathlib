@@ -20,7 +20,7 @@ instance : inhabited enat := ⟨0⟩
 instance : has_one enat := ⟨some 1⟩
 instance : has_add enat := ⟨λ x y, ⟨x.dom ∧ y.dom, λ h, get x h.1 + get y h.2⟩⟩
 instance : has_coe ℕ enat := ⟨some⟩
-instance (n : ℕ) : decidable (n : enat).dom := is_true trivial
+instance dom.decidable (n : ℕ) : decidable (n : enat).dom := is_true trivial
 
 @[simp] lemma coe_inj {x y : ℕ} : (x : enat) = y ↔ x = y := roption.some_inj
 

@@ -346,7 +346,8 @@ variables {C : Type u} [category.{v} C]
 
 section
 
-instance {X Y : C} (f : X ⟶ Y) [has_image f] : has_image (arrow.mk f).hom :=
+instance arrow.mk.hom.has_image {X Y : C} (f : X ⟶ Y) [has_image f] :
+  has_image (arrow.mk f).hom :=
 show has_image f, by apply_instance
 
 end

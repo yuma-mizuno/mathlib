@@ -32,7 +32,7 @@ namespace ωCPO
 
 open omega_complete_partial_order
 
-instance : bundled_hom @continuous_hom :=
+instance : bundled_hom continuous_hom :=
 { to_fun := @continuous_hom.to_fun,
   id := @continuous_hom.id,
   comp := @continuous_hom.comp,

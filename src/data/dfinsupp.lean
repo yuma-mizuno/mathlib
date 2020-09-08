@@ -31,7 +31,7 @@ structure pre : Type (max u v) :=
 instance inhabited_pre : inhabited (pre ι β) :=
 ⟨⟨λ i, 0, ∅, λ i, or.inr rfl⟩⟩
 
-instance : setoid (pre ι β) :=
+instance setoid : setoid (pre ι β) :=
 { r := λ x y, ∀ i, x.to_fun i = y.to_fun i,
   iseqv := ⟨λ f i, rfl, λ f g H i, (H i).symm,
     λ f g h H1 H2 i, (H1 i).trans (H2 i)⟩ }
@@ -118,7 +118,8 @@ instance [Π i, add_monoid (β i)] : add_monoid (Π₀ i, β i) :=
   zero_add  := λ f, ext $ λ i, by simp only [add_apply, zero_apply, zero_add],
   add_zero  := λ f, ext $ λ i, by simp only [add_apply, zero_apply, add_zero] }
 
-instance [Π i, add_monoid (β i)] {i : ι} : is_add_monoid_hom (λ g : Π₀ i : ι, β i, g i) :=
+instance Pi.is_add_monoid_hom [Π i, add_monoid (β i)] {i : ι} :
+  is_add_monoid_hom (λ g : Π₀ i : ι, β i, g i) :=
 { map_add := λ _ _, add_apply, map_zero := zero_apply }
 
 instance [Π i, add_group (β i)] : has_neg (Π₀ i, β i) :=
@@ -422,7 +423,8 @@ ext $ λ i, by simp only [neg_apply, mk_apply]; split_ifs; [refl, rw neg_zero]
   mk s (x - y) = mk s x - mk s y :=
 ext $ λ i, by simp only [sub_apply, mk_apply]; split_ifs; [refl, rw sub_zero]
 
-instance [Π i, add_group (β i)] {s : finset ι} : is_add_group_hom (@mk ι β _ _ s) :=
+instance mk.is_add_group_hom [Π i, add_group (β i)] {s : finset ι} :
+  is_add_group_hom (@mk ι β _ _ s) :=
 { map_add := λ _ _, mk_add }
 
 section

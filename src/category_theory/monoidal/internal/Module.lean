@@ -31,7 +31,7 @@ variables {R : Type u} [comm_ring R]
 namespace Mon_Module_equivalence_Algebra
 
 @[simps]
-instance (A : Mon_ (Module.{u} R)) : ring A.X :=
+instance ring (A : Mon_ (Module.{u} R)) : ring A.X :=
 { one := A.one (1 : R),
   mul := λ x y, A.mul (x ⊗ₜ y),
   one_mul := λ x, by { convert lcongr_fun A.one_mul ((1 : R) ⊗ₜ x), simp, },
@@ -51,7 +51,7 @@ instance (A : Mon_ (Module.{u} R)) : ring A.X :=
   end,
   ..(by apply_instance : add_comm_group A.X) }
 
-instance (A : Mon_ (Module.{u} R)) : algebra R A.X :=
+instance algebra (A : Mon_ (Module.{u} R)) : algebra R A.X :=
 { map_zero' := A.one.map_zero,
   map_one' := rfl,
   map_mul' := λ x y,

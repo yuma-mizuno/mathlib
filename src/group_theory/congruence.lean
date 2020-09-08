@@ -202,13 +202,13 @@ protected def quotient := quotient $ c.to_setoid
 See Note [use has_coe_t]. -/
 @[to_additive "Coercion from a type with an addition to its quotient by an additive congruence
 relation", priority 0]
-instance : has_coe_t M c.quotient := ⟨@quotient.mk _ c.to_setoid⟩
+instance quotient.has_coe_t : has_coe_t M c.quotient := ⟨@quotient.mk _ c.to_setoid⟩
 
 /-- The quotient of a type with decidable equality by a congruence relation also has
     decidable equality. -/
 @[to_additive "The quotient of a type with decidable equality by an additive congruence relation
 also has decidable equality."]
-instance [d : ∀ a b, decidable (c a b)] : decidable_eq c.quotient :=
+instance quotient.decidable_eq [d : ∀ a b, decidable (c a b)] : decidable_eq c.quotient :=
 @quotient.decidable_eq M c.to_setoid d
 
 /-- The function on the quotient by a congruence relation `c` induced by a function that is

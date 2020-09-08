@@ -86,7 +86,8 @@ begin
    apply nat_iso.is_iso_app_of_is_iso }
 end
 
-instance [reflective R] (X : monad.algebra ((left_adjoint R) ⋙ R)) :
+instance unit.app.is_iso
+  [reflective R] (X : monad.algebra ((left_adjoint R) ⋙ R)) :
   is_iso ((is_right_adjoint.adj : _ ⊣ R).unit.app X.A) :=
 let L := left_adjoint R in
 let h : L ⊣ R := (is_right_adjoint.adj) in

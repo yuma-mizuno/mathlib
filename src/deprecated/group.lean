@@ -121,7 +121,7 @@ lemma coe_of (f : M → N) [is_monoid_hom f] : ⇑ (monoid_hom.of f) = f :=
 rfl
 
 @[to_additive]
-instance (f : M →* N) : is_monoid_hom (f : M → N) :=
+instance (f : M →* N) : is_monoid_hom f :=
 { map_mul := f.map_mul,
   map_one := f.map_one }
 

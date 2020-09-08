@@ -372,7 +372,8 @@ open omega_complete_partial_order omega_complete_partial_order.chain
 
 set_option trace.simps.verbose true
 
-instance [∀a, omega_complete_partial_order (β a)] : omega_complete_partial_order (Πa, β a) :=
+instance Pi.omega_complete_partial_order [∀a, omega_complete_partial_order (β a)] :
+  omega_complete_partial_order (Πa, β a) :=
 { ωSup    := λc a, ωSup (c.map (monotone_apply a)),
   ωSup_le := assume c f hf a, ωSup_le _ _ $ by { rintro i, apply hf },
   le_ωSup := assume c i x, le_ωSup_of_le _ $ le_refl _ }
@@ -468,7 +469,7 @@ protected def ωSup (c : chain (α →ₘ β)) : α →ₘ β :=
   monotone := λ x y h, ωSup_le_ωSup_of_le (chain.map_le_map _ $ λ a, a.monotone h) }
 
 @[simps ωSup_to_fun {rhs_md := semireducible, simp_rhs := tt}]
-instance : omega_complete_partial_order (α →ₘ β) :=
+instance omega_complete_partial_order : omega_complete_partial_order (α →ₘ β) :=
 omega_complete_partial_order.lift preorder_hom.to_fun_hom preorder_hom.ωSup
   (λ x y h, h) (λ c, rfl)
 

@@ -98,7 +98,7 @@ calc det (M ⬝ N) = ∑ p : n → n, ∑ σ : perm n, ε σ * ∏ i, (M (σ i) 
     (λ _ _ _ _, mul_right_cancel) (λ τ _, ⟨τ * σ, by simp⟩))
 ... = det M * det N : by simp [det, mul_assoc, mul_sum, mul_comm, mul_left_comm]
 
-instance : is_monoid_hom (det : matrix n n R → R) :=
+instance det.is_monoid_hom : is_monoid_hom (det : matrix n n R → R) :=
 { map_one := det_one,
   map_mul := det_mul }
 
@@ -191,7 +191,7 @@ def mod_swap {n : Type u} [decidable_eq n] (i j : n) : setoid (perm n) :=
   λ σ τ h, or.cases_on h (λ h, or.inl h.symm) (λ h, or.inr (by rw [h, swap_mul_self_mul])),
   λ σ τ υ hστ hτυ, by cases hστ; cases hτυ; try {rw [hστ, hτυ, swap_mul_self_mul]}; finish⟩
 
-instance (i j : n) : decidable_rel (mod_swap i j).r := λ σ τ, or.decidable
+instance mod_swap.r.decidable_rel (i j : n) : decidable_rel (mod_swap i j).r := λ σ τ, or.decidable
 
 variables {M : matrix n n R} {i j : n}
 

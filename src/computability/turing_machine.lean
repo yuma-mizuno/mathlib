@@ -1230,7 +1230,7 @@ reachable. -/
 -- because of the inhabited instance, but we could avoid the inhabited instances on Λ and σ here.
 -- But they are parameters so we cannot easily skip them for just this definition.
 def Λ' := option stmt₁ × σ
-instance : inhabited Λ' := ⟨(some (M (default _)), default _)⟩
+instance Λ'.inhabited : inhabited Λ' := ⟨(some (M (default _)), default _)⟩
 
 open TM0.stmt
 
@@ -1386,7 +1386,7 @@ local notation `cfg₁` := cfg Γ Λ σ
 inductive Λ' : Type (max u_1 u_2 u_3)
 | normal : Λ → Λ'
 | write : Γ → stmt₁ → Λ'
-instance : inhabited Λ' := ⟨Λ'.normal (default _)⟩
+instance Λ'.inhabited : inhabited Λ' := ⟨Λ'.normal (default _)⟩
 
 local notation `stmt'` := stmt bool Λ' σ
 local notation `cfg'` := cfg bool Λ' σ
@@ -1709,7 +1709,7 @@ followed by the action and a jump to the next `normal` state.  -/
 inductive Λ'
 | normal : Λ → Λ'
 | act : TM0.stmt Γ → Λ → Λ'
-instance : inhabited Λ' := ⟨Λ'.normal (default _)⟩
+instance Λ'.inhabited : inhabited Λ' := ⟨Λ'.normal (default _)⟩
 
 local notation `cfg₀` := TM0.cfg Γ Λ
 local notation `stmt₁` := TM1.stmt Γ Λ' unit

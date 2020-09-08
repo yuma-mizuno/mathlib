@@ -803,18 +803,18 @@ theorem sum_mem {ι : Type w} {t : finset ι} {f : ι → A}
   (h : ∀ x ∈ t, f x ∈ S) : ∑ x in t, f x ∈ S :=
 subsemiring.sum_mem S h
 
-instance {R : Type u} {A : Type v} [comm_semiring R] [semiring A] [algebra R A]
+instance is_add_submonoid {R : Type u} {A : Type v} [comm_semiring R] [semiring A] [algebra R A]
   (S : subalgebra R A) : is_add_submonoid (S : set A) :=
 { zero_mem := S.zero_mem,
   add_mem := λ _ _, S.add_mem }
 
-instance {R : Type u} {A : Type v} [comm_semiring R] [semiring A] [algebra R A]
+instance is_submonoid {R : Type u} {A : Type v} [comm_semiring R] [semiring A] [algebra R A]
   (S : subalgebra R A) : is_submonoid (S : set A) :=
 { one_mem := S.one_mem,
   mul_mem := λ _ _, S.mul_mem }
 
-instance {R : Type u} {A : Type v} [comm_ring R] [ring A] [algebra R A] (S : subalgebra R A) :
-  is_subring (S : set A) :=
+instance is_subring {R : Type u} {A : Type v} [comm_ring R] [ring A] [algebra R A]
+  (S : subalgebra R A) : is_subring (S : set A) :=
 { neg_mem := λ _, S.neg_mem }
 
 instance : inhabited S := ⟨0⟩

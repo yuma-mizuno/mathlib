@@ -260,7 +260,7 @@ by { simp only [norm, mul_im, mul_re], ring }
 lemma norm_eq_mul_conj (n : ℤ√d) : (norm n : ℤ√d) = n * n.conj :=
 by cases n; simp [norm, conj, zsqrtd.ext, mul_comm, sub_eq_add_neg]
 
-instance : is_monoid_hom norm :=
+instance norm.is_monoid_hom : is_monoid_hom norm :=
 { map_one := norm_one, map_mul := norm_mul }
 
 lemma norm_nonneg (hd : d ≤ 0) (n : ℤ√d) : 0 ≤ n.norm :=

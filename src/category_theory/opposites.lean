@@ -145,10 +145,10 @@ protected definition right_op (F : Cᵒᵖ ⥤ D) : C ⥤ Dᵒᵖ :=
 
 -- TODO show these form an equivalence
 
-instance {F : C ⥤ D} [full F] : full F.op :=
+instance op.full {F : C ⥤ D} [full F] : full F.op :=
 { preimage := λ X Y f, (F.preimage f.unop).op }
 
-instance {F : C ⥤ D} [faithful F] : faithful F.op :=
+instance op.faithful {F : C ⥤ D} [faithful F] : faithful F.op :=
 { map_injective' := λ X Y f g h,
     has_hom.hom.unop_inj $ by simpa using map_injective F (has_hom.hom.op_inj h) }
 

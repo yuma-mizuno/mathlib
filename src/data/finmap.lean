@@ -458,7 +458,7 @@ section
 
 variables [decidable_eq α]
 
-instance : decidable_rel (@disjoint α β) :=
+instance disjoint.decidable_rel : decidable_rel (@disjoint α β) :=
 λ x y, by dsimp only [disjoint]; apply_instance
 
 lemma disjoint_union_left (x y z : finmap β) : disjoint (x ∪ y) z ↔ disjoint x z ∧ disjoint y z :=
