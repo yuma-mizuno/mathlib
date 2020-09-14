@@ -6,8 +6,7 @@ Authors: Scott Morrison
 import algebra.ring.pi
 import algebra.category.CommRing.basic
 import algebra.category.Group.limits
-import deprecated.subring
-import ring_theory.subsemiring
+import ring_theory.subring
 
 /-!
 # The category of (commutative) rings has all limits
@@ -20,6 +19,8 @@ open category_theory
 open category_theory.limits
 
 universe u
+
+noncomputable theory
 
 namespace SemiRing
 
@@ -84,7 +85,7 @@ open has_limits
 @[irreducible]
 instance has_limits : has_limits SemiRing :=
 { has_limits_of_shape := λ J 𝒥, by exactI
-  { has_limit := λ F,
+  { has_limit := λ F, has_limit.mk
     { cone     := limit_cone F,
       is_limit := limit_cone_is_limit F } } }
 
@@ -208,24 +209,18 @@ instance ring_obj (F : J ⥤ Ring) (j) :
   ring ((F ⋙ forget Ring).obj j) :=
 by { change ring (F.obj j), apply_instance }
 
--- We still don't have bundled subrings,
--- so we need to convert the bundled sub-objects back to unbundled
-
-instance sections_submonoid' (F : J ⥤ Ring) :
-  is_submonoid (F ⋙ forget Ring).sections :=
-(Mon.sections_submonoid (F ⋙ forget₂ Ring SemiRing ⋙ forget₂ SemiRing Mon)).is_submonoid
-
-instance sections_add_subgroup' (F : J ⥤ Ring) :
-  is_add_subgroup (F ⋙ forget Ring).sections :=
-(AddGroup.sections_add_subgroup (F ⋙ forget₂ Ring AddCommGroup ⋙ forget₂ AddCommGroup AddGroup)).is_add_subgroup
-
-instance sections_subring (F : J ⥤ Ring) :
-  is_subring (F ⋙ forget Ring).sections := {}
+/--
+The flat sections of a functor into `Ring` form a subring of all sections.
+-/
+def sections_subring (F : J ⥤ Ring) :
+  subring (Π j, F.obj j) :=
+{ carrier := (F ⋙ forget Ring).sections,
+  ..(AddGroup.sections_add_subgroup (F ⋙ forget₂ Ring AddCommGroup ⋙ forget₂ AddCommGroup AddGroup)),
+  ..(SemiRing.sections_subsemiring (F ⋙ forget₂ Ring SemiRing)) }
 
 instance limit_ring (F : J ⥤ Ring) :
   ring (types.limit_cone (F ⋙ forget Ring.{u})).X :=
-@subtype.ring ((Π (j : J), (F ⋙ forget _).obj j)) (by apply_instance) _
-  (by convert (Ring.sections_subring F))
+(sections_subring F).to_ring
 
 /--
 We show that the forgetful functor `CommRing ⥤ Ring` creates limits.
@@ -309,8 +304,8 @@ by { change comm_ring (F.obj j), apply_instance }
 
 instance limit_comm_ring (F : J ⥤ CommRing) :
   comm_ring (types.limit_cone (F ⋙ forget CommRing.{u})).X :=
-@subtype.comm_ring ((Π (j : J), (F ⋙ forget _).obj j)) (by apply_instance) _
-  (by convert (Ring.sections_subring (F ⋙ forget₂ CommRing Ring.{u})))
+@subring.to_comm_ring (Π j, F.obj j) _
+  (Ring.sections_subring (F ⋙ forget₂ CommRing Ring.{u}))
 
 /--
 We show that the forgetful functor `CommRing ⥤ Ring` creates limits.
