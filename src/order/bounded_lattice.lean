@@ -796,6 +796,8 @@ lemma lt_iff_exists_coe_btwn [partial_order α] [densely_ordered α] [no_top_ord
 
 end with_top
 
+attribute [irreducible] with_bot with_top
+
 namespace subtype
 
 /-- A subtype forms a `⊔`-semilattice if `⊔` preserves the property. -/

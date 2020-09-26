@@ -240,7 +240,7 @@ end units
 
 namespace with_zero
 
-local attribute [semireducible] with_zero
+local attribute [semireducible] with_zero with_bot
 
 instance [preorder α] : preorder (with_zero α) := with_bot.preorder
 
@@ -368,10 +368,10 @@ attribute [norm_cast] coe_one coe_eq_one coe_zero coe_eq_zero one_eq_coe zero_eq
 
 end has_one
 
+local attribute [semireducible] with_top with_zero
+
 instance [has_add α] : has_add (with_top α) :=
 ⟨λ o₁ o₂, o₁.bind (λ a, o₂.map (λ b, a + b))⟩
-
-local attribute [reducible] with_zero
 
 instance [add_semigroup α] : add_semigroup (with_top α) :=
 { add := (+),
@@ -446,6 +446,8 @@ by simp [lt_top_iff_ne_top, add_eq_top, not_or_distrib]
 end with_top
 
 namespace with_bot
+
+local attribute [semireducible] with_top with_bot
 
 instance [has_zero α] : has_zero (with_bot α) := with_top.has_zero
 instance [has_one α] : has_one (with_bot α) := with_top.has_one
