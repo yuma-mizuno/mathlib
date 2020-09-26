@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mario Carneiro
 -/
 import tactic.basic
+import tactic.lift
 
 namespace option
 variables {α : Type*} {β : Type*} {γ : Type*}
@@ -141,10 +142,10 @@ by cases o; simp
 lemma ne_none_iff_is_some {o : option α} : o ≠ none ↔ o.is_some :=
 by cases o; simp
 
-lemma ne_none_iff_exists {o : option α} : o ≠ none ↔ ∃ (x : α), o = some x :=
+lemma ne_none_iff_exists {o : option α} : o ≠ none ↔ ∃ (x : α), some x = o :=
 by {cases o; simp}
 
-lemma ne_none_iff_exists' {o : option α} : o ≠ none ↔ ∃ (x : α), o = x :=
+lemma ne_none_iff_exists' {o : option α} : o ≠ none ↔ ∃ (x : α), ↑x = o :=
 ne_none_iff_exists
 
 lemma bex_ne_none {p : option α → Prop} :
@@ -192,5 +193,17 @@ function to `a` if it comes from `α`, and return `b` otherwise. -/
 def cases_on' : option α → β → (α → β) → β
 | none     n s := n
 | (some a) n s := s a
+
+instance : can_lift (option α) α :=
+{ coe := some,
+  cond := λ o, o.is_some,
+  prf := λ o ho, ⟨option.get ho, some_get ho⟩ }
+
+/-- The default `option.can_lift` uses `option.is_some` as `can_lift.cond`.
+This version uses `λ o, o ≠ none` instead. -/
+def can_lift_ne_none : can_lift (option α) α :=
+{ coe := some,
+  cond := λ o, o ≠ none,
+  prf := λ o, ne_none_iff_exists.1 }
 
 end option

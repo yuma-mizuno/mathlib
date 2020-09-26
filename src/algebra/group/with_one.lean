@@ -33,21 +33,28 @@ instance : has_coe_t α (with_one α) := ⟨some⟩
 lemma some_eq_coe {a : α} : (some a : with_one α) = ↑a := rfl
 
 @[simp, to_additive]
-lemma one_ne_coe {a : α} : (1 : with_one α) ≠ a :=
-λ h, option.no_confusion h
+lemma coe_ne_one {a : α} : (a : with_one α) ≠ (1 : with_one α) :=
+option.some_ne_none a
 
 @[simp, to_additive]
-lemma coe_ne_one {a : α} : (a : with_one α) ≠ (1 : with_one α) :=
-λ h, option.no_confusion h
+lemma one_ne_coe {a : α} : (1 : with_one α) ≠ a :=
+coe_ne_one.symm
 
 @[to_additive]
-lemma ne_one_iff_exists : ∀ {x : with_one α}, x ≠ 1 ↔ ∃ (a : α), x = a
-| 1       := ⟨λ h, false.elim $ h rfl, by { rintros ⟨a,ha⟩ h, simpa using h }⟩
-| (a : α) := ⟨λ h, ⟨a, rfl⟩, λ h, with_one.coe_ne_one⟩
+lemma ne_one_iff_exists {x : with_one α} : x ≠ 1 ↔ ∃ (a : α), ↑a = x :=
+option.ne_none_iff_exists
 
 @[to_additive]
+instance : can_lift (with_one α) α :=
+{ coe := coe,
+  cond := λ a, a ≠ 1,
+  .. option.can_lift_ne_none }
+
+@[simp, to_additive]
 lemma coe_inj {a b : α} : (a : with_one α) = b ↔ a = b :=
 option.some_inj
+
+attribute [norm_cast] coe_inj with_zero.coe_inj
 
 @[elab_as_eliminator, to_additive]
 protected lemma cases_on {P : with_one α → Prop} :
@@ -130,7 +137,7 @@ namespace with_zero
 instance [one : has_one α] : has_one (with_zero α) :=
 { ..one }
 
-lemma coe_one [has_one α] : ((1 : α) : with_zero α) = 1 := rfl
+@[simp, norm_cast] lemma coe_one [has_one α] : ((1 : α) : with_zero α) = 1 := rfl
 
 instance [has_mul α] : mul_zero_class (with_zero α) :=
 { mul       := λ o₁ o₂, o₁.bind (λ a, option.map (λ b, a * b) o₂),
@@ -197,7 +204,12 @@ section group
 variables [group α]
 
 @[simp] lemma inv_one : (1 : with_zero α)⁻¹ = 1 :=
-show ((1⁻¹ : α) : with_zero α) = 1, by simp [coe_one]
+show ((1⁻¹ : α) : with_zero α) = 1, by simp
+
+instance : group_with_zero (with_zero α) :=
+{ inv_zero := inv_zero,
+  mul_inv_cancel := by { intros a ha, lift a to α, },
+  .. with_zero.monoid_with_zero, .. with_zero.has_inv, .. with_zero.nontrivial }
 
 /-- A division operation on `with_zero α` when `α` has an inverse operation -/
 definition div (x y : with_zero α) : with_zero α :=

@@ -29,8 +29,7 @@ instance : has_coe nnreal ennreal := ⟨ option.some ⟩
 
 instance : can_lift ennreal nnreal :=
 { coe := coe,
-  cond := λ r, r ≠ ∞,
-  prf := λ x hx, ⟨option.get $ option.ne_none_iff_is_some.1 hx, option.some_get _⟩ }
+  .. option.can_lift_ne_none }
 
 @[simp] lemma none_eq_top : (none : ennreal) = (⊤ : ennreal) := rfl
 @[simp] lemma some_eq_coe (a : nnreal) : (some a : ennreal) = (↑a : ennreal) := rfl
