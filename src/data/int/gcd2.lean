@@ -5,8 +5,6 @@ Authors: Sangwoo Jo (aka Jason), Guy Leroy, Johannes Hölzl, Mario Carneiro, Joh
   Jens Wagemaker, Aaron Anderson, Paul van Wamelen
 -/
 import data.int.gcd
-import ring_theory.principal_ideal_domain
-import ring_theory.unique_factorization_domain
 
 /-!
 # More divisibility over ℤ
