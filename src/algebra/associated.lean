@@ -605,6 +605,12 @@ begin
   simp,
 end
 
+lemma coprime_associated {a b : α} :
+  (∀ (d : α), d ∣ a → d ∣ b → ¬ _root_.prime d) ↔
+  (∀ (d : associates α), d ≤ associates.mk a → d ≤ associates.mk b → ¬ prime d) :=
+by { convert forall_quotient_iff.symm,
+  simp_rw [quotient_mk_eq_mk, prime_mk, mk_le_mk_iff_dvd_iff] }
+
 end comm_monoid_with_zero
 
 section comm_cancel_monoid_with_zero
