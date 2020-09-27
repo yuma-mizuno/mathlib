@@ -261,18 +261,6 @@ begin
       apply absurd (int.coe_zero_le (int.gcd a b)) (not_le.mpr hneg) }}
 end
 
-/-
-lemma ne_zero_pow {M : Type*} [monoid_with_zero M] {a : M} {n : ℕ} (hn : n ≠ 0) :
-  a ^ n ≠ 0 → a ≠ 0 :=
-begin
-  classical,
-  intro han,
-  by_contradiction ha,
-  have hann : a ^ n = 0, { rw (not_not.mp ha), apply zero_pow' _ hn },
-  apply absurd hann han
-end
--/
-
 lemma sqr_of_coprime [decidable_eq (associates ℤ)] [Π (p : associates ℤ), decidable (irreducible p)]
   {a b c : ℤ} (hc : c ≠ 0) (h : int.gcd a b = 1) (heq : a * b = c ^ 2) :
   ∃ (a0 : ℤ), a0 ≠ 0 ∧ (a = a0 ^ 2 ∨ a = - (a0 ^ 2)) :=
