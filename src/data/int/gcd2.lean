@@ -362,3 +362,28 @@ begin
     rw [pow_two, int.nat_abs_mul] at hpp,
     exact (or_self _).mp ((nat.prime.dvd_mul hp).mp hpp)}
 end
+
+namespace multiplicity
+
+lemma finite_int_iff_nat_abs_finite {a b : ℤ} : finite a b ↔ finite a.nat_abs b.nat_abs :=
+begin
+  rw [finite_def, finite_def],
+  conv in (a ^ _ ∣ b)
+    { rw [← int.nat_abs_dvd_abs_iff, int.nat_abs_pow] }
+end
+
+lemma finite_int_iff {a b : ℤ} : finite a b ↔ (a.nat_abs ≠ 1 ∧ b ≠ 0) :=
+begin
+  have := int.nat_abs_eq a,
+  have := @int.nat_abs_ne_zero_of_ne_zero b,
+  rw [finite_int_iff_nat_abs_finite, finite_nat_iff, nat.pos_iff_ne_zero],
+  split; finish
+end
+
+instance decidable_nat : decidable_rel (λ a b : ℕ, (multiplicity a b).dom) :=
+λ a b, decidable_of_iff _ finite_nat_iff.symm
+
+instance decidable_int : decidable_rel (λ a b : ℤ, (multiplicity a b).dom) :=
+λ a b, decidable_of_iff _ finite_int_iff.symm
+
+end multiplicity

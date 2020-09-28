@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Sangwoo Jo (aka Jason), Guy Leroy, Johannes Hölzl, Mario Carneiro
 -/
 import data.nat.prime
+import ring_theory.multiplicity
 import ring_theory.principal_ideal_domain
 import ring_theory.unique_factorization_domain
 
