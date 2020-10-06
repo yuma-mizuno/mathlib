@@ -410,7 +410,18 @@ noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation
     -- the maths question
     sorry
   end,
-  map_mul' := sorry,
+  map_mul' := begin
+    intros x y,
+    suffices : multiplicity (span {x*y}) (maximal_ideal R) =
+      multiplicity (span {x}) (maximal_ideal R) + multiplicity (span {y}) (maximal_ideal R),
+    { rw this,
+      -- some lean mess which can perhaps be made easier with a refactor
+      sorry
+    },
+    -- the maths question
+    sorry,
+  end,
+  -- etc etc
   map_zero' := sorry,
   map_add' := sorry }
 
