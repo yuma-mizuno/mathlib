@@ -186,7 +186,11 @@ instance decidable_set_of (p : α → Prop) [H : decidable_pred p] : decidable_p
 @[simp] theorem set_of_subset_set_of {p q : α → Prop} :
   {a | p a} ⊆ {a | q a} ↔ (∀a, p a → q a) := iff.rfl
 
-@[simp] lemma sep_set_of {α} {p q : α → Prop} : {a ∈ {a | p a } | q a} = {a | p a ∧ q a} := rfl
+@[simp] lemma sep_set_of {p q : α → Prop} : {a ∈ {a | p a } | q a} = {a | p a ∧ q a} := rfl
+
+lemma set_of_and {p q : α → Prop} : {a | p a ∧ q a} = {a | p a} ∩ {a | q a} := rfl
+
+lemma set_of_or {p q : α → Prop} : {a | p a ∨ q a} = {a | p a} ∪ {a | q a} := rfl
 
 /-! ### Lemmas about subsets -/
 
@@ -722,6 +726,10 @@ instance unique_singleton (a : α) : unique ↥({a} : set α) :=
     apply eq_of_mem_singleton (subtype.mem x),
   end}
 
+lemma eq_singleton_iff_unique_mem {s : set α} {a : α} :
+  s = {a} ↔ a ∈ s ∧ ∀ x ∈ s, x = a :=
+by simp [ext_iff, @iff_def (_ ∈ s), forall_and_distrib, and_comm]
+
 /-! ### Lemmas about sets defined as `{x ∈ s | p x}`. -/
 
 theorem mem_sep {s : set α} {p : α → Prop} {x : α} (xs : x ∈ s) (px : p x) : x ∈ {x ∈ s | p x} :=
@@ -855,6 +863,9 @@ h.left
 theorem not_mem_of_mem_diff {s t : set α} {x : α} (h : x ∈ s \ t) : x ∉ t :=
 h.right
 
+theorem diff_eq_compl_inter {s t : set α} : s \ t = tᶜ ∩ s :=
+by rw [diff_eq, inter_comm]
+
 theorem nonempty_diff {s t : set α} : (s \ t).nonempty ↔ ¬ (s ⊆ t) :=
 ⟨λ ⟨x, xs, xt⟩, not_subset.2 ⟨x, xs, xt⟩,
   λ h, let ⟨x, xs, xt⟩ := not_subset.1 h in ⟨x, xs, xt⟩⟩
@@ -900,6 +911,8 @@ by finish [ext_iff]
 
 theorem inter_union_diff (s t : set α) : (s ∩ t) ∪ (s \ t) = s :=
 by finish [ext_iff, iff_def]
+
+theorem inter_union_compl (s t : set α) : (s ∩ t) ∪ (s ∩ tᶜ) = s := inter_union_diff _ _
 
 theorem diff_subset (s t : set α) : s \ t ⊆ s :=
 by finish [subset_def]
@@ -992,6 +1005,12 @@ by rw [union_comm, union_diff_self, union_comm]
 
 theorem diff_inter_self {a b : set α} : (b \ a) ∩ a = ∅ :=
 by { ext, by simp [iff_def] {contextual:=tt} }
+
+theorem diff_inter_self_eq_diff {s t : set α} : s \ (t ∩ s) = s \ t :=
+by { ext, simp [iff_def] {contextual := tt} }
+
+theorem diff_self_inter {s t : set α} : s \ (s ∩ t) = s \ t :=
+by rw [inter_comm, diff_inter_self_eq_diff]
 
 theorem diff_eq_self {s t : set α} : s \ t = s ↔ t ∩ s ⊆ ∅ :=
 by finish [ext_iff, iff_def, subset_def]
@@ -1426,6 +1445,16 @@ s.eq_empty_or_nonempty.elim or.inl (λ ⟨x, hx⟩, or.inr ⟨x, hs.eq_singleton
 lemma subsingleton_univ [subsingleton α] : (univ : set α).subsingleton :=
 λ x hx y hy, subsingleton.elim x y
 
+/-- `s`, coerced to a type, is a subsingleton type if and only if `s`
+is a subsingleton set. -/
+@[simp, norm_cast] lemma subsingleton_coe (s : set α) : subsingleton s ↔ s.subsingleton :=
+begin
+  split,
+  { refine λ h, (λ a ha b hb, _),
+    exact set_coe.ext_iff.2 (@subsingleton.elim s h ⟨a, ha⟩ ⟨b, hb⟩) },
+  { exact λ h, subsingleton.intro (λ a b, set_coe.ext (h a.property b.property)) }
+end
+
 theorem univ_eq_true_false : univ = ({true, false} : set Prop) :=
 eq.symm $ eq_univ_of_forall $ classical.cases (by simp) (by simp)
 
@@ -1490,6 +1519,10 @@ range_nonempty_iff_nonempty.2 h
 
 @[simp] lemma range_eq_empty {f : ι → α} : range f = ∅ ↔ ¬ nonempty ι :=
 not_nonempty_iff_eq_empty.symm.trans $ not_congr range_nonempty_iff_nonempty
+
+@[simp] lemma image_union_image_compl_eq_range (f : α → β) :
+  (f '' s) ∪ (f '' sᶜ) = range f :=
+by rw [← image_union, ← image_univ, ← union_compl_self]
 
 theorem image_preimage_eq_inter_range {f : α → β} {t : set β} :
   f '' (f ⁻¹' t) = t ∩ range f :=
@@ -1867,8 +1900,11 @@ by { split_ifs; simp [h] }
 theorem image_swap_eq_preimage_swap : image (@prod.swap α β) = preimage prod.swap :=
 image_eq_preimage_of_inverse prod.swap_left_inverse prod.swap_right_inverse
 
+theorem preimage_swap_prod {s : set α} {t : set β} : prod.swap ⁻¹' t.prod s = s.prod t :=
+by { ext ⟨x, y⟩, simp [and_comm] }
+
 theorem image_swap_prod : prod.swap '' t.prod s = s.prod t :=
-by { ext ⟨x, y⟩, simp [image_swap_eq_preimage_swap, and_comm] }
+by rw [image_swap_eq_preimage_swap, preimage_swap_prod]
 
 theorem prod_image_image_eq {m₁ : α → γ} {m₂ : β → δ} :
   (image m₁ s).prod (image m₂ t) = image (λp:α×β, (m₁ p.1, m₂ p.2)) (s.prod t) :=

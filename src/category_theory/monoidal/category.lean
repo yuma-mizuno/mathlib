@@ -5,6 +5,46 @@ Authors: Michael Jendrusch, Scott Morrison
 -/
 import category_theory.products.basic
 
+/-!
+# Monoidal categories
+
+A monoidal category is a category equipped with a tensor product, unitors, and an associator.
+In the definition, we provide the tensor product as a pair of functions
+* `tensor_obj : C → C → C`
+* `tensor_hom : (X₁ ⟶ Y₁) → (X₂ ⟶ Y₂) → ((X₁ ⊗ X₂) ⟶ (Y₁ ⊗ Y₂))`
+and allow use of the overloaded notation `⊗` for both.
+The unitors and associator are provided componentwise.
+
+The tensor product can be expressed as a functor via `tensor : C × C ⥤ C`.
+The unitors and associator are gathered together as natural
+isomorphisms in `left_unitor_nat_iso`, `right_unitor_nat_iso` and `associator_nat_iso`.
+
+Some consequences of the definition are proved in other files,
+e.g. `(λ_ (𝟙_ C)).hom = (ρ_ (𝟙_ C)).hom` in `category_theory.monoidal.unitors_equal`.
+
+## Implementation
+Dealing with unitors and associators is painful, and at this stage we do not have a useful
+implementation of coherence for monoidal categories.
+
+In an effort to lessen the pain, we put some effort into choosing the right `simp` lemmas.
+Generally, the rule is that the component index of a natural transformation "weighs more"
+in considering the complexity of an expression than does a structural isomorphism (associator, etc).
+
+As an example when we prove Proposition 2.2.4 of
+<http://www-math.mit.edu/~etingof/egnobookfinal.pdf>
+we state it as a `@[simp]` lemma as
+```
+(λ_ (X ⊗ Y)).hom = (α_ (𝟙_ C) X Y).inv ≫ (λ_ X).hom ⊗ (𝟙 Y)
+```
+
+This is far from completely effective, but seems to prove a useful principle.
+
+## References
+* Tensor categories, Etingof, Gelaki, Nikshych, Ostrik,
+  http://www-math.mit.edu/~etingof/egnobookfinal.pdf
+* https://stacks.math.columbia.edu/tag/0FFK.
+-/
+
 open category_theory
 
 universes v u
@@ -92,6 +132,7 @@ notation `λ_` := left_unitor
 notation `ρ_` := right_unitor
 
 /-- The tensor product of two isomorphisms is an isomorphism. -/
+@[simps]
 def tensor_iso {C : Type u} {X Y X' Y' : C} [category.{v} C] [monoidal_category.{v} C] (f : X ≅ Y) (g : X' ≅ Y') :
     X ⊗ X' ≅ Y ⊗ Y' :=
 { hom := f.hom ⊗ g.hom,
@@ -138,11 +179,11 @@ by { rw ←tensor_comp, simp }
   (𝟙 Z) ⊗ (f ≫ g) = (𝟙 Z ⊗ f) ≫ (𝟙 Z ⊗ g) :=
 by { rw ←tensor_comp, simp }
 
-@[simp] lemma id_tensor_comp_tensor_id (f : W ⟶ X) (g : Y ⟶ Z) :
+@[simp, reassoc] lemma id_tensor_comp_tensor_id (f : W ⟶ X) (g : Y ⟶ Z) :
   ((𝟙 Y) ⊗ f) ≫ (g ⊗ (𝟙 X)) = g ⊗ f :=
 by { rw [←tensor_comp], simp }
 
-@[simp] lemma tensor_id_comp_id_tensor (f : W ⟶ X) (g : Y ⟶ Z) :
+@[simp, reassoc] lemma tensor_id_comp_id_tensor (f : W ⟶ X) (g : Y ⟶ Z) :
   (g ⊗ (𝟙 W)) ≫ ((𝟙 Z) ⊗ f) = g ⊗ f :=
 by { rw [←tensor_comp], simp }
 

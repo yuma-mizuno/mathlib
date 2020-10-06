@@ -60,7 +60,7 @@ add_tactic_doc
 
 /-- Unfold `has_well_founded.r`, `sizeof` and other such definitions. -/
 meta def unfold_wf :=
-well_founded_tactics.unfold_wf_rel; well_founded_tactics.unfold_sizeof
+propagate_tags (well_founded_tactics.unfold_wf_rel; well_founded_tactics.unfold_sizeof)
 
 /-- Unfold auxiliary definitions associated with the current declaration. -/
 meta def unfold_aux : tactic unit :=
@@ -423,7 +423,6 @@ do
   t,
   g ← instantiate_mvars g,
   unify e g
-
 
 /-- `success_if_fail_with_msg { tac } msg` succeeds if the interactive tactic `tac` fails with
 error message `msg` (for test writing purposes). -/

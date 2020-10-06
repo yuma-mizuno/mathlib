@@ -54,8 +54,8 @@ preventing structure projections from unfolding. -/
 @[simp] lemma equivalence_mk'_counit_inv (functor inverse unit_iso counit_iso f) :
   (⟨functor, inverse, unit_iso, counit_iso, f⟩ : C ≌ D).counit_inv = counit_iso.inv := rfl
 
-@[simp] lemma functor_unit_comp (e : C ≌ D) (X : C) : e.functor.map (e.unit.app X) ≫
-  e.counit.app (e.functor.obj X) = 𝟙 (e.functor.obj X) :=
+@[simp] lemma functor_unit_comp (e : C ≌ D) (X : C) :
+  e.functor.map (e.unit.app X) ≫ e.counit.app (e.functor.obj X) = 𝟙 (e.functor.obj X) :=
 e.functor_unit_iso_comp X
 
 @[simp] lemma counit_inv_functor_comp (e : C ≌ D) (X : C) :
@@ -66,11 +66,11 @@ begin
   exact e.functor_unit_comp X
 end
 
-lemma functor_unit (e : C ≌ D) (X : C) :
-  e.functor.map (e.unit.app X) = e.counit_inv.app (e.functor.obj X) :=
-by { erw [←iso.comp_hom_eq_id (e.counit_iso.app _), functor_unit_comp], refl }
+lemma counit_inv_app_functor (e : C ≌ D) (X : C) :
+  e.counit_inv.app (e.functor.obj X) = e.functor.map (e.unit.app X) :=
+by { symmetry, erw [←iso.comp_hom_eq_id (e.counit_iso.app _), functor_unit_comp], refl }
 
-lemma counit_functor (e : C ≌ D) (X : C) :
+lemma counit_app_functor (e : C ≌ D) (X : C) :
   e.counit.app (e.functor.obj X) = e.functor.map (e.unit_inv.app X) :=
 by { erw [←iso.hom_comp_eq_id (e.functor.map_iso (e.unit_iso.app X)), functor_unit_comp], refl }
 
@@ -105,13 +105,13 @@ begin
   exact e.unit_inverse_comp Y
 end
 
-lemma unit_inverse (e : C ≌ D) (Y : D) :
+lemma unit_app_inverse (e : C ≌ D) (Y : D) :
   e.unit.app (e.inverse.obj Y) = e.inverse.map (e.counit_inv.app Y) :=
 by { erw [←iso.comp_hom_eq_id (e.inverse.map_iso (e.counit_iso.app Y)), unit_inverse_comp], refl }
 
-lemma inverse_counit (e : C ≌ D) (Y : D) :
-  e.inverse.map (e.counit.app Y) = e.unit_inv.app (e.inverse.obj Y) :=
-by { erw [←iso.hom_comp_eq_id (e.unit_iso.app _), unit_inverse_comp], refl }
+lemma unit_inv_app_inverse (e : C ≌ D) (Y : D) :
+  e.unit_inv.app (e.inverse.obj Y) = e.inverse.map (e.counit.app Y) :=
+by { symmetry, erw [←iso.hom_comp_eq_id (e.unit_iso.app _), unit_inverse_comp], refl }
 
 @[simp] lemma fun_inv_map (e : C ≌ D) (X Y : D) (f : X ⟶ Y) :
   e.functor.map (e.inverse.map f) = e.counit.app X ≫ f ≫ e.counit_inv.app Y :=
@@ -178,8 +178,8 @@ variables {E : Type u₃} [category.{v₃} E]
   functor_unit_iso_comp' := λ X,
   begin
     dsimp,
-    rw [← f.functor.map_comp_assoc, e.functor.map_comp, functor_unit, fun_inv_map,
-        iso.inv_hom_id_app_assoc, assoc, iso.inv_hom_id_app, counit_functor, ← functor.map_comp],
+    rw [← f.functor.map_comp_assoc, e.functor.map_comp, ←counit_inv_app_functor, fun_inv_map,
+        iso.inv_hom_id_app_assoc, assoc, iso.inv_hom_id_app, counit_app_functor, ← functor.map_comp],
     erw [comp_id, iso.hom_inv_id_app, functor.map_id],
   end }
 

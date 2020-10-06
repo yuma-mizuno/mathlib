@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nathaniel Thomas, Jeremy Avigad, Johannes Hölzl, Mario Carneiro
 -/
 import group_theory.group_action
+import tactic.nth_rewrite
 
 /-!
 # Modules over a ring
@@ -106,6 +107,19 @@ lemma finset.sum_smul {f : ι → R} {s : finset ι} {x : M} :
 ((smul_add_hom R M).flip x).map_sum f s
 
 end add_comm_monoid
+
+variables (R)
+
+/-- An `add_comm_monoid` that is a `semimodule` over a `ring` carries a natural `add_comm_group` structure. -/
+def semimodule.add_comm_monoid_to_add_comm_group [ring R] [add_comm_monoid M] [semimodule R M] :
+  add_comm_group M :=
+{ neg          := λ a, (-1 : R) • a,
+  add_left_neg := λ a, by {
+    nth_rewrite 1 ← one_smul _ a,
+    rw [← add_smul, add_left_neg, zero_smul], },
+  ..(infer_instance : add_comm_monoid M), }
+
+variables {R}
 
 section add_comm_group
 
@@ -253,7 +267,6 @@ instance : has_coe_to_fun (M →ₗ[R] M₂) := ⟨_, to_fun⟩
 @[simp] lemma coe_mk (f : M → M₂) (h₁ h₂) :
   ((linear_map.mk f h₁ h₂ : M →ₗ[R] M₂) : M → M₂) = f := rfl
 
-
 /-- Identity map as a `linear_map` -/
 def id : M →ₗ[R] M :=
 ⟨id, λ _ _, rfl, λ _ _, rfl⟩
@@ -319,6 +332,10 @@ def to_add_monoid_hom : M →+ M₂ :=
 @[simp] lemma map_sum {ι} {t : finset ι} {g : ι → M} :
   f (∑ i in t, g i) = (∑ i in t, f (g i)) :=
 f.to_add_monoid_hom.map_sum _ _
+
+theorem to_add_monoid_hom_injective [semimodule R M] [semimodule R M₂] :
+  function.injective (to_add_monoid_hom : (M →ₗ[R] M₂) → (M →+ M₂)) :=
+λ f g h, coe_inj $ funext $ add_monoid_hom.congr_fun h
 
 end
 
