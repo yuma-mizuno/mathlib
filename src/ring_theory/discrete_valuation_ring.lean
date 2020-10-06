@@ -367,14 +367,10 @@ end
 
 end
 
+
+end discrete_valuation_ring
+
 /-! ## The valuation on a DVR. -/
-
---#check valuation
-
-instance : linear_order (with_zero (multiplicative ℤ)) := by apply_instance
-instance : comm_group_with_zero (with_zero (multiplicative ℤ)) := by apply_instance
---instance : linear_ordered_comm_group ℤ := sorry
---instance {α : Type} [lin]
 
 instance : linear_ordered_comm_group_with_zero (with_zero (multiplicative ℤ)) :=
 { mul_le_mul_left := with_zero.mul_le_mul_left,
@@ -382,51 +378,40 @@ instance : linear_ordered_comm_group_with_zero (with_zero (multiplicative ℤ)) 
   ..(by apply_instance : comm_group_with_zero (with_zero (multiplicative ℤ))),
   ..(by apply_instance : linear_order (with_zero (multiplicative ℤ))) }
 
--- the function we're missing
-noncomputable def add_val {A : Type u} [comm_ring A] (I : ideal A) (x : A) : enat :=
-multiplicity (ideal.span {x}) I
+-- should be in with_top
 
--- missing
+namespace with_top
 
-variables {A : Type u} [comm_ring A]
-lemma add_val_zero (I : ideal A) : add_val I 0 = ⊤ :=
-begin
-  unfold add_val,
-  have h : multiplicity (0 : ideal A) I = ⊤,
-    sorry,
-  rw ← h,
-  sorry,
---  convert h,
-  --show multiplicity ⊥ I = ⊤,
-  -- rw span_sin,
-end
+def some {α : Type u} (a : α) : with_top α := option.some a
 
+universe v
 
-open_locale classical
+@[elab_as_eliminator] def rec_on {α : Type u}
+  {C : with_top α → Sort v} (n : with_top α) (htop : C ⊤) (hsome : Π (val : α), C val) : C n :=
+option.rec htop hsome n
 
-local notation `Z0` := with_zero (multiplicative ℤ)
+end with_top
 
-noncomputable def aux_fun1 : enat → option ℕ := λ en, roption.to_option en
+namespace discrete_valuation_ring
 
-def aux_fun2 : option ℕ → with_zero (multiplicative ℤ)
-| none := 0
-| (some n) := (multiplicative.of_add (-n) : multiplicative ℤ)
-
---noncomputable def aux_fun : enat → Z0 := λ en, (aux_fun2 (aux_fun1 en))
-
-noncomputable def aux_fun : enat → Z0 := λ en, option.rec 0 (λ n, ((multiplicative.of_add (-n) : multiplicative ℤ) : Z0))
-  (roption.to_option en)
-
-
+open enat multiplicative
 
 noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
   valuation R (with_zero (multiplicative ℤ)) :=
-{ to_fun := λ x, aux_fun (add_val (maximal_ideal R) x),
-  map_one' := sorry,
+{ to_fun := λ x, with_top.rec_on (with_top_equiv (multiplicity (ideal.span {x}) (maximal_ideal R))) 0 (λ n, of_add (n : ℤ)),
+  map_one' := begin
+    suffices : multiplicity (ideal.span {(1 : R)}) (maximal_ideal R) = 0,
+    { rw this,
+      suffices : (0 : with_top ℕ).rec_on 0 (λ (n : ℕ), ↑(of_add ↑n)) = 1,
+        convert this, refl, simp,
+      suffices : (of_add ((0 : ℕ) : ℤ) : with_zero (multiplicative ℤ)) = 1,
+        rw ←this, refl,
+      simp },
+    -- the maths question
+    sorry
+  end,
   map_mul' := sorry,
   map_zero' := sorry,
   map_add' := sorry }
 
 end discrete_valuation_ring
-
--- note -- ask about rel_iso_of_bijective
