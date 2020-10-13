@@ -367,7 +367,6 @@ end
 
 end
 
-
 end discrete_valuation_ring
 
 /-! ## The valuation on a DVR. -/
@@ -395,6 +394,19 @@ end with_top
 namespace discrete_valuation_ring
 
 open enat multiplicative
+
+def v_nonzero (R : Type u) [integral_domain R] [discrete_valuation_ring R]
+  (r : R) (hr : r ≠ 0) : multiplicative ℤ :=
+of_add ((multiplicity (maximal_ideal R) (ideal.span {r})).get (begin
+  -- ⊢ ∃ N, ¬maximal_ideal R ^ (N + 1) ∣ span {r}
+  use 37,
+  intro h,
+  have h2 : ∀ I J : ideal R, I ∣ J → J ≤ I,
+  { library_search },
+  -- I ∣ J means J=I*K means J ⊆ I
+  sorry
+end) : ℤ)
+
 
 noncomputable def valuation (R : Type u) [integral_domain R] [discrete_valuation_ring R] :
   valuation R (with_zero (multiplicative ℤ)) :=
