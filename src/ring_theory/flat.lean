@@ -5,13 +5,27 @@ Authors: Johan Commelin
 -/
 
 import ring_theory.noetherian
+import algebra.category.Module.monoidal
+import category_theory.adjunction.limits
 
+universe variables u
 
-variables {R M N P Q : Type*} [comm_ring R]
+variables {R : Type u} {M N P Q : Type*} [comm_ring R]
 variables [add_comm_group M] [module R M]
 variables [add_comm_group N] [module R N]
 variables [add_comm_group P] [module R P]
 variables [add_comm_group Q] [module R Q]
+
+section move_this
+
+open category_theory
+open category_theory.limits
+open category_theory.monoidal_category
+
+instance (M : Module.{u} R) : preserves_colimits (tensor_right M) :=
+adjunction.left_adjoint_preserves_colimits is_left_adjoint.adj
+
+end move_this
 
 open_locale tensor_product
 
