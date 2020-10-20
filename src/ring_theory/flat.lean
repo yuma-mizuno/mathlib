@@ -60,10 +60,16 @@ variables (M)
 def ltensor (f : N →ₗ[R] P) : M ⊗ N →ₗ[R] M ⊗ P :=
 tensor_product.map id f
 
+lemma tensor_left_map (M : Module.{u} R) {N P : Module.{u} R} (f : N ⟶ P) :
+  (category_theory.monoidal_category.tensor_left M).map f = f.ltensor M := rfl
+
 /-- `rtensor f M : N₁ ⊗ M →ₗ N₂ ⊗ M` is the natural linear map induced by `f : N₁ →ₗ N₂`. -/
 def rtensor (f : N →ₗ[R] P) (M : Type*) [add_comm_group M] [module R M] :
   N ⊗ M →ₗ[R] P ⊗ M :=
 tensor_product.map f id
+
+lemma tensor_right_map (M : Module.{u} R) {N P : Module.{u} R} (f : N ⟶ P) :
+  (category_theory.monoidal_category.tensor_right M).map f = f.rtensor M := rfl
 
 variables (g : P →ₗ[R] Q) (f : N →ₗ[R] P)
 
@@ -240,10 +246,23 @@ begin
   simpa only [linear_map.map_zero, x', ← comp_apply, rtensor_comp_map, hι] using hM
 end
 
+lemma injective_rtensor_aux₁ (hM : flat R M) {n : ℕ} (L : submodule R (fin n →₀ R)) :
+  injective (L.subtype.rtensor M) :=
+begin
+  -- rw injective_iff,
+  -- induction n with n IH,
+  { sorry },
+end
+
 lemma injective_rtensor (hM : flat R M) (f : N →ₗ[R] P) (hf : injective f) :
   injective (f.rtensor M) :=
 begin
-  sorry
+  rw injective_iff,
+  intros x hx,
+  obtain ⟨p, q, hp, hq, x, ⟨-, rfl⟩⟩ := exists_fg_tmul_mem_range x,
+  rw [← comp_apply, rtensor_comp_map] at hx,
+  let x' : p ⊗ M := q.subtype.ltensor p x,
+  rw [← rtensor_comp_ltensor, comp_apply] at hx ⊢,
 end
 
 end flat
