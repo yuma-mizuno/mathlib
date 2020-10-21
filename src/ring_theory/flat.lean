@@ -137,6 +137,23 @@ by simp only [ltensor, rtensor, ← map_comp, id_comp, comp_id]
 
 end linear_map
 
+namespace module
+open linear_map
+
+variables {A : Type*} [comm_ring A] [algebra R A]
+
+instance : module A (A ⊗[R] M) :=
+{ smul := λ a, linear_map.rtensor (algebra.lmul_left R A a) M,
+  one_smul := λ x, by simp only [id_coe, algebra.lmul_left_one, id.def, rtensor_id],
+  mul_smul := by { sorry },
+  smul_add := λ a x y, by simp only [map_add],
+  smul_zero := λ a, by simp only [map_zero],
+  add_smul := _,
+  zero_smul := _ }
+
+end module
+
+
 namespace submodule
 
 variables {R M}
@@ -241,6 +258,8 @@ namespace flat
 
 open submodule linear_map
 
+variables (M)
+
 lemma injective_lsmul_comp_subtype [hM : flat R M] (I : ideal R) :
   injective (show I ⊗[R] M →ₗ[R] M, from tensor_product.lift ((lsmul R M).comp I.subtype)) :=
 begin
@@ -280,7 +299,7 @@ begin
   { sorry },
 end
 
-lemma injective_rtensor [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
+lemma rtensor_injective [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
   injective (f.rtensor M) :=
 begin
   rw injective_iff,
@@ -289,6 +308,18 @@ begin
   rw [← comp_apply, rtensor_comp_map] at hx,
   let x' : p ⊗ M := q.subtype.ltensor p x,
   rw [← rtensor_comp_ltensor, comp_apply] at hx ⊢,
+end
+
+lemma ltensor_injective [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
+  injective (f.ltensor M) :=
+begin
+  suffices : ltensor M f = (linear_map.comp (↑(tensor_product.comm R P M) : P ⊗[R] M →ₗ[R] M ⊗ P)
+    (f.rtensor M)).comp (tensor_product.comm R M N),
+  { rw this,
+    exact ((tensor_product.comm R P M).injective.comp (rtensor_injective M f hf)).comp
+      (tensor_product.comm R M N).injective },
+  ext x y,
+  simp only [comp_apply, rtensor_tmul, linear_equiv.coe_coe, ltensor_tmul, tensor_product.comm_tmul]
 end
 
 open tensor_product
@@ -312,7 +343,7 @@ lemma flat_iff_rtensor_injective :
     by exactI ∀ (f : N →ₗ[R] P) (hf : injective f), injective (f.rtensor M) :=
 begin
   split,
-  { introsI hM N P _ _ _ _ f hf, exact flat.injective_rtensor f hf },
+  { introsI hM N P _ _ _ _ f hf, exact flat.rtensor_injective f hf },
   intros hM I hI,
   specialize hM I.subtype subtype.coe_injective,
   suffices : tensor_product.lift ((lsmul R M).comp (submodule.subtype I)) =
@@ -347,6 +378,13 @@ begin
   letI := g.to_algebra,
   letI : is_scalar_tower A B C :=
     is_scalar_tower.of_algebra_map_eq (λ _, rfl),
+  haveI : module.flat A B := hf,
+  haveI : module.flat B C := hg,
+  show module.flat A C,
+  rw module.flat_iff_rtensor_injective,
+  introsI N P _ _ _ _ φ hφ,
+  have hφB := module.flat.rtensor_injective B φ hφ,
+  have hφBC := module.flat.rtensor_injective C _ hφB,
 end
 
 end flat

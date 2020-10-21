@@ -276,6 +276,11 @@ variables {R A}
 @[simp] lemma lmul_left_right_apply (vw : A × A) (p : A) :
   lmul_left_right R A vw p = vw.1 * p * vw.2 := rfl
 
+@[simp] lemma lmul_left_one : lmul_left R A 1 = linear_map.id :=
+by { ext, simp only [linear_map.id_coe, one_mul, id.def, lmul_left_apply] }
+@[simp] lemma lmul_right_one : lmul_right R A 1 = linear_map.id :=
+by { ext, simp only [linear_map.id_coe, mul_one, id.def, lmul_right_apply] }
+
 @[simp] lemma lmul'_apply {x y} : algebra.lmul' R A (x ⊗ₜ y) = x * y :=
 begin
   dsimp [algebra.lmul'],
