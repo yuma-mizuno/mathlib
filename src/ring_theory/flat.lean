@@ -202,12 +202,14 @@ by simp only [ltensor, rtensor, ← map_comp, id_comp, comp_id]
 end linear_map
 
 namespace module
-open linear_map
+open linear_map (hiding restrict_scalars)
+open semimodule (restrict_scalars)
 
 variables (A B : Type*) [comm_ring A] [comm_ring B]
 variables [algebra R A] [algebra R B] [algebra A B] [is_scalar_tower R A B]
+variables [module A N] [is_scalar_tower R A N]
 
-instance : module A (A ⊗[R] M) :=
+instance algebra_tensor_module : module A (A ⊗[R] M) :=
 { smul := λ a, rtensor M (algebra.lmul R A a),
   one_smul := λ x, by simp only [alg_hom.map_one, one_def, id.def, id_coe, rtensor_id],
   mul_smul := λ a b x, by simp only [alg_hom.map_mul, mul_def, rtensor_comp, comp_apply],
@@ -216,10 +218,43 @@ instance : module A (A ⊗[R] M) :=
   add_smul := λ a b x, by simp only [alg_hom.map_add, add_apply, rtensor_add],
   zero_smul := λ x, by simp only [rtensor_zero, alg_hom.map_zero, zero_apply] }
 
+instance algebra_tensor_module_is_scalar_tower :
+  is_scalar_tower R A (A ⊗[R] M) :=
+_
+
+instance hom_module_over_algebra : module A (M →ₗ[R] N) :=
+{ smul := λ a, linear_map.comp (a • @linear_map.id A N _ _ _),
+  one_smul := λ x, by simp only [one_def, algebra.lmul_right_one, comp_id],
+  mul_smul := λ a b x, by simp only [comp_assoc, algebra.lmul_right_mul],
+  smul_add := λ a x y, by simp only [add_comp],
+  smul_zero := λ a, by simp only [zero_comp],
+  add_smul := λ a b x, by simp only [comp_add, algebra.lmul_right, map_add],
+  zero_smul := λ x, by simp only [comp_zero, algebra.lmul_right, map_zero] }
+
+instance hom_module_over_algebra_is_scalar_tower :
+  is_scalar_tower R A (M →ₗ[R] N) :=
+_
+
+
+-- reorder and rename variables
+def uncurry' :
+  (A ⊗[R] M →ₗ[A] N) →ₗ[A] M →ₗ[R] N :=
+_
+
+-- reorder and rename variables
+def tensor_product.assoc' (N : Type*) [add_comm_group N] [module A N] :
+  restrict_scalars R A (N ⊗[A] A) ⊗[R] M ≃ₗ[R] restrict_scalars R A (N ⊗[A] (A ⊗[R] M)) :=
+{ to_fun := _,
+  inv_fun := _,
+  map_add' := _,
+  map_smul' := _,
+  left_inv := _,
+  right_inv := _ }
+
 def tensor_product.contract : B ⊗[A] (A ⊗[R] M) ≃ₗ[B] B ⊗[R] M :=
 { to_fun := _,
   map_smul' := _,
-  .. (show semimodule.restrict_scalars R A (B ⊗[A] (A ⊗[R] M)) ≃ₗ[R] B ⊗[R] M,
+  .. (show restrict_scalars R A (B ⊗[A] (A ⊗[R] M)) ≃ₗ[R] B ⊗[R] M,
       from sorry) }
 
 end module
@@ -398,14 +433,24 @@ begin
 end
 .
 
--- lemma injective_rtensor_aux₁ (hM : flat R M) {n : ℕ} (L : submodule R (fin n →₀ R)) :
---   injective (L.subtype.rtensor M) :=
--- begin
---   -- rw injective_iff,
---   -- induction n with n IH,
---   { sorry },
--- end
+variable {n : ℕ}
 
+set_option profiler true
+-- set_option class.instance_max_depth 32
+-- set_option trace.class_instances true
+
+#check (by apply_instance : module R (fin n → R))
+
+lemma injective_rtensor_aux₁ [hM : flat R M] {n : ℕ} (L : submodule R (fin n → R)) :
+  injective (L.subtype.rtensor M) :=
+begin
+  -- rw [show M = M, from rfl],
+  -- rw injective_iff,
+  -- induction n with n IH,
+  { sorry },
+end
+
+#exit
 
 lemma injective_rtensor_aux₂ [flat R M] {n : ℕ} {P Q : submodule R N}
   (hP : P.fg) (hQ : Q.fg) (h : P ≤ Q) :
