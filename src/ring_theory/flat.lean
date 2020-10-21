@@ -22,7 +22,7 @@ variables [add_comm_group Q] [module R Q]
 
 section move_this
 
-lemma equiv.injective_comp {α β γ : Type*} (e : α ≃ β) (f : β → γ) :
+@[simp] lemma equiv.injective_comp {α β γ : Type*} (e : α ≃ β) (f : β → γ) :
   function.injective (f ∘ e) ↔ function.injective f :=
 begin
   split,
@@ -31,6 +31,16 @@ begin
     apply h,
     simp only [hxy, function.comp_app, equiv.apply_symm_apply] },
   { intro h, exact h.comp e.injective }
+end
+
+@[simp] lemma equiv.comp_injective {α β γ : Type*} (f : α → β) (e : β ≃ γ) :
+  function.injective (e ∘ f) ↔ function.injective f :=
+begin
+  refine ⟨_, e.injective.comp⟩,
+  intros h x y hxy,
+  apply h,
+  apply e.symm.injective,
+  simp only [hxy, function.comp_app, equiv.apply_symm_apply]
 end
 
 open category_theory
@@ -64,6 +74,10 @@ end tensor_product
 -- move this
 namespace linear_map
 
+lemma one_def : (1 : M →ₗ[R] M) = id := rfl
+
+lemma mul_def (g f : M →ₗ[R] M) : g * f = g.comp f := rfl
+
 lemma injective_iff (f : M →ₗ[R] N) : function.injective f ↔ ∀ m, f m = 0 → m = 0 :=
 add_monoid_hom.injective_iff f.to_add_monoid_hom
 
@@ -77,7 +91,7 @@ lemma tensor_left_map (M : Module.{u} R) {N P : Module.{u} R} (f : N ⟶ P) :
   (category_theory.monoidal_category.tensor_left M).map f = f.ltensor M := rfl
 
 /-- `rtensor f M : N₁ ⊗ M →ₗ N₂ ⊗ M` is the natural linear map induced by `f : N₁ →ₗ N₂`. -/
-def rtensor (f : N →ₗ[R] P) (M : Type*) [add_comm_group M] [module R M] :
+def rtensor (f : N →ₗ[R] P) :
   N ⊗ M →ₗ[R] P ⊗ M :=
 tensor_product.map f id
 
@@ -89,6 +103,56 @@ variables (g : P →ₗ[R] Q) (f : N →ₗ[R] P)
 @[simp] lemma ltensor_tmul (m : M) (n : N) : f.ltensor M (m ⊗ₜ n) = m ⊗ₜ (f n) := rfl
 
 @[simp] lemma rtensor_tmul (m : M) (n : N) : f.rtensor M (n ⊗ₜ m) = (f n) ⊗ₜ m := rfl
+
+open tensor_product
+
+/-- `ltensor_hom M` is the natural linear map that sends a linear map `f : N →ₗ P` to `M ⊗ f`. -/
+def ltensor_hom : (N →ₗ[R] P) →ₗ[R] (M ⊗[R] N →ₗ[R] M ⊗[R] P) :=
+{ to_fun := ltensor M,
+  map_add' := λ f g, by { ext x y, simp only [add_apply, ltensor_tmul, tmul_add] },
+  map_smul' := λ r f, by { ext x y, simp only [tmul_smul, smul_apply, ltensor_tmul] } }
+
+@[simp] lemma coe_ltensor_hom :
+  (ltensor_hom M : (N →ₗ[R] P) → (M ⊗[R] N →ₗ[R] M ⊗[R] P)) = ltensor M := rfl
+
+@[simp] lemma ltensor_add (f g : N →ₗ[R] P) : (f + g).ltensor M = f.ltensor M + g.ltensor M :=
+(ltensor_hom M).map_add f g
+
+@[simp] lemma ltensor_sub (f g : N →ₗ[R] P) : (f - g).ltensor M = f.ltensor M - g.ltensor M :=
+by simp only [← coe_ltensor_hom, map_sub]
+
+@[simp] lemma ltensor_smul (r : R) (f : N →ₗ[R] P) : (r • f).ltensor M = r • (f.ltensor M) :=
+(ltensor_hom M).map_smul r f
+
+@[simp] lemma ltensor_neg (f : N →ₗ[R] P) : (-f).ltensor M = -(f.ltensor M) :=
+by simp only [← coe_ltensor_hom, map_neg]
+
+@[simp] lemma ltensor_zero : ltensor M (0 : N →ₗ[R] P) = 0 :=
+(ltensor_hom M).map_zero
+
+/-- `rtensor_hom M` is the natural linear map that sends a linear map `f : N →ₗ P` to `M ⊗ f`. -/
+def rtensor_hom : (N →ₗ[R] P) →ₗ[R] (N ⊗[R] M →ₗ[R] P ⊗[R] M) :=
+{ to_fun := λ f, f.rtensor M,
+  map_add' := λ f g, by { ext x y, simp only [add_apply, rtensor_tmul, add_tmul] },
+  map_smul' := λ r f, by { ext x y, simp only [smul_tmul, tmul_smul, smul_apply, rtensor_tmul] } }
+
+@[simp] lemma coe_rtensor_hom :
+  (rtensor_hom M : (N →ₗ[R] P) → (N ⊗[R] M →ₗ[R] P ⊗[R] M)) = rtensor M := rfl
+
+@[simp] lemma rtensor_add (f g : N →ₗ[R] P) : (f + g).rtensor M = f.rtensor M + g.rtensor M :=
+(rtensor_hom M).map_add f g
+
+@[simp] lemma rtensor_sub (f g : N →ₗ[R] P) : (f - g).rtensor M = f.rtensor M - g.rtensor M :=
+by simp only [← coe_rtensor_hom, map_sub]
+
+@[simp] lemma rtensor_smul (r : R) (f : N →ₗ[R] P) : (r • f).rtensor M = r • (f.rtensor M) :=
+(rtensor_hom M).map_smul r f
+
+@[simp] lemma rtensor_neg (f : N →ₗ[R] P) : (-f).rtensor M = -(f.rtensor M) :=
+by simp only [← coe_rtensor_hom, map_neg]
+
+@[simp] lemma rtensor_zero : rtensor M (0 : N →ₗ[R] P) = 0 :=
+(rtensor_hom M).map_zero
 
 lemma ltensor_comp : (g.comp f).ltensor M = (g.ltensor M).comp (f.ltensor M) :=
 by { ext m n, simp only [comp_apply, ltensor_tmul] }
@@ -140,19 +204,73 @@ end linear_map
 namespace module
 open linear_map
 
-variables {A : Type*} [comm_ring A] [algebra R A]
+variables (A B : Type*) [comm_ring A] [comm_ring B]
+variables [algebra R A] [algebra R B] [algebra A B] [is_scalar_tower R A B]
 
 instance : module A (A ⊗[R] M) :=
-{ smul := λ a, linear_map.rtensor (algebra.lmul_left R A a) M,
-  one_smul := λ x, by simp only [id_coe, algebra.lmul_left_one, id.def, rtensor_id],
-  mul_smul := by { sorry },
+{ smul := λ a, rtensor M (algebra.lmul R A a),
+  one_smul := λ x, by simp only [alg_hom.map_one, one_def, id.def, id_coe, rtensor_id],
+  mul_smul := λ a b x, by simp only [alg_hom.map_mul, mul_def, rtensor_comp, comp_apply],
   smul_add := λ a x y, by simp only [map_add],
   smul_zero := λ a, by simp only [map_zero],
-  add_smul := _,
-  zero_smul := _ }
+  add_smul := λ a b x, by simp only [alg_hom.map_add, add_apply, rtensor_add],
+  zero_smul := λ x, by simp only [rtensor_zero, alg_hom.map_zero, zero_apply] }
+
+def tensor_product.contract : B ⊗[A] (A ⊗[R] M) ≃ₗ[B] B ⊗[R] M :=
+{ to_fun := _,
+  map_smul' := _,
+  .. (show semimodule.restrict_scalars R A (B ⊗[A] (A ⊗[R] M)) ≃ₗ[R] B ⊗[R] M,
+      from sorry) }
 
 end module
 
+namespace linear_map
+open tensor_product
+
+variables (A B : Type*) [comm_ring A] [comm_ring B]
+variables [algebra R A] [algebra R B] [algebra A B] [is_scalar_tower R A B]
+variables (f g : M →ₗ[R] N)
+
+/-- `base_change A f` for `f : M →ₗ[R] N` is the `A`-linear map `A ⊗[R] M →ₗ[A] A ⊗[R] N`. -/
+def base_change (f : M →ₗ[R] N) : A ⊗[R] M →ₗ[A] A ⊗[R] N :=
+{ to_fun := f.ltensor A,
+  map_add' := (f.ltensor A).map_add,
+  map_smul' := λ a x,
+    show (f.ltensor A) (rtensor M (algebra.lmul R A a) x) =
+      (rtensor N ((algebra.lmul R A) a)) ((ltensor A f) x),
+    by simp only [← comp_apply, ltensor_comp_rtensor, rtensor_comp_ltensor] }
+
+@[simp] lemma base_change_tmul (a : A) (x : M) :
+  f.base_change A (a ⊗ₜ x) = a ⊗ₜ (f x) := rfl
+
+lemma base_change_eq_ltensor :
+  (f.base_change A : A ⊗ M → A ⊗ N) = f.ltensor A := rfl
+
+@[simp] lemma base_change_add :
+  (f + g).base_change A = f.base_change A + g.base_change A :=
+by { ext, simp only [base_change_eq_ltensor, add_apply, ltensor_add] }
+
+@[simp] lemma base_change_sub :
+  (f - g).base_change A = f.base_change A - g.base_change A :=
+by { ext, simp only [base_change_eq_ltensor, sub_apply, ltensor_sub] }
+
+-- @[simp] lemma base_change_smul (r : R) :
+--   (r • f).base_change A = r • (f.base_change A) :=
+-- sorry
+
+@[simp] lemma base_change_neg : (-f).base_change A = -(f.base_change A) :=
+by { ext, simp only [base_change_eq_ltensor, neg_apply, ltensor_neg] }
+
+@[simp] lemma base_change_zero : base_change A (0 : M →ₗ[R] N) = 0 :=
+by { ext, simp only [base_change_eq_ltensor, zero_apply, ltensor_zero] }
+
+@[simp] lemma base_change_base_change :
+  (f.base_change A).base_change B = (linear_map.comp _ (f.base_change B)).comp _ :=
+begin
+
+end
+
+end linear_map
 
 namespace submodule
 
@@ -310,17 +428,30 @@ begin
   rw [← rtensor_comp_ltensor, comp_apply] at hx ⊢,
 end
 
-lemma ltensor_injective [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
-  injective (f.ltensor M) :=
+lemma rtensor_injective_iff_ltensor_injective (f : N →ₗ[R] P) :
+  injective (f.rtensor M) ↔ injective (f.ltensor M) :=
 begin
   suffices : ltensor M f = (linear_map.comp (↑(tensor_product.comm R P M) : P ⊗[R] M →ₗ[R] M ⊗ P)
     (f.rtensor M)).comp (tensor_product.comm R M N),
   { rw this,
-    exact ((tensor_product.comm R P M).injective.comp (rtensor_injective M f hf)).comp
-      (tensor_product.comm R M N).injective },
+    simp only [←comp_coe, linear_equiv.coe_coe, ← linear_equiv.coe_to_equiv,
+      equiv.injective_comp, equiv.comp_injective] },
   ext x y,
   simp only [comp_apply, rtensor_tmul, linear_equiv.coe_coe, ltensor_tmul, tensor_product.comm_tmul]
 end
+
+lemma ltensor_injective [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
+  injective (f.ltensor M) :=
+begin
+  rw ← rtensor_injective_iff_ltensor_injective,
+  exact rtensor_injective _ f hf
+end
+
+variables (A : Type*) [comm_ring A] [algebra R A]
+
+lemma base_change_injective [flat R A] (f : N →ₗ[R] P) (hf : injective f) :
+  injective (f.base_change A) :=
+ltensor_injective A f hf
 
 open tensor_product
 
@@ -343,7 +474,8 @@ lemma flat_iff_rtensor_injective :
     by exactI ∀ (f : N →ₗ[R] P) (hf : injective f), injective (f.rtensor M) :=
 begin
   split,
-  { introsI hM N P _ _ _ _ f hf, exact flat.rtensor_injective f hf },
+  { introsI hM N P _ _ _ _ f hf,
+    exact @flat.rtensor_injective R M N P _ _ _ _ _ _ _ hM f hf },
   intros hM I hI,
   specialize hM I.subtype subtype.coe_injective,
   suffices : tensor_product.lift ((lsmul R M).comp (submodule.subtype I)) =
@@ -383,8 +515,9 @@ begin
   show module.flat A C,
   rw module.flat_iff_rtensor_injective,
   introsI N P _ _ _ _ φ hφ,
-  have hφB := module.flat.rtensor_injective B φ hφ,
-  have hφBC := module.flat.rtensor_injective C _ hφB,
+  have hφB := module.flat.base_change_injective B φ hφ,
+  have hφBC := module.flat.base_change_injective C _ hφB,
+  rw [module.flat.rtensor_injective_iff_ltensor_injective, ← linear_map.base_change_eq_ltensor],
 end
 
 end flat
