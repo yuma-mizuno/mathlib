@@ -500,6 +500,9 @@ begin
   simp,
 end
 
+@[simp] lemma lid_symm_apply (m : M) :
+  (tensor_product.lid R M).symm m = 1 ⊗ₜ m := rfl
+
 section
 variables (R M N)
 
@@ -535,6 +538,9 @@ begin
   dsimp [tensor_product.rid, tensor_product.comm, tensor_product.lid],
   simp,
 end
+
+@[simp] lemma rid_symm_apply (m : M) :
+  (tensor_product.rid R M).symm m = m ⊗ₜ 1 := rfl
 
 open linear_map
 section

@@ -8,7 +8,9 @@ import linear_algebra.dimension
 import ring_theory.noetherian
 import algebra.category.Module.monoidal
 import category_theory.adjunction.limits
+import ring_theory.algebra_tower
 import tactic.apply_fun
+import tactic
 
 universe variables u
 
@@ -19,6 +21,17 @@ variables [add_comm_group P] [module R P]
 variables [add_comm_group Q] [module R Q]
 
 section move_this
+
+lemma equiv.injective_comp {α β γ : Type*} (e : α ≃ β) (f : β → γ) :
+  function.injective (f ∘ e) ↔ function.injective f :=
+begin
+  split,
+  { intros h x y hxy,
+    apply e.symm.injective,
+    apply h,
+    simp only [hxy, function.comp_app, equiv.apply_symm_apply] },
+  { intro h, exact h.comp e.injective }
+end
 
 open category_theory
 open category_theory.limits
@@ -219,6 +232,7 @@ open_locale tensor_product
 
 /-- An `R`-module `M` is flat if for all finitely generated ideals `I` of `R`,
 the map `I ⊗ M →ₗ M` is injective. -/
+@[class]
 def flat (R M : Type*) [comm_ring R] [add_comm_group M] [module R M] : Prop :=
 ∀ ⦃I : ideal R⦄ (hI : I.fg),
   injective (show I ⊗[R] M →ₗ[R] M, from tensor_product.lift ((lsmul R M).comp I.subtype))
@@ -227,7 +241,7 @@ namespace flat
 
 open submodule linear_map
 
-lemma injective_lsmul_comp_subtype (hM : flat R M) (I : ideal R) :
+lemma injective_lsmul_comp_subtype [hM : flat R M] (I : ideal R) :
   injective (show I ⊗[R] M →ₗ[R] M, from tensor_product.lift ((lsmul R M).comp I.subtype)) :=
 begin
   rw injective_iff,
@@ -256,7 +270,7 @@ end
 -- end
 
 
-lemma injective_rtensor_aux₂ (hM : flat R M) {n : ℕ} {P Q : submodule R N}
+lemma injective_rtensor_aux₂ [flat R M] {n : ℕ} {P Q : submodule R N}
   (hP : P.fg) (hQ : Q.fg) (h : P ≤ Q) :
   injective ((incl h).rtensor M) :=
 begin
@@ -266,7 +280,7 @@ begin
   { sorry },
 end
 
-lemma injective_rtensor (hM : flat R M) (f : N →ₗ[R] P) (hf : injective f) :
+lemma injective_rtensor [flat R M] (f : N →ₗ[R] P) (hf : injective f) :
   injective (f.rtensor M) :=
 begin
   rw injective_iff,
@@ -275,6 +289,18 @@ begin
   rw [← comp_apply, rtensor_comp_map] at hx,
   let x' : p ⊗ M := q.subtype.ltensor p x,
   rw [← rtensor_comp_ltensor, comp_apply] at hx ⊢,
+end
+
+open tensor_product
+
+instance self : flat R R :=
+begin
+  intros I hI,
+  rw ← equiv.injective_comp (tensor_product.rid R I).symm.to_equiv,
+  convert subtype.coe_injective using 1,
+  ext x,
+  simp only [function.comp_app, linear_equiv.coe_to_equiv, rid_symm_apply, comp_apply,
+    mul_one, lift.tmul, subtype_apply, algebra.id.smul_eq_mul, lsmul_apply]
 end
 
 end flat
@@ -286,7 +312,7 @@ lemma flat_iff_rtensor_injective :
     by exactI ∀ (f : N →ₗ[R] P) (hf : injective f), injective (f.rtensor M) :=
 begin
   split,
-  { introsI hM N P _ _ _ _ f hf, exact hM.injective_rtensor f hf },
+  { introsI hM N P _ _ _ _ f hf, exact flat.injective_rtensor f hf },
   intros hM I hI,
   specialize hM I.subtype subtype.coe_injective,
   suffices : tensor_product.lift ((lsmul R M).comp (submodule.subtype I)) =
@@ -298,3 +324,31 @@ begin
 end
 
 end module
+
+namespace ring_hom
+
+variables {A B C : Type*} [comm_ring A] [comm_ring B] [comm_ring C] {g : B →+* C} {f : A →+* B}
+
+def flat (f : A →+* B) : Prop :=
+by letI := f.to_algebra; exact module.flat A B
+
+namespace flat
+
+variable (A)
+
+lemma id : (ring_hom.id A).flat := module.flat.self
+
+variable {A}
+
+lemma comp (hg : g.flat) (hf : f.flat) : (g.comp f).flat :=
+begin
+  letI := (g.comp f).to_algebra,
+  letI := f.to_algebra,
+  letI := g.to_algebra,
+  letI : is_scalar_tower A B C :=
+    is_scalar_tower.of_algebra_map_eq (λ _, rfl),
+end
+
+end flat
+
+end ring_hom
