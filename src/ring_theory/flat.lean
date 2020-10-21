@@ -245,10 +245,22 @@ begin
   apply_fun ι.rtensor M at hM,
   simpa only [linear_map.map_zero, x', ← comp_apply, rtensor_comp_map, hι] using hM
 end
+.
 
-lemma injective_rtensor_aux₁ (hM : flat R M) {n : ℕ} (L : submodule R (fin n →₀ R)) :
-  injective (L.subtype.rtensor M) :=
+-- lemma injective_rtensor_aux₁ (hM : flat R M) {n : ℕ} (L : submodule R (fin n →₀ R)) :
+--   injective (L.subtype.rtensor M) :=
+-- begin
+--   -- rw injective_iff,
+--   -- induction n with n IH,
+--   { sorry },
+-- end
+
+
+lemma injective_rtensor_aux₂ (hM : flat R M) {n : ℕ} {P Q : submodule R N}
+  (hP : P.fg) (hQ : Q.fg) (h : P ≤ Q) :
+  injective ((incl h).rtensor M) :=
 begin
+  have := finsupp.total,
   -- rw injective_iff,
   -- induction n with n IH,
   { sorry },
