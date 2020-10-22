@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Johannes Hölzl, Kenny Lau, Johan Commelin, Mario Carneiro, Kevin Buzzard
 -/
 import group_theory.submonoid.basic
-import algebra.big_operators
+import algebra.big_operators.basic
 
 /-!
 # Submonoids
@@ -30,6 +30,8 @@ open_locale big_operators
 
 variables {M : Type*} [monoid M] {s : set M}
 variables {A : Type*} [add_monoid A] {t : set A}
+
+set_option default_priority 90
 
 /-- `s` is an additive submonoid: a set containing 0 and closed under addition. -/
 class is_add_submonoid (s : set A) : Prop :=
