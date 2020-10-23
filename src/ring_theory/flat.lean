@@ -444,8 +444,9 @@ set_option profiler true
 lemma injective_rtensor_aux₁ [hM : flat R M] {n : ℕ} (L : submodule R (fin n → R)) :
   injective (L.subtype.rtensor M) :=
 begin
+  -- refine (injective_iff _).mpr _,
   -- rw [show M = M, from rfl],
-  -- rw injective_iff,
+  rw injective_iff,
   -- induction n with n IH,
   { sorry },
 end
