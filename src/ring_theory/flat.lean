@@ -54,22 +54,6 @@ end move_this
 
 open_locale tensor_product
 
--- move this
-namespace tensor_product
-
-variables {P' Q' : Type*}
-variables [add_comm_group P'] [module R P']
-variables [add_comm_group Q'] [module R Q']
-
-lemma map_comp (f₂ : P →ₗ[R] P') (f₁ : M →ₗ[R] P) (g₂ : Q →ₗ[R] Q') (g₁ : N →ₗ[R] Q) :
-  map (f₂.comp f₁) (g₂.comp g₁) = (map f₂ g₂).comp (map f₁ g₁) :=
-by { ext1, simp only [linear_map.comp_apply, map_tmul] }
-
-lemma lift_comp_map (i : P →ₗ[R] Q →ₗ[R] Q') (f : M →ₗ[R] P) (g : N →ₗ[R] Q) :
-  (lift i).comp (map f g) = lift ((i.comp f).compl₂ g) :=
-by { ext1, simp only [lift.tmul, map_tmul, linear_map.compl₂_apply, linear_map.comp_apply] }
-
-end tensor_product
 
 -- move this
 namespace linear_map
@@ -203,7 +187,6 @@ end linear_map
 
 namespace module
 open linear_map (hiding restrict_scalars)
-open semimodule (restrict_scalars)
 
 variables (A B : Type*) [comm_ring A] [comm_ring B]
 variables [algebra R A] [algebra R B] [algebra A B] [is_scalar_tower R A B]
