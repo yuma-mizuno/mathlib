@@ -26,22 +26,26 @@ There are likely some rough edges to it.
 Improving this tactic would be a good project for someone interested in learning tactic programming.
 -/
 
+def rat.lcm (a : ℚ) (b : ℚ) : ℚ
+  := if a = 0 then (abs b) else if b = 0 then (abs a) else
+    rat.mk ((abs a.num).to_nat.lcm b.num.to_nat) (a.denom.gcd b.denom)
+def rat.gcd (a : ℚ) (b : ℚ) : ℚ
+  := rat.mk ((abs a.num).to_nat.gcd b.num.to_nat) (a.denom.lcm b.denom)
+
 namespace cancel_factors
 
 /-! ### Lemmas used in the procedure -/
 
-lemma mul_subst {α} [comm_ring α] {n1 n2 k e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
-     (h3 : n1*n2 = k) : k * (e1 * e2) = t1 * t2 :=
-have h3 : n1 * n2 = k, from h3,
-by rw [←h3, mul_comm n1, mul_assoc n2, ←mul_assoc n1, h1, ←mul_assoc n2, mul_comm n2, mul_assoc, h2]
+lemma mul_subst {α} [comm_ring α] {n1 n2 k c e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
+     (h3 : c*n1*n2 = k) : k * (e1 * e2) = c * t1 * t2 :=
+by rw [←h3, mul_assoc c, mul_assoc c, mul_comm n1, mul_assoc n2, ←mul_assoc n1, h1,
+      ←mul_assoc n2, mul_comm n2, mul_assoc t1, h2, mul_assoc]
 
-lemma div_subst {α} [field α] {n1 n2 k e1 e2 t1 : α} (h1 : n1 * e1 = t1) (h2 : n2 / e2 = 1)
-   (h3 : n1*n2 = k) : k * (e1 / e2) = t1 :=
-by rw [←h3, mul_assoc, mul_div_comm, h2, ←mul_assoc, h1, mul_comm, one_mul]
-
-lemma cancel_factors_eq_div {α} [field α] {n e e' : α} (h : n*e = e') (h2 : n ≠ 0) :
-  e = e' / n :=
-eq_div_of_mul_eq h2 $ by rwa mul_comm at h
+lemma div_subst {α} [field α] {n1 n2 k c e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
+     (h3 : c*n1/n2 = k) : k * (e1 / e2) = c * t1 / t2 :=
+begin
+  rw [←h3, mul_div_assoc, mul_assoc c, div_mul_div, h1, h2, ←mul_div_assoc],
+end
 
 lemma add_subst {α} [ring α] {n e1 e2 t1 t2 : α} (h1 : n * e1 = t1) (h2 : n * e2 = t2) :
       n * (e1 + e2) = t1 + t2 := by simp [left_distrib, *]
@@ -51,36 +55,21 @@ lemma sub_subst {α} [ring α] {n e1 e2 t1 t2 : α} (h1 : n * e1 = t1) (h2 : n *
 
 lemma neg_subst {α} [ring α] {n e t : α} (h1 : n * e = t) : n * (-e) = -t := by simp *
 
-lemma cancel_factors_lt {α} [linear_ordered_field α] {a b ad bd a' b' gcd : α} (ha : ad*a = a')
-  (hb : bd*b = b') (had : 0 < ad) (hbd : 0 < bd) (hgcd : 0 < gcd) :
-  a < b = ((1/gcd)*(bd*a') < (1/gcd)*(ad*b')) :=
+lemma cancel_factors_lt {α} [linear_ordered_field α] {v a b a' b' : α} (ha : v*a = a')
+  (hb : v*b = b') (v_pos : 0 < v) : (a < b) = (a' < b') :=
+by rw [←ha, ←hb, mul_lt_mul_left v_pos]
+
+lemma cancel_factors_le {α} [linear_ordered_field α] {v a b a' b' : α} (ha : v*a = a')
+  (hb : v*b = b') (v_pos : 0 < v) : (a ≤ b) = (a' ≤ b') :=
 begin
-  rw [mul_lt_mul_left, ←ha, ←hb, ←mul_assoc, ←mul_assoc, mul_comm bd, mul_lt_mul_left],
-  exact mul_pos had hbd,
-  exact one_div_pos.2 hgcd
+  rw [←ha, ←hb, mul_le_mul_left v_pos]
 end
 
-lemma cancel_factors_le {α} [linear_ordered_field α] {a b ad bd a' b' gcd : α} (ha : ad*a = a')
-  (hb : bd*b = b') (had : 0 < ad) (hbd : 0 < bd) (hgcd : 0 < gcd)  :
-  a ≤ b = ((1/gcd)*(bd*a') ≤ (1/gcd)*(ad*b')) :=
+lemma cancel_factors_eq {α} [linear_ordered_field α] {v a b a' b' : α} (ha : v*a = a')
+  (hb : v*b = b') (v_pos : 0 < v) : (a = b) = (a' = b') :=
 begin
-  rw [mul_le_mul_left, ←ha, ←hb, ←mul_assoc, ←mul_assoc, mul_comm bd, mul_le_mul_left],
-  exact mul_pos had hbd,
-  exact one_div_pos.2 hgcd
-end
-
-lemma cancel_factors_eq {α} [linear_ordered_field α] {a b ad bd a' b' gcd : α} (ha : ad*a = a')
-  (hb : bd*b = b') (had : 0 < ad) (hbd : 0 < bd) (hgcd : 0 < gcd) :
-  a = b = ((1/gcd)*(bd*a') = (1/gcd)*(ad*b')) :=
-begin
-  rw [←ha, ←hb, ←mul_assoc bd, ←mul_assoc ad, mul_comm bd],
-  ext, split,
-  { rintro rfl, refl },
-  { intro h,
-    simp only [←mul_assoc] at h,
-    refine mul_left_cancel' (mul_ne_zero _ _) h,
-    apply mul_ne_zero, apply div_ne_zero,
-    all_goals {apply ne_of_gt; assumption <|> exact zero_lt_one}}
+  rw [←ha, ←hb],
+  exact propext (mul_right_inj' (ne_of_gt v_pos)).symm
 end
 
 open tactic expr
@@ -90,11 +79,12 @@ open tactic expr
 open tree
 
 /--
-`find_cancel_factor e` produces a natural number `n`, such that multiplying `e` by `n` will
+`find_cancel_factor e` produces a rational number `n`, such that multiplying `e` by `n` will
 be able to cancel all the numeric denominators in `e`. The returned `tree` describes how to
 distribute the value `n` over products inside `e`.
 -/
-meta def find_cancel_factor : expr → ℕ × tree ℕ
+
+meta def find_cancel_factor : expr → ℚ × tree ℚ
 | `(%%e1 + %%e2) :=
   let (v1, t1) := find_cancel_factor e1, (v2, t2) := find_cancel_factor e2, lcm := v1.lcm v2 in
   (lcm, node lcm t1 t2)
@@ -105,41 +95,44 @@ meta def find_cancel_factor : expr → ℕ × tree ℕ
   let (v1, t1) := find_cancel_factor e1, (v2, t2) := find_cancel_factor e2, pd := v1*v2 in
   (pd, node pd t1 t2)
 | `(%%e1 / %%e2) :=
-  match e2.to_nonneg_rat with
-  | some q := let (v1, t1) := find_cancel_factor e1, n := v1.lcm q.num.nat_abs in
-    (n, node n t1 (node q.num.nat_abs tree.nil tree.nil))
-  | none := (1, node 1 tree.nil tree.nil)
-  end
+  let (v1, t1) := find_cancel_factor e1, (v2, t2) := find_cancel_factor e2, pd := v1/v2 in
+  (pd, node pd t1 t2)
 | `(-%%e) := find_cancel_factor e
-| _ := (1, node 1 tree.nil tree.nil)
+| e := (let q := match e.to_nonneg_rat with
+  | some q := q.inv
+  | none := 1
+  end in (q, node q tree.nil tree.nil))
 
-/--
+/-
 `mk_prod_prf n tr e` produces a proof of `n*e = e'`, where numeric denominators have been
 canceled in `e'`, distributing `n` proportionally according to `tr`.
 -/
-meta def mk_prod_prf : ℕ → tree ℕ → expr → tactic expr
+meta def mk_prod_prf : ℚ → tree ℚ → expr → tactic expr
 | v (node _ lhs rhs) `(%%e1 + %%e2) :=
-  do v1 ← mk_prod_prf v lhs e1, v2 ← mk_prod_prf v rhs e2, mk_app ``add_subst [v1, v2]
+  do v1 ← mk_prod_prf v lhs e1, v2 ← mk_prod_prf v rhs e2,
+     mk_app ``add_subst [v1, v2]
 | v (node _ lhs rhs) `(%%e1 - %%e2) :=
   do v1 ← mk_prod_prf v lhs e1, v2 ← mk_prod_prf v rhs e2, mk_app ``sub_subst [v1, v2]
-| v (node n lhs@(node ln _ _) rhs) `(%%e1 * %%e2) :=
-  do tp ← infer_type e1, v1 ← mk_prod_prf ln lhs e1, v2 ← mk_prod_prf (v/ln) rhs e2,
-     ln' ← tp.of_nat ln, vln' ← tp.of_nat (v/ln), v' ← tp.of_nat v,
-     ntp ← to_expr ``(%%ln' * %%vln' = %%v'),
+| v (node n lhs@(node ln _ _) rhs@(node rn _ _)) `(%%le * %%re) :=
+  do tp ← infer_type le, lpf ← mk_prod_prf ln lhs le, rpf ← mk_prod_prf rn rhs re,
+     let v0 := v / (ln * rn),
+     ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
+     ntp ← to_expr ``(%%v0' * %%ln' * %%rn' = %%v'),
      (_, npf) ← solve_aux ntp `[norm_num, done],
-     mk_app ``mul_subst [v1, v2, npf]
-| v (node n lhs rhs@(node rn _ _)) `(%%e1 / %%e2) :=
-  do tp ← infer_type e1, v1 ← mk_prod_prf (v/rn) lhs e1,
-     rn' ← tp.of_nat rn, vrn' ← tp.of_nat (v/rn), n' ← tp.of_nat n, v' ← tp.of_nat v,
-     ntp ← to_expr ``(%%rn' / %%e2 = 1),
+     lpft ← infer_type lpf,
+     rpft ← infer_type rpf,
+     mk_app ``mul_subst [lpf, rpf, npf]
+| v (node n lhs@(node ln _ _) rhs@(node rn _ _)) `(%%le / %%re) :=
+  do tp ← infer_type le, lpf ← mk_prod_prf ln lhs le, rpf ← mk_prod_prf rn rhs re,
+     let v0 := v / (ln / rn),
+     ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
+     ntp ← to_expr ``(%%v0' * %%ln' / %%rn' = %%v'),
      (_, npf) ← solve_aux ntp `[norm_num, done],
-     ntp2 ← to_expr ``(%%vrn' * %%n' = %%v'),
-     (_, npf2) ← solve_aux ntp2 `[norm_num, done],
-     mk_app ``div_subst [v1, npf, npf2]
+     mk_app ``div_subst [lpf, rpf, npf]
 | v t `(-%%e) := do v' ← mk_prod_prf v t e, mk_app ``neg_subst [v']
 | v _ e :=
   do tp ← infer_type e,
-     v' ← tp.of_nat v,
+     v' ← tp.of_rat v,
      e' ← to_expr ``(%%v' * %%e),
      mk_app `eq.refl [e']
 
@@ -148,21 +141,11 @@ Given `e`, a term with rational division, produces a natural number `n` and a pr
 where `e'` has no division. Assumes "well-behaved" division.
 -/
 meta def derive (e : expr) : tactic (ℕ × expr) :=
-let (n, t) := find_cancel_factor e in
-prod.mk n <$> mk_prod_prf n t e <|>
+do
+  let (v, t) := find_cancel_factor e,
+  let n := v.num.to_nat,
+  prod.mk n <$> mk_prod_prf n t e <|>
   fail!"cancel_factors.derive failed to normalize {e}. Are you sure this is well-behaved division?"
-
-/--
-Given `e`, a term with rational divison, produces a natural number `n` and a proof of `e = e' / n`,
-where `e'` has no divison. Assumes "well-behaved" division.
--/
-meta def derive_div (e : expr) : tactic (ℕ × expr) :=
-do (n, p) ← derive e,
-   tp ← infer_type e,
-   n' ← tp.of_nat n, tgt ← to_expr ``(%%n' ≠ 0),
-   (_, pn) ← solve_aux tgt `[norm_num, done],
-   infer_type p >>= trace, infer_type pn >>= trace,
-   prod.mk n <$> mk_mapp ``cancel_factors_eq_div [none, none, n', none, none, p, pn]
 
 /--
 `find_comp_lemma e` arranges `e` in the form `lhs R rhs`, where `R ∈ {<, ≤, =}`, and returns
@@ -184,20 +167,16 @@ Numeric denominators have been canceled in `lhs'` and `rhs'`.
 -/
 meta def cancel_denominators_in_type (h : expr) : tactic (expr × expr) :=
 do some (lhs, rhs, lem) ← return $ find_comp_lemma h | fail "cannot kill factors",
-   (al, lhs_p) ← derive lhs,
-   (ar, rhs_p) ← derive rhs,
-   let gcd := al.gcd ar,
+   let (lv, ltr) := find_cancel_factor lhs,
+   let (rv, rtr) := find_cancel_factor rhs,
+   let v := lv.lcm rv,
+   lpf ← mk_prod_prf v ltr lhs,
+   rpf ← mk_prod_prf v rtr rhs,
    tp ← infer_type lhs,
-   al ← tp.of_nat al,
-   ar ← tp.of_nat ar,
-   gcd ← tp.of_nat gcd,
-   al_pos ← to_expr ``(0 < %%al),
-   ar_pos ← to_expr ``(0 < %%ar),
-   gcd_pos ← to_expr ``(0 < %%gcd),
-   (_, al_pos) ← solve_aux al_pos `[norm_num, done],
-   (_, ar_pos) ← solve_aux ar_pos `[norm_num, done],
-   (_, gcd_pos) ← solve_aux gcd_pos `[norm_num, done],
-   pf ← mk_app lem [lhs_p, rhs_p, al_pos, ar_pos, gcd_pos],
+   v ← tp.of_rat v,
+   v_pos ← to_expr ``(0 < %%v),
+   (_, v_pos) ← solve_aux v_pos `[norm_num, done],
+   pf ← mk_app lem [lpf, rpf, v_pos],
    pf_tp ← infer_type pf,
    return ((find_comp_lemma pf_tp).elim (default _) (prod.fst ∘ prod.snd), pf)
 
