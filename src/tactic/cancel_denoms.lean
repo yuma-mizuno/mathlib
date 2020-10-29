@@ -40,12 +40,23 @@ lemma mul_subst {α} [comm_ring α] {n1 n2 k c e1 e2 t1 t2 : α} (h1 : n1 * e1 =
      (h3 : c*n1*n2 = k) : k * (e1 * e2) = c * t1 * t2 :=
 by rw [←h3, mul_assoc c, mul_assoc c, mul_comm n1, mul_assoc n2, ←mul_assoc n1, h1,
       ←mul_assoc n2, mul_comm n2, mul_assoc t1, h2, mul_assoc]
+lemma mul_subst_1 {α} [comm_ring α] {n1 n2 k e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
+     (h3 : 1*n1*n2 = k) : k * (e1 * e2) = t1 * t2 :=
+by rw [←h3, one_mul, mul_comm n1, mul_assoc n2,
+  ←mul_assoc n1, h1, ←mul_assoc n2, mul_comm n2, mul_assoc t1, h2]
 
 lemma div_subst {α} [field α] {n1 n2 k c e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
      (h3 : c*n1/n2 = k) : k * (e1 / e2) = c * t1 / t2 :=
-begin
-  rw [←h3, mul_div_assoc, mul_assoc c, div_mul_div, h1, h2, ←mul_div_assoc],
-end
+by rw [←h3, mul_div_assoc, mul_assoc c, div_mul_div, h1, h2, ←mul_div_assoc]
+lemma div_subst_1 {α} [field α] {n1 n2 k e1 e2 t1 t2 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = t2)
+     (h3 : 1*n1/n2 = k) : k * (e1 / e2) = t1 / t2 :=
+by rw [←h3, one_mul, div_mul_div, h1, h2]
+lemma div_subst_d1 {α} [field α] {n1 n2 k c e1 e2 t1 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = 1)
+     (h3 : c*n1/n2 = k) : k * (e1 / e2) = c * t1 :=
+by rw [←h3, mul_div_assoc, mul_assoc c, div_mul_div, h1, h2, div_one]
+lemma div_subst_1d1 {α} [field α] {n1 n2 k e1 e2 t1 : α} (h1 : n1 * e1 = t1) (h2 : n2 * e2 = 1)
+     (h3 : 1*n1/n2 = k) : k * (e1 / e2) = t1 :=
+by rw [←h3, one_mul, div_mul_div, h1, h2, div_one]
 
 lemma add_subst {α} [ring α] {n e1 e2 t1 t2 : α} (h1 : n * e1 = t1) (h2 : n * e2 = t2) :
       n * (e1 + e2) = t1 + t2 := by simp [left_distrib, *]
@@ -106,7 +117,53 @@ meta def find_cancel_factor : expr → ℚ × tree ℚ
 /-
 `mk_prod_prf n tr e` produces a proof of `n*e = e'`, where numeric denominators have been
 canceled in `e'`, distributing `n` proportionally according to `tr`.
+
+mk_prod_prf_sth are helper functions for particular form of the expression e
 -/
+meta def mk_prod_prf_mul (v ln rn : ℚ) (lhs rhs : tree ℚ)
+  (le re lpf rpf : expr) : tactic expr :=
+do tp ← infer_type le,
+   let v0 := v / (ln * rn),
+   ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
+   ntp ← to_expr ``(%%v0' * %%ln' * %%rn' = %%v'),
+   (_, npf) ← solve_aux ntp `[norm_num, done],
+   lpft ← infer_type lpf,
+   rpft ← infer_type rpf,
+   mk_app ``mul_subst_1 [lpf, rpf, npf] <|> mk_app ``mul_subst [lpf, rpf, npf]
+
+meta def mk_prod_prf_div (v ln rn : ℚ) (lhs rhs : tree ℚ)
+  (le re lpf rpf : expr) : tactic expr :=
+do tp ← infer_type le,
+   let v0 := v / (ln / rn),
+   ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
+   ntp ← to_expr ``(%%v0' * %%ln' / %%rn' = %%v'),
+   (_, npf) ← solve_aux ntp `[norm_num, done],
+   --`(_ = %%rr) ← infer_type rpf,
+   mk_app ``div_subst_1d1 [lpf, rpf, npf] <|> mk_app ``div_subst_1 [lpf, rpf, npf] <|>
+   mk_app ``div_subst_d1 [lpf, rpf, npf] <|> mk_app ``div_subst [lpf, rpf, npf]
+
+meta def mk_prod_prf_const (v : ℚ) (e : expr) : tactic expr :=
+do tp ← infer_type e,
+   v' ← tp.of_rat v,
+   (do 
+     some en ← return e.to_nonneg_rat,
+     let r := en*v,
+     r' ← tp.of_rat r,
+     ntp ← to_expr ``(%%v' * %%e = %%r'),
+     (_, npf) ← solve_aux ntp `[norm_num, done],
+     return npf
+   )
+   <|>
+   (do 
+     tactic.unify v' `(1:ℚ),
+     mk_app `one_mul [e]
+   )
+   <|>
+   (do
+     e' ← to_expr ``(%%v' * %%e),
+     mk_app `eq.refl [e']
+   )
+
 meta def mk_prod_prf : ℚ → tree ℚ → expr → tactic expr
 | v (node _ lhs rhs) `(%%e1 + %%e2) :=
   do v1 ← mk_prod_prf v lhs e1, v2 ← mk_prod_prf v rhs e2,
@@ -114,27 +171,15 @@ meta def mk_prod_prf : ℚ → tree ℚ → expr → tactic expr
 | v (node _ lhs rhs) `(%%e1 - %%e2) :=
   do v1 ← mk_prod_prf v lhs e1, v2 ← mk_prod_prf v rhs e2, mk_app ``sub_subst [v1, v2]
 | v (node n lhs@(node ln _ _) rhs@(node rn _ _)) `(%%le * %%re) :=
-  do tp ← infer_type le, lpf ← mk_prod_prf ln lhs le, rpf ← mk_prod_prf rn rhs re,
-     let v0 := v / (ln * rn),
-     ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
-     ntp ← to_expr ``(%%v0' * %%ln' * %%rn' = %%v'),
-     (_, npf) ← solve_aux ntp `[norm_num, done],
-     lpft ← infer_type lpf,
-     rpft ← infer_type rpf,
-     mk_app ``mul_subst [lpf, rpf, npf]
+  do lpf ← mk_prod_prf ln lhs le,
+     rpf ← mk_prod_prf rn rhs re,
+     mk_prod_prf_mul v ln rn lhs rhs le re lpf rpf
 | v (node n lhs@(node ln _ _) rhs@(node rn _ _)) `(%%le / %%re) :=
-  do tp ← infer_type le, lpf ← mk_prod_prf ln lhs le, rpf ← mk_prod_prf rn rhs re,
-     let v0 := v / (ln / rn),
-     ln' ← tp.of_rat ln, rn' ← tp.of_rat rn, v' ← tp.of_rat v, v0' ← tp.of_rat v0,
-     ntp ← to_expr ``(%%v0' * %%ln' / %%rn' = %%v'),
-     (_, npf) ← solve_aux ntp `[norm_num, done],
-     mk_app ``div_subst [lpf, rpf, npf]
+  do lpf ← mk_prod_prf ln lhs le,
+     rpf ← mk_prod_prf rn rhs re,
+     mk_prod_prf_div v ln rn lhs rhs le re lpf rpf
 | v t `(-%%e) := do v' ← mk_prod_prf v t e, mk_app ``neg_subst [v']
-| v _ e :=
-  do tp ← infer_type e,
-     v' ← tp.of_rat v,
-     e' ← to_expr ``(%%v' * %%e),
-     mk_app `eq.refl [e']
+| v _ e := mk_prod_prf_const v e
 
 /--
 Given `e`, a term with rational division, produces a natural number `n` and a proof of `n*e = e'`,
@@ -211,7 +256,7 @@ meta def tactic.interactive.cancel_denoms (l : parse location) : tactic unit :=
 do locs ← l.get_locals,
    tactic.replace_at cancel_denominators_in_type locs l.include_goal >>= guardb
      <|> fail "failed to cancel any denominators",
-   tactic.interactive.norm_num [simp_arg_type.symm_expr ``(mul_assoc)] l
+   try (tactic.interactive.norm_num [simp_arg_type.symm_expr ``(mul_assoc)] l)
 
 add_tactic_doc
 { name := "cancel_denoms",
