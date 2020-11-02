@@ -102,6 +102,9 @@ structure sheaf :=
 (presheaf : presheaf C X)
 (sheaf_condition : presheaf.sheaf_condition)
 
+/-- The presheaf underlying a sheaf -/
+add_decl_doc sheaf.presheaf
+
 instance : category (sheaf C X) := induced_category.category sheaf.presheaf
 
 -- Let's construct a trivial example, to keep the inhabited linter happy.

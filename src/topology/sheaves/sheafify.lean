@@ -79,6 +79,7 @@ In `sheafify_stalk_iso` we show this is an isomorphism.
 def stalk_to_fiber (x : X) : F.sheafify.presheaf.stalk x ⟶ F.stalk x :=
 stalk_to_fiber (sheafify.is_locally_germ F) x
 
+-- TODO typo in surjective docstring
 lemma stalk_to_fiber_surjective (x : X) : function.surjective (F.stalk_to_fiber x) :=
 begin
   apply stalk_to_fiber_surjective,
@@ -108,11 +109,11 @@ begin
   { change W ⊓ (U' ⊓ V') ⟶ V.val,
     exact (opens.inf_le_right _ _) ≫ (opens.inf_le_right _ _) ≫ iV, },
   { intro w,
-    dsimp,
+    dsimp only,
     specialize wU ⟨w.1, w.2.2.1⟩,
-    dsimp at wU,
+    dsimp only at wU,
     specialize wV ⟨w.1, w.2.2.2⟩,
-    dsimp at wV,
+    dsimp only at wV,
     erw [wU, ←F.germ_res_apply iU' ⟨w, w.2.1⟩ gU, e', F.germ_res_apply, ←wV],
     refl, },
 end
@@ -123,6 +124,44 @@ The isomorphism betweeen a stalk of the sheafification and the original stalk.
 def sheafify_stalk_iso (x : X) : F.sheafify.presheaf.stalk x ≅ F.stalk x :=
 (equiv.of_bijective _ ⟨stalk_to_fiber_injective _ _, stalk_to_fiber_surjective _ _⟩).to_iso
 
+/-! # Functoriality -/
+
+-- If F is a presheaf and G is a sheaf on X,
+-- and F → G.presheaf, then F.sheafify → G
+
+def adjoint (F : presheaf (Type v) X) (G : sheaf (Type v) X)
+  (φ : F ⟶ G.presheaf) : F.sheafify ⟶ G :=
+{ app := λ U, λ s, begin
+    cases s with stalk_fun hs,
+    dsimp only at stalk_fun,
+--    unfold sheafify.is_locally_germ at hs,
+--    unfold sheafify.is_germ at hs,
+--    unfold prelocal_predicate.sheafify at hs,
+--    dsimp at hs,
+    have hG := G.sheaf_condition,
+--    unfold sheaf_condition at hG,
+    choose cover hcover1 hcover2 sections hcover4 using hs,
+    specialize hG cover,
+    -- hG is the sheaf condition
+    -- so it says G(union of cover) = limit of fork Prod_i G(U_i) -> -> Prod_{i,j} G(U_i ∩ U_j)
+    -- let's define this section!
+    -- let's first define the local sections
+    let ti : ∀ x : unop U, G.presheaf.obj (op (cover x)) := λ x, φ.app _ (sections x),
+    cases hG,
+    unfold auto_param at *,
+    -- BIG BOX : click on "category_theory.limits.cone"
+    -- in term hG_lift
+    sorry,
+    end,
+  naturality' := sorry }
+
+#exit
+
 -- PROJECT functoriality, and that sheafification is the left adjoint of the forgetful functor.
+def sheafify' : presheaf (Type v) X ⥤ sheaf (Type v) X :=
+{ obj := sheafify,
+  map := λ F G φ, _,
+  map_id' := _,
+  map_comp' := _ }
 
 end Top.presheaf
