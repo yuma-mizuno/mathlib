@@ -359,7 +359,7 @@ by rw [countp_eq_length_filter, countp_eq_length_filter];
 
 theorem subperm.countp_le (p : α → Prop) [decidable_pred p]
   {l₁ l₂ : list α} : l₁ <+~ l₂ → countp p l₁ ≤ countp p l₂
-| ⟨l, p', s⟩ := p'.countp_eq p ▸ countp_le_of_sublist s
+| ⟨l, p', s⟩ := p'.countp_eq p ▸ countp_le_of_sublist p s
 
 theorem perm.count_eq [decidable_eq α] {l₁ l₂ : list α}
   (p : l₁ ~ l₂) (a) : count a l₁ = count a l₂ :=
@@ -902,6 +902,7 @@ begin
   { refine (IH₁ H).trans (IH₂ ((p₁.pairwise_iff _).1 H)),
     exact λ a b h h₁ h₂, h h₂ h₁ }
 end
+
 lemma perm.take_inter {α} [decidable_eq α] {xs ys : list α} (n : ℕ)
   (h : xs ~ ys) (h' : ys.nodup) :
   xs.take n ~ ys.inter (xs.take n) :=

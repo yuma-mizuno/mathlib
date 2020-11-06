@@ -44,6 +44,8 @@ coe_ne_one.symm
 lemma ne_one_iff_exists {x : with_one α} : x ≠ 1 ↔ ∃ (a : α), ↑a = x :=
 option.ne_none_iff_exists
 
+-- `to_additive` fails to generate some meta info around eqn lemmas, so `lift` doesn't work
+-- unless we explicitly define this instance
 instance : can_lift (with_one α) α :=
 { coe := coe,
   cond := λ a, a ≠ 1,
@@ -133,7 +135,7 @@ end with_one
 
 namespace with_zero
 
--- `to_additive` fails to generate some meta info around eqn lemmas, so `lift` doesn't workf
+-- `to_additive` fails to generate some meta info around eqn lemmas, so `lift` doesn't work
 -- unless we explicitly define this instance
 instance : can_lift (with_zero α) α :=
 { coe := coe,
@@ -230,8 +232,6 @@ end group
 instance [comm_group α] : comm_group_with_zero (with_zero α) :=
 { .. with_zero.group_with_zero, .. with_zero.comm_monoid_with_zero }
 
-section semiring
-
 instance [semiring α] : semiring (with_zero α) :=
 { left_distrib := λ a b c, begin
     cases a with a, {refl},
@@ -247,8 +247,6 @@ instance [semiring α] : semiring (with_zero α) :=
   ..with_zero.add_comm_monoid,
   ..with_zero.mul_zero_class,
   ..with_zero.monoid_with_zero }
-
-end semiring
 
 attribute [irreducible] with_zero
 
