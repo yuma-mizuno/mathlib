@@ -39,6 +39,7 @@ Extension of Sup and Inf from a preorder `α` to `with_top α` and `with_bot α`
 -/
 
 open_locale classical
+local attribute [semireducible] with_top with_bot
 
 noncomputable instance {α : Type*} [preorder α] [has_Sup α] : has_Sup (with_top α) :=
 ⟨λ S, if ⊤ ∈ S then ⊤ else
@@ -493,6 +494,8 @@ end nat
 
 namespace with_top
 open_locale classical
+
+local attribute [semireducible] with_top
 
 variables [conditionally_complete_linear_order_bot α]
 

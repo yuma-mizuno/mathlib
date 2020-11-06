@@ -81,6 +81,7 @@ do guard (same_operator l r) <|>
 @[reducible]
 def mono_key := (with_bot name × with_bot name)
 
+local attribute [semireducible] with_bot
 open nat
 
 meta def mono_head_candidates : ℕ → list expr → expr → tactic mono_key

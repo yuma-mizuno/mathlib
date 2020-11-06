@@ -548,6 +548,8 @@ end lift
 
 end galois_coinsertion
 
+local attribute [semireducible] with_bot
+
 /-- If `α` is a partial order with bottom element (e.g., `ℕ`, `ℝ≥0`), then
 `λ o : with_bot α, o.get_or_else ⊥` and coercion form a Galois insertion. -/
 def with_bot.gi_get_or_else_bot [order_bot α] :

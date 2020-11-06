@@ -70,6 +70,8 @@ meta def find_scalars_core : nat → list (list nat × term) → tactic (list na
   do new ← elim_var m neg pos,
      find_scalars_core m (new ++ zero)
 
+local attribute [semireducible] with_bot
+
 /-- Perform Fourier–Motzkin elimination to find a contradictory
     linear combination of input constraints. -/
 meta def find_scalars (ts : list term) : tactic (list nat) :=

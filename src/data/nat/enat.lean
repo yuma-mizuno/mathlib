@@ -291,6 +291,8 @@ by rw [add_comm a, add_comm a, enat.add_right_cancel_iff ha]
 
 section with_top
 
+local attribute [semireducible] with_top
+
 /-- Computably converts an `enat` to a `with_top ℕ`. -/
 def to_with_top (x : enat) [decidable x.dom]: with_top ℕ := x.to_option
 
@@ -322,6 +324,8 @@ end with_top
 section with_top_equiv
 
 open_locale classical
+
+local attribute [semireducible] with_top
 
 @[simp] lemma to_with_top_add {x y : enat} : to_with_top (x + y) = to_with_top x + to_with_top y :=
 begin

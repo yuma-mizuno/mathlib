@@ -455,10 +455,17 @@ local attribute [semireducible] with_top with_bot
 
 instance [has_zero α] : has_zero (with_bot α) := with_top.has_zero
 instance [has_one α] : has_one (with_bot α) := with_top.has_one
-instance [add_semigroup α] : add_semigroup (with_bot α) := with_top.add_semigroup
-instance [add_comm_semigroup α] : add_comm_semigroup (with_bot α) := with_top.add_comm_semigroup
-instance [add_monoid α] : add_monoid (with_bot α) := with_top.add_monoid
-instance [add_comm_monoid α] : add_comm_monoid (with_bot α) :=  with_top.add_comm_monoid
+instance [has_add α] : has_add (with_bot α) := with_top.has_add
+instance [add_semigroup α] : add_semigroup (with_bot α) :=
+{ add := (+), .. with_top.add_semigroup }
+instance [add_comm_semigroup α] : add_comm_semigroup (with_bot α) :=
+{ add := (+), .. with_top.add_comm_semigroup }
+instance [add_monoid α] : add_monoid (with_bot α) :=
+{ zero := 0, add := (+), .. with_top.add_monoid }
+instance [add_comm_monoid α] : add_comm_monoid (with_bot α) :=
+{ zero := 0, add := (+), .. with_top.add_comm_monoid }
+
+def coe_add_hom [add_monoid α] : α →+ with_bot α := { to_fun := coe, .. with_top.coe_add_hom }
 
 instance [ordered_add_comm_monoid α] : ordered_add_comm_monoid (with_bot α) :=
 begin
@@ -491,8 +498,7 @@ lemma coe_zero [has_zero α] : ((0 : α) : with_bot α) = 0 := rfl
 lemma coe_one [has_one α] : ((1 : α) : with_bot α) = 1 := rfl
 
 -- `by norm_cast` proves this lemma, so I did not tag it with `norm_cast`
-lemma coe_eq_zero {α : Type*}
-  [add_monoid α] {a : α} : (a : with_bot α) = 0 ↔ a = 0 :=
+lemma coe_eq_zero {α : Type*} [has_zero α] {a : α} : (a : with_bot α) = 0 ↔ a = 0 :=
 by norm_cast
 
 -- `by norm_cast` proves this lemma, so I did not tag it with `norm_cast`
@@ -559,7 +565,7 @@ lemma le_add_right (h : a ≤ b) : a ≤ b + c :=
 calc a = a + 0 : by simp
   ... ≤ b + c : add_le_add h (zero_le _)
 
-local attribute [semireducible] with_zero
+local attribute [semireducible] with_zero with_bot with_top
 
 instance with_zero.canonically_ordered_add_monoid :
   canonically_ordered_add_monoid (with_zero α) :=
@@ -849,6 +855,8 @@ end ordered_cancel_comm_monoid
 section ordered_cancel_add_comm_monoid
 
 variable [ordered_cancel_add_comm_monoid α]
+
+local attribute [semireducible] with_top with_bot
 
 lemma with_top.add_lt_add_iff_left :
   ∀{a b c : with_top α}, a < ⊤ → (a + c < a + b ↔ c < b)

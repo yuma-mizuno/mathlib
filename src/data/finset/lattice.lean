@@ -197,6 +197,8 @@ lemma inf_eq_infi [complete_lattice β] (s : finset α) (f : α → β) : s.inf 
 section max_min
 variables [linear_order α]
 
+local attribute [semireducible] with_bot with_top
+
 /-- Let `s` be a finset in a linear order. Then `s.max` is the maximum of `s` if `s` is not empty,
 and `none` otherwise. It belongs to `option α`. If you want to get an element of `α`, see
 `s.max'`. -/

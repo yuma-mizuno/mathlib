@@ -20,6 +20,7 @@ Results include
 
 noncomputable theory
 local attribute [instance, priority 100] classical.prop_decidable
+local attribute [semireducible] with_bot
 
 open finsupp finset
 open_locale big_operators

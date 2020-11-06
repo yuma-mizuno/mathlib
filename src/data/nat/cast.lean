@@ -228,10 +228,13 @@ end ring_hom
 @[simp, norm_cast] theorem nat.cast_id (n : ℕ) : ↑n = n :=
 ((ring_hom.id ℕ).eq_nat_cast n).symm
 
-@[simp] theorem nat.cast_with_bot : ∀ (n : ℕ),
-  @coe ℕ (with_bot ℕ) (@coe_to_lift _ _ nat.cast_coe) n = n
-| 0     := rfl
-| (n+1) := by rw [with_bot.coe_add, nat.cast_add, nat.cast_with_bot n]; refl
+local attribute [semireducible] with_bot with_top
+
+set_option pp.all true
+
+@[simp] theorem nat.cast_with_bot (n : ℕ) :
+  @coe ℕ (with_bot ℕ) (@coe_to_lift _ _ nat.cast_coe) n = n :=
+(with_bot.coe_add_hom.eq_nat_cast rfl n).symm
 
 instance nat.subsingleton_ring_hom {R : Type*} [semiring R] : subsingleton (ℕ →+* R) :=
 ⟨ring_hom.ext_nat⟩

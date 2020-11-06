@@ -12,6 +12,8 @@ Lemmas about the type of natural numbers with a bottom element adjoined.
 -/
 namespace nat
 
+local attribute [semireducible] with_bot
+
 lemma with_bot.add_eq_zero_iff : ∀ {n m : with_bot ℕ}, n + m = 0 ↔ n = 0 ∧ m = 0
 | none     m        := iff_of_false dec_trivial (λ h, absurd h.1 dec_trivial)
 | n        none     := iff_of_false (by cases n; exact dec_trivial)

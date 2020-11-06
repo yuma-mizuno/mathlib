@@ -172,6 +172,8 @@ def of_nat (s : set ℕ) [decidable_pred s] [infinite s] : ℕ → s
 | 0     := ⊥
 | (n+1) := succ (of_nat n)
 
+local attribute [semireducible] with_bot with_top
+
 lemma of_nat_surjective_aux : ∀ {x : ℕ} (hx : x ∈ s), ∃ n, of_nat s n = ⟨x, hx⟩
 | x := λ hx, let t : list s := ((list.range x).filter (λ y, y ∈ s)).pmap
   (λ (y : ℕ) (hy : y ∈ s), ⟨y, hy⟩) (by simp) in

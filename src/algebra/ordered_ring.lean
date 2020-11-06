@@ -979,6 +979,8 @@ end canonically_ordered_semiring
 
 namespace with_top
 
+local attribute [semireducible] with_top
+
 instance [nonempty α] : nontrivial (with_top α) :=
 option.nontrivial
 

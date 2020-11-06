@@ -195,6 +195,8 @@ theorem argmin_eq_some_iff [decidable_eq α] {f : α → β} {m : α} {l : list 
 
 variable [linear_order α]
 
+local attribute [semireducible] with_bot with_top
+
 /-- `maximum l` returns an `with_bot α`, the largest element of `l` for nonempty lists, and `⊥` for
 `[]`  -/
 def maximum (l : list α) : with_bot α := argmax id l

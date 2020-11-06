@@ -418,8 +418,8 @@ instance has_bot : has_bot (with_bot α) := ⟨none⟩
 
 instance : inhabited (with_bot α) := ⟨⊥⟩
 
-@[simp] lemma none_eq_bot : (none : with_bot α) = (⊥ : with_bot α) := rfl
-@[simp] lemma some_eq_coe (a : α) : (some a : with_bot α) = (↑a : with_bot α) := rfl
+lemma none_eq_bot : (none : with_bot α) = (⊥ : with_bot α) := rfl
+lemma some_eq_coe (a : α) : (some a : with_bot α) = (↑a : with_bot α) := rfl
 
 /-- Recursor for `with_bot` using the preferred forms `⊥` and `↑a`. -/
 @[elab_as_eliminator]
