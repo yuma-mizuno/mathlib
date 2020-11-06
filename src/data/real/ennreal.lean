@@ -90,7 +90,8 @@ instance : has_coe ℝ≥0 ennreal := ⟨ option.some ⟩
 
 instance : can_lift ennreal ℝ≥0 :=
 { coe := coe,
-  .. option.can_lift_ne_none }
+  cond := λ r, r ≠ ∞,
+  prf := λ x hx, ⟨option.get $ option.ne_none_iff_is_some.1 hx, option.some_get _⟩ }
 
 @[simp] lemma none_eq_top : (none : ennreal) = (⊤ : ennreal) := rfl
 @[simp] lemma some_eq_coe (a : ℝ≥0) : (some a : ennreal) = (↑a : ennreal) := rfl
