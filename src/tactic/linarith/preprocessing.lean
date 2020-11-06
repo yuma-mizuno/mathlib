@@ -196,6 +196,8 @@ It creates a proof of `lhs' R 0`, where all numeric division in `lhs` has been c
 -/
 meta def normalize_denominators_in_lhs (h lhs : expr) : tactic expr :=
 do (v, lhs') ← cancel_factors.derive lhs,
+   -- if lhs has denominators that are "already cancelled" like `2*(x/2)`, then `lhs'` is of the
+   -- form `1 * (2*(x/2)) = 1*x` but we want `(2*(x/2)) = 1*x`.
    lhs' ← if v = 1 then to_expr ``(eq.trans (one_mul _).symm %%lhs') else return lhs',
    (ih, h'') ← mk_single_comp_zero_pf v h,
    (_, nep, _) ← infer_type h'' >>= rewrite_core lhs',
