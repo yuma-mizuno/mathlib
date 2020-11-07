@@ -719,7 +719,11 @@ noncomputable instance with_top.conditionally_complete_lattice
   ..with_top.has_Sup,
   ..with_top.has_Inf }
 
-/-- Adding a bottom element to a conditionally complete lattice gives a conditionally complete lattice -/
+-- enables us to steal some proofs from `order_dual`.
+local attribute [reducible] with_top with_bot
+
+/-- Adding a bottom element to a conditionally complete lattice gives a conditionally
+  complete lattice -/
 noncomputable instance with_bot.conditionally_complete_lattice
   {α : Type*} [conditionally_complete_lattice α] :
   conditionally_complete_lattice (with_bot α) :=
@@ -731,19 +735,23 @@ noncomputable instance with_bot.conditionally_complete_lattice
   ..with_bot.has_Sup,
   ..with_bot.has_Inf }
 
-/-- Adding a bottom and a top to a conditionally complete lattice gives a bounded lattice-/
-noncomputable instance with_top.with_bot.bounded_lattice {α : Type*}
-  [conditionally_complete_lattice α] : bounded_lattice (with_top (with_bot α)) :=
-{ ..with_top.order_bot,
-  ..with_top.order_top,
-  ..conditionally_complete_lattice.to_lattice _ }
-
 theorem with_bot.cSup_empty {α : Type*} [conditionally_complete_lattice α] :
   Sup (∅ : set (with_bot α)) = ⊥ :=
 begin
   show ite _ _ _ = ⊥,
   split_ifs; finish,
 end
+
+-- normal service resumes
+local attribute [irreducible] with_top with_bot
+
+/-- Adding a bottom and a top to a conditionally complete lattice gives a bounded lattice-/
+noncomputable instance with_top.with_bot.bounded_lattice {α : Type*}
+  [conditionally_complete_lattice α] : bounded_lattice (with_top (with_bot α)) :=
+{ ..with_top.order_bot,
+  ..with_top.order_top,
+  ..conditionally_complete_lattice.to_lattice _
+}
 
 noncomputable instance with_top.with_bot.complete_lattice {α : Type*}
   [conditionally_complete_lattice α] : complete_lattice (with_top (with_bot α)) :=
@@ -762,11 +770,10 @@ noncomputable instance with_top.with_bot.complete_lattice {α : Type*}
     show ite _ _ _ ≤ a,
     begin
       split_ifs,
-      { cases a with a, exact _root_.le_refl _,
-        cases (h haS); tauto },
-      { cases a,
-        { exact le_top },
-        { apply with_top.some_le_some.2, refine cInf_le _ haS, use ⊥, intros b hb, exact bot_le } }
+      { exact le_of_eq (mem_singleton_iff.1 (h haS)).symm },
+      { revert haS, refine with_top.rec_top_coe _ _ a,
+        { intros, exact le_top },
+        { intros a haS, apply with_top.some_le_some.2, refine cInf_le _ haS, use ⊥, intros b hb, exact bot_le } }
     end,
   le_Inf := λ S a haS, (with_top.is_glb_Inf' ⟨a, haS⟩).2 haS,
   ..with_top.has_Inf,
