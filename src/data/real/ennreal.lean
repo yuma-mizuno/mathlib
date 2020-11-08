@@ -73,6 +73,7 @@ open classical set
 open_locale classical big_operators nnreal
 variables {α : Type*} {β : Type*}
 
+local attribute [semireducible] with_top
 /-- The extended nonnegative real numbers. This is usually denoted [0, ∞],
   and is relevant as the codomain of a measure. -/
 @[derive canonically_ordered_comm_semiring, derive complete_linear_order, derive densely_ordered,
@@ -1348,3 +1349,5 @@ by cases a; cases b; cases c; simp [← ennreal.coe_add, ennreal.coe_le_coe]
 
 
 end ennreal
+
+local attribute [irreducible] with_top
