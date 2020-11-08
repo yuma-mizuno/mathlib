@@ -33,6 +33,8 @@ also do some limits stuff (liminf/limsup etc).
 See https://isabelle.in.tum.de/dist/library/HOL/HOL-Library/Extended_Real.html
 -/
 
+local attribute [semireducible] with_bot with_top
+
 /-- ereal : The type `[-∞, ∞]` -/
 @[derive [linear_order, order_bot, order_top,
   has_Sup, has_Inf, complete_lattice, has_add]]
@@ -91,5 +93,7 @@ protected theorem neg_le {a b : ereal} : -a ≤ b ↔ -b ≤ a :=
 /-- a ≤ -b → b ≤ -a on ereal -/
 theorem le_neg_of_le_neg {a b : ereal} (h : a ≤ -b) : b ≤ -a :=
 by rwa [←ereal.neg_neg b, ereal.neg_le, ereal.neg_neg]
+
+local attribute [irreducible] with_bot with_top
 
 end ereal

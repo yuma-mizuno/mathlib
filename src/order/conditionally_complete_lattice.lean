@@ -720,7 +720,7 @@ noncomputable instance with_top.conditionally_complete_lattice
   ..with_top.has_Inf }
 
 -- enables us to steal some proofs from `order_dual`.
-local attribute [reducible] with_top with_bot
+local attribute [semireducible] with_top with_bot
 
 /-- Adding a bottom element to a conditionally complete lattice gives a conditionally
   complete lattice -/
@@ -745,7 +745,7 @@ end
 -- normal service resumes
 local attribute [irreducible] with_top with_bot
 
-/-- Adding a bottom and a top to a conditionally complete lattice gives a bounded lattice-/
+/-- Adding a bottom and a top to a conditionally complete lattice gives a bounded lattice. -/
 noncomputable instance with_top.with_bot.bounded_lattice {α : Type*}
   [conditionally_complete_lattice α] : bounded_lattice (with_top (with_bot α)) :=
 { ..with_top.order_bot,
