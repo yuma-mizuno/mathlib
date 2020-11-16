@@ -94,6 +94,4 @@ protected theorem neg_le {a b : ereal} : -a ≤ b ↔ -b ≤ a :=
 theorem le_neg_of_le_neg {a b : ereal} (h : a ≤ -b) : b ≤ -a :=
 by rwa [←ereal.neg_neg b, ereal.neg_le, ereal.neg_neg]
 
-local attribute [irreducible] with_bot with_top
-
 end ereal

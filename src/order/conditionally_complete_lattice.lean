@@ -742,9 +742,6 @@ begin
   split_ifs; finish,
 end
 
--- normal service resumes
-local attribute [irreducible] with_top with_bot
-
 /-- Adding a bottom and a top to a conditionally complete lattice gives a bounded lattice. -/
 noncomputable instance with_top.with_bot.bounded_lattice {α : Type*}
   [conditionally_complete_lattice α] : bounded_lattice (with_top (with_bot α)) :=

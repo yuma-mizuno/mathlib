@@ -1349,5 +1349,3 @@ by cases a; cases b; cases c; simp [← ennreal.coe_add, ennreal.coe_le_coe]
 
 
 end ennreal
-
-local attribute [irreducible] with_top
