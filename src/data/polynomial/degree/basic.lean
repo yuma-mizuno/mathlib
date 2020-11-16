@@ -506,11 +506,13 @@ calc degree (p * q) ≤ (p.support).sup (λi, degree (sum q (λj a, C (coeff p i
       exact add_le_add (le_degree_of_ne_zero ha) (le_degree_of_ne_zero hb)
     end
 
+instance : add_monoid (with_bot ℕ) := by apply_instance
+
 lemma degree_pow_le (p : polynomial R) : ∀ n, degree (p ^ n) ≤ n •ℕ (degree p)
-| 0     := by rw [pow_zero, zero_nsmul]; exact degree_one_le
+| 0     := by erw [pow_zero, zero_nsmul]; exact degree_one_le
 | (n+1) := calc degree (p ^ (n + 1)) ≤ degree p + degree (p ^ n) :
     by rw pow_succ; exact degree_mul_le _ _
-  ... ≤ _ : by rw succ_nsmul; exact add_le_add (le_refl _) (degree_pow_le _)
+  ... ≤ _ : by erw succ_nsmul; exact add_le_add (le_refl _) (degree_pow_le _)
 
 @[simp] lemma leading_coeff_monomial (a : R) (n : ℕ) : leading_coeff (C a * X ^ n) = a :=
 begin
@@ -630,13 +632,13 @@ by rw [pow_succ, pow_succ, leading_coeff_mul' h₂, ih h₁]
 lemma degree_pow' : ∀ {n}, leading_coeff p ^ n ≠ 0 →
   degree (p ^ n) = n •ℕ (degree p)
 | 0     := λ h, by rw [pow_zero, ← C_1] at *;
-  rw [degree_C h, zero_nsmul]
+  erw [degree_C h, zero_nsmul]; refl
 | (n+1) := λ h,
 have h₁ : leading_coeff p ^ n ≠ 0 := λ h₁, h $
   by rw [pow_succ, h₁, mul_zero],
 have h₂ : leading_coeff p * leading_coeff (p ^ n) ≠ 0 :=
   by rwa [pow_succ, ← leading_coeff_pow' h₁] at h,
-by rw [pow_succ, degree_mul' h₂, succ_nsmul, degree_pow' h₁]
+by erw [pow_succ, degree_mul' h₂, succ_nsmul, degree_pow' h₁]; refl
 
 lemma nat_degree_pow' {n : ℕ} (h : leading_coeff p ^ n ≠ 0) :
   nat_degree (p ^ n) = n * nat_degree p :=
@@ -675,7 +677,7 @@ begin
   apply nat_degree_le_of_degree_le,
   apply le_trans (degree_mul_le p q),
   rw with_bot.coe_add,
-  refine add_le_add _ _; apply degree_le_nat_degree,
+  convert add_le_add _ _; apply degree_le_nat_degree,
 end
 
 lemma subsingleton_of_monic_zero (h : monic (0 : polynomial R)) :
@@ -825,7 +827,7 @@ else degree_mul' $ mul_ne_zero (mt leading_coeff_eq_zero.1 hp0)
 @[simp] lemma degree_pow (p : polynomial R) (n : ℕ) :
   degree (p ^ n) = n •ℕ (degree p) :=
 by induction n; [simp only [pow_zero, degree_one, zero_nsmul],
-simp only [*, pow_succ, succ_nsmul, degree_mul]]
+simp only [*, pow_succ, succ_nsmul, degree_mul]]; refl
 
 @[simp] lemma leading_coeff_mul (p q : polynomial R) : leading_coeff (p * q) =
   leading_coeff p * leading_coeff q :=
