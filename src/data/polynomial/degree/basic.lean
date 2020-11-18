@@ -506,8 +506,6 @@ calc degree (p * q) ≤ (p.support).sup (λi, degree (sum q (λj a, C (coeff p i
       exact add_le_add (le_degree_of_ne_zero ha) (le_degree_of_ne_zero hb)
     end
 
-instance : add_monoid (with_bot ℕ) := by apply_instance
-
 lemma degree_pow_le (p : polynomial R) : ∀ n, degree (p ^ n) ≤ n •ℕ (degree p)
 | 0     := by erw [pow_zero, zero_nsmul]; exact degree_one_le
 | (n+1) := calc degree (p ^ (n + 1)) ≤ degree p + degree (p ^ n) :
