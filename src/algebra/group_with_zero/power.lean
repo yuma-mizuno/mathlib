@@ -15,21 +15,123 @@ This generalises the integer power function on a division ring.
 section zero
 variables {M : Type*} [monoid_with_zero M]
 
-@[simp] lemma zero_pow' : ∀ n : ℕ, n ≠ 0 → (0 : M) ^ n = 0
-| 0     h := absurd rfl h
-| (k+1) h := zero_mul _
+lemma zero_pow : ∀ {n : ℕ}, 0 < n → (0 : M) ^ n = 0
+| (n+1) _ := zero_mul _
 
-lemma ne_zero_pow {a : M} {n : ℕ} (hn : n ≠ 0) : a ^ n ≠ 0 → a ≠ 0 :=
-by { contrapose!, rintro rfl, exact zero_pow' n hn }
+lemma ne_zero_pow {a : M} {n : ℕ} (hn : 0 < n) : a ^ n ≠ 0 → a ≠ 0 :=
+by { contrapose!, rintro rfl, exact zero_pow hn }
 
 @[simp] lemma zero_pow_eq_zero [nontrivial M] {n : ℕ} : (0 : M) ^ n = 0 ↔ 0 < n :=
 begin
   split; intro h,
   { rw [nat.pos_iff_ne_zero], rintro rfl, simpa using h },
-  { exact zero_pow' n h.ne.symm }
+  { exact zero_pow h }
 end
 
+theorem pow_eq_zero [monoid_with_zero M] [no_zero_divisors M] {x : M} {n : ℕ} (H : x^n = 0) : x = 0 :=
+begin
+  induction n with n ih,
+  { rw pow_zero at H,
+    rw [← mul_one x, H, mul_zero] },
+  exact or.cases_on (mul_eq_zero.1 H) id ih
+end
+
+@[simp] lemma pow_eq_zero_iff [monoid_with_zero M] [no_zero_divisors M]
+  {a : M} {n : ℕ} (hn : 0 < n) :
+  a ^ n = 0 ↔ a = 0 :=
+begin
+  refine ⟨pow_eq_zero, _⟩,
+  rintros rfl,
+  exact zero_pow hn,
+end
+
+@[field_simps] theorem pow_ne_zero [monoid_with_zero M] [no_zero_divisors M]
+  {a : M} (n : ℕ) (h : a ≠ 0) : a ^ n ≠ 0 :=
+mt pow_eq_zero h
+
 end zero
+
+section linear_ordered_semiring
+
+variables {R : Type*} [linear_ordered_semiring R]
+
+@[simp] theorem pow_pos {a : R} (H : 0 < a) : ∀ (n : ℕ), 0 < a ^ n
+| 0     := by { nontriviality, exact zero_lt_one }
+| (n+1) := mul_pos H (pow_pos _)
+
+@[simp] theorem pow_nonneg {a : R} (H : 0 ≤ a) : ∀ (n : ℕ), 0 ≤ a ^ n
+| 0     := zero_le_one
+| (n+1) := mul_nonneg H (pow_nonneg _)
+
+theorem pow_lt_pow_of_lt_left {x y : R} {n : ℕ} (Hxy : x < y) (Hxpos : 0 ≤ x) (Hnpos : 0 < n) :
+  x ^ n < y ^ n :=
+begin
+  cases lt_or_eq_of_le Hxpos,
+  { rw ←nat.sub_add_cancel Hnpos,
+    induction (n - 1), { simpa only [pow_one] },
+    rw [pow_add, pow_add, nat.succ_eq_add_one, pow_one, pow_one],
+    apply mul_lt_mul ih (le_of_lt Hxy) h (le_of_lt (pow_pos (lt_trans h Hxy) _)) },
+  { rw [←h, zero_pow Hnpos], apply pow_pos (by rwa ←h at Hxy : 0 < y),}
+end
+
+theorem pow_left_inj {x y : R} {n : ℕ} (Hxpos : 0 ≤ x) (Hypos : 0 ≤ y) (Hnpos : 0 < n)
+  (Hxyn : x ^ n = y ^ n) : x = y :=
+begin
+  rcases lt_trichotomy x y with hxy | rfl | hyx,
+  { exact absurd Hxyn (ne_of_lt (pow_lt_pow_of_lt_left hxy Hxpos Hnpos)) },
+  { refl },
+  { exact absurd Hxyn (ne_of_gt (pow_lt_pow_of_lt_left hyx Hypos Hnpos)) },
+end
+
+theorem one_le_pow_of_one_le {a : R} (H : 1 ≤ a) : ∀ (n : ℕ), 1 ≤ a ^ n
+| 0     := le_refl _
+| (n+1) := by simpa only [mul_one] using mul_le_mul H (one_le_pow_of_one_le n)
+    zero_le_one (le_trans zero_le_one H)
+
+theorem pow_le_pow {a : R} {n m : ℕ} (ha : 1 ≤ a) (h : n ≤ m) : a ^ n ≤ a ^ m :=
+let ⟨k, hk⟩ := nat.le.dest h in
+calc a ^ n = a ^ n * 1 : (mul_one _).symm
+  ... ≤ a ^ n * a ^ k : mul_le_mul_of_nonneg_left
+    (one_le_pow_of_one_le ha _)
+    (pow_nonneg (le_trans zero_le_one ha) _)
+  ... = a ^ m : by rw [←hk, pow_add]
+
+lemma pow_lt_pow {a : R} {n m : ℕ} (h : 1 < a) (h2 : n < m) : a ^ n < a ^ m :=
+begin
+  have h' : 1 ≤ a := le_of_lt h,
+  have h'' : 0 < a := lt_trans zero_lt_one h,
+  cases m, cases h2, rw [pow_succ, ←one_mul (a ^ n)],
+  exact mul_lt_mul h (pow_le_pow h' (nat.le_of_lt_succ h2)) (pow_pos h'' _) (le_of_lt h'')
+end
+
+lemma pow_lt_pow_iff {a : R} {n m : ℕ} (h : 1 < a) : a ^ n < a ^ m ↔ n < m :=
+strict_mono.lt_iff_lt $ λ m n, pow_lt_pow h
+
+lemma pow_le_pow_of_le_left {a b : R} (ha : 0 ≤ a) (hab : a ≤ b) : ∀ i : ℕ, a^i ≤ b^i
+| 0     := by simp
+| (k+1) := mul_le_mul hab (pow_le_pow_of_le_left _) (pow_nonneg ha _) (le_trans ha hab)
+
+lemma lt_of_pow_lt_pow {a b : R} (n : ℕ) (hb : 0 ≤ b) (h : a ^ n < b ^ n) : a < b :=
+lt_of_not_ge $ λ hn, not_lt_of_ge (pow_le_pow_of_le_left hb hn _) h
+
+lemma le_of_pow_le_pow {a b : R} (n : ℕ) (hb : 0 ≤ b) (hn : 0 < n) (h : a ^ n ≤ b ^ n) : a ≤ b :=
+le_of_not_lt $ λ h1, not_le_of_lt (pow_lt_pow_of_lt_left h1 hb hn) h
+
+end linear_ordered_semiring
+
+section linear_ordered_ring
+variables {R : Type*}
+
+theorem pow_two_nonneg [linear_ordered_ring R] (a : R) : 0 ≤ a ^ 2 :=
+by { rw pow_two, exact mul_self_nonneg _ }
+
+theorem pow_two_pos_of_ne_zero [linear_ordered_ring R] (a : R) (h : a ≠ 0) : 0 < a ^ 2 :=
+begin
+  nontriviality,
+  exact lt_of_le_of_ne (pow_two_nonneg a) (pow_ne_zero 2 h).symm
+end
+
+end linear_ordered_ring
 
 section group_with_zero
 variables {G₀ : Type*} [group_with_zero G₀]
@@ -84,7 +186,7 @@ local attribute [ematch] le_of_lt
 | -[1+ n] := show _⁻¹=(1:G₀), by rw [one_pow, inv_one]
 
 lemma zero_fpow : ∀ z : ℤ, z ≠ 0 → (0 : G₀) ^ z = 0
-| (of_nat n) h := zero_pow' _ $ by rintro rfl; exact h rfl
+| (of_nat n) h := zero_pow $ by sorry
 | -[1+n]     h := show (0*0 ^ n)⁻¹ = (0 : G₀), by simp
 
 @[simp] theorem fpow_neg (a : G₀) : ∀ (n : ℤ), a ^ -n = (a ^ n)⁻¹

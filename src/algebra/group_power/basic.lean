@@ -373,9 +373,6 @@ instance gsmul.is_add_group_hom (n : ℤ) : is_add_group_hom (gsmul n : A → A)
 
 end comm_group
 
-lemma zero_pow [monoid_with_zero R] : ∀ {n : ℕ}, 0 < n → (0 : R) ^ n = 0
-| (n+1) _ := zero_mul _
-
 namespace ring_hom
 
 variables [semiring R] [semiring S]
@@ -410,27 +407,6 @@ by rwa [← add_eq_zero_iff_eq_neg, ← sub_eq_zero, or_comm, ← mul_eq_zero,
 
 theorem sq_sub_sq [comm_ring R] (a b : R) : a ^ 2 - b ^ 2 = (a + b) * (a - b) :=
 by rw [pow_two, pow_two, mul_self_sub_mul_self]
-
-theorem pow_eq_zero [monoid_with_zero R] [no_zero_divisors R] {x : R} {n : ℕ} (H : x^n = 0) : x = 0 :=
-begin
-  induction n with n ih,
-  { rw pow_zero at H,
-    rw [← mul_one x, H, mul_zero] },
-  exact or.cases_on (mul_eq_zero.1 H) id ih
-end
-
-@[simp] lemma pow_eq_zero_iff [monoid_with_zero R] [no_zero_divisors R]
-  {a : R} {n : ℕ} (hn : 0 < n) :
-  a ^ n = 0 ↔ a = 0 :=
-begin
-  refine ⟨pow_eq_zero, _⟩,
-  rintros rfl,
-  exact zero_pow hn,
-end
-
-@[field_simps] theorem pow_ne_zero [monoid_with_zero R] [no_zero_divisors R]
-  {a : R} (n : ℕ) (h : a ≠ 0) : a ^ n ≠ 0 :=
-mt pow_eq_zero h
 
 lemma pow_abs [linear_ordered_comm_ring R] (a : R) (n : ℕ) : (abs a)^n = abs (a^n) :=
 by induction n with n ih; [exact (abs_one).symm,

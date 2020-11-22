@@ -1186,7 +1186,7 @@ theorem eq_pow_of_mul_eq_pow {a b c : associates α} (ha : a ≠ 0) (hb : b ≠ 
   ∃ (d : associates α), a = d ^ k :=
 begin
   classical,
-  by_cases hk0 : k = 0,
+  cases nat.eq_zero_or_pos k with hk0 hk0,
   { use 1,
     rw [hk0, pow_zero] at h ⊢,
     apply (mul_eq_one_iff.1 h).1 },
@@ -1196,7 +1196,7 @@ begin
     rw h,
     apply dvd_count_pow _ hp,
     rintros rfl,
-    rw zero_pow' _ hk0 at h,
+    rw zero_pow hk0 at h,
     cases mul_eq_zero.mp h; contradiction }
 end
 
