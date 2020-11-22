@@ -741,12 +741,93 @@ as additive groups"]
 def prod_equiv (H : subgroup G) (K : subgroup N) : H.prod K ≃* H × K :=
 { map_mul' := λ x y, rfl, .. equiv.set.prod ↑H ↑K }
 
-/-- A subgroup is normal if whenever `n ∈ H`, then `g * n * g⁻¹ ∈ H` for every `g : G` -/
-structure normal : Prop :=
-(conj_mem : ∀ n, n ∈ H → ∀ g : G, g * n * g⁻¹ ∈ H)
+-- A subgroup is normal if whenever `n ∈ H`, then `g * n * g⁻¹ ∈ H` for every `g : G`
+-- structure normal : Prop :=
+-- (conj_mem : ∀ n, n ∈ H → ∀ g : G, g * n * g⁻¹ ∈ H)
 
-attribute [class] normal
+-- attribute [class] normal
 
+variables (G)
+
+structure normal_subgroup extends subgroup G :=
+(conj_mem : ∀ n ∈ carrier, ∀ g : G, g * n * g⁻¹ ∈ carrier)
+
+/-- Reinterpret a `normal_subgroup` as a `subgroup`. -/
+add_decl_doc normal_subgroup.to_subgroup
+
+namespace normal
+
+variables {G} (M : normal_subgroup G)
+
+instance : has_coe (normal_subgroup G) (set G) :=
+⟨normal_subgroup.carrier⟩
+
+@[simp] lemma coe_to_subgroup : (M.to_subgroup : set G) = M := rfl
+
+instance : has_coe_to_sort (normal_subgroup G) := ⟨Type*, λ N, N.carrier⟩
+
+instance : has_mem G (normal_subgroup G) := ⟨λ n N, n ∈ (N : set G)⟩
+
+@[simp] lemma mem_mk (s : set G) (h_conj_mem : ∀ x ∈ s, ∀ g : G, g * x * g⁻¹ ∈ s)
+  (h₁ h₂ h₃) (x : G) : x ∈ normal_subgroup.mk s h₁ h₂ h₃ h_conj_mem ↔ x ∈ s := iff.rfl
+
+@[simp] lemma mem_coe (x : G) : x ∈ (M : set G) ↔ x ∈ M := iff.rfl
+
+@[simp] lemma mem_to_subgroup (x : G) : x ∈ M.to_subgroup ↔ x ∈ M := iff.rfl
+
+theorem ext' ⦃N₁ N₂ : normal_subgroup G⦄ (h : (N₁ : set G) = N₂) : N₁ = N₂ :=
+by { cases N₁, cases N₂, congr' }
+
+protected theorem ext'_iff {N₁ N₂ : normal_subgroup G} : N₁ = N₂ ↔ (N₁ : set G) = N₂ :=
+⟨λ h, h ▸ rfl, λ h, ext' h⟩
+
+@[ext] theorem ext {N₁ N₂ : normal_subgroup G} (h : ∀ x, x ∈ N₁ ↔ x ∈ N₂) : N₁ = N₂ :=
+ext' $ set.ext h
+
+theorem one_mem : (1 : G) ∈ M := M.one_mem'
+
+theorem mul_mem : ∀ {x y : G}, x ∈ M → y ∈ M → x * y ∈ M := N.mul_mem'
+
+theorem inv_mem : ∀ {x : G}, x ∈ M → x⁻¹ ∈ M := M.inv_mem'
+
+lemma list_prod_mem {l : list G} : (∀ x ∈ l, x ∈ M) → l.prod ∈ M :=
+M.to_subgroup.list_prod_mem
+
+lemma pow_mem {x : G} (hx : x ∈ M) (n : ℕ) : x^n ∈ M :=
+M.to_subgroup.pow_mem hx n
+
+end normal
+
+variables {G}
+
+def is_normal (H : subgroup G) := ∀ n, n ∈ H →  ∀ g : G, g * n * g⁻¹ ∈ H
+
+def to_normal_subgroup (conj_mem : is_normal H) :
+  normal_subgroup G :=
+{ conj_mem := conj_mem ..H }
+
+@[simp] lemma to_subgroup_to_normal_subgroup (conj_mem : is_normal H) :
+  (H.to_normal_subgroup conj_mem).to_subgroup = H :=
+by { ext, refl }
+
+@[simp] lemma to_normal_subgroup_to_subgroup (N : normal_subgroup G)
+  (conj_mem : is_normal N.to_subgroup) : N.to_subgroup.to_normal_subgroup conj_mem = N :=
+by { ext, refl }
+
+namespace normal
+
+variables (M : normal_subgroup G)
+
+lemma is_normal : M.to_subgroup.is_normal := M.conj_mem
+
+instance to_group : group M :=
+M.to_subgroup.to_group
+
+@[simp, norm_cast] lemma coe_one : ((1 : M) : G) = 1 := rfl
+@[simp, norm_cast] lemma coe_mul (x y : M) : (↑(x * y) : G) = ↑x * ↑y := rfl
+@[simp, norm_cast] lemma coe_inv (x y : M) : (↑(x⁻¹) : G) = (↑x)⁻¹ := rfl
+
+end normal
 end subgroup
 
 namespace add_subgroup
@@ -755,35 +836,57 @@ namespace add_subgroup
 structure normal (H : add_subgroup A) : Prop :=
 (conj_mem [] : ∀ n, n ∈ H → ∀ g : A, g + n - g ∈ H)
 
-attribute [to_additive add_subgroup.normal] subgroup.normal
-attribute [class] normal
+-- attribute [to_additive add_subgroup.normal] subgroup.normal
+-- attribute [class] normal
+
+-- variables (A)
+
+-- @[class]
+-- structure normal_subgroup extends add_subgroup A :=
+-- (conj_mem : ∀ n ∈ carrier, ∀ g : A, g + n - g ∈ carrier)
+
+-- attribute [to_additive add_subgroup.normal_subgroup] subgroup.normal_subgroup
 
 end add_subgroup
 
 namespace subgroup
 
 variables {H K : subgroup G}
-@[priority 100, to_additive]
-instance normal_of_comm {G : Type*} [comm_group G] (H : subgroup G) : H.normal :=
-⟨by simp [mul_comm, mul_left_comm]⟩
+
+lemma normal_of_comm' {G : Type*} [comm_group G] (H : subgroup G) : H.is_normal :=
+by simp [is_normal, mul_comm, mul_left_comm]
+
+def normal_of_comm {G : Type*} [comm_group G] (H : subgroup G) : normal_subgroup G :=
+H.to_normal_subgroup (normal_of_comm' H)
+
+-- @[priority 100, to_additive]
+-- instance normal_of_comm {G : Type*} [comm_group G] (H : subgroup G) : normal_subgroup G :=
+-- { conj_mem := by simp [mul_comm, mul_left_comm] ..H }
 
 namespace normal
 
-variable (nH : H.normal)
+variable (N : normal_subgroup G)
 
-@[to_additive] lemma mem_comm {a b : G} (h : a * b ∈ H) : b * a ∈ H :=
-have a⁻¹ * (a * b) * a⁻¹⁻¹ ∈ H, from nH.conj_mem (a * b) h a⁻¹, by simpa
+@[to_additive] lemma mem_comm {a b : G} (h : a * b ∈ N) : b * a ∈ N :=
+have a⁻¹ * (a * b) * a⁻¹⁻¹ ∈ N, from N.conj_mem (a * b) h a⁻¹, by simpa
 
-@[to_additive] lemma mem_comm_iff {a b : G} : a * b ∈ H ↔ b * a ∈ H :=
-⟨nH.mem_comm, nH.mem_comm⟩
+@[to_additive] lemma mem_comm_iff {a b : G} : a * b ∈ N ↔ b * a ∈ N :=
+⟨mem_comm N, mem_comm N⟩
 
 end normal
 
 @[priority 100, to_additive]
-instance bot_normal : normal (⊥ : subgroup G) := ⟨by simp⟩
+def bot_normal : normal_subgroup G :=
+{ conj_mem := λ n h g,
+  have n ∈ (⊥ : subgroup G) := h,
+  by simp * at *,
+  ..(⊥ : subgroup G) }
 
 @[priority 100, to_additive]
-instance top_normal : normal (⊤ : subgroup G) := ⟨λ _ _, mem_top⟩
+def top_normal : normal_subgroup G :=
+{ conj_mem := sorry,
+  .. (⊤ : subgroup G)
+}
 
 variable (G)
 /-- The center of a group `G` is the set of elements that commute with everything in `G` -/
