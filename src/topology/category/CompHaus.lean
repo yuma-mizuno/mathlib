@@ -42,8 +42,52 @@ instance {X : CompHaus} : t2_space X := X.is_hausdorff
 
 instance category : category CompHaus := induced_category.category to_Top
 
-end  CompHaus
+end CompHaus
 
 /-- The fully faithful embedding of `CompHaus` in `Top`. -/
 @[simps {rhs_md := semireducible}, derive [full, faithful]]
 def CompHaus_to_Top : CompHaus ⥤ Top := induced_functor _
+
+namespace Top
+
+open category_theory.limits
+
+#check Top.limit_cone
+
+lemma limit_compact (J : Type*)
+  (𝒥 : small_category J)
+  (F : J ⥤ Top)
+  [∀ j, compact_space (F.obj j)] :
+  compact_space (Top.limit_cone F).X :=
+begin
+  set f : (Top.limit_cone F).X → Π (j : J), F.obj j := λ x, x.val with hf,
+  have hfc : continuous f,
+    sorry,
+  sorry
+end
+
+lemma limit_t2 (J : Type*)
+  (𝒥 : small_category J)
+  (F : J ⥤ Top)
+  [∀ j, t2_space (F.obj j)] :
+  t2_space (Top.limit_cone F).X :=
+begin
+  set f : (Top.limit_cone F).X → Π (j : J), F.obj j := λ x, x.val with hf,
+  have hfc : continuous f,
+    sorry,
+  sorry
+end
+
+end Top
+
+namespace CompHaus
+
+def limit_aux (J : Type*)
+  (𝒥 : small_category J)
+  (F : J ⥤ CompHaus) :
+  CompHaus :=
+{ to_Top := (Top.limit_cone (F ⋙ CompHaus_to_Top)).X,
+  is_compact := @limit_compact J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_compact),
+  is_hausdorff := @limit_t2 J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_hausdorff)}
+
+end CompHaus

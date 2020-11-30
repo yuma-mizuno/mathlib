@@ -60,3 +60,29 @@ instance : faithful Profinite_to_CompHaus := {}
 @[simp] lemma Profinite_to_CompHaus_to_Top :
   Profinite_to_CompHaus ⋙ CompHaus_to_Top = Profinite_to_Top :=
 rfl
+
+#check limits.is_limit.of_faithful
+
+namespace Profinite
+
+open category_theory.limits
+
+--def limit_aux
+
+def limit_aux (J : Type*)
+  (𝒥 : small_category J)
+  (F : J ⥤ Profinite) :
+  Profinite :=
+begin
+  admit,
+end
+
+instance : has_limits Profinite :=
+⟨λ J 𝒥, by exactI ⟨λ F, ⟨⟨⟨⟨by extract_goal, _⟩, _⟩⟩⟩⟩⟩
+#exit
+begin
+  let ZZZ := limits.is_limit.of_faithful,
+  sorry
+end
+
+end Profinite
