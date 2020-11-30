@@ -68,14 +68,16 @@ namespace Profinite
 open category_theory.limits
 
 --def limit_aux
+#check Top.limit_cone
 
-def limit_aux (J : Type*)
+noncomputable def limit_aux (J : Type*)
   (𝒥 : small_category J)
   (F : J ⥤ Profinite) :
   Profinite :=
-begin
-  admit,
-end
+{ to_Top := limit (F ⋙ Profinite_to_Top),
+  is_compact := _,
+  is_t2 := _,
+  is_td := _ }
 
 instance : has_limits Profinite :=
 ⟨λ J 𝒥, by exactI ⟨λ F, ⟨⟨⟨⟨by extract_goal, _⟩, _⟩⟩⟩⟩⟩
