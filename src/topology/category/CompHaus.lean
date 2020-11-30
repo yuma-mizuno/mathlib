@@ -82,11 +82,13 @@ end Top
 
 namespace CompHaus
 
+open Top
+
 def limit_aux (J : Type*)
   (𝒥 : small_category J)
   (F : J ⥤ CompHaus) :
   CompHaus :=
-{ to_Top := (Top.limit_cone (F ⋙ CompHaus_to_Top)).X,
+{ to_Top := (limit_cone (F ⋙ CompHaus_to_Top)).X,
   is_compact := @limit_compact J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_compact),
   is_hausdorff := @limit_t2 J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_hausdorff)}
 
