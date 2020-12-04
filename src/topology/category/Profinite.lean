@@ -5,6 +5,7 @@ Authors: Kevin Buzzard
 -/
 
 import topology.category.CompHaus
+import category_theory.limits.shapes.products
 
 /-!
 # The category of Profinite Types
@@ -28,7 +29,7 @@ structure Profinite :=
 (to_Top : Top)
 [is_compact : compact_space to_Top]
 [is_t2 : t2_space to_Top]
-[is_td : totally_disconnected_space to_Top]
+[is_totally_disconnected : totally_disconnected_space to_Top]
 
 namespace Profinite
 
@@ -37,7 +38,7 @@ instance : inhabited Profinite := ⟨{to_Top := { α := pempty }}⟩
 instance : has_coe_to_sort Profinite := ⟨Type*, λ X, X.to_Top⟩
 instance {X : Profinite} : compact_space X := X.is_compact
 instance {X : Profinite} : t2_space X := X.is_t2
-instance {X : Profinite} : totally_disconnected_space X := X.is_td
+instance {X : Profinite} : totally_disconnected_space X := X.is_totally_disconnected
 
 instance category : category Profinite := induced_category.category to_Top
 
@@ -68,23 +69,48 @@ namespace Profinite
 open category_theory.limits
 
 --def limit_aux
+#check continuous_apply
+-- λp:Πi, π i, p i
+variable {J : Type*}
 #check Top.limit_cone
 
-noncomputable def limit_aux (J : Type*)
-  (𝒥 : small_category J)
-  (F : J ⥤ Profinite) :
-  Profinite :=
-{ to_Top := limit (F ⋙ Profinite_to_Top),
-  is_compact := _,
-  is_t2 := _,
-  is_td := _ }
 
-instance : has_limits Profinite :=
-⟨λ J 𝒥, by exactI ⟨λ F, ⟨⟨⟨⟨by extract_goal, _⟩, _⟩⟩⟩⟩⟩
-#exit
-begin
-  let ZZZ := limits.is_limit.of_faithful,
-  sorry
-end
+def product_cone (F : (discrete J) ⥤ Profinite) : cone F :=
+{
+  X := { to_Top := { α := Π (i : J), (F.obj i)},
+        is_compact := by apply_instance,
+        is_t2 := Pi.t2_space,
+        is_totally_disconnected :=
+        {
+        is_totally_disconnected_univ :=
+        begin
+          intros t sub_t preconn_t, constructor,
+          intros a b, ext,
+          have H1 : subsingleton ((λ c : (Π (i : J), (F.obj i)), c x )'' t),
+            {
+              cases (F.obj x).is_totally_disconnected with H,
+              apply H, simp,
+              apply is_preconnected.image, exact preconn_t,
+              apply continuous.continuous_on,
+              apply continuous_apply,
+            },
+          cases H1,
+          have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
+          have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
+          simp at H3, exact H3,
+        end
+        }
+      },
+  π := { app := λ i : J, ⟨λ p : (Π (j : J), F.obj j), p i, continuous_apply _⟩},
+}
+
+def product_cone_is_limit (F : (discrete J) ⥤ Profinite) : is_limit (product_cone F) :=
+{
+  lift := λ s, ⟨λ (x : s.X), (λ (i : J), (s.π.app i) x), continuous_pi (λ i, (s.π.app i).2)⟩,
+  uniq' := by {intros, ext x j, apply (congr_fun (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x)},
+}
+
+instance Profinite_has_products : has_products Profinite :=
+λ J, { has_limit := λ F, has_limit.mk { cone := product_cone F, is_limit := product_cone_is_limit F } }
 
 end Profinite
