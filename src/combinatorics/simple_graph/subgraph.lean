@@ -20,7 +20,7 @@ We prove this alternative definition is equivalent.
 structure subgraph :=
 (adj' : V → V → Prop)
 (adj_sub : ∀ ⦃v w : V⦄, adj' v w → G.adj v w)
-(sym' : symmetric adj') -- i think we can also get rid of this
+(sym' : symmetric adj')
 
 namespace simple_graph
 
