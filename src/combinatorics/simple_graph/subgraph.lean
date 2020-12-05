@@ -20,7 +20,7 @@ We prove this alternative definition is equivalent.
 structure subgraph :=
 (adj' : V → V → Prop)
 (adj_sub : ∀ ⦃v w : V⦄, adj' v w → G.adj v w)
-(sym' : symmetric adj')
+(sym' : symmetric adj') -- i think we can also get rid of this
 
 namespace simple_graph
 
@@ -31,6 +31,9 @@ def is_subgraph (H : simple_graph V) : Prop := ∀ ⦃v w : V⦄, H.adj v w → 
 
 variables (H : simple_graph V) (h : is_subgraph G H)
 
+/--
+If `G.is_subgraph H`, we can coerce `H` into the type `subgraph G`
+-/
 def to_subgraph : subgraph G :=
 { adj' := H.adj,
   adj_sub := h,
