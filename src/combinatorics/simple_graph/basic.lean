@@ -60,6 +60,12 @@ The complete graph on a type `V` is the simple graph with all pairs of distinct 
 def complete_graph (V : Type u) : simple_graph V :=
 { adj := ne }
 
+/--
+The complete graph on a type `V` is the simple graph with all pairs of distinct vertices adjacent.
+-/
+def empty_graph (V : Type u) : simple_graph V :=
+{ adj := λ v w, false }
+
 instance (V : Type u) : inhabited (simple_graph V) :=
 ⟨complete_graph V⟩
 

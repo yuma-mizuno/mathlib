@@ -1,4 +1,5 @@
 import combinatorics.simple_graph.basic
+
 open simple_graph
 
 /-!
@@ -12,7 +13,8 @@ variables {V : Type u} (G : simple_graph V)
 A subgraph of a graph is a subset of vertices and a subset of edges
 such that each endpoint of an edge is contained in the vertex set.
 Subgraphs implement the `simple_graph` class.  They also form a bounded lattice.
-Note: subgraphs could also have been defined as in `subgraph.of_edge_set'`.  We prove this alternative definition is equivalent.
+Note: subgraphs could also have been defined as in `subgraph.of_edge_set'`.
+We prove this alternative definition is equivalent.
 -/
 @[ext]
 structure subgraph :=
@@ -22,10 +24,25 @@ structure subgraph :=
 (edge_vert : ∀ ⦃v w : V⦄, adj' v w → v ∈ V')
 (sym' : symmetric adj')
 
+/--
+The Prop that states that `H` is a subgraph of `G`.
+-/
+def is_subgraph (H : simple_graph V) : Prop := ∀ ⦃v w : V⦄, H.adj v w → G.adj v w
+
+/-def simple_graph.to_subgraph (G H : simple_graph V) [is_subgraph G H] : subgraph G :=
+{ V' := V.to_set,
+  adj' := _,
+  adj_sub := _,
+  edge_vert := _,
+  sym' := _ }-/
+
 namespace subgraph
 
 variable {G}
 
+/--
+The edges of `G'` consist of a subset of edges of `G`.
+-/
 def edge_set' (G' : subgraph G) : set (sym2 V) := sym2.from_rel G'.sym'
 
 @[simp]
@@ -55,14 +72,30 @@ end
 lemma adj_symm' (G' : subgraph G) ⦃v w : V⦄ : G'.adj' v w ↔ G'.adj' w v :=
 by { split; apply G'.sym' }
 
+/--
+Function lifting `G' : subgraph G` to `G' : simple_graph G.V`
+-/
 def to_simple_graph {G : simple_graph V} (G' : subgraph G) : simple_graph G'.V' :=
 { adj := λ v w, G'.adj' ↑v ↑w,
   sym := λ v w h, G'.sym' h,
   loopless := λ ⟨v, _⟩ h, loopless G v (G'.adj_sub h) }
 
-def subgraph.coe {V : Type*} {G : simple_graph V} (G' : subgraph G) : simple_graph V :=
+/--
+Coercion from `G' : subgraph G` to `G' : simple_graph G.V`
+-/
+def coe {V : Type*} {G : simple_graph V} (G' : subgraph G) : simple_graph V :=
 { adj := G'.adj',
   sym := G'.sym',
   loopless := λ v h, loopless G v (G'.adj_sub h) }
 
+--lemma empty_is_subgraph :
+
+instance : inhabited (subgraph G) := { default :=
+{ V' := ∅,
+  adj' := λ v w, false,
+  adj_sub := λ v w, by finish,
+  edge_vert := λ v w, by finish,
+  sym' := λ v w, by finish } }
+
 end subgraph
+#lint
