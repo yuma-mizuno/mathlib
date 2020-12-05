@@ -18,23 +18,25 @@ We prove this alternative definition is equivalent.
 -/
 @[ext]
 structure subgraph :=
-(V' : set V)
 (adj' : V → V → Prop)
 (adj_sub : ∀ ⦃v w : V⦄, adj' v w → G.adj v w)
-(edge_vert : ∀ ⦃v w : V⦄, adj' v w → v ∈ V')
 (sym' : symmetric adj')
+
+namespace simple_graph
 
 /--
 The Prop that states that `H` is a subgraph of `G`.
 -/
 def is_subgraph (H : simple_graph V) : Prop := ∀ ⦃v w : V⦄, H.adj v w → G.adj v w
 
-/-def simple_graph.to_subgraph (G H : simple_graph V) [is_subgraph G H] : subgraph G :=
-{ V' := V.to_set,
-  adj' := _,
-  adj_sub := _,
-  edge_vert := _,
-  sym' := _ }-/
+variables (H : simple_graph V) (h : is_subgraph G H)
+
+def to_subgraph : subgraph G :=
+{ adj' := H.adj,
+  adj_sub := h,
+  sym' := H.sym }
+
+end simple_graph
 
 namespace subgraph
 
@@ -58,27 +60,19 @@ begin
   apply G'.adj_sub,
 end
 
-lemma has_verts (G' : subgraph G) : ∀ ⦃e : sym2 V⦄ ⦃v : V⦄, e ∈ G'.edge_set' → v ∈ e → v ∈ G'.V' :=
-begin
-  intro e,
-  refine quotient.rec_on_subsingleton e (λ e, _),
-  cases e with v w, intros u he hu,
-  simp only [mem_edge_set'] at he,
-  cases sym2.mem_iff.mp hu; subst u,
-  exact G'.edge_vert he,
-  exact G'.edge_vert (G'.sym' he),
-end
-
 lemma adj_symm' (G' : subgraph G) ⦃v w : V⦄ : G'.adj' v w ↔ G'.adj' w v :=
 by { split; apply G'.sym' }
 
 /--
 Function lifting `G' : subgraph G` to `G' : simple_graph G.V`
 -/
-def to_simple_graph {G : simple_graph V} (G' : subgraph G) : simple_graph G'.V' :=
-{ adj := λ v w, G'.adj' ↑v ↑w,
+def to_simple_graph {G : simple_graph V} (G' : subgraph G) : simple_graph V :=
+{ adj := G'.adj',
   sym := λ v w h, G'.sym' h,
-  loopless := λ ⟨v, _⟩ h, loopless G v (G'.adj_sub h) }
+  loopless := λ v h, --G.loopless v (G'.adj_sub h)
+  begin
+    exact G.loopless v (G'.adj_sub h)
+  end }
 
 /--
 Coercion from `G' : subgraph G` to `G' : simple_graph G.V`
@@ -88,13 +82,9 @@ def coe {V : Type*} {G : simple_graph V} (G' : subgraph G) : simple_graph V :=
   sym := G'.sym',
   loopless := λ v h, loopless G v (G'.adj_sub h) }
 
---lemma empty_is_subgraph :
-
 instance : inhabited (subgraph G) := { default :=
-{ V' := ∅,
-  adj' := λ v w, false,
+{ adj' := λ v w, false,
   adj_sub := λ v w, by finish,
-  edge_vert := λ v w, by finish,
   sym' := λ v w, by finish } }
 
 end subgraph
