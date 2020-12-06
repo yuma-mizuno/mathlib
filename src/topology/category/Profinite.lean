@@ -75,25 +75,25 @@ open category_theory.limits
 #check continuous_apply
 -- λp:Πi, π i, p i
 variable {J : Type*}
-#check Top.limit_cone
 
 /-
 totally_disconnected_space ↥{α := Π (i : J), ↥(F.obj i),
 str := Pi.topological_space (λ (a : J), (F.obj a).to_Top.topological_space)
 -/
 
-#check Pi.t2_space
-
 instance Pi.totally_disconnected_space {α : Type*} {β : α → Type*} [t₂ : Πa, topological_space (β a)]
    [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
 begin
   constructor,
-  intros t sub_t preconn_t, constructor,
+  intros t h1 h2, constructor,
   intros a b, ext,
   have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
     {
-      apply (_inst_2 x).is_totally_disconnected_univ, simp,
-      apply is_preconnected.image, exact preconn_t,
+
+
+      apply (_inst_2 x).is_totally_disconnected_univ,
+        apply set.subset_univ,
+      apply is_preconnected.image, exact h2,
       apply continuous.continuous_on,
       apply continuous_apply,
     },
@@ -103,8 +103,21 @@ begin
   simp at H3, exact H3,
 end
 
-#check continuous_subtype_val
-#check continuous.continuous_on
+instance Pi.totally_disconnected_space' {α : Type*} {β : α → Type*} [t₂ : Πa, topological_space (β a)]
+   [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
+begin
+  constructor,
+  intros t h1 h2, constructor,
+  intros a b, ext,
+  have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
+    { exact (totally_disconnected_space.is_totally_disconnected_univ
+          ( (λ (c : Π (a : α), β a), c x) '' t) (set.subset_univ _)
+          (is_preconnected.image h2 _ (continuous.continuous_on (continuous_apply _)))) },
+  cases H1,
+  have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
+  have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
+  simp at H3, exact H3,
+end
 
 theorem subsingleton_of_image {α β : Type*} {f : α → β} (hf : function.injective f)
   (s : set α) (hs : subsingleton (f '' s)) : subsingleton s :=
@@ -116,19 +129,11 @@ begin
   simpa using @subsingleton.elim _ hs ⟨f a, ⟨a, ha, rfl⟩⟩ ⟨f b, ⟨b, hb, rfl⟩⟩,
 end
 
---instance totally_disconnected_space_subtype
 instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topological_space α] [t2_space α] [totally_disconnected_space α] : totally_disconnected_space (subtype p) :=
   ⟨λ s h1 h2,
-    begin
-      let s' := subtype.val '' s,
-      apply subsingleton_of_image subtype.val_injective,
-      apply (_inst_4).is_totally_disconnected_univ,
-        { apply set.subset_univ },
-      apply is_preconnected.image h2,
-      apply continuous.continuous_on,
-      apply continuous_subtype_val,
-    end
-  ⟩
+    subsingleton_of_image subtype.val_injective s (
+      totally_disconnected_space.is_totally_disconnected_univ (subtype.val '' s) (set.subset_univ _)
+        ( (is_preconnected.image h2 _) (continuous.continuous_on (@continuous_subtype_val _ _ p)) ) ) ⟩
 
 variables [small_category J]
 variable G : J ⥤ Profinite
@@ -160,9 +165,6 @@ def limit_cone (F : J ⥤ Profinite) : cone F :=
       end ⟩
   }
 }
-
-#check continuous_subtype_mk
-
 
 def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
 { lift := λ s, ⟨λ (x : s.X), ⟨λ j, s.π.app j x, λ j j' f,
