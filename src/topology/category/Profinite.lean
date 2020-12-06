@@ -88,28 +88,6 @@ begin
   intros t h1 h2, constructor,
   intros a b, ext,
   have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
-    {
-
-
-      apply (_inst_2 x).is_totally_disconnected_univ,
-        apply set.subset_univ,
-      apply is_preconnected.image, exact h2,
-      apply continuous.continuous_on,
-      apply continuous_apply,
-    },
-  cases H1,
-  have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
-  have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
-  simp at H3, exact H3,
-end
-
-instance Pi.totally_disconnected_space' {α : Type*} {β : α → Type*} [t₂ : Πa, topological_space (β a)]
-   [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
-begin
-  constructor,
-  intros t h1 h2, constructor,
-  intros a b, ext,
-  have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
     { exact (totally_disconnected_space.is_totally_disconnected_univ
           ( (λ (c : Π (a : α), β a), c x) '' t) (set.subset_univ _)
           (is_preconnected.image h2 _ (continuous.continuous_on (continuous_apply _)))) },
