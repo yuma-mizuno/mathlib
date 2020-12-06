@@ -6,6 +6,7 @@ Authors: Kevin Buzzard
 
 import topology.category.CompHaus
 import category_theory.limits.shapes.products
+import category_theory.limits.shapes.pullbacks
 
 /-!
 # The category of Profinite Types
@@ -66,6 +67,8 @@ rfl
 
 namespace Profinite
 
+variables (α : Type*) [topological_space α]
+
 open category_theory.limits
 
 --def limit_aux
@@ -74,43 +77,182 @@ open category_theory.limits
 variable {J : Type*}
 #check Top.limit_cone
 
+/-
+totally_disconnected_space ↥{α := Π (i : J), ↥(F.obj i),
+str := Pi.topological_space (λ (a : J), (F.obj a).to_Top.topological_space)
+-/
 
-def product_cone (F : (discrete J) ⥤ Profinite) : cone F :=
-{
-  X := { to_Top := { α := Π (i : J), (F.obj i)},
-        is_compact := by apply_instance,
-        is_t2 := Pi.t2_space,
-        is_totally_disconnected :=
-        {
-        is_totally_disconnected_univ :=
-        begin
-          intros t sub_t preconn_t, constructor,
-          intros a b, ext,
-          have H1 : subsingleton ((λ c : (Π (i : J), (F.obj i)), c x )'' t),
-            {
-              cases (F.obj x).is_totally_disconnected with H,
-              apply H, simp,
-              apply is_preconnected.image, exact preconn_t,
-              apply continuous.continuous_on,
-              apply continuous_apply,
-            },
-          cases H1,
-          have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
-          have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
-          simp at H3, exact H3,
-        end
-        }
+#check Pi.t2_space
+
+instance Pi.totally_disconnected_space {α : Type*} {β : α → Type*} [t₂ : Πa, topological_space (β a)]
+   [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
+begin
+  constructor,
+  intros t sub_t preconn_t, constructor,
+  intros a b, ext,
+  have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
+    {
+      apply (_inst_2 x).is_totally_disconnected_univ, simp,
+      apply is_preconnected.image, exact preconn_t,
+      apply continuous.continuous_on,
+      apply continuous_apply,
+    },
+  cases H1,
+  have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
+  have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
+  simp at H3, exact H3,
+end
+
+#check continuous_subtype_val
+#check continuous.continuous_on
+
+theorem subsingleton_of_image {α β : Type*} {f : α → β} (hf : function.injective f)
+  (s : set α) (hs : subsingleton (f '' s)) : subsingleton s :=
+begin
+  apply subsingleton.intro,
+  rintros ⟨a, ha⟩ ⟨b, hb⟩,
+  ext,
+  apply hf,
+  simpa using @subsingleton.elim _ hs ⟨f a, ⟨a, ha, rfl⟩⟩ ⟨f b, ⟨b, hb, rfl⟩⟩,
+end
+
+--instance totally_disconnected_space_subtype
+instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topological_space α] [t2_space α] [totally_disconnected_space α] : totally_disconnected_space (subtype p) :=
+  ⟨λ s h1 h2,
+    begin
+      let s' := subtype.val '' s,
+      apply subsingleton_of_image subtype.val_injective,
+      apply (_inst_4).is_totally_disconnected_univ,
+        { apply set.subset_univ },
+      apply is_preconnected.image h2,
+      apply continuous.continuous_on,
+      apply continuous_subtype_val,
+    end
+  ⟩
+
+variables [small_category J]
+variable G : J ⥤ Profinite
+
+def limit_cone (F : J ⥤ Profinite) : cone F :=
+{ X := { to_Top := { α := { u : Π j, F.obj j // ∀ {j j'} (f : j ⟶ j'), F.map f (u j) = u j' } },
+        is_compact :=
+          compact_iff_compact_space.1 (compact_of_is_closed_subset compact_univ
+            (
+            begin
+              convert (_:is_closed (⋂ (j j' : J) (f : j ⟶ j'), {u : Π j, F.obj j | F.map f (u j) = u j'})),
+                { ext1, simp only [forall_apply_eq_imp_iff', set.mem_sInter, set.mem_range, set.mem_Inter, set.mem_set_of_eq, exists_imp_distrib], refl },
+              exact (
+                is_closed_Inter (λ j, is_closed_Inter (λ j', is_closed_Inter
+                (λ f, is_closed_eq ((F.map f).2.comp (continuous_apply _)) (continuous_apply _))))),
+            end
+            )
+            (set.subset_univ _)),
+        is_t2 := subtype.t2_space,
+        is_totally_disconnected := subtype.totally_disconnected_space},
+  π :=
+  { app := λ j, ⟨ λ u, u.val j,
+      begin
+        show continuous _, dsimp,
+        convert (_:continuous ((λ u : (Π j', F.obj j'), u j) ∘ subtype.val)),
+        apply continuous.comp,
+        apply continuous_apply,
+        apply continuous_subtype_val,
+      end ⟩
+  }
+}
+
+#check continuous_subtype_mk
+
+
+def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
+{ lift := λ s, ⟨λ (x : s.X), ⟨λ j, s.π.app j x, λ j j' f,
+    by {
+      rw ←Top.comp_app,
+      unfold_coes,
+      have H1 : (s.π.app j ≫ F.map f).to_fun = (s.π.app j').to_fun, { rw cone.w s f },
+      apply congr_fun H1 _,}⟩,
+    begin
+      show continuous _,
+      apply continuous_subtype_mk,
+      apply continuous_pi,
+      intro i,
+      apply (s.π.app i).2,
+    end⟩,
+  uniq' := by {intros, ext x j, apply (congr_fun (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x), } }
+
+instance Profinite_has_limits : has_limits Profinite :=
+{ has_limits_of_shape := λ J 𝒥, by exactI
+  { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
+
+/-
+
+def procompletion_setoid : setoid α :=
+⟨ λ x y, y ∈ connected_component x,
+  ⟨ λ x, mem_connected_component,
+    begin
+      intros x y h1,
+      rw ←connected_component_eq h1,
+      exact mem_connected_component,
+    end,
+    begin
+      intros x y z h1 h2,
+      rw [(connected_component_eq h1), (connected_component_eq h2)],
+      exact mem_connected_component
+    end
+⟩⟩
+local attribute [instance] procompletion_setoid
+
+--lemma eqv_class_connected_component (s : procompletion_setoid.classes) :
+
+#check quotient_map_iff.1
+def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
+{ obj := λ X,
+  { to_Top := { α := quotient (procompletion_setoid X.to_Top.α)},
+    is_compact := quotient.compact_space,
+    is_t2 :=
+    begin
+      constructor, intros x y,
+      apply quotient.induction_on x,
+      apply quotient.induction_on y,
+      intros a b ne,
+      have top_thing : ∃ (u v : set X.to_Top.α), is_open u ∧ is_open v
+        ∧ connected_component a ⊆ u ∧ connected_component b ⊆ v ∧ u ∩ v = ∅,
+      {
+        haveI := (@normal_of_compact_t2 _ _ X.is_compact X.is_hausdorff),
+        simp_rw ←set.disjoint_iff_inter_eq_empty,
+        apply normal_space.normal (connected_component a) (connected_component b)
+          (is_closed_connected_component) is_closed_connected_component _,
+        sorry,
       },
-  π := { app := λ i : J, ⟨λ p : (Π (j : J), F.obj j), p i, continuous_apply _⟩},
-}
+    cases top_thing with u H,
+    cases H with v H,
+    cases H with Ou H,
+    cases H with Ov H,
+    cases H with a_u H,
+    cases H with b_v disj,
+    use ((quotient.mk)'' u),
+    use ((quotient.mk)'' v),
+    split,
+      {
+        rw (quotient_map_iff.1 quotient_map_quot_mk).2,
 
-def product_cone_is_limit (F : (discrete J) ⥤ Profinite) : is_limit (product_cone F) :=
-{
-  lift := λ s, ⟨λ (x : s.X), (λ (i : J), (s.π.app i) x), continuous_pi (λ i, (s.π.app i).2)⟩,
-  uniq' := by {intros, ext x j, apply (congr_fun (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x)},
-}
+      }
+    {split,
+      {sorry},
+    {split,
+      {sorry},
+    {split,
+     {sorry},
+    sorry
+    }}}
+    end
 
-instance Profinite_has_products : has_products Profinite :=
-λ J, { has_limit := λ F, has_limit.mk { cone := product_cone F, is_limit := product_cone_is_limit F } }
 
+    ,
+    is_totally_disconnected := _ },
+  map := _,
+  map_id' := _,
+  map_comp' := _,}
+
+-/
 end Profinite

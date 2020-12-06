@@ -1056,6 +1056,14 @@ theorem subset_connected_component {x : α} {s : set α} (H1 : is_preconnected s
   s ⊆ connected_component x :=
 λ z hz, mem_sUnion_of_mem hz ⟨H1, H2⟩
 
+theorem connected_component_eq {x y : α} : y ∈ connected_component x →
+  connected_component x = connected_component y :=
+λ h1, eq_of_subset_of_subset
+  (subset_connected_component is_connected_connected_component.2 h1)
+  (subset_connected_component is_connected_connected_component.2
+    (set.mem_of_mem_of_subset mem_connected_component
+      (subset_connected_component is_connected_connected_component.2 h1)))
+
 theorem is_closed_connected_component {x : α} :
   is_closed (connected_component x) :=
 closure_eq_iff_is_closed.1 $ subset.antisymm
