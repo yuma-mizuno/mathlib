@@ -5,8 +5,6 @@ Authors: Kevin Buzzard
 -/
 
 import topology.category.CompHaus
-import category_theory.limits.shapes.products
-import category_theory.limits.shapes.pullbacks
 
 /-!
 # The category of Profinite Types
@@ -120,44 +118,32 @@ def limit_cone (F : J ⥤ Profinite) : cone F :=
 { X := { to_Top := { α := { u : Π j, F.obj j // ∀ {j j'} (f : j ⟶ j'), F.map f (u j) = u j' } },
         is_compact :=
           compact_iff_compact_space.1 (compact_of_is_closed_subset compact_univ
-            (
-            begin
-              convert (_:is_closed (⋂ (j j' : J) (f : j ⟶ j'), {u : Π j, F.obj j | F.map f (u j) = u j'})),
-                { ext1, simp only [forall_apply_eq_imp_iff', set.mem_sInter, set.mem_range, set.mem_Inter, set.mem_set_of_eq, exists_imp_distrib], refl },
-              exact (
-                is_closed_Inter (λ j, is_closed_Inter (λ j', is_closed_Inter
-                (λ f, is_closed_eq ((F.map f).2.comp (continuous_apply _)) (continuous_apply _))))),
-            end
-            )
+            ( begin
+                convert (_:is_closed (⋂ (j j' : J) (f : j ⟶ j'), {u : Π j, F.obj j | F.map f (u j) = u j'})),
+                  { ext1, simp only [forall_apply_eq_imp_iff', set.mem_sInter, set.mem_range, set.mem_Inter, set.mem_set_of_eq, exists_imp_distrib], refl },
+                exact (
+                  is_closed_Inter (λ j, is_closed_Inter (λ j', is_closed_Inter
+                  (λ f, is_closed_eq ((F.map f).2.comp (continuous_apply _)) (continuous_apply _))))),
+              end )
             (set.subset_univ _)),
         is_t2 := subtype.t2_space,
         is_totally_disconnected := subtype.totally_disconnected_space},
   π :=
   { app := λ j, ⟨ λ u, u.val j,
       begin
-        show continuous _, dsimp,
+        dsimp only [set.subset_univ, set.mem_Inter, set.mem_set_of_eq],
         convert (_:continuous ((λ u : (Π j', F.obj j'), u j) ∘ subtype.val)),
-        apply continuous.comp,
-        apply continuous_apply,
-        apply continuous_subtype_val,
+        exact (continuous.comp (continuous_apply _) continuous_subtype_val),
       end ⟩
   }
 }
 
 def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
 { lift := λ s, ⟨λ (x : s.X), ⟨λ j, s.π.app j x, λ j j' f,
-    by {
-      rw ←Top.comp_app,
-      unfold_coes,
-      have H1 : (s.π.app j ≫ F.map f).to_fun = (s.π.app j').to_fun, { rw cone.w s f },
-      apply congr_fun H1 _,}⟩,
-    begin
-      show continuous _,
-      apply continuous_subtype_mk,
-      apply continuous_pi,
-      intro i,
-      apply (s.π.app i).2,
-    end⟩,
+        by {  rw ←Top.comp_app,
+              have H1 : (s.π.app j ≫ F.map f).to_fun = (s.π.app j').to_fun, { rw cone.w s f },
+              apply congr_fun H1 _,}⟩,
+    continuous_subtype_mk _ (continuous_pi (λ i, (s.π.app i).2)) ⟩,
   uniq' := by {intros, ext x j, apply (congr_fun (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x), } }
 
 instance Profinite_has_limits : has_limits Profinite :=
