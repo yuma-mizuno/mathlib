@@ -1,4 +1,5 @@
 import combinatorics.simple_graph.basic
+import combinatorics.simple_graph.hom
 
 open simple_graph
 
@@ -25,10 +26,11 @@ structure subgraph :=
 (sym' : symmetric adj')
 
 /--
-The Prop that states that `H` is a subgraph of `G`.
+The Prop that states that `H` is isomorphic to a subgraph of `G`.
 -/
 def is_subgraph (H : simple_graph V) : Prop := ∀ ⦃v w : V⦄, H.adj v w → G.adj v w
 
+-- hom instead of coercion?
 /-def simple_graph.to_subgraph (G H : simple_graph V) [is_subgraph G H] : subgraph G :=
 { V' := V.to_set,
   adj' := _,
@@ -98,4 +100,3 @@ instance : inhabited (subgraph G) := { default :=
   sym' := λ v w, by finish } }
 
 end subgraph
-#lint
