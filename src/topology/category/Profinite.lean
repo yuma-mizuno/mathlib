@@ -5,6 +5,7 @@ Authors: Kevin Buzzard
 -/
 
 import topology.category.CompHaus
+import category_theory.sites.pretopology
 
 /-!
 # The category of Profinite Types
@@ -83,7 +84,8 @@ instance Pi.totally_disconnected_space {α : Type*} {β : α → Type*} [t₂ : 
    [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
 begin
   constructor,
-  intros t h1 h2, constructor,
+  intros t h1 h2,
+  constructor,
   intros a b, ext,
   have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
     { exact (totally_disconnected_space.is_totally_disconnected_univ
@@ -128,15 +130,12 @@ def limit_cone (F : J ⥤ Profinite) : cone F :=
             (set.subset_univ _)),
         is_t2 := subtype.t2_space,
         is_totally_disconnected := subtype.totally_disconnected_space},
-  π :=
-  { app := λ j, ⟨ λ u, u.val j,
-      begin
-        dsimp only [set.subset_univ, set.mem_Inter, set.mem_set_of_eq],
-        convert (_:continuous ((λ u : (Π j', F.obj j'), u j) ∘ subtype.val)),
-        exact (continuous.comp (continuous_apply _) continuous_subtype_val),
-      end ⟩
-  }
-}
+  π := { app := λ j, ⟨ λ u, u.val j,
+    begin
+      dsimp only [set.subset_univ, set.mem_Inter, set.mem_set_of_eq],
+      convert (_:continuous ((λ u : (Π j', F.obj j'), u j) ∘ subtype.val)),
+      exact (continuous.comp (continuous_apply _) continuous_subtype_val),
+    end ⟩ } }
 
 def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
 { lift := λ s, ⟨λ (x : s.X), ⟨λ j, s.π.app j x, λ j j' f,
@@ -150,7 +149,21 @@ instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
 
+def proetale_pretopology : pretopology Profinite :=
+{ coverings := λ X, {S | (∀ x, ∃ Y (f : Y ⟶ X) y, S f ∧ f y = x) ∧ set.finite {f | S f}},
+  has_isos := _,
+  pullbacks := _,
+  transitive := _ }
+
 /-
+
+{ sieves := λ A, {S | ∀ x, ∃ B (f : B ⟶ A) b, S.arrows f ∧ f b = x},
+  top_mem' := λ A, (λ x, by {use A, use (𝟙 A), use x, split, work_on_goal 0 { exact dec_trivial }, refl,}),
+  pullback_stable' := λ X Y S f h, (λ y,
+    begin
+      cases h (f y),
+    end),
+  transitive' := _ }
 
 def procompletion_setoid : setoid α :=
 ⟨ λ x y, y ∈ connected_component x,
