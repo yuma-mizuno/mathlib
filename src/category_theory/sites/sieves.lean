@@ -35,8 +35,6 @@ variables {X Y Z : C} (f : Y ⟶ X)
 @[derive complete_lattice]
 def presieve (X : C) := Π ⦃Y⦄, set (Y ⟶ X)
 
-def support_presieve (X : C) (S : presieve X) := {f | S f}
-
 namespace presieve
 
 instance : inhabited (presieve X) := ⟨⊤⟩
