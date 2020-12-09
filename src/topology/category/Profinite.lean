@@ -17,9 +17,22 @@ The type of profinite topological spaces is called `Profinite`. It has a categor
 instance and is a fully faithful subcategory of `Top`. The fully faithful functor
 is called `Profinite_to_Top`.
 
--- TODO
-1) existence of products, limits(?), finite coproducts
-2) `Profinite_to_Top` creates limits?
+## Implementation notes
+
+A profinite type is defined to be a topological space which is
+compact, Hausdorff and totally disconnected.
+
+## TODO
+
+0. Link to category of projective limits of finite discrete sets.
+1. existence of products, limits(?), finite coproducts
+2. `Profinite_to_Top` creates limits?
+3. Clausen/Scholze topology on the category `Profinite`.
+
+## Tags
+
+profinite
+
 -/
 
 open category_theory
@@ -42,17 +55,19 @@ instance {X : Profinite} : totally_disconnected_space X := X.is_totally_disconne
 
 instance category : category Profinite := induced_category.category to_Top
 
+@[simp]
+lemma coe_to_Top {X : Profinite} : (X.to_Top : Type*) = X :=
+rfl
+
 end Profinite
 
 /-- The fully faithful embedding of `Profinite` in `Top`. -/
 @[simps {rhs_md := semireducible}, derive [full, faithful]]
 def Profinite_to_Top : Profinite ⥤ Top := induced_functor _
 
-/-- The fully faithful embedding of `Profinite` in `Top`. -/
+/-- The fully faithful embedding of `Profinite` in `CompHaus`. -/
 @[simps] def Profinite_to_CompHaus : Profinite ⥤ CompHaus :=
-{ obj := λ X, { to_Top := X.to_Top,
-  is_compact := X.is_compact,
-  is_hausdorff := X.is_t2 },
+{ obj := λ X, { to_Top := X.to_Top },
   map := λ _ _ f, f }
 
 instance : full Profinite_to_CompHaus := { preimage := λ _ _ f, f }
