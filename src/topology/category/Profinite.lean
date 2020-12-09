@@ -175,15 +175,45 @@ def proetale_pretopology : pretopology Profinite :=
   begin
     resetI,
     refine ⟨λ z, ⟨_, f, inv ((forget _).map f) z, presieve.singleton_self _, congr_fun (is_iso.inv_hom_id ((forget Profinite).map f)) z⟩, _, _⟩,
-    { let k := {Y_1 : Profinite | nonempty ↥{f_1 : Y_1 ⟶ X | presieve.singleton f f_1}},
-      change k.finite,
-      suffices : k = {Y},
+    { suffices : {Z : Profinite | nonempty {g : Z ⟶ X | presieve.singleton f g}} = {Y},
         rw this,
-        refine set.finite_singleton Y,
-
-    }
+        apply set.finite_singleton Y,
+      rw set.eq_singleton_iff_unique_mem,
+      split,
+      { exact ⟨⟨f, presieve.singleton_self _⟩⟩ },
+      { rintro Z ⟨_, ⟨_⟩⟩,
+        refl } },
+    { intro Z,
+      by_cases (Z = Y),
+      { cases h,
+        suffices : {g : Y ⟶ X | presieve.singleton f g} = {f},
+          rw this,
+          apply set.finite_singleton,
+        rw set.eq_singleton_iff_unique_mem,
+        split,
+        apply presieve.singleton.mk,
+        rintro f ⟨_⟩,
+        refl },
+      { suffices : {g : Z ⟶ X | presieve.singleton f g} = ∅,
+          rw this,
+          refine set.finite_empty,
+        rw set.eq_empty_iff_forall_not_mem,
+        rintro g ⟨_⟩,
+        apply h, refl } }
   end,
-  pullbacks := _,
+  pullbacks := λ X Y f S,
+  begin
+    rintro ⟨surj, fin_dom, fin_arr⟩,
+    refine ⟨_, _, _⟩,
+    { intro y,
+      rcases surj (f y) with ⟨Z, g, z, hg, gf⟩,
+      refine ⟨_, _, _, pullback_arrows.mk _ _ hg, _⟩,
+      sorry,
+      sorry },
+    {
+
+    },
+  end,
   transitive := _ }
 
 /-
