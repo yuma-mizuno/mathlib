@@ -65,6 +65,9 @@ end Profinite
 @[simps {rhs_md := semireducible}, derive [full, faithful]]
 def Profinite_to_Top : Profinite ⥤ Top := induced_functor _
 
+instance : concrete_category Profinite :=
+{ forget := Profinite_to_Top ⋙ forget _ }
+
 /-- The fully faithful embedding of `Profinite` in `CompHaus`. -/
 @[simps] def Profinite_to_CompHaus : Profinite ⥤ CompHaus :=
 { obj := λ X, { to_Top := X.to_Top },
@@ -170,13 +173,15 @@ def proetale_pretopology : pretopology Profinite :=
                          ∀ Y, set.finite {f : Y ⟶ X | S f}},
   has_isos := λ X Y f i,
   begin
-    refine ⟨_, _, _⟩,
-    { intros z,
-      refine ⟨_, f, _, presieve.singleton_self _, _⟩,
-      change ↥Y,
-      resetI,
-      have := inv f,
-    },
+    resetI,
+    refine ⟨λ z, ⟨_, f, inv ((forget _).map f) z, presieve.singleton_self _, congr_fun (is_iso.inv_hom_id ((forget Profinite).map f)) z⟩, _, _⟩,
+    { let k := {Y_1 : Profinite | nonempty ↥{f_1 : Y_1 ⟶ X | presieve.singleton f f_1}},
+      change k.finite,
+      suffices : k = {Y},
+        rw this,
+        refine set.finite_singleton Y,
+
+    }
   end,
   pullbacks := _,
   transitive := _ }
