@@ -150,8 +150,19 @@ instance Profinite_has_limits : has_limits Profinite :=
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
 
 def proetale_pretopology : pretopology Profinite :=
-{ coverings := λ X, {S | (∀ x, ∃ Y (f : Y ⟶ X) y, S f ∧ f y = x) ∧ set.finite {f | S f}},
-  has_isos := _,
+{ coverings := λ X, {S | (∀ x, ∃ Y (f : Y ⟶ X) y, S f ∧ f y = x) ∧
+                         set.finite {Y | nonempty {f : Y ⟶ X | S f}} ∧
+                         ∀ Y, set.finite {f : Y ⟶ X | S f}},
+  has_isos := λ X Y f i,
+  begin
+    refine ⟨_, _, _⟩,
+    { intros z,
+      refine ⟨_, f, _, presieve.singleton_self _, _⟩,
+      change ↥Y,
+      resetI,
+      have := inv f,
+    },
+  end,
   pullbacks := _,
   transitive := _ }
 
