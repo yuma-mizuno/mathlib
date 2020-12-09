@@ -6,6 +6,7 @@ Authors: Kevin Buzzard
 
 import topology.category.CompHaus
 import category_theory.sites.pretopology
+import category_theory.Fintype
 
 /-!
 # The category of Profinite Types
@@ -80,7 +81,15 @@ instance : faithful Profinite_to_CompHaus := {}
   Profinite_to_CompHaus ⋙ CompHaus_to_Top = Profinite_to_Top :=
 rfl
 
-#check limits.is_limit.of_faithful
+#check compact_finite
+
+def Fintype_to_Profinite : Fintype ⥤ Profinite :=
+{ obj := λ X,
+  { to_Top := ⟨X, ⊥⟩,
+    is_totally_disconnected := by apply_instance },
+  map := _,
+  map_id' := _,
+  map_comp' := _ }
 
 namespace Profinite
 
@@ -215,6 +224,9 @@ def proetale_pretopology : pretopology Profinite :=
     },
   end,
   transitive := _ }
+
+--lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) :
+
 
 /-
 
