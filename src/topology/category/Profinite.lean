@@ -81,15 +81,23 @@ instance : faithful Profinite_to_CompHaus := {}
   Profinite_to_CompHaus ⋙ CompHaus_to_Top = Profinite_to_Top :=
 rfl
 
-#check compact_finite
+#check discrete_topology.mk
+#check discrete_topology
+#check t2_space_discrete
+#check discrete_topology
+#check Profinite.mk
+#check Top.discrete
 
 def Fintype_to_Profinite : Fintype ⥤ Profinite :=
 { obj := λ X,
   { to_Top := ⟨X, ⊥⟩,
-    is_totally_disconnected := by apply_instance },
-  map := _,
-  map_id' := _,
-  map_comp' := _ }
+    is_t2 := @t2_space_discrete _ _ ⟨rfl⟩,
+    is_totally_disconnected := by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩; apply_instance },
+  map := λ X Y f, by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩;
+                  by letI:topological_space Y := ⊥; letI:discrete_topology Y := ⟨rfl⟩;
+                  exact ⟨f, continuous_of_discrete_topology⟩,
+  map_id' := λ X, rfl,
+  map_comp' := λ X Y Z f g, rfl}
 
 namespace Profinite
 
@@ -140,6 +148,330 @@ instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topo
       totally_disconnected_space.is_totally_disconnected_univ (subtype.val '' s) (set.subset_univ _)
         ( (is_preconnected.image h2 _) (continuous.continuous_on (@continuous_subtype_val _ _ p)) ) ) ⟩
 
+theorem subset_of_inter_eq_self_left {s t : set α} (h : s ∩ t = s) : s ⊆ t :=
+λ x h1, set.mem_of_mem_inter_right (by {rw h, exact h1})
+
+theorem subset_of_inter_eq_self_right {s t : set α} (h : t ∩ s = s) : s ⊆ t :=
+λ x h1, set.mem_of_mem_inter_left (by {rw h, exact h1})
+
+lemma continuous_on.preimage_clopen_of_clopen {α β: Type*} [topological_space α] [topological_space β]
+  {f : α → β} {s : set α} {t : set β} (hf : continuous_on f s) (hs : is_clopen s)
+  (ht : is_clopen t) : is_clopen (s ∩ f⁻¹' t) :=
+⟨continuous_on.preimage_open_of_open hf hs.1 ht.1, continuous_on.preimage_closed_of_closed hf hs.2 ht.2⟩
+
+lemma inter_compl_nonempty_iff_left {α : Type*} {s t : set α} : (tᶜ ∩ s).nonempty ↔ ¬ s ⊆ t :=
+begin
+  split,
+  { rintros ⟨x ,xs, xt⟩ sub,
+    exact xs (sub xt) },
+  { intros h,
+    rcases set.not_subset.mp h with ⟨x, xs, xt⟩,
+    exact ⟨x, xt, xs⟩ }
+end
+#check and.elim
+
+lemma is_clopen_Inter {α β : Type*} [topological_space α] [fintype β] {s : β → set α}
+  (h : ∀ i, is_clopen (s i)) : is_clopen (⋂ i, s i) :=
+⟨(is_open_Inter (forall_and_distrib.1 h).1), (is_closed_Inter (forall_and_distrib.1 h).2)⟩
+
+lemma is_clopen_bInter {α β : Type*} {s : finset β} [topological_space α] {f : β → set α} :
+  (∀i∈s, is_clopen (f i)) → is_clopen (⋂i∈s, f i) :=
+begin
+  intro h,
+  split,
+  { apply is_open_bInter ⟨finset_coe.fintype s⟩,
+    rintros i hi,
+    exact (h i hi).1,
+  },
+  { show is_closed (⋂ (i : β) (H : i ∈ (↑s : set β)), f i),
+    rw set.bInter_eq_Inter,
+    apply is_closed_Inter,
+    rintro ⟨i, hi⟩,
+    exact (h i hi).2
+  }
+end
+
+#check is_open_bInter
+
+--theorem is_clopen_of_partition_clopen {α : Type*} [topological_space α] {Z a b : set α} (h : is_clopen Z)
+--  (cover : Z ⊆ a ∪ b)
+
+#check is_connected_connected_component
+#check is_clopen_iff
+#check set.image_inter_preimage
+#check compl_unique
+
+theorem is_preconnected_iff_subset_of_disjoint_closed {α : Type*} {s : set α} [topological_space α] :
+  is_preconnected s ↔
+  ∀ (u v : set α) (hu : is_closed u) (hv : is_closed v) (hs : s ⊆ u ∪ v) (huv : s ∩ (u ∩ v) = ∅),
+  s ⊆ u ∨ s ⊆ v :=
+begin
+  split; intro h,
+  { intros u v hu hv hs huv,
+    rw is_preconnected_closed_iff at h,
+    specialize h u v hu hv hs,
+    contrapose! huv,
+    rw set.ne_empty_iff_nonempty,
+    simp [set.not_subset] at huv,
+    rcases huv with ⟨⟨x, hxs, hxu⟩, ⟨y, hys, hyv⟩⟩,
+    have hxv : x ∈ v := or_iff_not_imp_left.mp (hs hxs) hxu,
+    have hyu : y ∈ u := or_iff_not_imp_right.mp (hs hys) hyv,
+    exact h ⟨y, hys, hyu⟩ ⟨x, hxs, hxv⟩ },
+  { rw is_preconnected_closed_iff,
+    intros u v hu hv hs hsu hsv,
+    rw ← set.ne_empty_iff_nonempty,
+    intro H,
+    specialize h u v hu hv hs H,
+    contrapose H,
+    apply set.ne_empty_iff_nonempty.mpr,
+    cases h,
+    { rcases hsv with ⟨x, hxs, hxv⟩, exact ⟨x, hxs, ⟨h hxs, hxv⟩⟩ },
+    { rcases hsu with ⟨x, hxs, hxu⟩, exact ⟨x, hxs, ⟨hxu, h hxs⟩⟩ } }
+end
+
+#check preconnected_space
+
+theorem is_preconnected_iff_subset_of_fully_disjoint_closed {α : Type*} {s : set α} [topological_space α] (hs : is_closed s) :
+  is_preconnected s ↔
+  ∀ (u v : set α) (hu : is_closed u) (hv : is_closed v) (hss : s ⊆ u ∪ v) (huv : u ∩ v = ∅),
+  s ⊆ u ∨ s ⊆ v :=
+begin
+  split,
+  {
+    intros,
+    apply is_preconnected_iff_subset_of_disjoint_closed.1 ᾰ u v hu hv hss,
+    rw huv,
+    exact set.inter_empty s,
+  },
+intro H,
+rw is_preconnected_iff_subset_of_disjoint_closed,
+intros u v hu hv hss huv,
+have H1 := H (u ∩ s) (v ∩ s),
+rw [(@set.subset_inter_iff _ u s s), (@set.subset_inter_iff _ v s s)] at H1,
+simp [set.subset.refl] at H1,
+apply H1 (is_closed_inter hu hs) (is_closed_inter hv hs),
+{
+  rw ←set.inter_distrib_right,
+  apply set.subset_inter_iff.2,
+  split,
+    exact hss,
+  exact set.subset.refl s,
+},
+{
+conv in (v ∩ s) {rw set.inter_comm},
+rw set.inter_assoc,
+conv in (s ∩ (s ∩ v)) {rw [←set.inter_assoc, set.inter_self s]},
+rw [set.inter_comm, set.inter_assoc],
+conv in (v ∩ u) {rw set.inter_comm},
+exact huv,
+}
+end
+
+#check subtype.preimage_coe_eq_preimage_coe_iff
+
+theorem preconnected_subset_clopen {α : Type*} [topological_space α] {s t : set α} (h : is_clopen s) (h1 : is_preconnected t) :
+  (s ∩ t).nonempty → t ⊆ s :=
+begin
+  intro h2,
+  let v := sᶜ,
+  apply subset_of_inter_eq_self_left,
+  let u := (coe : (t → α)) ⁻¹' s,
+  have H : is_clopen u,
+  {
+    rw [←(set.inter_univ u), set.inter_comm],
+    apply (continuous_on.preimage_clopen_of_clopen
+          (continuous_iff_continuous_on_univ.1 continuous_subtype_coe) is_clopen_univ h),
+  },
+  cases (@is_clopen_iff _ _ (is_preconnected_iff_preconnected_space.1 h1) _).1 H,
+    {
+      exfalso,
+      apply set.nonempty.ne_empty h2,
+      suffices : (coe : (t → α)) ⁻¹' (s ∩ t) = ∅,
+      {
+        rw [←set.preimage_eq_empty_iff, subtype.range_coe, set.disjoint_iff_inter_eq_empty] at this,
+        rw [set.inter_assoc, set.inter_self t] at this,
+        exact this,
+      },
+      rw [set.preimage_inter, subtype.coe_preimage_self, set.inter_univ],
+      exact h_1,
+    },
+    {
+      rw [←subtype.coe_preimage_self t, subtype.preimage_coe_eq_preimage_coe_iff, set.inter_self t] at h_1,
+      rw set.inter_comm,
+      exact h_1,
+    },
+end
+
+lemma connected_component_Inter {α : Type*} [topological_space α] [t2_space α] [compact_space α] :
+  ∀ x : α, connected_component x = ⋂ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, Z :=
+begin
+  intro x,
+  apply set.eq_of_subset_of_subset,
+  { exact (set.subset_Inter (λ Z, preconnected_subset_clopen Z.2.1
+    (is_connected_connected_component).2 (set.nonempty_of_mem
+    (set.mem_inter Z.2.2 (mem_connected_component))))) },
+  {
+    have hs : @is_closed _ _inst_2 (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z),
+    { apply is_closed_Inter, intro Z, exact Z.2.1.2},
+    apply subset_connected_component,
+    {
+      apply (is_preconnected_iff_subset_of_fully_disjoint_closed hs).2,
+      intros a b ha hb hab ab_empty,
+      haveI := @normal_of_compact_t2 α _ _ _,
+      rcases normal_separation a b ha hb (disjoint_iff.2 ab_empty) with ⟨u, v, hu, hv, hau, hbv, huv⟩,
+      suffices : ∃ (Z : set α), is_clopen Z ∧ x ∈ Z ∧ Z ⊆ u ∪ v,
+      {
+        cases this with Z H,
+        have H1 : is_clopen (Z ∩ u),
+        {
+          split,
+            exact is_open_inter H.1.1 hu,
+          rw ←(@subtype.range_coe _ Z),
+          apply (closed_embedding.closed_iff_preimage_closed
+            (is_closed.closed_embedding_subtype_coe H.1.2) (set.inter_subset_left _ u)).2,
+          apply is_open_compl_iff.1,
+          have H2 :  ((coe : Z → α) ⁻¹' (set.range (coe : Z → α) ∩ u))ᶜ = ((coe : Z → α) ⁻¹' (set.range (coe : Z → α) ∩ v)),
+          {
+            apply set.eq_of_subset_of_subset,
+            {
+              rw set.compl_subset_iff_union,
+              cases H, cases H_right, cases H_left, dsimp,
+              simp, ext1, cases x_1, dsimp, simp, solve_by_elim,
+            },
+            rw [set.subset_compl_iff_disjoint],
+            simp only [set.univ_inter, subtype.coe_preimage_self, subtype.range_coe_subtype, set.preimage_inter, set.set_of_mem_eq],
+            rw [←set.preimage_inter, set.inter_comm],
+            apply set.preimage_eq_empty,
+            rw set.disjoint_iff_inter_eq_empty at huv,
+            rw huv,
+            exact set.empty_disjoint _,
+          },
+          rw H2,
+          apply continuous.is_open_preimage continuous_subtype_coe,
+          rw subtype.range_coe,
+          exact is_open_inter H.1.1 hv,
+        },
+        have H2: is_clopen (Z ∩ v),
+        {
+          split,
+            exact is_open_inter H.1.1 hv,
+          rw ←(@subtype.range_coe _ Z),
+          apply (closed_embedding.closed_iff_preimage_closed
+            (is_closed.closed_embedding_subtype_coe H.1.2) (set.inter_subset_left _ v)).2,
+          apply is_open_compl_iff.1,
+          have H2 :  ((coe : Z → α) ⁻¹' (set.range (coe : Z → α) ∩ v))ᶜ = ((coe : Z → α) ⁻¹' (set.range (coe : Z → α) ∩ u)),
+          {
+            apply set.eq_of_subset_of_subset,
+            {
+              rw [set.compl_subset_iff_union, set.union_comm],
+              cases H, cases H_right, cases H_left, dsimp,
+              simp, ext1, cases x_1, dsimp, simp, solve_by_elim,
+            },
+            rw [set.subset_compl_iff_disjoint],
+            simp only [set.univ_inter, subtype.coe_preimage_self, subtype.range_coe_subtype, set.preimage_inter, set.set_of_mem_eq],
+            rw [←set.preimage_inter, set.inter_comm],
+            apply set.preimage_eq_empty,
+            rw set.disjoint_iff_inter_eq_empty at huv,
+            rw [set.inter_comm, huv],
+            exact set.empty_disjoint _,
+          },
+          rw H2,
+          apply continuous.is_open_preimage continuous_subtype_coe,
+          rw subtype.range_coe,
+          exact is_open_inter H.1.1 hu,
+        },
+        by_cases (x ∈ a),
+        {
+          left,
+          suffices : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ⊆ u,
+          {
+            rw [←set.compl_compl u, set.subset_compl_iff_disjoint] at this,
+            have H3 : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ∩ b = ∅,
+            {
+              rw [set.disjoint_iff_inter_eq_empty, set.inter_comm, ←set.subset_compl_iff_disjoint] at huv,
+              apply set.eq_empty_of_subset_empty,
+              rw ←this,
+              exact set.inter_subset_inter (set.subset.refl
+                (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z)) (set.subset.trans hbv huv),
+            },
+            rw ←set.subset_compl_iff_disjoint at H3,
+            have H4 := set.subset_inter hab H3,
+            rw [set.inter_distrib_right, set.inter_compl_self, set.union_empty] at H4,
+            exact set.subset.trans H4 (set.inter_subset_left a bᶜ),
+          },
+          {
+            have h1 : (x ∈ u), exact set.mem_of_mem_of_subset h hau,
+            apply set.subset.trans _ (set.inter_subset_right Z u),
+            apply set.Inter_subset (λ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, ↑Z)
+            ⟨Z ∩ u, by {split, exact H1, apply set.mem_inter H.2.1 h1}⟩,
+          },
+        },
+        have h1 : x ∈ b,
+        {
+          cases (set.mem_union x a b).1 (set.mem_of_subset_of_mem hab
+            (set.mem_Inter.2 (λ i, i.2.2))),
+          { exfalso, apply h, exact h_1},
+          { exact h_1},
+        },
+        right,
+        suffices : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ⊆ v,
+          {
+            rw [←set.compl_compl v, set.subset_compl_iff_disjoint] at this,
+            have H3 : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ∩ a = ∅,
+            {
+              rw [set.disjoint_iff_inter_eq_empty, ←set.subset_compl_iff_disjoint] at huv,
+              apply set.eq_empty_of_subset_empty,
+              rw ←this,
+              exact set.inter_subset_inter (set.subset.refl
+                (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z)) (set.subset.trans hau huv),
+            },
+            rw ←set.subset_compl_iff_disjoint at H3,
+            have H4 := set.subset_inter hab H3,
+            rw [set.inter_distrib_right, set.inter_compl_self, set.empty_union] at H4,
+            exact set.subset.trans H4 (set.inter_subset_left b aᶜ),
+          },
+          {
+            have h1 : (x ∈ v), exact set.mem_of_mem_of_subset h1 hbv,
+            apply set.subset.trans _ (set.inter_subset_right Z v),
+            apply set.Inter_subset (λ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, ↑Z)
+            ⟨Z ∩ v, by {split, exact H2, apply set.mem_inter H.2.1 h1}⟩,
+          },
+      },
+      have H1 := (is_compact.inter_Inter_nonempty (is_closed.compact (is_closed_compl_iff.2 (is_open_union hu hv)))
+          (λ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, Z) _),
+      rw [←not_imp_not, not_forall, set.not_nonempty_iff_eq_empty, set.inter_comm] at H1,
+      have huv_union := set.subset.trans hab (set.union_subset_union hau hbv),
+      rw [←set.compl_compl (u ∪ v), set.subset_compl_iff_disjoint] at huv_union,
+      replace H1 := H1 huv_union,
+      cases H1 with Zi H2,
+      existsi (⋂ (U ∈ Zi), subtype.val U),
+      split,
+      {
+        apply @is_clopen_bInter _ _ _ _ _ _,
+        intros Z hZ,
+        exact Z.2.1,
+      },
+      {
+        split,
+        {
+          apply set.mem_bInter_iff.2,
+          intros Z hZ,
+          exact Z.2.2,
+        },
+        {
+          rw [inter_compl_nonempty_iff_left, not_not] at H2,
+          exact H2,
+        }
+      },
+      intro Z,
+      apply Z.2.1.2,
+    },
+  apply set.mem_Inter.2,
+  intro Z,
+  exact Z.2.2,
+  },
+end
+
 variables [small_category J]
 variable G : J ⥤ Profinite
 
@@ -175,6 +507,8 @@ def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
 instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
+
+--lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) : _
 
 def proetale_pretopology : pretopology Profinite :=
 { coverings := λ X, {S | (∀ x, ∃ Y (f : Y ⟶ X) y, S f ∧ f y = x) ∧
@@ -219,13 +553,13 @@ def proetale_pretopology : pretopology Profinite :=
       refine ⟨_, _, _, pullback_arrows.mk _ _ hg, _⟩,
       sorry,
       sorry },
-    {
+    { sorry,
 
     },
+    sorry,
   end,
-  transitive := _ }
+  transitive := sorry, }
 
---lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) :
 
 
 /-
