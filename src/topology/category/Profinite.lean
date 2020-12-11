@@ -135,7 +135,7 @@ begin
   simpa using @subsingleton.elim _ hs ⟨f a, ⟨a, ha, rfl⟩⟩ ⟨f b, ⟨b, hb, rfl⟩⟩,
 end
 
-instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topological_space α] [t2_space α] [totally_disconnected_space α] : totally_disconnected_space (subtype p) :=
+instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topological_space α] [totally_disconnected_space α] : totally_disconnected_space (subtype p) :=
   ⟨λ s h1 h2,
     subsingleton_of_image subtype.val_injective s (
       totally_disconnected_space.is_totally_disconnected_univ (subtype.val '' s) (set.subset_univ _)
@@ -196,9 +196,12 @@ begin
   {
     apply set.eq_of_subset_of_subset,
     {
-      rw set.compl_subset_iff_union,
-      -- TODO: avoid this shit:
-      cases h, dsimp, simp, ext1, cases x, dsimp, simp, solve_by_elim,
+      rw [set.compl_subset_iff_union],
+      simp only [set.preimage_inter],
+      ext1, cases x,
+      simp only [set.mem_preimage, set.univ_inter, set.mem_univ, subtype.coe_preimage_self,
+        subtype.range_coe_subtype, iff_true, set.mem_union_eq, subtype.coe_mk, set.set_of_mem_eq],
+      solve_by_elim,
     },
     rw [set.subset_compl_iff_disjoint],
     simp only [set.univ_inter, subtype.coe_preimage_self, subtype.range_coe_subtype, set.preimage_inter, set.set_of_mem_eq],
@@ -311,7 +314,7 @@ begin
 end
 
 lemma sub_refined_of_sub_partition {α : Type*} {Z a b u v : set α} (hZ : Z ⊆ u)
-  (hau : a ⊆ u) (hbv : b ⊆ v) (Zab : Z ⊆ a ∪ b) (hab : a ∩ b = ∅) (huv : u ∩ v = ∅) : Z ⊆ a :=
+  (hbv : b ⊆ v) (Zab : Z ⊆ a ∪ b) (huv : u ∩ v = ∅) : Z ⊆ a :=
 begin
   rw [←set.compl_compl u, set.subset_compl_iff_disjoint] at hZ,
   have H : Z ∩ b = ∅,
@@ -354,7 +357,7 @@ begin
           left,
           suffices : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ⊆ u, {
             rw set.inter_comm at huv,
-            exact sub_refined_of_sub_partition this hau hbv hab ab_empty huv },
+            exact sub_refined_of_sub_partition this hbv hab huv },
           {
             apply set.subset.trans _ (set.inter_subset_right Z u),
             apply set.Inter_subset (λ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, ↑Z)
@@ -369,7 +372,7 @@ begin
         suffices : (⋂ (Z : {Z : set α // is_clopen Z ∧ x ∈ Z}), ↑Z) ⊆ v, {
             rw set.union_comm at hab,
             rw set.inter_comm at ab_empty,
-            exact sub_refined_of_sub_partition this hbv hau hab ab_empty huv },
+            exact sub_refined_of_sub_partition this hau hab huv },
           {
             apply set.subset.trans _ (set.inter_subset_right Z v),
             apply set.Inter_subset (λ Z : {Z : set α // is_clopen Z ∧ x ∈ Z}, ↑Z)
