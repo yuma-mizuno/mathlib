@@ -290,7 +290,7 @@ begin
     apply (continuous_on.preimage_clopen_of_clopen
           (continuous_iff_continuous_on_univ.1 continuous_subtype_coe) is_clopen_univ h),
   },
-  cases (@is_clopen_iff _ _ (is_preconnected_iff_preconnected_space.1 h1) _).1 hu,
+  cases (@is_clopen_iff _ _ (is_preconnected_iff_preconnected_space.1 h1) _).1 hu with h1 h1,
     {
       exfalso,
       apply set.nonempty.ne_empty h2,
@@ -301,30 +301,30 @@ begin
         exact this,
       },
       rw [set.preimage_inter, subtype.coe_preimage_self, set.inter_univ],
-      exact h_1,
+      exact h1,
     },
     {
-      rw [←subtype.coe_preimage_self t, subtype.preimage_coe_eq_preimage_coe_iff, set.inter_self t] at h_1,
+      rw [←subtype.coe_preimage_self t, subtype.preimage_coe_eq_preimage_coe_iff, set.inter_self t] at h1,
       rw set.inter_comm,
-      exact h_1,
+      exact h1,
     },
 end
 
 lemma sub_refined_of_sub_partition {α : Type*} {Z a b u v : set α} (hZ : Z ⊆ u)
   (hau : a ⊆ u) (hbv : b ⊆ v) (Zab : Z ⊆ a ∪ b) (hab : a ∩ b = ∅) (huv : u ∩ v = ∅) : Z ⊆ a :=
 begin
-rw [←set.compl_compl u, set.subset_compl_iff_disjoint] at hZ,
-have H : Z ∩ b = ∅,
-{
-  rw [set.inter_comm, ←set.subset_compl_iff_disjoint] at huv,
-  apply set.eq_empty_of_subset_empty,
-  rw ←hZ,
-  exact set.inter_subset_inter (set.subset.refl Z) (set.subset.trans hbv huv),
-},
-rw ←set.subset_compl_iff_disjoint at H,
-have H1 := set.subset_inter Zab H,
-rw [set.inter_distrib_right, set.inter_compl_self, set.union_empty] at H1,
-exact set.subset.trans H1 (set.inter_subset_left a bᶜ),
+  rw [←set.compl_compl u, set.subset_compl_iff_disjoint] at hZ,
+  have H : Z ∩ b = ∅,
+  {
+    rw [set.inter_comm, ←set.subset_compl_iff_disjoint] at huv,
+    apply set.eq_empty_of_subset_empty,
+    rw ←hZ,
+    exact set.inter_subset_inter (set.subset.refl Z) (set.subset.trans hbv huv),
+  },
+  rw ←set.subset_compl_iff_disjoint at H,
+  have H1 := set.subset_inter Zab H,
+  rw [set.inter_distrib_right, set.inter_compl_self, set.union_empty] at H1,
+  exact set.subset.trans H1 (set.inter_subset_left a bᶜ),
 end
 
 lemma connected_component_Inter {α : Type*} [topological_space α] [t2_space α] [compact_space α] :
