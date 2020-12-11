@@ -215,8 +215,12 @@ def trivial : pretopology C :=
   begin
     rintro ⟨Z, g, i, rfl⟩,
     refine ⟨pullback g f, pullback.snd, _, _⟩,
-    sorry,
-    apply pullback_singleton,
+    { exactI { is_iso . inv := pullback.lift (f ≫ inv g) (𝟙 _) (by simp), hom_inv_id' := _ },
+      apply pullback.hom_ext,
+      { rw [assoc, pullback.lift_fst, ←pullback.condition_assoc],
+        simp },
+      { simp } },
+    { apply pullback_singleton },
   end,
   transitive :=
   begin

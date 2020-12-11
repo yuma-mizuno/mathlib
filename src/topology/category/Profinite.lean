@@ -432,55 +432,77 @@ instance Profinite_has_limits : has_limits Profinite :=
 
 --lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) : _
 
+-- inductive finite_jointly_surjective (Y : Profinite)
+-- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
+--      (hf : ∀ (y : Y), ∃ (i : ι) (x : X i), f i x = y) :
+--     finite_jointly_surjective Y
+
+inductive presieve_of_arrows {X : Profinite} {ι : Type*} (Y : ι → Profinite) (f : Π i, Y i ⟶ X) :
+  presieve X
+| mk {i : ι} : presieve_of_arrows (f i)
+
 def proetale_pretopology : pretopology Profinite :=
-{ coverings := λ X, {S | (∀ x, ∃ Y (f : Y ⟶ X) y, S f ∧ f y = x) ∧
-                         set.finite {Y | nonempty {f : Y ⟶ X | S f}} ∧
-                         ∀ Y, set.finite {f : Y ⟶ X | S f}},
+{ coverings := λ X S, ∃ (ι : Type*) [fintype ι] (Y : ι → Profinite) (f : Π (i : ι), Y i ⟶ X),
+      (∀ (x : X), ∃ i y, f i y = x) ∧ S = presieve_of_arrows Y f,
   has_isos := λ X Y f i,
   begin
+    refine ⟨punit, infer_instance, λ _, Y, λ _, f, _, _⟩,
+    intro x,
+    refine ⟨punit.star, _, _⟩,
     resetI,
-    refine ⟨λ z, ⟨_, f, inv ((forget _).map f) z, presieve.singleton_self _, congr_fun (is_iso.inv_hom_id ((forget Profinite).map f)) z⟩, _, _⟩,
-    { suffices : {Z : Profinite | nonempty {g : Z ⟶ X | presieve.singleton f g}} = {Y},
-        rw this,
-        apply set.finite_singleton Y,
-      rw set.eq_singleton_iff_unique_mem,
-      split,
-      { exact ⟨⟨f, presieve.singleton_self _⟩⟩ },
-      { rintro Z ⟨_, ⟨_⟩⟩,
-        refl } },
-    { intro Z,
-      by_cases (Z = Y),
-      { cases h,
-        suffices : {g : Y ⟶ X | presieve.singleton f g} = {f},
-          rw this,
-          apply set.finite_singleton,
-        rw set.eq_singleton_iff_unique_mem,
-        split,
-        apply presieve.singleton.mk,
-        rintro f ⟨_⟩,
-        refl },
-      { suffices : {g : Z ⟶ X | presieve.singleton f g} = ∅,
-          rw this,
-          refine set.finite_empty,
-        rw set.eq_empty_iff_forall_not_mem,
-        rintro g ⟨_⟩,
-        apply h, refl } }
+    apply (forget _).map (inv f) x,
+    dsimp,
+    sorry,
+    ext Y g,
+    split,
+    { rintro ⟨_⟩,
+      apply presieve_of_arrows.mk,
+      apply punit.star },
+    { rintro ⟨_⟩,
+      apply presieve.singleton.mk },
   end,
   pullbacks := λ X Y f S,
   begin
-    rintro ⟨surj, fin_dom, fin_arr⟩,
-    refine ⟨_, _, _⟩,
-    { intro y,
-      rcases surj (f y) with ⟨Z, g, z, hg, gf⟩,
-      refine ⟨_, _, _, pullback_arrows.mk _ _ hg, _⟩,
-      sorry,
-      sorry },
-    { sorry,
-
-    },
-    sorry,
+    rintro ⟨ι, hι, Z, g, hg, rfl⟩,
+    refine ⟨ι, hι, λ i, pullback (g i) f, λ i, pullback.snd, _, _⟩,
+    intro y,
+    rcases hg (f y) with ⟨i, z, hz⟩,
+    refine ⟨i, _, _⟩,
+    sorry, sorry,
+    ext W k,
+    split,
+    { intro hk,
+      cases hk with W k hk₁,
+      cases hk₁ with i hi,
+      apply presieve_of_arrows.mk },
+    { intro hk,
+      cases hk with i,
+      apply pullback_arrows.mk,
+      apply presieve_of_arrows.mk }
   end,
-  transitive := sorry, }
+  transitive := λ X S Ti,
+  begin
+    rintro ⟨ι, hι, Z, g, hY, rfl⟩ hTi,
+    choose j hj W k hk₁ hk₂ using hTi,
+    refine ⟨Σ (i : ι), j (g i) presieve_of_arrows.mk, _, λ ij, W _ _ ij.2, _, _, _⟩,
+    { apply sigma.fintype _,
+      { apply hι },
+      { intro i,
+        apply hj } },
+    { intro ij,
+      apply k _ _ ij.2 ≫ g ij.1 },
+    { intro x,
+      rcases hY x with ⟨i, y, hy⟩,
+      rcases hk₁ (g i) presieve_of_arrows.mk y with ⟨j', z, hz⟩,
+      refine ⟨⟨i, j'⟩, z, _⟩,
+      rw ← hy,
+      rw ← hz,
+      refl },
+    { ext Y f,
+      split,
+      { sorry },
+      { sorry } }
+  end }
 
 
 
