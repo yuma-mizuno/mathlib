@@ -188,8 +188,8 @@ begin
   rw fact at *, linarith,
 end
 
-lemma ring_hom.char_p_iff_char_p {K L : Type*} [division_ring K] [division_ring L] (f : K →+* L) (p : ℕ) :
-  char_p K p ↔ char_p L p :=
+lemma ring_hom.char_p_iff_char_p {K L : Type*} [division_ring K] [division_ring L] (f : K →+* L)
+  (p : ℕ) : char_p K p ↔ char_p L p :=
 begin
   split;
   { introI _c, constructor, intro n,

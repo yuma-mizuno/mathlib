@@ -309,8 +309,8 @@ lemma mul_sub_algebra_map_commutes [comm_semiring R] [ring A] [algebra R A] (x :
   x * (x - algebra_map R A r) = (x - algebra_map R A r) * x :=
 by rw [mul_sub, ←commutes, sub_mul]
 
-lemma mul_sub_algebra_map_pow_commutes [comm_semiring R] [ring A] [algebra R A] (x : A) (r : R) (n : ℕ) :
-  x * (x - algebra_map R A r) ^ n = (x - algebra_map R A r) ^ n * x :=
+lemma mul_sub_algebra_map_pow_commutes [comm_semiring R] [ring A] [algebra R A] (x : A) (r : R)
+  (n : ℕ) : x * (x - algebra_map R A r) ^ n = (x - algebra_map R A r) ^ n * x :=
 begin
   induction n with n ih,
   { simp },
