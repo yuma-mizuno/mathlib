@@ -44,6 +44,7 @@ open emetric set
 
 lemma to_lipschitz_with (hf : contracting_with K f) : lipschitz_with K f := hf.2
 
+lemma one_sub_K_pos (hf : contracting_with K f) : (0:ℝ) < 1 - K := sub_pos.2 hf.1
 lemma one_sub_K_pos' (hf : contracting_with K f) : (0:ennreal) < 1 - K := by simp [hf.1]
 
 lemma one_sub_K_ne_zero (hf : contracting_with K f) : (1:ennreal) - K ≠ 0 :=
@@ -237,8 +238,6 @@ namespace contracting_with
 
 variables [metric_space α] {K : ℝ≥0} {f : α → α} (hf : contracting_with K f)
 include hf
-
-lemma one_sub_K_pos (hf : contracting_with K f) : (0:ℝ) < 1 - K := sub_pos.2 hf.1
 
 lemma dist_le_mul (x y : α) : dist (f x) (f y) ≤ K * dist x y :=
 hf.to_lipschitz_with.dist_le_mul x y

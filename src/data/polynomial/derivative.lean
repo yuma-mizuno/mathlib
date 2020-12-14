@@ -189,7 +189,7 @@ if H : p = 0 then le_of_eq $ by rw [H, derivative_zero] else le_of_lt $ degree_d
 end comm_semiring
 
 section domain
-variables [integral_domain R]
+variables [domain R]
 
 lemma mem_support_derivative [char_zero R] (p : polynomial R) (n : ℕ) :
   n ∈ (derivative p).support ↔ n + 1 ∈ p.support :=

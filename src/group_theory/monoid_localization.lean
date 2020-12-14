@@ -277,8 +277,9 @@ by rw [mul_comm, sec_spec]
 `w : M, z : N` and `y ∈ S`, we have `w * (f y)⁻¹ = z ↔ w = f y * z`. -/
 @[to_additive "Given an add_monoid hom `f : M →+ N` and submonoid `S ⊆ M` such that
 `f(S) ⊆ add_units N`, for all `w : M, z : N` and `y ∈ S`, we have `w - f y = z ↔ w = f y + z`."]
-lemma mul_inv_left {f : M →* N} (h : ∀ y : S, is_unit (f y))
-  (y : S) (w z) : w * ↑(is_unit.lift_right (f.mrestrict S) h y)⁻¹ = z ↔ w = f y * z :=
+lemma mul_inv_left {M : Type*} [monoid M] {S : submonoid M} {N : Type*} [comm_monoid N]
+  {f : M →* N} (h : ∀ y : S, is_unit (f y)) (y : S) (w z) :
+w * ↑(is_unit.lift_right (f.mrestrict S) h y)⁻¹ = z ↔ w = f y * z :=
 by rw mul_comm; convert units.inv_mul_eq_iff_eq_mul _;
   exact (is_unit.coe_lift_right (f.mrestrict S) h _).symm
 
@@ -286,9 +287,11 @@ by rw mul_comm; convert units.inv_mul_eq_iff_eq_mul _;
 `w : M, z : N` and `y ∈ S`, we have `z = w * (f y)⁻¹ ↔ z * f y = w`. -/
 @[to_additive "Given an add_monoid hom `f : M →+ N` and submonoid `S ⊆ M` such that
 `f(S) ⊆ add_units N`, for all `w : M, z : N` and `y ∈ S`, we have `z = w - f y ↔ z + f y = w`."]
-lemma mul_inv_right {f : M →* N} (h : ∀ y : S, is_unit (f y))
-  (y : S) (w z) : z = w * ↑(is_unit.lift_right (f.mrestrict S) h y)⁻¹ ↔ z * f y = w :=
-by rw [eq_comm, mul_inv_left h, mul_comm, eq_comm]
+lemma mul_inv_right {M : Type*} [monoid M] {S : submonoid M} {N : Type*} [comm_monoid N]
+  {f : M →* N} (h : ∀ y : S, is_unit (f y)) (y : S) (w z) :
+z = w * ↑(is_unit.lift_right (f.mrestrict S) h y)⁻¹ ↔ z * f y = w :=
+by symmetry; convert units.mul_inv_eq_iff_eq_mul _; rw [inv_inv,
+ is_unit.coe_lift_right (f.mrestrict S) h y, monoid_hom.mrestrict_apply]
 
 /-- Given a monoid hom `f : M →* N` and submonoid `S ⊆ M` such that
 `f(S) ⊆ units N`, for all `x₁ x₂ : M` and `y₁, y₂ ∈ S`, we have

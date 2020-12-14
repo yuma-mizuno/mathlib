@@ -188,7 +188,7 @@ begin
   rw fact at *, linarith,
 end
 
-lemma ring_hom.char_p_iff_char_p {K L : Type*} [field K] [field L] (f : K →+* L) (p : ℕ) :
+lemma ring_hom.char_p_iff_char_p {K L : Type*} [division_ring K] [division_ring L] (f : K →+* L) (p : ℕ) :
   char_p K p ↔ char_p L p :=
 begin
   split;
@@ -299,10 +299,10 @@ absurd (@nat.cast_injective α _ _ this) (not_injective_infinite_fintype coe)
 
 end
 
-section integral_domain
+section domain
 open nat
 
-variables (α : Type u) [integral_domain α]
+variables (α : Type u) [domain α]
 
 theorem char_ne_one (p : ℕ) [hc : char_p α p] : p ≠ 1 :=
 assume hp : p = 1,
@@ -340,7 +340,7 @@ lemma char_is_prime_of_pos (p : ℕ) [h : fact (0 < p)] [char_p α p] : fact p.p
 theorem char_is_prime [fintype α] (p : ℕ) [char_p α p] : p.prime :=
 or.resolve_right (char_is_prime_or_zero α p) (char_ne_zero_of_fintype α p)
 
-end integral_domain
+end domain
 
 section char_one
 
@@ -373,7 +373,7 @@ end char_p
 
 section
 
-variables (n : ℕ) (R : Type*) [comm_ring R] [fintype R]
+variables (n : ℕ) (R : Type*) [ring R] [fintype R]
 
 lemma char_p_of_ne_zero (hn : fintype.card R = n) (hR : ∀ i < n, (i : R) = 0 → i = 0) :
   char_p R n :=

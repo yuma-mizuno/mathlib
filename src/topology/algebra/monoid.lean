@@ -220,14 +220,14 @@ end has_continuous_mul
 
 section
 
-variables [topological_space M] [comm_monoid M]
+variables [topological_space M]
 
 @[to_additive]
-lemma submonoid.mem_nhds_one (S : submonoid M) (oS : is_open (S : set M)) :
+lemma submonoid.mem_nhds_one [monoid M] (S : submonoid M) (oS : is_open (S : set M)) :
   (S : set M) ∈ 𝓝 (1 : M) :=
 mem_nhds_sets oS S.one_mem
 
-variable [has_continuous_mul M]
+variables [comm_monoid M] [has_continuous_mul M]
 
 @[to_additive]
 lemma tendsto_multiset_prod {f : β → α → M} {x : filter α} {a : β → M} (s : multiset β) :

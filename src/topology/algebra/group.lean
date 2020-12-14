@@ -87,6 +87,17 @@ by simpa only [div_eq_mul_inv] using is_open_map_mul_right (a⁻¹)
 lemma is_closed_map_div_right (a : G) : is_closed_map (λ x, x / a) :=
 by simpa only [div_eq_mul_inv] using is_closed_map_mul_right (a⁻¹)
 
+@[to_additive]
+lemma nhds_translation_mul_inv (x : G) : comap (λ y : G, y * x⁻¹) (𝓝 1) = 𝓝 x :=
+begin
+  refine comap_eq_of_inverse (λ y : G, y * x) _ _ _,
+  { funext x, simp },
+  { rw ← mul_right_inv x,
+    exact tendsto_id.mul tendsto_const_nhds },
+  { suffices : tendsto (λ y : G, y * x) (𝓝 1) (𝓝 (1 * x)), { simpa },
+    exact tendsto_id.mul tendsto_const_nhds }
+end
+
 end continuous_mul_group
 
 section topological_group
@@ -191,17 +202,6 @@ by simpa only [div_eq_mul_inv, nhds_prod_eq, mem_prod_self_iff, prod_subset_iff,
   using this
 
 @[to_additive]
-lemma nhds_translation_mul_inv (x : G) : comap (λ y : G, y * x⁻¹) (𝓝 1) = 𝓝 x :=
-begin
-  refine comap_eq_of_inverse (λ y : G, y * x) _ _ _,
-  { funext x, simp },
-  { rw ← mul_right_inv x,
-    exact tendsto_id.mul tendsto_const_nhds },
-  { suffices : tendsto (λ y : G, y * x) (𝓝 1) (𝓝 (1 * x)), { simpa },
-    exact tendsto_id.mul tendsto_const_nhds }
-end
-
-@[to_additive]
 lemma topological_group.ext {G : Type*} [group G] {t t' : topological_space G}
   (tg : @topological_group G t _) (tg' : @topological_group G t' _)
   (h : @nhds G t 1 = @nhds G t' 1) : t = t' :=
@@ -287,7 +287,7 @@ topological_group.of_nhds_one hmul hinv hleft (by simpa using tendsto_id)
 end topological_group
 
 section quotient_topological_group
-variables [topological_space G] [group G] [topological_group G] (N : subgroup G) (n : N.normal)
+variables [topological_space G] [group G] (N : subgroup G) (n : N.normal)
 
 @[to_additive]
 instance {G : Type*} [group G] [topological_space G] (N : subgroup G) :
@@ -297,7 +297,7 @@ quotient.topological_space
 open quotient_group
 
 @[to_additive]
-lemma quotient_group.is_open_map_coe : is_open_map (coe : G →  quotient N) :=
+lemma quotient_group.is_open_map_coe [has_continuous_mul G] : is_open_map (coe : G →  quotient N) :=
 begin
   intros s s_op,
   change is_open ((coe : G →  quotient N) ⁻¹' (coe '' s)),
@@ -306,7 +306,8 @@ begin
 end
 
 @[to_additive]
-instance topological_group_quotient [N.normal] : topological_group (quotient N) :=
+instance topological_group_quotient [topological_group G] [N.normal] :
+  topological_group (quotient N) :=
 { continuous_mul := begin
     have cont : continuous ((coe : G → quotient N) ∘ (λ (p : G × G), p.fst * p.snd)) :=
       continuous_quot_mk.comp continuous_mul,
@@ -455,7 +456,7 @@ end add_group_with_zero_nhd
 section filter_mul
 
 section
-variables [topological_space G] [group G] [topological_group G]
+variables [topological_space G] [group G] [has_continuous_mul G]
 
 @[to_additive]
 lemma is_open.mul_left {s t : set G} : is_open t → is_open (s * t) := λ ht,
@@ -475,12 +476,16 @@ begin
   exact is_open_Union (λa, is_open_Union $ λha, this _),
 end
 
+end
+
+section
+variables [topological_space G] [group G]
 variables (G)
 
-lemma topological_group.t1_space (h : @is_closed G _ {1}) : t1_space G :=
+lemma has_continuous_mul.t1_space [has_continuous_mul G] (h : @is_closed G _ {1}) : t1_space G :=
 ⟨assume x, by { convert is_closed_map_mul_right x _ h, simp }⟩
 
-lemma topological_group.regular_space [t1_space G] : regular_space G :=
+lemma topological_group.regular_space [topological_group G] [t1_space G] : regular_space G :=
 ⟨assume s a hs ha,
  let f := λ p : G × G, p.1 * (p.2)⁻¹ in
  have hf : continuous f := continuous_fst.mul continuous_snd.inv,
@@ -501,7 +506,7 @@ lemma topological_group.regular_space [t1_space G] : regular_space G :=
 
 local attribute [instance] topological_group.regular_space
 
-lemma topological_group.t2_space [t1_space G] : t2_space G := regular_space.t2_space G
+lemma topological_group.t2_space [topological_group G] [t1_space G] : t2_space G := regular_space.t2_space G
 
 end
 
@@ -509,7 +514,7 @@ section
 
 /-! Some results about an open set containing the product of two sets in a topological group. -/
 
-variables [topological_space G] [group G] [topological_group G]
+variables [topological_space G] [group G] [has_continuous_mul G]
 
 /-- Given a compact set `K` inside an open set `U`, there is a open neighborhood `V` of `1`
   such that `KV ⊆ U`. -/
@@ -554,7 +559,7 @@ end
 end
 
 section
-variables [topological_space G] [comm_group G] [topological_group G]
+variables [topological_space G] [comm_group G] [has_continuous_mul G]
 
 @[to_additive]
 lemma nhds_mul (x y : G) : 𝓝 (x * y) = 𝓝 x * 𝓝 y :=

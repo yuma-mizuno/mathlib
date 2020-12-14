@@ -231,7 +231,7 @@ protected lemma inv_inv [group α] : s⁻¹⁻¹ = s :=
 by { simp only [← inv_preimage, preimage_preimage, inv_inv, preimage_id'] }
 
 @[simp, to_additive]
-protected lemma univ_inv [group α] : (univ : set α)⁻¹ = univ := preimage_univ
+protected lemma univ_inv [has_inv α] : (univ : set α)⁻¹ = univ := preimage_univ
 
 @[simp, to_additive]
 lemma inv_subset_inv [group α] {s t : set α} : s⁻¹ ⊆ t⁻¹ ↔ s ⊆ t :=

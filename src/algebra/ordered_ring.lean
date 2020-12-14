@@ -417,7 +417,7 @@ instance linear_ordered_semiring.to_no_top_order {α : Type*} [linear_ordered_se
 end linear_ordered_semiring
 
 section mono
-variables {β : Type*} [linear_ordered_semiring α] [preorder β] {f g : β → α} {a : α}
+variables {β : Type*} [ordered_semiring α] [preorder β] {f g : β → α} {a : α}
 
 lemma monotone_mul_left_of_nonneg (ha : 0 ≤ a) : monotone (λ x, a*x) :=
 assume b c b_le_c, mul_le_mul_of_nonneg_left b_le_c ha
@@ -437,20 +437,6 @@ lemma monotone.mul (hf : monotone f) (hg : monotone g) (hf0 : ∀ x, 0 ≤ f x) 
   monotone (λ x, f x * g x) :=
 λ x y h, mul_le_mul (hf h) (hg h) (hg0 x) (hf0 y)
 
-lemma strict_mono_mul_left_of_pos (ha : 0 < a) : strict_mono (λ x, a * x) :=
-assume b c b_lt_c, (mul_lt_mul_left ha).2 b_lt_c
-
-lemma strict_mono_mul_right_of_pos (ha : 0 < a) : strict_mono (λ x, x * a) :=
-assume b c b_lt_c, (mul_lt_mul_right ha).2 b_lt_c
-
-lemma strict_mono.mul_const (hf : strict_mono f) (ha : 0 < a) :
-  strict_mono (λ x, (f x) * a) :=
-(strict_mono_mul_right_of_pos ha).comp hf
-
-lemma strict_mono.const_mul (hf : strict_mono f) (ha : 0 < a) :
-  strict_mono (λ x, a * (f x)) :=
-(strict_mono_mul_left_of_pos ha).comp hf
-
 lemma strict_mono.mul_monotone (hf : strict_mono f) (hg : monotone g) (hf0 : ∀ x, 0 ≤ f x)
   (hg0 : ∀ x, 0 < g x) :
   strict_mono (λ x, f x * g x) :=
@@ -465,6 +451,25 @@ lemma strict_mono.mul (hf : strict_mono f) (hg : strict_mono g) (hf0 : ∀ x, 0 
   (hg0 : ∀ x, 0 ≤ g x) :
   strict_mono (λ x, f x * g x) :=
 λ x y h, mul_lt_mul'' (hf h) (hg h) (hf0 x) (hg0 x)
+
+end mono
+
+section mono
+variables {β : Type*} [linear_ordered_semiring α] [preorder β] {f g : β → α} {a : α}
+
+lemma strict_mono_mul_left_of_pos (ha : 0 < a) : strict_mono (λ x, a * x) :=
+assume b c b_lt_c, (mul_lt_mul_left ha).2 b_lt_c
+
+lemma strict_mono_mul_right_of_pos (ha : 0 < a) : strict_mono (λ x, x * a) :=
+assume b c b_lt_c, (mul_lt_mul_right ha).2 b_lt_c
+
+lemma strict_mono.mul_const (hf : strict_mono f) (ha : 0 < a) :
+  strict_mono (λ x, (f x) * a) :=
+(strict_mono_mul_right_of_pos ha).comp hf
+
+lemma strict_mono.const_mul (hf : strict_mono f) (ha : 0 < a) :
+  strict_mono (λ x, a * (f x)) :=
+(strict_mono_mul_left_of_pos ha).comp hf
 
 end mono
 

@@ -110,11 +110,8 @@ lemma is_lub_u {b : β} : is_lub { a | l a ≤ b } (u b) :=
 end
 
 section partial_order
-variables [partial_order α] [partial_order β] {l : α → β} {u : β → α} (gc : galois_connection l u)
+variables [preorder α] [partial_order β] {l : α → β} {u : β → α} (gc : galois_connection l u)
 include gc
-
-lemma u_l_u_eq_u : u ∘ l ∘ u = u :=
-funext (assume x, le_antisymm (gc.monotone_u (gc.l_u_le _)) (gc.le_u_l _))
 
 lemma l_u_l_eq_l : l ∘ u ∘ l = l :=
 funext (assume x, le_antisymm (gc.l_u_le _) (gc.monotone_l (gc.le_u_l _)))
@@ -124,12 +121,21 @@ lemma l_unique {l' : α → β} {u' : β → α} (gc' : galois_connection l' u')
 le_antisymm (gc.l_le $ (hu (l' a)).symm ▸ gc'.le_u_l _)
   (gc'.l_le $ hu (l a) ▸ gc.le_u_l _)
 
+end partial_order
+
+section partial_order'
+variables [partial_order α] [preorder β] {l : α → β} {u : β → α} (gc : galois_connection l u)
+include gc
+
+lemma u_l_u_eq_u : u ∘ l ∘ u = u :=
+funext (assume x, le_antisymm (gc.monotone_u (gc.l_u_le _)) (gc.le_u_l _))
+
 lemma u_unique {l' : α → β} {u' : β → α} (gc' : galois_connection l' u')
   (hl : ∀ a, l a = l' a) {b : β} : u b = u' b :=
 le_antisymm (gc'.le_u $ hl (u b) ▸ gc.l_u_le _)
   (gc.le_u $ (hl (u' b)).symm ▸ gc'.l_u_le _)
 
-end partial_order
+end partial_order'
 
 section order_top
 variables [order_top α] [order_top β] {l : α → β} {u : β → α} (gc : galois_connection l u)
@@ -323,7 +329,7 @@ lemma u_le_u_iff [preorder α] [preorder β] (gi : galois_insertion l u) {a b} :
 ⟨λ h, le_trans (gi.le_l_u _) (gi.gc.l_le h),
     λ h, gi.gc.monotone_u h⟩
 
-lemma strict_mono_u [preorder α] [partial_order β] (gi : galois_insertion l u) : strict_mono u :=
+lemma strict_mono_u [preorder α] [preorder β] (gi : galois_insertion l u) : strict_mono u :=
 strict_mono_of_le_iff_le $ λ _ _, gi.u_le_u_iff.symm
 
 section lift

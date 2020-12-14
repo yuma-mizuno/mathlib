@@ -111,6 +111,9 @@ instance [comm_monoid α] : comm_monoid (opposite α) :=
 instance [has_inv α] : has_inv (opposite α) :=
 { inv := λ x, op $ (unop x)⁻¹ }
 
+instance [has_sub α] : has_sub (opposite α) :=
+{ sub := λ x y, op $ unop x - unop y }
+
 instance [group α] : group (opposite α) :=
 { mul_left_inv := λ x, unop_injective $ mul_inv_self $ unop x,
   .. opposite.monoid α, .. opposite.has_inv α }
@@ -179,8 +182,8 @@ variable {α}
 @[simp] lemma op_inv [has_inv α] (x : α) : op (x⁻¹) = (op x)⁻¹ := rfl
 @[simp] lemma unop_inv [has_inv α] (x : αᵒᵖ) : unop (x⁻¹) = (unop x)⁻¹ := rfl
 
-@[simp] lemma op_sub [add_group α] (x y : α) : op (x - y) = op x - op y := rfl
-@[simp] lemma unop_sub [add_group α] (x y : αᵒᵖ) : unop (x - y) = unop x - unop y := rfl
+@[simp] lemma op_sub [has_sub α] (x y : α) : op (x - y) = op x - op y := rfl
+@[simp] lemma unop_sub [has_sub α] (x y : αᵒᵖ) : unop (x - y) = unop x - unop y := rfl
 
 @[simp] lemma op_smul {R : Type*} [has_scalar R α] (c : R) (a : α) : op (c • a) = c • op a := rfl
 @[simp] lemma unop_smul {R : Type*} [has_scalar R α] (c : R) (a : αᵒᵖ) :

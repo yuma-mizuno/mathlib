@@ -787,9 +787,6 @@ by rw [div_div_eq_div_mul, div_div_eq_div_mul, mul_comm]
 lemma div_div_div_cancel_right (a : G₀) (hc : c ≠ 0) : (a / c) / (b / c) = a / b :=
 by rw [div_div_eq_mul_div, div_mul_cancel _ hc]
 
-lemma div_mul_div_cancel (a : G₀) (hc : c ≠ 0) : (a / c) * (c / b) = a / b :=
-by rw [← mul_div_assoc, div_mul_cancel _ hc]
-
 @[field_simps] lemma div_eq_div_iff (hb : b ≠ 0) (hd : d ≠ 0) : a / b = c / d ↔ a * d = c * b :=
 calc a / b = c / d ↔ a / b * (b * d) = c / d * (b * d) :
 by rw [mul_left_inj' (mul_ne_zero hb hd)]
@@ -807,6 +804,14 @@ lemma div_div_cancel' (ha : a ≠ 0) : a / (a / b) = b :=
 by rw [div_eq_mul_inv, inv_div, mul_div_cancel' _ ha]
 
 end comm_group_with_zero
+
+section group_with_zero
+variables [group_with_zero G₀] {b c d : G₀}
+
+lemma div_mul_div_cancel (a : G₀) (hc : c ≠ 0) : (a / c) * (c / b) = a / b :=
+by rw [← mul_div_assoc, div_mul_cancel _ hc]
+
+end group_with_zero
 
 namespace semiconj_by
 

@@ -2177,19 +2177,20 @@ def quot_equiv_of_eq (h : p = q) : p.quotient ≃ₗ[R] q.quotient :=
 { map_add' := by { rintros ⟨x⟩ ⟨y⟩, refl }, map_smul' := by { rintros x ⟨y⟩, refl },
   ..@quotient.congr _ _ (quotient_rel p) (quotient_rel q) (equiv.refl _) $ λ a b, by { subst h, refl } }
 
-end submodule
-
-namespace submodule
-
-variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [module R M] [module R M₂]
-variables (p : submodule R M) (q : submodule R M₂)
-
+variables [add_comm_group M₂] [module R M₂]
 @[simp] lemma mem_map_equiv {e : M ≃ₗ[R] M₂} {x : M₂} : x ∈ p.map (e : M →ₗ[R] M₂) ↔ e.symm x ∈ p :=
 begin
   rw submodule.mem_map, split,
   { rintros ⟨y, hy, hx⟩, simp [←hx, hy], },
   { intros hx, refine ⟨e.symm x, hx, by simp⟩, },
 end
+
+end submodule
+
+namespace submodule
+
+variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [module R M] [module R M₂]
+variables (p : submodule R M) (q : submodule R M₂)
 
 lemma comap_le_comap_smul (f : M →ₗ[R] M₂) (c : R) :
   comap f q ≤ comap (c • f) q :=

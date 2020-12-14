@@ -289,7 +289,7 @@ variables {α : Type*} {β : Type*} {γ : Type*} {δ : Type*}
 -- α, β and G are abelian topological groups, G is a uniform space
 variables [topological_space α] [add_comm_group α]
 variables [topological_space β] [add_comm_group β]
-variables {G : Type*} [uniform_space G] [add_comm_group G]
+variables {G : Type*} [topological_space G] [add_comm_group G]
 
 variables {ψ : α × β → G} (hψ : continuous ψ) [ψbilin : is_Z_bilin ψ]
 

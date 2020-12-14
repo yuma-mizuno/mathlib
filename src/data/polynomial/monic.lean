@@ -143,8 +143,8 @@ by rw [eq_C_of_degree_le_zero this, ← nat_degree_eq_zero_iff_degree_le_zero.2 
 
 end comm_semiring
 
-section comm_ring
-variables [comm_ring R]
+section ring
+variables [ring R]
 namespace monic
 
 lemma coeff_nat_degree {p : polynomial R} (hp : p.monic) : p.coeff (p.nat_degree) = 1 := hp
@@ -199,6 +199,12 @@ begin
     { have : y = dq - 1, by omega, subst y, right, congr, omega } }
 end
 
+end monic
+end ring
+
+section comm_ring
+namespace monic
+variable [comm_ring R]
 lemma next_coeff_prod
   (s : finset ι) (f : ι → polynomial R) (h : ∀ i ∈ s, monic (f i)) :
 next_coeff (∏ i in s, f i) = ∑ i in s, next_coeff (f i) :=
@@ -217,7 +223,6 @@ begin
     { refine congr rfl (hs _),
       intros b bs, apply monic, apply finset.mem_insert_of_mem bs }}
 end
-
 end monic
 end comm_ring
 
@@ -248,11 +253,12 @@ have (-q).coeff (-q).nat_degree = 1 :=
 by rw [nat_degree_neg, coeff_neg, show q.coeff q.nat_degree = -1, from hq, neg_neg],
 by { rw sub_eq_add_neg, apply monic_add_of_right this, rwa degree_neg }
 
+end ring
 section injective
+variables [semiring R] {p : polynomial R}
 open function
 variables [semiring S] {f : R →+* S} (hf : injective f)
 include hf
-
 
 lemma leading_coeff_of_injective (p : polynomial R) :
   leading_coeff (p.map f) = f (leading_coeff p) :=
@@ -268,8 +274,6 @@ begin
 end
 
 end injective
-end ring
-
 
 section nonzero_semiring
 variables [semiring R] [nontrivial R] {p q : polynomial R}

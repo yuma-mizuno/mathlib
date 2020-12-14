@@ -513,8 +513,8 @@ end
 
 end trunc
 
-section comm_semiring
-variable [comm_semiring R]
+section semiring
+variable [semiring R]
 
 lemma X_pow_dvd_iff {s : σ} {n : ℕ} {φ : mv_power_series σ R} :
   (X s : mv_power_series σ R)^n ∣ φ ↔ ∀ m : σ →₀ ℕ, m s < n → coeff R m φ = 0 :=
@@ -555,7 +555,7 @@ begin
   { exact h m (hm.symm ▸ zero_lt_one) },
   { exact h m (nat.eq_zero_of_le_zero $ nat.le_of_succ_le_succ hm) }
 end
-end comm_semiring
+end semiring
 
 section ring
 variables [ring R]

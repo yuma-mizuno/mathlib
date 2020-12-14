@@ -226,26 +226,32 @@ end monoid
 -/
 
 section comm_monoid
-variables [comm_monoid M] [add_comm_monoid A]
+variables [comm_monoid M]
 
 theorem mul_pow (a b : M) (n : ℕ) : (a * b)^n = a^n * b^n :=
 (commute.all a b).mul_pow n
 
-theorem nsmul_add : ∀ (a b : A) (n : ℕ), n •ℕ (a + b) = n •ℕ a + n •ℕ b :=
+theorem nsmul_add [add_comm_monoid A] : ∀ (a b : A) (n : ℕ), n •ℕ (a + b) = n •ℕ a + n •ℕ b :=
 @mul_pow (multiplicative A) _
 
 instance pow.is_monoid_hom (n : ℕ) : is_monoid_hom ((^ n) : M → M) :=
 { map_mul := λ _ _, mul_pow _ _ _, map_one := one_pow _ }
 
-instance nsmul.is_add_monoid_hom (n : ℕ) : is_add_monoid_hom (nsmul n : A → A) :=
+instance nsmul.is_add_monoid_hom (n : ℕ) [add_comm_monoid A] :
+  is_add_monoid_hom (nsmul n : A → A) :=
 { map_add := λ _ _, nsmul_add _ _ _, map_zero := nsmul_zero _ }
+
+end comm_monoid
+
+section monoid
+variables [monoid M]
 
 lemma dvd_pow {x y : M} :
   ∀ {n : ℕ} (hxy : x ∣ y) (hn : n ≠ 0), x ∣ y^n
 | 0     hxy hn := (hn rfl).elim
 | (n+1) hxy hn := by { rw [pow_succ], exact dvd_mul_of_dvd_left hxy _ }
 
-end comm_monoid
+end monoid
 
 section group
 variables [group G] [group H] [add_group A] [add_group B]
@@ -432,11 +438,11 @@ end
   {a : R} (n : ℕ) (h : a ≠ 0) : a ^ n ≠ 0 :=
 mt pow_eq_zero h
 
-lemma pow_abs [linear_ordered_comm_ring R] (a : R) (n : ℕ) : (abs a)^n = abs (a^n) :=
+lemma pow_abs [linear_ordered_ring R] (a : R) (n : ℕ) : (abs a)^n = abs (a^n) :=
 by induction n with n ih; [exact (abs_one).symm,
   rw [pow_succ, pow_succ, ih, abs_mul]]
 
-lemma abs_neg_one_pow [linear_ordered_comm_ring R] (n : ℕ) : abs ((-1 : R)^n) = 1 :=
+lemma abs_neg_one_pow [linear_ordered_ring R] (n : ℕ) : abs ((-1 : R)^n) = 1 :=
 by rw [←pow_abs, abs_neg, abs_one, one_pow]
 
 section add_monoid

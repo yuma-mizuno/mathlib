@@ -141,14 +141,15 @@ end
 end comm_semiring
 
 section ring
+variables {R}
+open ring
+
+theorem adjoin_int [ring R] (s : set R) : adjoin ℤ s = subalgebra_of_is_subring (closure s) :=
+le_antisymm (adjoin_le subset_closure) (closure_subset subset_adjoin)
+
 variables [comm_ring R] [ring A]
 variables [algebra R A] {s t : set A}
 variables {R s t}
-open ring
-
-theorem adjoin_int (s : set R) : adjoin ℤ s = subalgebra_of_is_subring (closure s) :=
-le_antisymm (adjoin_le subset_closure) (closure_subset subset_adjoin)
-
 theorem mem_adjoin_iff {s : set A} {x : A} :
   x ∈ adjoin R s ↔ x ∈ closure (set.range (algebra_map R A) ∪ s) :=
 ⟨λ hx, subsemiring.closure_induction hx subset_closure is_add_submonoid.zero_mem

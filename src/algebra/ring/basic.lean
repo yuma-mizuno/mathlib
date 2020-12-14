@@ -123,9 +123,6 @@ by unfold bit0
 theorem two_mul (n : α) : 2 * n = n + n :=
 eq.trans (right_distrib 1 1 n) (by simp)
 
-lemma distrib_three_right (a b c d : α) : (a + b + c) * d = a * d + b * d + c * d :=
-by simp [right_distrib]
-
 theorem mul_two (n : α) : n * 2 = n + n :=
 (left_distrib n 1 1).trans (by simp)
 
@@ -175,6 +172,14 @@ lemma even_iff_two_dvd {a : α} : even a ↔ 2 ∣ a := iff.rfl
 def odd (a : α) : Prop := ∃ k, a = 2*k + 1
 
 end semiring
+
+section distrib
+variables [distrib α]
+
+lemma distrib_three_right (a b c d : α) : (a + b + c) * d = a * d + b * d + c * d :=
+by simp [right_distrib]
+
+end distrib
 
 namespace add_monoid_hom
 

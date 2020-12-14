@@ -585,7 +585,7 @@ instance {α : Type*} [topological_space α] [partial_order α] [order_topology 
   conv in (_ ∨ _) { rw or.comm }; refl⟩
 
 section partial_order
-variables [topological_space α] [partial_order α] [t : order_topology α]
+variables [topological_space α] [preorder α] [t : order_topology α]
 include t
 
 lemma is_open_iff_generate_intervals {s : set α} :

@@ -546,7 +546,7 @@ structure is_antimono_basis extends is_basis p s : Prop :=
 /-- We say that a filter `l` has a antimono basis `s : ι → set α` bounded by `p : ι → Prop`,
 if `t ∈ l` if and only if `t` includes `s i` for some `i` such that `p i`,
 and `s` is decreasing and `p` is increasing, ie `i ≤ j → p i → p j`. -/
-structure has_antimono_basis [preorder ι] (l : filter α) (p : ι → Prop) (s : ι → set α)
+structure has_antimono_basis (l : filter α) (p : ι → Prop) (s : ι → set α)
   extends has_basis l p s : Prop :=
 (decreasing : ∀ {i j}, p i → p j → i ≤ j → s j ⊆ s i)
 (mono : monotone p)

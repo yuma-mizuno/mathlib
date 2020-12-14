@@ -293,13 +293,13 @@ multiset.induction_on s (by simp [mt is_unit_iff_dvd_one.2 hp.not_unit])
       exact ⟨q, multiset.mem_cons.2 (or.inr hq₁), hq₂⟩ }
   end)
 
-lemma dvd_iff_dvd_of_rel_left [comm_monoid_with_zero α] {a b c : α} (h : a ~ᵤ b) : a ∣ c ↔ b ∣ c :=
+lemma dvd_iff_dvd_of_rel_left [monoid_with_zero α] {a b c : α} (h : a ~ᵤ b) : a ∣ c ↔ b ∣ c :=
 let ⟨u, hu⟩ := h in hu ▸ units.mul_right_dvd.symm
 
 lemma dvd_iff_dvd_of_rel_right [comm_monoid_with_zero α] {a b c : α} (h : b ~ᵤ c) : a ∣ b ↔ a ∣ c :=
 let ⟨u, hu⟩ := h in hu ▸ units.dvd_mul_right.symm
 
-lemma eq_zero_iff_of_associated [comm_monoid_with_zero α] {a b : α} (h : a ~ᵤ b) : a = 0 ↔ b = 0 :=
+lemma eq_zero_iff_of_associated [monoid_with_zero α] {a b : α} (h : a ~ᵤ b) : a = 0 ↔ b = 0 :=
 ⟨λ ha, let ⟨u, hu⟩ := h in by simp [hu.symm, ha],
   λ hb, let ⟨u, hu⟩ := h.symm in by simp [hu.symm, hb]⟩
 

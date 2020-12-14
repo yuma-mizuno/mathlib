@@ -294,8 +294,8 @@ instance at_bot_is_measurably_generated : (filter.at_bot : filter α).is_measura
 
 end preorder
 
-section partial_order
-variables [partial_order α] [order_closed_topology α] [second_countable_topology α]
+section preorder
+variables [preorder α] [order_closed_topology α] [second_countable_topology α]
   {a b : α}
 
 lemma is_measurable_le' : is_measurable {p : α × α | p.1 ≤ p.2} :=
@@ -305,7 +305,7 @@ lemma is_measurable_le {f g : δ → α} (hf : measurable f) (hg : measurable g)
   is_measurable {a | f a ≤ g a} :=
 hf.prod_mk hg is_measurable_le'
 
-end partial_order
+end preorder
 
 section linear_order
 variables [linear_order α] [order_closed_topology α] {a b : α}

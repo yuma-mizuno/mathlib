@@ -14,11 +14,11 @@ endpoints in the range.  This is expressed in this file using `set.surj_on`, and
 permutations of interval endpoints.
 -/
 
-variables {α : Type*} {β : Type*} [linear_order α] [partial_order β] {f : α → β}
+variables {α : Type*} {β : Type*} [linear_order α] {f : α → β}
 
 open set function
 
-lemma surj_on_Ioo_of_monotone_surjective
+lemma surj_on_Ioo_of_monotone_surjective [preorder β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a b : α) :
   surj_on f (Ioo a b) (Ioo (f a) (f b)) :=
 begin
@@ -33,7 +33,7 @@ begin
   { exact has_lt.lt.false (lt_of_le_of_lt (h_mono (not_lt.mp hb)) hp.2) }
 end
 
-lemma surj_on_Ico_of_monotone_surjective
+lemma surj_on_Ico_of_monotone_surjective [partial_order β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a b : α) :
   surj_on f (Ico a b) (Ico (f a) (f b)) :=
 begin
@@ -49,7 +49,7 @@ begin
     exact surj_on_empty f _ },
 end
 
-lemma surj_on_Ioc_of_monotone_surjective
+lemma surj_on_Ioc_of_monotone_surjective [partial_order β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a b : α) :
   surj_on f (Ioc a b) (Ioc (f a) (f b)) :=
 begin
@@ -58,7 +58,7 @@ begin
 end
 
 -- to see that the hypothesis `a ≤ b` is necessary, consider a constant function
-lemma surj_on_Icc_of_monotone_surjective
+lemma surj_on_Icc_of_monotone_surjective [partial_order β]
   (h_mono : monotone f) (h_surj : function.surjective f) {a b : α} (hab : a ≤ b) :
   surj_on f (Icc a b) (Icc (f a) (f b)) :=
 begin
@@ -77,7 +77,7 @@ begin
     exact ⟨b, mem_singleton _, (mem_singleton_iff.mp hp).symm⟩ }
 end
 
-lemma surj_on_Ioi_of_monotone_surjective
+lemma surj_on_Ioi_of_monotone_surjective [preorder β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a : α) :
   surj_on f (Ioi a) (Ioi (f a)) :=
 begin
@@ -90,12 +90,12 @@ begin
   exact has_lt.lt.false (lt_of_lt_of_le hp (h_mono (not_lt.mp h)))
 end
 
-lemma surj_on_Iio_of_monotone_surjective
+lemma surj_on_Iio_of_monotone_surjective [preorder β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a : α) :
   surj_on f (Iio a) (Iio (f a)) :=
 @surj_on_Ioi_of_monotone_surjective _ _ _ _ _ (monotone.order_dual h_mono) h_surj a
 
-lemma surj_on_Ici_of_monotone_surjective
+lemma surj_on_Ici_of_monotone_surjective [partial_order β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a : α) :
   surj_on f (Ici a) (Ici (f a)) :=
 begin
@@ -108,7 +108,7 @@ begin
     refine ⟨a, left_mem_Ici, rfl⟩ }
 end
 
-lemma surj_on_Iic_of_monotone_surjective
+lemma surj_on_Iic_of_monotone_surjective [partial_order β]
   (h_mono : monotone f) (h_surj : function.surjective f) (a : α) :
   surj_on f (Iic a) (Iic (f a)) :=
 @surj_on_Ici_of_monotone_surjective _ _ _ _ _ (monotone.order_dual h_mono) h_surj a

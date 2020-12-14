@@ -356,6 +356,8 @@ begin
     simp }
 end
 
+section
+
 variables {𝕜' : Type*} [nondiscrete_normed_field 𝕜'] [normed_algebra 𝕜' 𝕜]
   [normed_space 𝕜' E₂] [is_scalar_tower 𝕜' 𝕜 E₂]
 
@@ -378,14 +380,23 @@ normed_group.of_core _ ⟨op_norm_zero_iff, op_norm_add_le, op_norm_neg⟩
 instance to_normed_space : normed_space 𝕜' (continuous_multilinear_map 𝕜 E₁ E₂) :=
 ⟨λ c f, f.op_norm_smul_le c⟩
 
+end
+
 section restrict_scalars
 
+variables {𝕜' : Type*} [nondiscrete_normed_field 𝕜'] [normed_space 𝕜' 𝕜]
+  [normed_space 𝕜' E₂] [is_scalar_tower 𝕜' 𝕜 E₂]
 variables [Π i, normed_space 𝕜' (E₁ i)] [∀ i, is_scalar_tower 𝕜' 𝕜 (E₁ i)]
 
 @[simp] lemma norm_restrict_scalars : ∥f.restrict_scalars 𝕜'∥ = ∥f∥ :=
 by simp only [norm_def, coe_restrict_scalars]
+end restrict_scalars
 
-variable (𝕜')
+section restrict_scalars
+
+variables (𝕜' : Type*) [nondiscrete_normed_field 𝕜'] [normed_algebra 𝕜' 𝕜]
+  [normed_space 𝕜' E₂] [is_scalar_tower 𝕜' 𝕜 E₂] [Π i, normed_space 𝕜' (E₁ i)]
+  [∀ i, is_scalar_tower 𝕜' 𝕜 (E₁ i)]
 
 /-- `continuous_multilinear_map.restrict_scalars` as a `continuous_multilinear_map`. -/
 def restrict_scalars_linear :

@@ -255,7 +255,7 @@ end extend
 end
 
 theorem Cauchy_eq
-  {α : Type*} [inhabited α] [uniform_space α] [complete_space α] [separated_space α] {f g : Cauchy α} :
+  {α : Type*} [nonempty α] [uniform_space α] [complete_space α] [separated_space α] {f g : Cauchy α} :
   Lim f.1 = Lim g.1 ↔ (f, g) ∈ separation_rel (Cauchy α) :=
 begin
   split,

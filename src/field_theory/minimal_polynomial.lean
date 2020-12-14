@@ -130,13 +130,6 @@ end
 lemma not_is_unit : ¬ is_unit (minimal_polynomial hx) :=
 assume H, (ne_of_lt (degree_pos hx)).symm $ degree_eq_zero_of_is_unit H
 
-end ring
-
-section domain
-
-variables [domain β] [algebra α β]
-variables {x : β} (hx : is_integral α x)
-
 /-- If `a` strictly divides the minimal polynomial of `x`, then `x` cannot be a root for `a`. -/
 lemma aeval_ne_zero_of_dvd_not_unit_minimal_polynomial {a : polynomial α}
   (hamonic : a.monic) (hdvd : dvd_not_unit a (minimal_polynomial hx)) :
@@ -161,6 +154,13 @@ begin
   rw [prod, degree_mul, degree_eq_nat_degree hzeroa, degree_eq_nat_degree hzerob],
   exact_mod_cast lt_add_of_pos_right _ degbzero,
 end
+
+end ring
+
+section domain
+
+variables [domain β] [algebra α β]
+variables {x : β} (hx : is_integral α x)
 
 /--A minimal polynomial is irreducible.-/
 lemma irreducible : irreducible (minimal_polynomial hx) :=

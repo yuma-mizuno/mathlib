@@ -606,7 +606,7 @@ end polynomial
 
 namespace is_integral_domain
 
-variables {R : Type*} [comm_ring R]
+variables {R : Type*} [ring R]
 
 /-- Lift evidence that `is_integral_domain R` to `is_integral_domain (polynomial R)`. -/
 lemma polynomial (h : is_integral_domain R) : is_integral_domain (polynomial R) :=

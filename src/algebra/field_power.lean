@@ -156,7 +156,7 @@ end
 end ordered
 
 section
-variables {K : Type*} [field K]
+variables {K : Type*} [division_ring K]
 
 @[simp, norm_cast] theorem rat.cast_fpow [char_zero K] (q : ℚ) (n : ℤ) :
   ((q ^ n : ℚ) : K) = q ^ n :=

@@ -189,19 +189,19 @@ by rw [div_def, mul_comm, degree_mul_leading_coeff_inv _ hq0];
   exact degree_div_by_monic_lt _ (monic_mul_leading_coeff_inv hq0) hp
     (by rw degree_mul_leading_coeff_inv _ hq0; exact hq)
 
-@[simp] lemma degree_map [field k] (p : polynomial R) (f : R →+* k) :
+@[simp] lemma degree_map [division_ring k] (p : polynomial R) (f : R →+* k) :
   degree (p.map f) = degree p :=
 p.degree_map_eq_of_injective f.injective
 
-@[simp] lemma nat_degree_map [field k] (f : R →+* k) :
+@[simp] lemma nat_degree_map [division_ring k] (f : R →+* k) :
   nat_degree (p.map f) = nat_degree p :=
 nat_degree_eq_of_degree_eq (degree_map _ f)
 
-@[simp] lemma leading_coeff_map [field k] (f : R →+* k) :
+@[simp] lemma leading_coeff_map [division_ring k] (f : R →+* k) :
   leading_coeff (p.map f) = f (leading_coeff p) :=
 by simp only [← coeff_nat_degree, coeff_map f, nat_degree_map]
 
-theorem monic_map_iff [field k] {f : R →+* k} {p : polynomial R} :
+theorem monic_map_iff [division_ring k] {f : R →+* k} {p : polynomial R} :
   (p.map f).monic ↔ p.monic :=
 by rw [monic, leading_coeff_map, ← f.map_one, function.injective.eq_iff f.injective, monic]
 

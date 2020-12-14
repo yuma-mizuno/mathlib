@@ -140,7 +140,7 @@ begin
   apply h,
 end
 
-lemma is_left_invariant_inner_content [group G] [topological_group G] {μ : compacts G → ennreal}
+lemma is_left_invariant_inner_content [group G] [has_continuous_mul G] {μ : compacts G → ennreal}
   (h : ∀ (g : G) {K : compacts G}, μ (K.map _ $ continuous_mul_left g) = μ K) (g : G)
   (U : opens G) : inner_content μ (U.comap $ continuous_mul_left g) = inner_content μ U :=
 by convert inner_content_comap (homeomorph.mul_left g) (λ K, h g) U

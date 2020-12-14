@@ -30,10 +30,10 @@ section
 open finset polynomial function
 open_locale big_operators nat
 
-variables {R : Type*} {G : Type*} [integral_domain R] [group G] [fintype G]
+variables {R : Type*} {G : Type*} [integral_domain R]  [fintype G]
 
-lemma card_nth_roots_subgroup_units (f : G →* R) (hf : injective f) {n : ℕ} (hn : 0 < n) (g₀ : G) :
-  ({g ∈ univ | g ^ n = g₀} : finset G).card ≤ (nth_roots n (f g₀)).card :=
+lemma card_nth_roots_subgroup_units [monoid G] (f : G →* R) (hf : injective f) {n : ℕ} (hn : 0 < n)
+  (g₀ : G) : ({g ∈ univ | g ^ n = g₀} : finset G).card ≤ (nth_roots n (f g₀)).card :=
 begin
   haveI : decidable_eq R := classical.dec_eq _,
   refine le_trans _ (nth_roots n (f g₀)).to_finset_card_le,
@@ -45,7 +45,8 @@ begin
 end
 
 /-- A finite subgroup of the unit group of an integral domain is cyclic. -/
-lemma is_cyclic_of_subgroup_integral_domain (f : G →* R) (hf : injective f) : is_cyclic G :=
+lemma is_cyclic_of_subgroup_integral_domain [group G] (f : G →* R) (hf : injective f) :
+  is_cyclic G :=
 begin
   haveI := classical.dec_eq G,
   apply is_cyclic_of_card_pow_eq_one_le,
@@ -83,7 +84,7 @@ end
 
 end
 
-lemma card_fiber_eq_of_mem_range {H : Type*} [group H] [decidable_eq H]
+lemma card_fiber_eq_of_mem_range [group G] {H : Type*} [group H] [decidable_eq H]
   (f : G →* H) {x y : H} (hx : x ∈ set.range f) (hy : y ∈ set.range f) :
   (univ.filter $ λ g, f g = x).card = (univ.filter $ λ g, f g = y).card :=
 begin
@@ -102,7 +103,7 @@ end
 section
 local attribute [instance] subtype.group subtype.monoid range.is_submonoid
 /-- In an integral domain, a sum indexed by a nontrivial homomorphism from a finite group is zero. -/
-lemma sum_hom_units_eq_zero (f : G →* R) (hf : f ≠ 1) : ∑ g : G, f g = 0 :=
+lemma sum_hom_units_eq_zero [group G] (f : G →* R) (hf : f ≠ 1) : ∑ g : G, f g = 0 :=
 begin
   classical,
   obtain ⟨x, hx⟩ : ∃ x : set.range f.to_hom_units, ∀ y : set.range f.to_hom_units, y ∈ powers x,
@@ -156,7 +157,7 @@ end
 
 /-- In an integral domain, a sum indexed by a homomorphism from a finite group is zero,
 unless the homomorphism is trivial, in which case the sum is equal to the cardinality of the group. -/
-lemma sum_hom_units (f : G →* R) [decidable (f = 1)] :
+lemma sum_hom_units [group G] (f : G →* R) [decidable (f = 1)] :
   ∑ g : G, f g = if f = 1 then fintype.card G else 0 :=
 begin
   split_ifs with h h,
