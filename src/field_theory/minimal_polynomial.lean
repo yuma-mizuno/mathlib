@@ -79,11 +79,11 @@ variables [integral_domain α]
 
 section ring
 
-variables [ring β] [algebra α β] [nontrivial β]
+variables [ring β] [algebra α β]
 variables {x : β} (hx : is_integral α x)
 
 /--The degree of a minimal polynomial is positive. -/
-lemma degree_pos [nontrivial α] : 0 < degree (minimal_polynomial hx) :=
+lemma degree_pos [nontrivial α] [nontrivial β] : 0 < degree (minimal_polynomial hx) :=
 begin
   apply lt_of_le_of_ne,
   { simpa only [zero_le_degree_iff] using ne_zero hx },
@@ -99,8 +99,9 @@ end
 
 /-- If `L/K` is a ring extension, and `x` is an element of `L` in the image of `K`,
 then the minimal polynomial of `x` is `X - C x`. -/
-lemma eq_X_sub_C_of_algebra_map_inj [nontrivial α] (a : α) (hf : function.injective (algebra_map α β)) :
-  minimal_polynomial (@is_integral_algebra_map α β _ _ _ a) = X - C a :=
+lemma eq_X_sub_C_of_algebra_map_inj [nontrivial α] [nontrivial β] (a : α)
+  (hf : function.injective (algebra_map α β)) :
+minimal_polynomial (@is_integral_algebra_map α β _ _ _ a) = X - C a :=
 begin
   have hdegle : (minimal_polynomial (@is_integral_algebra_map α β _ _ _ a)).nat_degree ≤ 1,
   { apply with_bot.coe_le_coe.1,
@@ -127,7 +128,7 @@ begin
 end
 
 /-- A minimal polynomial is not a unit. -/
-lemma not_is_unit : ¬ is_unit (minimal_polynomial hx) :=
+lemma not_is_unit [nontrivial β] : ¬ is_unit (minimal_polynomial hx) :=
 assume H, (ne_of_lt (degree_pos hx)).symm $ degree_eq_zero_of_is_unit H
 
 /-- If `a` strictly divides the minimal polynomial of `x`, then `x` cannot be a root for `a`. -/
