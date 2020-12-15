@@ -107,40 +107,6 @@ open category_theory.limits
 
 variable {J : Type*}
 
-
-instance Pi.totally_disconnected_space {α : Type*} {β : α → Type*} [t₂ : Πa, topological_space (β a)]
-   [∀a, totally_disconnected_space (β a)] : totally_disconnected_space (Π (a : α), β a) :=
-begin
-  constructor,
-  intros t h1 h2,
-  constructor,
-  intros a b, ext,
-  have H1 : subsingleton ((λ c : (Π (a : α), β a), c x )'' t),
-    { exact (totally_disconnected_space.is_totally_disconnected_univ
-          ( (λ (c : Π (a : α), β a), c x) '' t) (set.subset_univ _)
-          (is_preconnected.image h2 _ (continuous.continuous_on (continuous_apply _)))) },
-  cases H1,
-  have H2 := H1 ⟨(a.1 x), by {simp, use a, split, simp}⟩,
-  have H3 := H2 ⟨(b.1 x), by {simp, use b, split, simp}⟩,
-  simp at H3, exact H3,
-end
-
-theorem subsingleton_of_image {α β : Type*} {f : α → β} (hf : function.injective f)
-  (s : set α) (hs : subsingleton (f '' s)) : subsingleton s :=
-begin
-  apply subsingleton.intro,
-  rintros ⟨a, ha⟩ ⟨b, hb⟩,
-  ext,
-  apply hf,
-  simpa using @subsingleton.elim _ hs ⟨f a, ⟨a, ha, rfl⟩⟩ ⟨f b, ⟨b, hb, rfl⟩⟩,
-end
-
-instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topological_space α] [totally_disconnected_space α] : totally_disconnected_space (subtype p) :=
-  ⟨λ s h1 h2,
-    subsingleton_of_image subtype.val_injective s (
-      totally_disconnected_space.is_totally_disconnected_univ (subtype.val '' s) (set.subset_univ _)
-        ( (is_preconnected.image h2 _) (continuous.continuous_on (@continuous_subtype_val _ _ p)) ) ) ⟩
-
 theorem subset_of_inter_eq_self_left {s t : set α} (h : s ∩ t = s) : s ⊆ t :=
 λ x h1, set.mem_of_mem_inter_right (by {rw h, exact h1})
 
