@@ -94,8 +94,6 @@ def Fintype_to_Profinite : Fintype ⥤ Profinite :=
 
 namespace Profinite
 
-variables (α : Type*) [topological_space α]
-
 open category_theory.limits
 
 variable {J : Type*}
@@ -135,7 +133,182 @@ instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
 
---lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) : _
+def component_setoid (α : Type*) [topological_space α] : setoid α :=
+⟨ λ x y, connected_component y = connected_component x,
+  ⟨ λ x, by trivial, λ x y h1, eq.symm h1, λ x y z h1 h2, eq.trans h2 h1 ⟩⟩
+local attribute [instance] component_setoid
+
+variables {α : Type*} [topological_space α]
+open set
+
+lemma component_rel_iff {x y : α} : ⟦x⟧ = ⟦y⟧ ↔ connected_component x = connected_component y :=
+⟨λ h, (quotient.exact h).symm, λ h, quotient.sound h.symm⟩
+
+#check subset_connected_component
+#check not_iff_not
+
+lemma connected_component_disjoint {x y : α} (h : connected_component x ≠ connected_component y) :
+  disjoint (connected_component x) (connected_component y) :=
+set.disjoint_left.2 (λ a h1 h2, h (
+  eq.trans (connected_component_eq h1) (connected_component_eq h2).symm))
+
+lemma component_nrel_iff {x y : α} : ⟦x⟧ ≠ ⟦y⟧ ↔ connected_component x ≠ connected_component y :=
+begin
+rw not_iff_not,
+exact component_rel_iff,
+end
+
+lemma clopen_eq_union_connected_components {Z : set α} (h : is_clopen Z) :
+  Z = (⋃ (x : α) (H : x ∈ Z), connected_component x) :=
+begin
+  apply eq_of_subset_of_subset,
+  { intros x xZ,
+    apply mem_Union.2 ⟨x, _⟩,
+    apply mem_Union.2,
+    use xZ,
+    exact mem_connected_component,
+  },
+  apply Union_subset,
+  intro x,
+  apply Union_subset,
+  intro xZ,
+  apply subset.trans connected_component_subset_Inter_clopen (Inter_subset _ ⟨Z, ⟨h, xZ⟩⟩),
+end
+
+lemma totally_disconnected_space_iff_connected_component_singleton :
+  totally_disconnected_space α ↔ (∀ x : α, subsingleton (connected_component x)) :=
+begin
+  split,
+  { intros h x,
+    apply h.1,
+    { apply subset_univ },
+    exact (is_connected_connected_component).2 },
+  intro h, constructor,
+  intros s s_sub hs,
+  -- TODO subsingleton of subtype
+  sorry,
+end
+
+#check is_clopen_inter_of_disjoint_cover_clopen
+#check is_closed.preimage
+
+instance component_quot.totally_disconnected_space :
+  totally_disconnected_space (quotient (component_setoid α)) :=
+begin
+  rw totally_disconnected_space_iff_connected_component_singleton,
+  intro x,
+  apply quotient.induction_on x,
+  intro a,
+  constructor,
+  intros x' x'',
+  cases x',
+  cases x'',
+  revert x'_property,
+  revert x''_property,
+  apply quotient.induction_on x'_val,
+  apply quotient.induction_on x''_val,
+  intros b c hb hc,
+  ext,
+  dsimp,
+  rw component_rel_iff,
+  rw ←mem_preimage at hb,
+  have H : is_connected (quotient.mk ⁻¹' connected_component ⟦a⟧),
+  { refine ⟨nonempty_of_mem hb, _⟩,
+    apply (is_preconnected_iff_subset_of_fully_disjoint_closed
+      (is_closed.preimage continuous_quotient_mk is_closed_connected_component)).2,
+    intros u v hu hv uv_cover huv,
+    /-
+    let ⟦t⟧ ∈ connected_component ⟦a⟧,
+    have quotient.mk ⁻¹' ⟦t⟧ ⊆ u ∩ ..⁻¹' connected_component ⟦a⟧ ∨ ..⁻¹' v ∩ connected_component ⟦a⟧
+    have connected_component ⟦a⟧ = T₁ ∪ T₂ ...
+    have is_closed T₁
+    have is_closed T₂
+    some Ti = ∅
+    ...
+
+    -/
+    sorry,
+  },
+
+  have h1 := subset_connected_component H.2 hb,
+  rw ←mem_preimage at hc,
+  apply eq.symm,
+  apply connected_component_eq,
+  apply mem_of_subset_of_mem h1 hc,
+end
+
+#check quotient_map_iff.1
+#check is_compact.inter_Inter_nonempty
+#check is_compact.elim_finite_subfamily_closed
+#check subset_preimage_image
+#check preimage_injective
+#check preimage_empty
+#check surjective_quotient_mk
+
+def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
+{ obj := λ X,
+  { to_Top := { α := quotient (component_setoid X.to_Top.α)},
+    is_compact := quotient.compact_space,
+    is_t2 :=
+    begin
+      constructor, intros x y,
+      apply quotient.induction_on x,
+      apply quotient.induction_on y,
+      intros a b ne,
+      rw component_nrel_iff at ne,
+      have h := connected_component_disjoint ne,
+      rw [connected_component_eq_Inter_clopen, disjoint_iff_inter_eq_empty, inter_comm] at h,
+      cases is_compact.elim_finite_subfamily_closed
+        (is_closed.compact (is_closed_connected_component)) _ _ h with fin_a ha,
+      simp at ha,
+      set U : set X.to_Top.α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
+      rw ←hU at ha,
+      use quotient.mk '' U,
+      use quotient.mk '' Uᶜ,
+      have hu : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
+      have h1 := clopen_eq_union_connected_components hu,
+      have h2 : (quotient.mk ⁻¹' (quotient.mk '' U)) = U,
+      { apply set.eq_of_subset_of_subset,
+        { conv {congr, skip, rw h1},
+          intros c hc,
+          rw mem_preimage at hc,
+          rw mem_image _ _ ⟦c⟧ at hc,
+          rcases hc with ⟨d, hd, hcd⟩,
+          apply mem_Union.2, use d,
+          apply mem_Union.2, use hd,
+          rw component_rel_iff at hcd,
+          rw hcd,
+          exact mem_connected_component },
+        exact subset_preimage_image _ _ },
+      have h3 : (quotient.mk ⁻¹' (quotient.mk '' Uᶜ)) = Uᶜ,
+      { --TODO : make h2 into lemma and apply here
+        sorry },
+      split,
+      {  apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
+         rw h2,
+         exact hu.1 },
+      split,
+      { apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
+        rw h3,
+        exact is_open_compl_iff.2 hu.2 },
+      split,
+      { apply mem_image_of_mem,
+        rw mem_Inter, intro Z,
+        rw mem_Inter, intro Zmem,
+        exact Z.2.2 },
+      split,
+      { apply mem_image_of_mem,
+        apply mem_of_subset_of_mem _ (@mem_connected_component _ _ a),
+        exact subset_compl_iff_disjoint.2 ha },
+      apply preimage_injective.2 (@surjective_quotient_mk _ _),
+      rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
+      -- TOO SWAP GOAL TO AFTER have ha
+      exact (λ Z, Z.2.1.2),
+    end
+    },
+  map := _,
+  map_id' := _,
+  map_comp' := _,}
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
@@ -221,73 +394,9 @@ def proetale_pretopology : pretopology Profinite :=
     end),
   transitive' := _ }
 
-def procompletion_setoid : setoid α :=
-⟨ λ x y, y ∈ connected_component x,
-  ⟨ λ x, mem_connected_component,
-    begin
-      intros x y h1,
-      rw ←connected_component_eq h1,
-      exact mem_connected_component,
-    end,
-    begin
-      intros x y z h1 h2,
-      rw [(connected_component_eq h1), (connected_component_eq h2)],
-      exact mem_connected_component
-    end
-⟩⟩
-local attribute [instance] procompletion_setoid
-
---lemma eqv_class_connected_component (s : procompletion_setoid.classes) :
-
-#check quotient_map_iff.1
-def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
-{ obj := λ X,
-  { to_Top := { α := quotient (procompletion_setoid X.to_Top.α)},
-    is_compact := quotient.compact_space,
-    is_t2 :=
-    begin
-      constructor, intros x y,
-      apply quotient.induction_on x,
-      apply quotient.induction_on y,
-      intros a b ne,
-      have top_thing : ∃ (u v : set X.to_Top.α), is_open u ∧ is_open v
-        ∧ connected_component a ⊆ u ∧ connected_component b ⊆ v ∧ u ∩ v = ∅,
-      {
-        haveI := (@normal_of_compact_t2 _ _ X.is_compact X.is_hausdorff),
-        simp_rw ←set.disjoint_iff_inter_eq_empty,
-        apply normal_space.normal (connected_component a) (connected_component b)
-          (is_closed_connected_component) is_closed_connected_component _,
-        sorry,
-      },
-    cases top_thing with u H,
-    cases H with v H,
-    cases H with Ou H,
-    cases H with Ov H,
-    cases H with a_u H,
-    cases H with b_v disj,
-    use ((quotient.mk)'' u),
-    use ((quotient.mk)'' v),
-    split,
-      {
-        rw (quotient_map_iff.1 quotient_map_quot_mk).2,
-
-      }
-    {split,
-      {sorry},
-    {split,
-      {sorry},
-    {split,
-     {sorry},
-    sorry
-    }}}
-    end
 
 
-    ,
-    is_totally_disconnected := _ },
-  map := _,
-  map_id' := _,
-  map_comp' := _,}
 
+lemma profinite_is_limit_of_discrete {ι : Type*} (I : ι → Type) (h : ∀ i, fintype (I i)) (X : Profinite) : _
 -/
 end Profinite
