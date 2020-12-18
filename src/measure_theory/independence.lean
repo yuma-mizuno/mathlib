@@ -10,12 +10,12 @@ import algebra.big_operators.intervals
 # Independence of sets of sets and measure spaces (σ-algebras)
 
 * A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
-any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+any finite set of indices `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. It will be used
 for families of pi_systems.
 * A family of measurable spaces (or σ-algebras) is independent if the family of sets of measurable
-sets they difine is independent. `m : ι → measurable_space α` is independent with
-respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+sets they define is independent. `m : ι → measurable_space α` is independent with
+respect to measure `μ` if for any finite set of indices `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
 * Independence of sets (or events in probabilistic parlance) is defined as independence of the
 measurable spaces they generate: a set `s` generates the measurable space with measurable sets
@@ -61,7 +61,7 @@ local attribute [instance] classical.prop_decidable
 section definitions
 
 /-- A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
-any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+any finite set of indices `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
 It will be used for families of pi_systems. -/
 def indep_sets {α ι} [measurable_space α] (pi : ι → set (set α)) (μ : measure α) : Prop :=
@@ -74,7 +74,7 @@ def indep2_sets {α} [measurable_space α] (p1 p2 : set (set α)) (μ : measure 
 ∀ t1 t2 : set α, t1 ∈ p1 → t2 ∈ p2 → μ (t1 ∩ t2) = μ t1 * μ t2
 
 /-- A family of measurable spaces (or σ-algebras) `m : ι → measurable_space α` is independent with
-respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+respect to measure `μ` if for any finite set of indices `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. -/
 def indep {α ι} (m : ι → measurable_space α) [measurable_space α] (μ : measure α) : Prop :=
 indep_sets (λ x, (m x).is_measurable') μ
