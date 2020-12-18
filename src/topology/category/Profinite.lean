@@ -88,9 +88,7 @@ def Fintype_to_Profinite : Fintype ⥤ Profinite :=
     is_totally_disconnected := by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩; apply_instance },
   map := λ X Y f, by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩;
                   by letI:topological_space Y := ⊥; letI:discrete_topology Y := ⟨rfl⟩;
-                  exact ⟨f, continuous_of_discrete_topology⟩,
-  map_id' := λ X, rfl,
-  map_comp' := λ X Y Z f g, rfl}
+                  exact ⟨f, continuous_of_discrete_topology⟩ }
 
 namespace Profinite
 
@@ -217,13 +215,26 @@ begin
     apply (is_preconnected_iff_subset_of_fully_disjoint_closed
       (is_closed.preimage continuous_quotient_mk is_closed_connected_component)).2,
     intros u v hu hv uv_cover huv,
+    let T₁ := {t : quotient (component_setoid α) | (t ∈ connected_component ⟦a⟧) ∧ (quotient.mk ⁻¹ t) ⊆ u},
+    let T₂ := {t : quotient (component_setoid α) | (t ∈ connected_component ⟦a⟧) ∧ (quotient.mk ⁻¹ t) ⊆ v},
+    have H1 : connected_component ⟦a⟧ = T₁ ∪ T₂,
+    { apply set.eq_of_subset_of_subset,
+      { sorry
+
+      },
+      sorry
+    },
+    have HT₁ : is_closed T₁,
+    {
+
+    },
+    have HT₂ : is_closed T₂,
+    {
+
+    },
     /-
-    let ⟦t⟧ ∈ connected_component ⟦a⟧,
-    have quotient.mk ⁻¹' ⟦t⟧ ⊆ u ∩ ..⁻¹' connected_component ⟦a⟧ ∨ ..⁻¹' v ∩ connected_component ⟦a⟧
-    have connected_component ⟦a⟧ = T₁ ∪ T₂ ...
-    have is_closed T₁
-    have is_closed T₂
     some Ti = ∅
+    connected_component ⟦a⟧ = Ti → subset thing.. DONE
     ...
 
     -/
@@ -237,13 +248,47 @@ begin
   apply mem_of_subset_of_mem h1 hc,
 end
 
+#check quotient.lift
+#check function.comp
+#check quotient.sound
+#check quotient
+#check is_preconnected.image
+#check component_rel_iff
+
+def component_map {β : Type*} [topological_space β] (f : α → β) [h : continuous f] :
+  quotient (component_setoid α) → quotient (component_setoid β) :=
+quotient.lift (quotient.mk ∘ f) (λ a b hab,
+begin
+  apply quotient.sound,
+  apply connected_component_eq,
+  -- TODO: make separate lemma:
+  have H : f '' connected_component b ⊆ connected_component (f b),
+  { apply subset_connected_component,
+    { exact is_preconnected.image (is_connected_connected_component).2 f (continuous.continuous_on h)},
+    rw mem_image,
+    use b,
+    split,
+    { exact mem_connected_component },
+    refl,
+  },
+  apply mem_of_subset_of_mem H,
+  rw mem_image,
+  use a,
+  split,
+  { rw ←(component_rel_iff.1 (quotient.sound hab)),
+    exact mem_connected_component },
+  refl,
+end
+)
+
+
+
 #check quotient_map_iff.1
 #check is_compact.inter_Inter_nonempty
 #check is_compact.elim_finite_subfamily_closed
 #check subset_preimage_image
 #check preimage_injective
 #check preimage_empty
-#check surjective_quotient_mk
 
 def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
 { obj := λ X,
@@ -306,9 +351,7 @@ def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
       exact (λ Z, Z.2.1.2),
     end
     },
-  map := _,
-  map_id' := _,
-  map_comp' := _,}
+  map := _,}
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
