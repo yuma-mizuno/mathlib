@@ -7,23 +7,20 @@ import measure_theory.measure_space
 import algebra.big_operators.intervals
 
 /-!
-# Independence of measure spaces (σ-algebras) and sets of sets
+# Independence of sets of sets and measure spaces (σ-algebras)
 
-We define independence of measurable spaces and of sets of sets.
-
-* A family of measurable spaces (or σ-algebras) `m : ι → measurable_space α` is independent with
-respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
-`f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
 * A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
 any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. It will be used
 for families of pi_systems.
-
-Independence of sets (or events in probabilistic parlance) is defined as independence of the
+* A family of measurable spaces (or σ-algebras) is independent if the family of sets of measurable
+sets they difine is independent. `m : ι → measurable_space α` is independent with
+respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+`f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
+* Independence of sets (or events in probabilistic parlance) is defined as independence of the
 measurable spaces they generate: a set `s` generates the measurable space with measurable sets
 `∅, s, sᶜ, univ`.
-
-Independence of functions (or random variables) is also defined as independence of the measurable
+* Independence of functions (or random variables) is also defined as independence of the measurable
 spaces they generate : a function `f` for which we have a measurable space `m` on the codomain
 generates `measurable_space.comap f m`.
 
@@ -35,10 +32,10 @@ generates `measurable_space.comap f m`.
 
 ## Implementation notes
 
-We provide two main definitions of independence.
-* `indep`: independence of a family of measurable spaces `m : ι → measurable_space α`,
+We provide one main definitions of independence:
 * `indep_sets`: independence of a family of sets of sets `pi : ι → set (set α)`,
-Two other independence notions are defined using `indep`:
+Three other independence notions are defined using `indep_sets`:
+* `indep`: independence of a family of measurable spaces `m : ι → measurable_space α`,
 * `indep_set`: independence of a family of sets `s : ι → set α`,
 * `indep_fun`: independence of a family of functions. For measurable spaces
   `m : Π (x : ι), measurable_space (β x)`, we consider functions `f : Π (x : ι), α → β x`.
@@ -46,9 +43,9 @@ Two other independence notions are defined using `indep`:
 Additionally, we provide four corresponding statements for two measurable spaces (resp. sets of
 sets, sets, functions) instead of a family.
 
-The definition of independence for `indep` and `indep_sets` uses finite sets (`finset`): it is a
-statement of the form "for all finite sets...". An alternative and equivalent way of defining
-independence would have been to use countable sets.
+The definition of independence for `indep_sets` uses finite sets (`finset`): it is a statement of
+the form "for all finite sets...". An alternative and equivalent way of defining independence
+would have been to use countable sets.
 TODO: prove that equivalence.
 
 ## References
@@ -63,19 +60,31 @@ local attribute [instance] classical.prop_decidable
 
 section definitions
 
+/-- A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
+any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
+`f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
+It will be used for families of pi_systems. -/
+def indep_sets {α ι} [measurable_space α] (pi : ι → set (set α)) (μ : measure α) : Prop :=
+∀ (S : finset ι) {f : ι → set α} (H : ∀ x, x ∈ S → f x ∈ pi x),
+  μ (⋂ t ∈ S, f t) = ∏ t in S, μ (f t)
+
+/-- Two sets of sets `p₁, p₂` are independent with respect to
+measure `μ` if for any sets `t₁ ∈ p₁, t₂ ∈ p₂`, `μ (t₁ ∩ t₂) = μ (t₁) * μ (t₂)` -/
+def indep2_sets {α} [measurable_space α] (p1 p2 : set (set α)) (μ : measure α) : Prop :=
+∀ t1 t2 : set α, t1 ∈ p1 → t2 ∈ p2 → μ (t1 ∩ t2) = μ t1 * μ t2
+
 /-- A family of measurable spaces (or σ-algebras) `m : ι → measurable_space α` is independent with
 respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. -/
 def indep {α ι} (m : ι → measurable_space α) [measurable_space α] (μ : measure α) : Prop :=
-∀ (S : finset ι) {f : ι → set α} (H : ∀ x, x ∈ S → (m x).is_measurable' (f x)),
-  μ (⋂ t ∈ S, f t) = ∏ t in S, μ (f t)
+indep_sets (λ x, (m x).is_measurable') μ
 
 /-- Two measurable spaces (or σ-algebras) `m₁, m₂` are independent with respect to
 measure `μ` if for any sets `t₁ ∈ m₁, t₂ ∈ m₂`, `μ (t₁ ∩ t₂) = μ (t₁) * μ (t₂)` -/
 def indep2 {α} (m₁ : measurable_space α) (m₂ : measurable_space α) [measurable_space α]
   (μ : measure α) :
   Prop :=
-∀ t1 t2 : set α, m₁.is_measurable' t1 → m₂.is_measurable' t2 → μ (t1 ∩ t2) = μ t1 * μ t2
+indep2_sets (m₁.is_measurable') (m₂.is_measurable') μ
 
 /-- A family of sets is independent if the family of measurable spaces they generate is
 independent. For a set `s`, the generated measurable space has measurable sets `∅, s, sᶜ, univ`. -/
@@ -100,20 +109,6 @@ space is `measurable_space.comap f m`. -/
 def indep2_fun {α β γ} [measurable_space α] (mβ : measurable_space β) (mγ : measurable_space γ)
   {f : α → β} {g : α → γ} (μ : measure α) : Prop :=
 indep2 (measurable_space.comap f mβ) (measurable_space.comap g mγ) μ
-
-/-- A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
-any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
-`f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
-It will be used for families of pi_systems. -/
-def indep_sets {α ι} [measurable_space α] (pi : ι → set (set α)) (μ : measure α) :
-  Prop :=
-∀ (S : finset ι) {f : ι → set α} (H : ∀ x, x ∈ S → f x ∈ pi x),
-  μ (⋂ t ∈ S, f t) = ∏ t in S, μ (f t)
-
-/-- Two sets of sets `p₁, p₂` are independent with respect to
-measure `μ` if for any sets `t₁ ∈ p₁, t₂ ∈ p₂`, `μ (t₁ ∩ t₂) = μ (t₁) * μ (t₂)` -/
-def indep2_sets {α} [measurable_space α] (p1 p2 : set (set α)) (μ : measure α) : Prop :=
-∀ t1 t2 : set α, t1 ∈ p1 → t2 ∈ p2 → μ (t1 ∩ t2) = μ t1 * μ t2
 
 end definitions
 
@@ -203,8 +198,10 @@ begin
   { intros x hx,
     rw finset.mem_insert at hx,
     cases hx,
-    { simp [hx, ht₁], },
-    { simp [finset.mem_singleton.mp hx, hij.symm, ht₂], }, },
+    { have ht₁' : (m i).is_measurable' t₁, by assumption,
+      simp [hx, ht₁'], },
+    { have ht₂' : (m j).is_measurable' t₂, by assumption,
+      simp [finset.mem_singleton.mp hx, hij.symm, ht₂'], }, },
   have h1 : t₁ = ite (i = i) t₁ t₂, by simp only [if_true, eq_self_iff_true],
   have h2 : t₂ = ite (j = i) t₁ t₂, by simp only [hij.symm, if_false],
   have h_inter : (⋂ (t : ι) (H : t ∈ ({i, j} : finset ι)), ite (t = i) t₁ t₂)
@@ -262,6 +259,7 @@ lemma indep_sets_of_indep {α ι} [measurable_space α] {μ : measure α} {m : �
   indep_sets p μ :=
 begin
   refine (λ S f hfp, h_indep S (λ x hxS, _)),
+  dsimp only,
   rw hps x,
   exact measurable_space.is_measurable_generate_from (hfp x hxS),
 end
