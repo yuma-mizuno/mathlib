@@ -32,7 +32,7 @@ generates `measurable_space.comap f m`.
 
 ## Implementation notes
 
-We provide one main definitions of independence:
+We provide one main definition of independence:
 * `indep_sets`: independence of a family of sets of sets `pi : ι → set (set α)`,
 Three other independence notions are defined using `indep_sets`:
 * `indep`: independence of a family of measurable spaces `m : ι → measurable_space α`,
