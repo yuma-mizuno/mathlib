@@ -1603,6 +1603,15 @@ lemma measure.finite_at_nhds [topological_space α] (μ : measure α)
   μ.finite_at_filter (𝓝 x) :=
 locally_finite_measure.finite_at_nhds x
 
+lemma measure.smul_finite {α : Type*} [measurable_space α] (μ : measure α) [finite_measure μ]
+  {c : ennreal} (hc : c < ⊤) :
+  finite_measure (c • μ) :=
+begin
+  refine ⟨_⟩,
+  rw measure.smul_apply,
+  exact ennreal.mul_lt_top hc (measure_lt_top μ set.univ),
+end
+
 /-- Two finite measures are equal if they are equal on the π-system generating the σ-algebra
   (and `univ`). -/
 lemma ext_of_generate_finite (C : set (set α)) (hA : _inst_1 = generate_from C)
@@ -1616,6 +1625,24 @@ begin
   { rintros f h1f h2f h3f, simp [measure_Union, is_measurable.Union, *] }
 end
 
+lemma ext_on_sigma_algebra_of_generate_finite {α} (m₀ : measurable_space α)
+  {μ ν : measure α} [finite_measure μ] [finite_measure ν]
+  (C : set (set α)) (hμν : ∀ s ∈ C, μ s = ν s) {m : measurable_space α}
+  (h : m ≤ m₀) (hA : m = measurable_space.generate_from C) (hC : is_pi_system C)
+  (h_univ : μ set.univ = ν set.univ) {s : set α} {hs : m.is_measurable' s}:
+  μ s = ν s :=
+begin
+  refine measurable_space.induction_on_inter hA hC (by simp) hμν _ _ hs,
+  { intros t h1t h2t,
+    have h1t_ : @is_measurable α m₀ t, from h _ h1t,
+    rw @measure_compl α m₀ μ t h1t_ (@measure_lt_top α m₀ μ _ t),
+    rw @measure_compl α m₀ ν t h1t_ (@measure_lt_top α m₀ ν _ t),
+    rw [h_univ, h2t], },
+  { intros f h1f h2f h3f,
+    have h2f_ : ∀ (i : ℕ), @is_measurable α m₀ (f i), from (λ i, h _ (h2f i)),
+    have h_Union : @is_measurable α m₀ (⋃ (i : ℕ), f i), from @is_measurable.Union α ℕ m₀ _ f h2f_,
+    simp [measure_Union, h_Union, h1f, h3f, h2f_], },
+end
 
 namespace measure
 
