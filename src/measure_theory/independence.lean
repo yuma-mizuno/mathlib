@@ -124,13 +124,13 @@ lemma indep2.symm {α} {m₁ m₂ : measurable_space α} [measurable_space α] {
   indep2 m₂ m₁ μ :=
 by {intros t1 t2 ht1 ht2, rw [set.inter_comm, mul_comm], exact h t2 t1 ht2 ht1, }
 
-lemma indep2_of_indep2_of_le_left {α} {m₁ m₂ m₃: measurable_space α}
-  [measurable_space α] {μ : measure α} (h31 : m₃ ≤ m₁) (h_indep : indep2 m₁ m₂ μ) :
+lemma indep2_of_indep2_of_le_left {α} {m₁ m₂ m₃: measurable_space α} [measurable_space α]
+  {μ : measure α} (h_indep : indep2 m₁ m₂ μ) (h31 : m₃ ≤ m₁) :
   indep2 m₃ m₂ μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 (h31 _ ht1) ht2
 
-lemma indep2_of_indep2_of_le_right {α} {m₁ m₂ m₃: measurable_space α}
-  [measurable_space α] {μ : measure α} (h32 : m₃ ≤ m₂) (h_indep : indep2 m₁ m₂ μ) :
+lemma indep2_of_indep2_of_le_right {α} {m₁ m₂ m₃: measurable_space α} [measurable_space α]
+  {μ : measure α} (h_indep : indep2 m₁ m₂ μ) (h32 : m₃ ≤ m₂) :
   indep2 m₁ m₃ μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 ht1 (h32 _ ht2)
 
@@ -139,13 +139,13 @@ lemma indep2_sets.symm {α} {p₁ p₂ : set (set α)}[measurable_space α] {μ 
   indep2_sets p₂ p₁ μ :=
 by {intros t1 t2 ht1 ht2, rw [set.inter_comm, mul_comm], exact h t2 t1 ht2 ht1, }
 
-lemma indep2_sets_of_indep2_sets_of_le_left {α} {p₁ p₂ p₃: set (set α)}
-  [measurable_space α] {μ : measure α} (h31 : p₃ ⊆ p₁) (h_indep : indep2_sets p₁ p₂ μ) :
+lemma indep2_sets_of_indep2_sets_of_le_left {α} {p₁ p₂ p₃: set (set α)} [measurable_space α]
+  {μ : measure α} (h_indep : indep2_sets p₁ p₂ μ) (h31 : p₃ ⊆ p₁) :
   indep2_sets p₃ p₂ μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 (set.mem_of_subset_of_mem h31 ht1) ht2
 
-lemma indep2_sets_of_indep2_sets_of_le_right {α} {p₁ p₂ p₃: set (set α)}
-  [measurable_space α] {μ : measure α} (h32 : p₃ ⊆ p₂) (h_indep : indep2_sets p₁ p₂ μ) :
+lemma indep2_sets_of_indep2_sets_of_le_right {α} {p₁ p₂ p₃: set (set α)} [measurable_space α]
+  {μ : measure α} (h_indep : indep2_sets p₁ p₂ μ) (h32 : p₃ ⊆ p₂) :
   indep2_sets p₁ p₃ μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 ht1 (set.mem_of_subset_of_mem h32 ht2)
 
@@ -165,8 +165,8 @@ lemma indep2_sets.union_iff {α} [measurable_space α] {p₁ p₂ p' : set (set 
 begin
   split; intro h,
   { split,
-    { exact indep2_sets_of_indep2_sets_of_le_left (set.subset_union_left p₁ p₂) h, },
-    { exact indep2_sets_of_indep2_sets_of_le_left (set.subset_union_right p₁ p₂) h, }, },
+    { exact indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_left p₁ p₂), },
+    { exact indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_right p₁ p₂), }, },
   { exact indep2_sets.union h.left h.right, },
 end
 
@@ -220,8 +220,8 @@ begin
   rw [←h_inter, ←h_prod, h_indep {i, j} hf_m],
 end
 
-lemma indep2_sets_of_indep_sets {α ι} {m : ι → set (set α)} [measurable_space α]
-  {μ : measure α} (h_indep : indep_sets m μ) {i j : ι} (hij : i ≠ j) :
+lemma indep2_sets_of_indep_sets {α ι} {m : ι → set (set α)} [measurable_space α] {μ : measure α}
+  (h_indep : indep_sets m μ) {i j : ι} (hij : i ≠ j) :
   indep2_sets (m i) (m j) μ :=
 begin
   intros t₁ t₂ ht₁ ht₂,
@@ -256,9 +256,9 @@ Independence of measurable spaces is equivalent to independence of generating π
 
 section from_measurable_spaces_to_sets_of_sets
 
-lemma indep_sets_of_indep {α ι} [measurable_space α] {m : ι → measurable_space α}
+lemma indep_sets_of_indep {α ι} [measurable_space α] {μ : measure α} {m : ι → measurable_space α}
   {p : ι → set (set α)} (hps : ∀ n, m n = measurable_space.generate_from (p n))
-  {μ : measure α} (h_indep : indep m μ) :
+  (h_indep : indep m μ) :
   indep_sets p μ :=
 begin
   refine (λ S f hfp, h_indep S (λ x hxS, _)),
@@ -266,7 +266,7 @@ begin
   exact measurable_space.is_measurable_generate_from (hfp x hxS),
 end
 
-lemma indep2_sets_of_indep2 {α} [measurable_space α] {p1 p2 : set (set α)} {μ : measure α}
+lemma indep2_sets_of_indep2 {α} [measurable_space α] {μ : measure α} {p1 p2 : set (set α)}
   (h_indep : indep2 (measurable_space.generate_from p1) (measurable_space.generate_from p2) μ) :
   indep2_sets p1 p2 μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 (measurable_space.is_measurable_generate_from ht1)
