@@ -11,9 +11,9 @@ import algebra.big_operators.intervals
 
 We define independence of measurable spaces and of sets of sets.
 
-* A family of measurable spaces (or σ-algebras) `s : ι → measurable_space α` is independent with
+* A family of measurable spaces (or σ-algebras) `m : ι → measurable_space α` is independent with
 respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
-`f i_1 ∈ s i_1, ..., f i_n ∈ s i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
+`f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `.
 * A family of sets of sets `π : ι → set (set α)` is independent with respect to measure `μ` if for
 any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
 `f i_1 ∈ π i_1, ..., f i_n ∈ π i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. It will be used
@@ -41,7 +41,7 @@ We provide two main definitions of independence.
 Two other independence notions are defined using `indep`:
 * `indep_set`: independence of a family of sets `s : ι → set α`,
 * `indep_fun`: independence of a family of functions. For measurable spaces
-  `m : Π (x : ι), measurable_space (β x)`, we consider `f : Π (x : ι), α → β x`.
+  `m : Π (x : ι), measurable_space (β x)`, we consider functions `f : Π (x : ι), α → β x`.
 
 Additionally, we provide four corresponding statements for two measurable spaces (resp. sets of
 sets, sets, functions) instead of a family.
@@ -63,11 +63,11 @@ local attribute [instance] classical.prop_decidable
 
 section definitions
 
-/-- A family of measurable spaces (or σ-algebras) `s : ι → measurable_space α` is independent with
+/-- A family of measurable spaces (or σ-algebras) `m : ι → measurable_space α` is independent with
 respect to measure `μ` if for any finite set of indexes `S = {i_1, ..., i_n}`, for any sets
-`f i_1 ∈ s i_1, ..., f i_n ∈ s i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. -/
-def indep {α ι} (s : ι → measurable_space α) [measurable_space α] (μ : measure α) : Prop :=
-∀ (S : finset ι) {f : ι → set α} (H : ∀ x, x ∈ S → (s x).is_measurable' (f x)),
+`f i_1 ∈ m i_1, ..., f i_n ∈ m i_n`, `μ (⋂ m in S, f i_m) = ∏ m in S, μ (f i_m) `. -/
+def indep {α ι} (m : ι → measurable_space α) [measurable_space α] (μ : measure α) : Prop :=
+∀ (S : finset ι) {f : ι → set α} (H : ∀ x, x ∈ S → (m x).is_measurable' (f x)),
   μ (⋂ t ∈ S, f t) = ∏ t in S, μ (f t)
 
 /-- Two measurable spaces (or σ-algebras) `m₁, m₂` are independent with respect to
@@ -97,7 +97,7 @@ indep (λ x, measurable_space.comap (f x) (m x)) μ
 /-- Two functions are independent if the two measurable spaces they generate are independent.
 For a function `f` with codomain having measurable space `m`, the generated measurable
 space is `measurable_space.comap f m`. -/
-def indep2_fun {α β γ} [measurable_space α] {mβ : measurable_space β} {mγ : measurable_space γ}
+def indep2_fun {α β γ} [measurable_space α] (mβ : measurable_space β) (mγ : measurable_space γ)
   {f : α → β} {g : α → γ} (μ : measure α) : Prop :=
 indep2 (measurable_space.comap f mβ) (measurable_space.comap g mγ) μ
 
@@ -194,12 +194,12 @@ end indep2
 
 section from_indep_to_indep2
 
-lemma indep2_of_indep {α ι} {s : ι → measurable_space α} [measurable_space α] {μ : measure α}
-  (h_indep : indep s μ) {i j : ι} (hij : i ≠ j) :
-  indep2 (s i) (s j) μ :=
+lemma indep2_of_indep {α ι} {m : ι → measurable_space α} [measurable_space α] {μ : measure α}
+  (h_indep : indep m μ) {i j : ι} (hij : i ≠ j) :
+  indep2 (m i) (m j) μ :=
 begin
   intros t₁ t₂ ht₁ ht₂,
-  have hf_m : ∀ (x : ι), x ∈ ({i, j} : finset ι) → (s x).is_measurable' (ite (x=i) t₁ t₂),
+  have hf_m : ∀ (x : ι), x ∈ ({i, j} : finset ι) → (m x).is_measurable' (ite (x=i) t₁ t₂),
   { intros x hx,
     rw finset.mem_insert at hx,
     cases hx,
@@ -220,12 +220,12 @@ begin
   rw [←h_inter, ←h_prod, h_indep {i, j} hf_m],
 end
 
-lemma indep2_sets_of_indep_sets {α ι} {s : ι → set (set α)} [measurable_space α]
-  {μ : measure α} (h_indep : indep_sets s μ) {i j : ι} (hij : i ≠ j) :
-  indep2_sets (s i) (s j) μ :=
+lemma indep2_sets_of_indep_sets {α ι} {m : ι → set (set α)} [measurable_space α]
+  {μ : measure α} (h_indep : indep_sets m μ) {i j : ι} (hij : i ≠ j) :
+  indep2_sets (m i) (m j) μ :=
 begin
   intros t₁ t₂ ht₁ ht₂,
-  have hf_m : ∀ (x : ι), x ∈ ({i, j} : finset ι) → (ite (x=i) t₁ t₂) ∈ (s x) ,
+  have hf_m : ∀ (x : ι), x ∈ {i, j} → (ite (x=i) t₁ t₂) ∈ m x,
   { intros x hx,
     rw finset.mem_insert at hx,
     cases hx,
