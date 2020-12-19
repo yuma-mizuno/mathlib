@@ -688,7 +688,8 @@ end indep_of_indep_sets_of_pi_system
 
 section lattice
 
-lemma bsupr_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
+lemma bsupr_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α}
+  (h : ∀ i,  p i → q i) :
   (⨆ i (hi : p i), f i) ≤ (⨆ i (hi : q i), f i) :=
 begin
   suffices h_forall : ∀ i, (⨆ (hi : p i), f i) ≤ ⨆ (hi : q i), f i,
@@ -698,8 +699,9 @@ begin
   exact (λ i pi, le_supr (λ (hqi : q i), f i) (h i pi)),
 end
 
-lemma binfi_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
-   (⨅ i (hi : q i), f i) ≤ (⨅ i (hi : p i), f i) :=
+lemma binfi_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α}
+  (h : ∀ i,  p i → q i) :
+  (⨅ i (hi : q i), f i) ≤ (⨅ i (hi : p i), f i) :=
 @bsupr_le_of_mp (order_dual α) ι _ p q f h
 
 lemma le_head_n {α} [complete_lattice α] (s : ℕ → α) {i n : ℕ} (hin : i < n) : s i ≤ ⨆ j < n, s j :=
