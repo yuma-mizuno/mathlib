@@ -725,8 +725,7 @@ begin
   { exact supr_le (λ i, bsupr_le_supr (λ n, n < i) (λ n, s n)), },
 end
 
-lemma le_tail_n {α} [complete_lattice α] (s : ℕ → α) {i n : ℕ} (hin : n ≤ i) :
-  s i ≤ ⨆ i ≥ n, s i :=
+lemma le_tail_n {α} [complete_lattice α] (s : ℕ → α) {i n : ℕ} (hin : n ≤ i) : s i ≤ ⨆ i ≥ n, s i :=
 le_bsupr i hin
 
 lemma tail_n_le {α} [complete_lattice α] {m : α} (s : ℕ → α) (n : ℕ) (h_le : ∀ n, s n ≤ m) :
@@ -749,22 +748,18 @@ end lattice
 
 section zero_one_law
 
-lemma measure_eq_zero_or_one_or_top_of_indep_self {α} [measurable_space α] (μ : measure α)
+lemma measure_eq_zero_or_one_or_top_of_indep_self {α} [measurable_space α] {μ : measure α}
   {m : measurable_space α} (h_indep : @indep2 α m m _inst_1 μ) {t : set α}
   (ht_m : m.is_measurable' t) :
   μ t = 0 ∨ μ t = 1 ∨ μ t = ⊤ :=
 begin
   specialize h_indep t t ht_m ht_m,
-  rw set.inter_self at h_indep,
   by_cases h0 : μ t = 0,
-  { simp [h0], },
-  { right,
-    by_cases h_top : μ t = ⊤,
-    { simp [h_top], },
-    left,
-    nth_rewrite 0 ←one_mul (μ t) at h_indep,
-    rw ennreal.mul_eq_mul_right h0 h_top at h_indep,
-    exact h_indep.symm, },
+  { exact or.inl h0, },
+  by_cases h_top : μ t = ⊤,
+  { exact or.inr (or.inr h_top), },
+  rw [←one_mul (μ (t ∩ t)), set.inter_self, ennreal.mul_eq_mul_right h0 h_top] at h_indep,
+  exact or.inr (or.inl h_indep.symm),
 end
 
 lemma measure_eq_zero_or_one_of_indep_self {α} [measurable_space α] (μ : measure α)
@@ -774,11 +769,11 @@ lemma measure_eq_zero_or_one_of_indep_self {α} [measurable_space α] (μ : meas
 begin
   have h_0_1_top := @measure_eq_zero_or_one_or_top_of_indep_self α _inst_1 μ m h_indep t ht_m,
   cases h_0_1_top with h0 h_1_top,
-  { simp [h0], },
+  { exact or.inl h0, },
   cases h_1_top with h1 h_top,
-  { simp [h1], },
-  { exfalso,
-    exact (@measure_ne_top α _inst_1 μ _ t) h_top, },
+  { exact or.inr h1, },
+  exfalso,
+  exact (@measure_ne_top α _inst_1 μ _ t) h_top,
 end
 
 lemma head_n_eq_generate_from_Union_Inter_range {α} (s : ℕ → measurable_space α) (n : ℕ):
@@ -792,14 +787,14 @@ end
 lemma tail_n_eq_generate_from_Union_Inter_Ico {α} (s : ℕ → measurable_space α) (N : ℕ) :
   (⨆ i ≥ N, s i)
     = measurable_space.generate_from (pi_system_Union_Inter (λ n, (s n).is_measurable')
-     { p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)}) :=
+     {p : finset ℕ | ∃ r, p = finset.Ico N (N+r+1)}) :=
 begin
   rw ←Sup_prop_eq_generate_from_pi_system_Union_Inter s
-    { p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)},
+    {p : finset ℕ | ∃ r, p = finset.Ico N (N+r+1)},
   congr,
   ext1 i,
   have h_congr : i ≥ N
-    = ∃ (p : finset ℕ) (hp : p ∈ {q : finset ℕ | ∃ r : ℕ, q = finset.Ico N (N+r+1)}), i ∈ p,
+    = ∃ (p : finset ℕ) (hp : p ∈ {q : finset ℕ | ∃ r, q = finset.Ico N (N+r+1)}), i ∈ p,
   { rw eq_iff_iff,
     split; intro h,
     { use finset.Ico N (N+i+1),
@@ -843,10 +838,10 @@ begin
       = (∏ i in finset.Ico N (N + r), 1),
     { refine finset.prod_congr rfl (λ x hx, _),
       simp_rw finset.Ico.mem at hx,
-      have x_not_le : ¬ x < N,
+      have x_not_lt : ¬ x < N,
       { push_neg,
         exact hx.left, },
-      simp [x_not_le], },
+      simp [x_not_lt], },
     rw [h_congr, finset.prod_const_one], },
   rw [h_left, h_right, mul_one],
   { nth_rewrite 0 ←add_zero N,
@@ -864,8 +859,7 @@ begin
     rw finset.mem_range at hx,
     have h_not : ¬ (N ≤ x ∧ x < N + r),
     { rw auto.not_and_eq,
-      left,
-      exact (lt_iff_not_ge _ _).mp hx, },
+      exact or.inl ((lt_iff_not_ge _ _).mp hx), },
     simp [h_not], },
   rw [finset.Ico.zero_bot, h_left, one_mul],
   refine finset.prod_congr rfl (λ x hx, _),
@@ -879,13 +873,12 @@ lemma prod_range_offset {α} [comm_monoid α] (N r : ℕ) (f : ℕ → α) :
   (∏ (n : ℕ) in finset.range (N + r), ite (N ≤ n ∧ n < N + r) (f n) 1)
     = ∏ (n : ℕ) in finset.range r, f (N + n) :=
 begin
-  have h_sub : r = (N + r) - N,
-  { exact (nat.add_sub_cancel_left N r).symm, },
+  have h_sub : r = (N + r) - N, from (nat.add_sub_cancel_left N r).symm,
   nth_rewrite 1 h_sub,
   rw [prod_Ico_ite N r f, ←finset.prod_Ico_eq_prod_range],
 end
 
-lemma aux_p1_remove_ite (N r : ℕ) (p1 : finset ℕ) (f : ℕ → ennreal)
+lemma aux_p1_remove_ite (N r : ℕ) {p1 : finset ℕ} (f : ℕ → ennreal)
   (hp1 : p1 = finset.range N) :
   (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p1) (f x) 1)
     = ∏ (x : ℕ) in finset.range N, (f x) :=
@@ -897,14 +890,13 @@ begin
   by_cases hn : n < N + 1; simp [hn],
 end
 
-lemma aux_p2_remove_ite (N r : ℕ) (p2 : finset ℕ) (f : ℕ → ennreal)
+lemma aux_p2_remove_ite (N r : ℕ) {p2 : finset ℕ} (f : ℕ → ennreal)
   (hp2 : p2 = finset.Ico N (N + r)) :
   (∏ (x : ℕ) in finset.range (N + r), ite (x ∈ p2) (f x) 1)
     = ∏ (x : ℕ) in finset.Ico N (N + r), f x :=
 begin
-  simp_rw hp2,
+  simp_rw [hp2, finset.Ico.mem],
   rw ←prod_Ico_ite N r f,
-  simp_rw finset.Ico.mem,
   --it looks like refl, but the `decidable` arguments of the ite are different.
   congr,
   ext1 n,
@@ -966,10 +958,10 @@ begin
     { exact @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
   have h1 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p1) (μ (f1 x)) 1)
     = ∏ (x : ℕ) in finset.range N, μ (f1 x),
-  from aux_p1_remove_ite N r p1 (λ n, μ (f1 n)) hp1,
+  from aux_p1_remove_ite N r (λ n, μ (f1 n)) hp1,
   have h2 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p2) (μ (f2 x)) 1)
     = ∏ (x : ℕ) in finset.Ico N (N + r + 1), μ (f2 x),
-  from aux_p2_remove_ite N (r + 1) p2 (λ n, μ (f2 n)) hp2,
+  from aux_p2_remove_ite N (r + 1) (λ n, μ (f2 n)) hp2,
   have h_P_1 : μ t1 = ∏ n in p1, μ (f1 n), by rw [ht1_eq, ←h_indep p1 hf1m],
   have h_P_2 : μ t2 = ∏ n in p2, μ (f2 n), by rw [ht2_eq, ←h_indep p2 hf2m],
   have h_P_inter : μ (t1 ∩ t2) = ∏ n in finset.range (N+r+1), μ (g n),
