@@ -954,14 +954,6 @@ begin
   { refine (λ i _, @is_measurable.inter α (s i) _ _ _ _),
     { exact @is_measurable.ite α (s i) _ _ _ (hf1m i) (λ _, @is_measurable.univ α (s i)), },
     { exact @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
-  have h1 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p1) (μ (f1 x)) 1)
-    = ∏ (x : ℕ) in finset.range N, μ (f1 x),
-  from aux_p1_remove_ite N r (λ n, μ (f1 n)) hp1,
-  have h2 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p2) (μ (f2 x)) 1)
-    = ∏ (x : ℕ) in finset.Ico N (N + r + 1), μ (f2 x),
-  from aux_p2_remove_ite N (r + 1) (λ n, μ (f2 n)) hp2,
-  have h_P_1 : μ t1 = ∏ n in p1, μ (f1 n), by rw [ht1_eq, ←h_indep p1 hf1m],
-  have h_P_2 : μ t2 = ∏ n in p2, μ (f2 n), by rw [ht2_eq, ←h_indep p2 hf2m],
   have h_P_inter : μ (t1 ∩ t2) = ∏ n in finset.range (N+r+1), μ (g n),
   { rw [ht1_eq, ht2_eq, aux_t1_inter_t2 N r f1 f2 p1 p2 hp1 hp2],
     have h_almost := h_indep (finset.range (N+r+1)) hgm,
@@ -979,6 +971,14 @@ begin
       linarith, },
     all_goals { simp [measure_univ], }, },
   simp_rw h_μg,
+  have h1 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p1) (μ (f1 x)) 1)
+    = ∏ (x : ℕ) in finset.range N, μ (f1 x),
+  from aux_p1_remove_ite N r (λ n, μ (f1 n)) hp1,
+  have h2 : (∏ (x : ℕ) in finset.range (N + r + 1), ite (x ∈ p2) (μ (f2 x)) 1)
+    = ∏ (x : ℕ) in finset.Ico N (N + r + 1), μ (f2 x),
+  from aux_p2_remove_ite N (r + 1) (λ n, μ (f2 n)) hp2,
+  have h_P_1 : μ t1 = ∏ n in p1, μ (f1 n), by rw [ht1_eq, ←h_indep p1 hf1m],
+  have h_P_2 : μ t2 = ∏ n in p2, μ (f2 n), by rw [ht2_eq, ←h_indep p2 hf2m],
   rw [finset.prod_mul_distrib, h1, h2, h_P_1, h_P_2],
   simp_rw [hp1, hp2],
 end
