@@ -479,8 +479,8 @@ begin
   { exact h_inter_eq, },
 end
 
-lemma generate_from_pi_system_Union_Inter_le {α ι} (m : measurable_space α) (s : ι → measurable_space α)
-  (h : ∀ n, s n ≤ m) (pi : ι → set (set α)) (S : set (finset ι))
+lemma generate_from_pi_system_Union_Inter_le {α ι} {m : measurable_space α}
+  {s : ι → measurable_space α} (h : ∀ n, s n ≤ m) (pi : ι → set (set α)) (S : set (finset ι))
   (hpis : ∀ n, s n = measurable_space.generate_from (pi n)) :
   measurable_space.generate_from (pi_system_Union_Inter pi S) ≤ m :=
 begin
@@ -519,10 +519,10 @@ begin
       simpa using hx1, }, },
 end
 
-lemma le_generate_from_pi_system_Union_Inter {α ι} (s : ι → measurable_space α)
-  (pi : ι → set (set α)) (S : set (finset ι))
+lemma le_generate_from_pi_system_Union_Inter {α ι} {s : ι → measurable_space α}
+  {pi : ι → set (set α)} (S : set (finset ι))
   (hpis : ∀ n, s n = measurable_space.generate_from (pi n)) (h_univ : ∀ n, set.univ ∈ (pi n))
-  (x : ι) (t : finset ι) (htS : t ∈ S) (hxt : x ∈ t) :
+  {x : ι} {t : finset ι} (htS : t ∈ S) (hxt : x ∈ t) :
   s x ≤ measurable_space.generate_from (pi_system_Union_Inter pi S) :=
 begin
   rw hpis x,
@@ -662,28 +662,24 @@ begin
   rw [finset.bInter_insert, finset.prod_insert ha_notin_S, ←h_rec hf_m_S],
   -- define π systems and generated σ-algebras
   let p_ := pi_system_Union_Inter pi {S},
-  have hp_ : is_pi_system p_,
-  from is_pi_system_pi_system_Union_Inter pi h_pi {S} (sup_closed_singleton S),
   let S_ := measurable_space.generate_from p_,
   have hpS : S_ = measurable_space.generate_from p_, from rfl,
-  have hS : S_ ≤ m, from generate_from_pi_system_Union_Inter_le m s h pi {S} hps,
   have h_generated : ∀ n : ι, n ∈ S → s n ≤ S_,
-  from (λ n hn, le_generate_from_pi_system_Union_Inter s pi {S} hps hp_univ n S
-    (set.mem_singleton _) hn),
-  have h_two : indep2_sets p_ (pi a) μ → indep2 S_ (s a) μ,
-  --(∀ t1 ∈ p_, ∀ t2 ∈ pi a, μ (t1 ∩ t2) = μ t1 * μ t2)
-  --  → ∀ t1 t2 : set α, S_.is_measurable' t1 → (s a).is_measurable' t2 → μ (t1 ∩ t2) = μ t1 * μ t2,
-  from indep2_of_indep2_sets_of_pi_system hS (h a) hp_ (h_pi a) hpS (hps a),
-  have h_two_hyp : indep2_sets p_ (pi a) μ,
-  --∀ (t1 : set α), t1 ∈ p_ → ∀ (t2 : set α), t2 ∈ pi a → μ (t1 ∩ t2) = μ t1 * μ t2,
-  from pi_system_indep_insert hp_ind ha_notin_S,
+  from (λ n hn, le_generate_from_pi_system_Union_Inter {S} hps hp_univ (set.mem_singleton _) hn),
+  have h_indep : indep2 S_ (s a) μ,
+  { have hp_ : is_pi_system p_,
+    from is_pi_system_pi_system_Union_Inter pi h_pi {S} (sup_closed_singleton S),
+    have hS : S_ ≤ m, from generate_from_pi_system_Union_Inter_le h pi {S} hps,
+    have h_two : indep2_sets p_ (pi a) μ → indep2 S_ (s a) μ,
+    from indep2_of_indep2_sets_of_pi_system hS (h a) hp_ (h_pi a) hpS (hps a),
+    exact h_two (pi_system_indep_insert hp_ind ha_notin_S), },
   have ht1m : S_.is_measurable' (⋂ (n : ι) (H :n ∈ S), f n),
   { have h_S_f : ∀ i (hi : i ∈ S), S_.is_measurable' (f i),
     from (λ i hi, (h_generated i hi) (f i) (hf_m_S i hi)),
     exact @finset.is_measurable_bInter α ι S_ f _ (λ i hi, h_S_f i hi), },
   have ht2m : (s a).is_measurable' (f a), from hf_m a (by simp),
   rw [set.inter_comm, mul_comm],
-  exact h_two h_two_hyp (⋂ (n : ι) (H : n ∈ S), f n) (f a) ht1m ht2m,
+  exact h_indep (⋂ (n : ι) (H : n ∈ S), f n) (f a) ht1m ht2m,
 end
 
 end indep_of_indep_sets_of_pi_system
@@ -692,7 +688,7 @@ end indep_of_indep_sets_of_pi_system
 
 section lattice
 
-lemma bsupr_mono {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
+lemma bsupr_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
   (⨆ i (hi : p i), f i) ≤ (⨆ i (hi : q i), f i) :=
 begin
   suffices h_forall : ∀ i, (⨆ (hi : p i), f i) ≤ ⨆ (hi : q i), f i,
@@ -702,9 +698,9 @@ begin
   exact (λ i pi, le_supr (λ (hqi : q i), f i) (h i pi)),
 end
 
-lemma binfi_mono {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
+lemma binfi_le_of_mp {α} {ι} [complete_lattice α] {p q : ι → Prop} {f : ι → α} (h : ∀ i,  p i → q i) :
    (⨅ i (hi : q i), f i) ≤ (⨅ i (hi : p i), f i) :=
-@bsupr_mono (order_dual α) ι _ p q f h
+@bsupr_le_of_mp (order_dual α) ι _ p q f h
 
 lemma le_head_n {α} [complete_lattice α] (s : ℕ → α) {i n : ℕ} (hin : i < n) : s i ≤ ⨆ j < n, s j :=
 le_bsupr i hin
@@ -715,7 +711,7 @@ bsupr_le (λ i hi, h_le i)
 
 lemma head_n_mono {α} [complete_lattice α] (s : ℕ → α) {n m : ℕ} (h : n ≤ m) :
   (⨆ i < n, s i) ≤ ⨆ i < m, s i :=
-bsupr_mono (λ i hi, lt_of_lt_of_le hi h)
+bsupr_le_of_mp (λ i hi, lt_of_lt_of_le hi h)
 
 lemma supr_eq_supr_head_n {α} [complete_lattice α] (s : ℕ → α) : supr s = ⨆ n, ⨆ i < n, s i :=
 begin
