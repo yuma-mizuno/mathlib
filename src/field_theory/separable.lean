@@ -209,7 +209,7 @@ section comm_ring
 variables {R : Type u} [comm_ring R]
 
 lemma separable_X_sub_C {x : R} : separable (X - C x) :=
-by simpa only [C_neg] using separable_X_add_C (-x)
+by simpa only [sub_eq_add_neg, C_neg] using separable_X_add_C (-x)
 
 lemma separable.mul {f g : polynomial R} (hf : f.separable) (hg : g.separable)
   (h : is_coprime f g) : (f * g).separable :=
@@ -571,6 +571,14 @@ begin
   apply polynomial.separable.of_mul_left,
   rw ← hq,
   exact hs,
+end
+
+lemma is_separable.of_alg_hom {E' : Type*} [field E'] [algebra F E']
+  (f : E →ₐ[F] E') (h : is_separable F E') : is_separable F E :=
+begin
+  letI : algebra E E' := ring_hom.to_algebra f.to_ring_hom,
+  haveI : is_scalar_tower F E E' := is_scalar_tower.of_algebra_map_eq (λ x, (f.commutes x).symm),
+  exact is_separable_tower_bot_of_is_separable E h,
 end
 
 end is_separable_tower

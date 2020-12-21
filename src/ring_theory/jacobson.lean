@@ -89,7 +89,7 @@ lemma is_jacobson_iff_Inf_maximal' : is_jacobson R ↔
 ⟨λ H I h, eq_jacobson_iff_Inf_maximal'.1 (H _ (is_prime.radical h)),
   λ H , is_jacobson_iff_prime_eq.2 (λ P hP, eq_jacobson_iff_Inf_maximal'.2 (H hP))⟩
 
-lemma radical_eq_jacobson (H : is_jacobson R) (I : ideal R) : I.radical = I.jacobson :=
+lemma radical_eq_jacobson [H : is_jacobson R] (I : ideal R) : I.radical = I.jacobson :=
 le_antisymm (le_Inf (λ J ⟨hJ, hJ_max⟩, (is_prime.radical_le_iff hJ_max.is_prime).mpr hJ))
             ((H I.radical (radical_idem I)) ▸ (jacobson_mono le_radical))
 
@@ -290,11 +290,7 @@ begin
   haveI : (⊥ : ideal (I.comap ϕ'.to_map).quotient).is_prime := bot_prime,
   have hcomm: φ'.comp ϕ.to_map = ϕ'.to_map.comp φ := ϕ.map_comp _,
   let f := quotient_map (I.comap ϕ'.to_map) φ le_rfl,
-  let f' := quotient_map I φ' le_rfl,
   let g := quotient_map I ϕ'.to_map le_rfl,
-  let g' : ((I.comap ϕ'.to_map).comap φ).quotient →+* (I.comap φ').quotient :=
-    quotient_map (I.comap φ') ϕ.to_map
-    (le_of_eq (trans (comap_comap φ ϕ'.to_map) (hcomm ▸ (comap_comap ϕ.to_map φ').symm))),
   have := ((is_maximal_iff_is_maximal_disjoint ϕ _).1
     (is_maximal_comap_of_is_integral_of_is_maximal' φ' hφ' I hI)).left,
   have : ((I.comap ϕ'.to_map).comap φ).is_maximal,
@@ -302,12 +298,12 @@ begin
   rw ← bot_quotient_is_maximal_iff at this ⊢,
   refine is_maximal_of_is_integral_of_is_maximal_comap' f _ ⊥
     ((eq_bot_iff.2 (comap_bot_le_of_injective f quotient_map_injective)).symm ▸ this),
-  exact is_integral_tower_bot_of_is_integral' f g quotient_map_injective
+  exact f.is_integral_tower_bot_of_is_integral g quotient_map_injective
     ((comp_quotient_map_eq_of_comp_eq hcomm I).symm ▸
-    (ring_hom.is_integral_trans (is_integral_of_surjective'
+    (ring_hom.is_integral_trans _ _ (ring_hom.is_integral_of_surjective _
       (localization_map.surjective_quotient_map_of_maximal_of_localization
       (by rwa [comap_comap, hcomm, ← bot_quotient_is_maximal_iff])))
-      (is_integral_quotient_of_is_integral' hφ'))),
+      (ring_hom.is_integral_quotient_of_is_integral _ hφ'))),
 end
 
 /-- Used to bootstrap the proof of `is_jacobson_polynomial_iff_is_jacobson`.
@@ -342,15 +338,15 @@ begin
     suffices : φ'.is_integral_elem (ϕ'.to_map p'),
     { obtain ⟨q', hq', rfl⟩ := hq,
       obtain ⟨q'', hq''⟩ := is_unit_iff_exists_inv'.1 (ϕ.map_units ⟨q', hq'⟩),
-      refine is_integral_of_is_integral_mul_unit' p (ϕ'.to_map (φ q')) q'' _ (hp.symm ▸ this),
+      refine φ'.is_integral_of_is_integral_mul_unit p (ϕ'.to_map (φ q')) q'' _ (hp.symm ▸ this),
       convert trans (trans (φ'.map_mul _ _).symm (congr_arg φ' hq'')) φ'.map_one using 2,
       rw [← φ'.comp_apply, localization_map.map_comp, ϕ'.to_map.comp_apply, subtype.coe_mk] },
     refine is_integral_of_mem_closure''
       ((ϕ'.to_map.comp (quotient.mk P)) '' (insert X {p | p.degree ≤ 0})) _ _ _,
     { rintros x ⟨p, hp, rfl⟩,
       refine hp.rec_on (λ hy, _) (λ hy, _),
-      { refine hy.symm ▸ (is_integral_elem_localization_at_leading_coeff' ((quotient.mk P) X)
-          (pX.map (quotient.mk P')) φ _ M ⟨1, pow_one _⟩ _ _),
+      { refine hy.symm ▸ (φ.is_integral_elem_localization_at_leading_coeff ((quotient.mk P) X)
+          (pX.map (quotient.mk P')) _ M ⟨1, pow_one _⟩ _ _),
         rwa [eval₂_map, hφ', ← hom_eval₂, quotient.eq_zero_iff_mem, eval₂_C_X] },
       { rw [set.mem_set_of_eq, degree_le_zero_iff] at hy,
         refine hy.symm ▸ ⟨X - C (ϕ.to_map ((quotient.mk P') (p.coeff 0))), monic_X_sub_C _, _⟩,
