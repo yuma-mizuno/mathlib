@@ -12,6 +12,12 @@ import ring_theory.algebra_tower
 import tactic.apply_fun
 import tactic
 
+/-!
+## Inspiration/contributors
+
+Contributions by Roman Fedorov
+-/
+
 universe variables u
 
 variables {R : Type u} {M N P Q : Type*} [comm_ring R]
@@ -21,6 +27,12 @@ variables [add_comm_group P] [module R P]
 variables [add_comm_group Q] [module R Q]
 
 section move_this
+
+/-- Scalar multiplication gives a linear map. Probably belongs to linear_algebra.tensor_product.-/
+def linear_map_smul (P : Type u) [add_comm_group P] [module R P] (r : R) : P →ₗ[R] P :=
+{to_fun := (λ (x : P), r • x),
+map_add' := (is_linear_map.is_linear_map_smul r).map_add,
+map_smul' := (is_linear_map.is_linear_map_smul r).map_smul}
 
 @[simp] lemma equiv.injective_comp {α β γ : Type*} (e : α ≃ β) (f : β → γ) :
   function.injective (f ∘ e) ↔ function.injective f :=
@@ -182,6 +194,61 @@ by simp only [ltensor, rtensor, ← map_comp, id_comp, comp_id]
 @[simp] lemma ltensor_comp_map (g' : Q →ₗ[R] M') (f : M →ₗ[R] P) (g : N →ₗ[R] Q) :
   (g'.ltensor _).comp (map f g) = map f (g'.comp g) :=
 by simp only [ltensor, rtensor, ← map_comp, id_comp, comp_id]
+
+/-- The isomorphism M ⊗[R] R ≃ₗ M is functorial in M.
+Probably belongs to linear_algebra.tensor_product. -/
+
+theorem tensor_product_rid_functorial (f : M →ₗ[R] N) :
+  (tensor_product.rid R N : N ⊗[R] R ≃ₗ N) ∘ (rtensor R f : (M ⊗[R] R) →ₗ[R] (N ⊗[R] R)) =
+  f ∘ (tensor_product.rid R M : M ⊗[R] R ≃ₗ M) :=
+let g₁ : M ⊗[R] R ≃ₗ M := tensor_product.rid R M in
+let g₂ : N ⊗[R] R ≃ₗ N := tensor_product.rid R N in
+have h_compose : (g₂.to_linear_map.comp (rtensor R f) = f.comp g₁.to_linear_map), by
+{
+  apply tensor_product.ext,
+  intros m r,
+  repeat{rw [comp_apply]},
+  exact calc
+  g₂.to_linear_map (rtensor R f (m ⊗ₜ[R] r)) = (g₂.to_linear_map) ((f m) ⊗ₜ[R] (linear_map.id r)) :
+    by refl
+    ... = (tensor_product.rid R N) ((f m) ⊗ₜ[R] r) : rfl
+    ... = r • f m                                  : by rw [tensor_product.rid_tmul (f m) r]
+    ... = f (r • m)                                : (f.map_smul r m).symm
+    ... = f ((tensor_product.rid R M) (m ⊗ₜ[R] r)) : by rw [tensor_product.rid_tmul m r]
+    ... = f (g₁.to_linear_map (m ⊗ₜ[R] r))          : rfl
+},
+by
+{
+  apply funext,
+  exact (ext_iff.1 h_compose)
+}
+
+/-- RF: The associator for tensor product is functorial in the third argument.
+Probably belongs to linear_algebra.tensor_product.-/
+
+variable {M}
+lemma assoc_functorial_third (f : M →ₗ[R] N) :
+let α := tensor_product.assoc R P Q M in let β := tensor_product.assoc R P Q N in
+  (ltensor P (ltensor Q f)).comp  α.to_linear_map  = β.to_linear_map.comp (ltensor (P ⊗ Q) f) :=
+let ftt : (P ⊗[R] (Q ⊗[R] M)) →ₗ[R](P ⊗[R] (Q ⊗[R] N)) := ltensor P (ltensor Q f) in
+let ftt': ((P ⊗[R] Q) ⊗[R] M) →ₗ[R]((P ⊗[R] Q) ⊗[R] N) := ltensor (P ⊗ Q) f in
+let α := tensor_product.assoc R P Q M in let β := tensor_product.assoc R P Q N in
+  ext_threefold (assume (p : P) (q : Q) (m : M),
+  have heq₁  : (ftt.comp α.to_linear_map) ((p ⊗ₜ q) ⊗ₜ m) = (p ⊗ₜ (q ⊗ₜ f m)),
+  from calc
+    (comp ftt α.to_linear_map) ((p ⊗ₜ q) ⊗ₜ m) = ftt (α.to_linear_map ((p ⊗ₜ q) ⊗ₜ m)) :
+      comp_apply _ _ _
+    ... = ftt (p ⊗ₜ (q ⊗ₜ m)) : by refl
+    ... = (linear_map.id p) ⊗ₜ (ltensor Q f) (q ⊗ₜ m) : map_tmul _ _ _ _
+    ... = p ⊗ₜ (ltensor Q f) (q ⊗ₜ m)                 : by rw [id_apply]
+    ... = p ⊗ₜ (q ⊗ₜ f m)                  : by rw[ltensor_tmul],
+  have heq₂ : (comp β.to_linear_map ftt') ((p ⊗ₜ q) ⊗ₜ m) = (p ⊗ₜ (q ⊗ₜ f m)), from calc
+    (comp β.to_linear_map ftt') ((p ⊗ₜ q) ⊗ₜ m) = β.to_linear_map (ftt' ((p ⊗ₜ q) ⊗ₜ m)) :
+        comp_apply _ _ _
+    ... = β.to_linear_map ((p ⊗ₜ q) ⊗ₜ f m)                 : by rw[ltensor_tmul]
+    ... = (p ⊗ₜ (q ⊗ₜ f m))                                 : by refl,
+  heq₁.trans heq₂)
+variable (M)
 
 end linear_map
 
@@ -434,7 +501,7 @@ begin
   { sorry },
 end
 
-#exit
+-- RF #exit
 
 lemma injective_rtensor_aux₂ [flat R M] {n : ℕ} {P Q : submodule R N}
   (hP : P.fg) (hQ : Q.fg) (h : P ≤ Q) :
@@ -514,6 +581,83 @@ begin
   simp only [tensor_product.lift.tmul, linear_equiv.coe_coe, tensor_product.lid_tmul,
     linear_map.rtensor_tmul, linear_map.lsmul_apply, linear_map.comp_apply]
 end
+
+-- RF
+lemma flat_iff_ltensor_injective :
+  flat R M ↔
+  ∀ ⦃N P : Type u⦄ [add_comm_group N] [add_comm_group P],
+    by exactI ∀ [module R N] [module R P],
+    by exactI ∀ (f : N →ₗ[R] P) (hf : injective f), injective (f.ltensor M) :=
+ begin
+   split,
+     {introsI, apply flat.ltensor_injective, assumption},
+     {introsI hFM, apply flat_iff_rtensor_injective.2, introsI,
+     apply (flat.rtensor_injective_iff_ltensor_injective M f).2,
+     exact hFM f hf}
+ end
+
+open linear_map (ltensor) (rtensor) (assoc_functorial_third) (comp_apply)
+(tensor_product_rid_functorial) -- RF
+
+/-- RF: The tensor product of flat modules is flat -/
+
+lemma tensor_product_flat {P : Type u} [add_comm_group P] [module R P] (hFP : flat R P)
+{Q : Type u} [add_comm_group Q] [module R Q] (hFQ: flat R Q) : flat R (P⊗[R] Q) :=
+begin
+apply flat_iff_ltensor_injective.2, introsI M N _ _ _ _ f inj,
+exact
+let ft : (Q ⊗[R] M) →ₗ[R] (Q ⊗[R] N) := ltensor Q f in
+have injt : function.injective ft, from flat_iff_ltensor_injective.1 hFQ f inj,
+let ftt : (P ⊗[R] (Q ⊗[R] M)) →ₗ[R](P ⊗[R] (Q ⊗[R] N)) := ltensor P ft in
+have injt : function.injective ftt, from flat_iff_ltensor_injective.1 hFP ft injt,
+let ftt': ((P ⊗[R] Q) ⊗[R] M) →ₗ[R]((P ⊗[R] Q) ⊗[R] N) := ltensor (P ⊗ Q) f in
+let h₁ := tensor_product.assoc R P Q M in let h₂ := tensor_product.assoc R P Q N in
+have Comm : ftt.comp (h₁.to_linear_map) = (h₂.to_linear_map).comp ftt',
+from assoc_functorial_third f,
+have Comm': ftt ∘ h₁ = h₂ ∘ ftt', by {funext, exact
+(calc
+  (ftt ∘ h₁) x = ftt (h₁ x) : rfl
+  ... =  (ftt.comp (h₁.to_linear_map)) x :  by {rw[comp_apply], refl}
+  ... =  ((h₂.to_linear_map).comp ftt') x : by rw[Comm]
+  ... = h₂ (ftt' x) :                       by {rw[comp_apply], refl}
+  ... = (h₂ ∘ ftt') x :                     rfl),
+},
+have function.injective (ftt ∘ h₁),
+from function.injective.comp injt $ equiv.injective $ linear_equiv.to_equiv h₁,
+have function.injective (h₂  ∘ ftt'), from Comm' ▸ this,
+show function.injective ftt',
+from (equiv.comp_injective ftt' (linear_equiv.to_equiv h₂)).1 this
+end
+
+open tensor_product (smul_tmul) -- RF
+
+/-- RF: A non-zero divisor in R remains a non-zero divisor on any flat R-module-/
+
+theorem non_zero_divisor_of_flat (P : Type u) [add_comm_group P] [module R P]
+  (hflP : flat R P) (r : R) (non_div : function.injective (λ (x : R), r * x)) :
+  function.injective (λ (x : P), r • x) :=
+let f : P →ₗ[R] P := linear_map_smul P r  in
+let g : R →ₗ[R] R := linear_map_smul R r in
+have h_inj : function.injective (ltensor P g), from flat_iff_ltensor_injective.1 hflP g non_div,
+let h : P ⊗[R] R ≃ₗ P := tensor_product.rid R P in
+have ltensor P g = rtensor R f , by
+{
+  apply tensor_product.ext,
+  intros p r',
+  repeat{rw [comp_apply]},
+  exact calc
+    (ltensor P g) (p ⊗ₜ[R] r')= (linear_map.id p) ⊗ₜ[R] (g r') : by refl
+    ... = p ⊗ₜ[R] (r * r')                          : rfl
+    ... = (r • p) ⊗ₜ[R] r'                          : (smul_tmul _ _ _).symm
+    ... = (f p) ⊗ₜ[R] ( linear_map.id r')           : rfl
+    ... = (rtensor R f) (p ⊗ₜ[R] r')        : by refl
+},
+have Comm : h ∘ (ltensor P g) = f ∘ h, by rw [this, tensor_product_rid_functorial P f],
+have function.injective (h ∘ (ltensor P g)),
+from function.injective.comp (equiv.injective (linear_equiv.to_equiv h)) h_inj,
+have function.injective (f ∘ h), from Comm ▸ this,
+show function.injective f, from (equiv.injective_comp (linear_equiv.to_equiv h) f).1 this
+
 
 end module
 
