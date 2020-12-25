@@ -8,7 +8,7 @@ namespace nat
 /-- The multinomial coefficient for `[c1,...,cn]` is the coefficient in front of
 `x1^c1 * ... * xn^cn` in `(x1 + ... + xn)^(c1 + ... + cn)`.  It counts the number of ways
 of ordering objects of `n` types, with `ci` of type `i`, where objects within each type
-are indistinguishable.  The binomial coefficient is `[a, b].binomial = (a + b).choose a`. -/
+are indistinguishable.  The binomial coefficient is `multinomial [a, b] = (a + b).choose a`. -/
 def multinomial (m : list ℕ) : ℕ := m.sum! / (m.map nat.factorial).prod
 
 lemma prod_factorial_dvd_factorial_sum (m : list ℕ) : (m.map factorial).prod ∣ factorial m.sum :=
@@ -16,10 +16,15 @@ begin
   induction m,
   { simp, },
   { simp only [list.sum_cons, list.prod_cons, list.map],
-    transitivity m_hd! * m_tl.sum!,
-    { exact mul_dvd_mul_left m_hd! m_ih, },
-    { convert @factorial_mul_factorial_dvd_factorial (m_hd + m_tl.sum) m_hd (le.intro rfl),
-      rw nat.add_sub_cancel_left, }, },
+    refine dvd.trans (mul_dvd_mul_left m_hd! m_ih) _,
+    convert @factorial_mul_factorial_dvd_factorial (m_hd + m_tl.sum) m_hd (le.intro rfl),
+    rw nat.add_sub_cancel_left, },
+end
+
+lemma mul_factorial_dvd_factorial_add (a b : ℕ) : a! * b! ∣ (a + b)! :=
+begin
+  convert @factorial_mul_factorial_dvd_factorial (a + b) a (le.intro rfl),
+  rw nat.add_sub_cancel_left,
 end
 
 lemma prod_factorial_pos (m : list ℕ) : 0 < (m.map factorial).prod :=
@@ -59,12 +64,12 @@ lemma binomial_eq : multinomial [a, b] = (a + b)! / (a! * b!) :=
 by simp [multinomial]
 
 lemma binomial_eq_choose : multinomial [a, b] = (a + b).choose a :=
-by simp [multinomial, nat.choose_eq_factorial_div_factorial (nat.le.intro rfl)]
+by simp [multinomial, choose_eq_factorial_div_factorial (nat.le.intro rfl)]
 
-theorem binomial_spec : a! * b! * multinomial [a, b] = (a + b)! :=
+lemma binomial_spec : a! * b! * multinomial [a, b] = (a + b)! :=
 by { have h := multinomial_spec [a, b], simpa using h, }
 
-theorem binomial_swap : multinomial [a, b] = multinomial [b, a] :=
+lemma binomial_swap : multinomial [a, b] = multinomial [b, a] :=
 multinomial_swap []
 
 @[simp] lemma binomial_zero_right (n : ℕ) : multinomial [n, 0] = 1 :=
@@ -87,6 +92,30 @@ by simp
 @[simp] lemma binomial_succ_succ :
   multinomial [a.succ, b.succ] = multinomial [a, b.succ] + multinomial [a.succ, b] :=
 by simp [binomial_eq_choose, succ_add, add_succ, choose_succ_succ]
+
+/-- "stars and bars" -/
+@[simp] lemma multinomial_head (n : ℕ) (m : list ℕ) :
+  multinomial (n :: m) = (n + m.sum).choose n * multinomial m :=
+begin
+  rw choose_eq_factorial_div_factorial (le.intro rfl),
+  simp only [multinomial, list.sum_cons, nat.add_sub_cancel_left, list.prod_cons, list.map],
+  rw ←@nat.mul_left_inj (n! * (list.map factorial m).prod),
+  rw nat.div_mul_cancel,
+  rw mul_comm _ (list.map factorial m).prod,
+  rw mul_assoc, rw ←mul_assoc _ _ n!,
+  rw nat.div_mul_cancel,
+  rw mul_comm n!,
+  rw nat.div_mul_cancel,
+  rw add_comm,
+  exact mul_factorial_dvd_factorial_add _ _,
+  exact prod_factorial_dvd_factorial_sum _,
+  transitivity n! * m.sum!,
+  exact mul_dvd_mul_left n! (prod_factorial_dvd_factorial_sum _),
+  exact mul_factorial_dvd_factorial_add _ _,
+  apply nat.mul_pos,
+  exact factorial_pos _,
+  exact prod_factorial_pos _,
+end
 
 @[simp] lemma binomial_two_left' (n : ℕ) : multinomial [2, n] * 2 = n.succ * n.succ.succ :=
 begin
