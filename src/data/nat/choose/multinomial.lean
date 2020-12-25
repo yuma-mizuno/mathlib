@@ -94,27 +94,19 @@ by simp
 by simp [binomial_eq_choose, succ_add, add_succ, choose_succ_succ]
 
 /-- "stars and bars" -/
-@[simp] lemma multinomial_head (n : ℕ) (m : list ℕ) :
+lemma multinomial_head (n : ℕ) (m : list ℕ) :
   multinomial (n :: m) = (n + m.sum).choose n * multinomial m :=
 begin
   rw choose_eq_factorial_div_factorial (le.intro rfl),
   simp only [multinomial, list.sum_cons, nat.add_sub_cancel_left, list.prod_cons, list.map],
-  rw ←@nat.mul_left_inj (n! * (list.map factorial m).prod),
-  rw nat.div_mul_cancel,
-  rw mul_comm _ (list.map factorial m).prod,
-  rw mul_assoc, rw ←mul_assoc _ _ n!,
-  rw nat.div_mul_cancel,
-  rw mul_comm n!,
-  rw nat.div_mul_cancel,
-  rw add_comm,
-  exact mul_factorial_dvd_factorial_add _ _,
-  exact prod_factorial_dvd_factorial_sum _,
-  transitivity n! * m.sum!,
-  exact mul_dvd_mul_left n! (prod_factorial_dvd_factorial_sum _),
-  exact mul_factorial_dvd_factorial_add _ _,
-  apply nat.mul_pos,
-  exact factorial_pos _,
-  exact prod_factorial_pos _,
+  rw ←@nat.mul_left_inj (n! * (list.map factorial m).prod) _ _
+    (nat.mul_pos (factorial_pos _) (prod_factorial_pos _)),
+  rw nat.div_mul_cancel (dvd.trans (mul_dvd_mul_left n! (prod_factorial_dvd_factorial_sum _))
+    (mul_factorial_dvd_factorial_add _ _)),
+  rw [mul_comm _ (list.map factorial m).prod, mul_assoc, ←mul_assoc _ _ n!],
+  rw nat.div_mul_cancel (prod_factorial_dvd_factorial_sum _),
+  rw [mul_comm n!, add_comm n],
+  rw nat.div_mul_cancel (mul_factorial_dvd_factorial_add _ _),
 end
 
 @[simp] lemma binomial_two_left' (n : ℕ) : multinomial [2, n] * 2 = n.succ * n.succ.succ :=
