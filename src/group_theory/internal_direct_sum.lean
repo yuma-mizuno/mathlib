@@ -80,8 +80,13 @@ lemma internal_sum_hom_bijective_of_disjoint {s t : subgroup A} (h : disjoint s 
     exact s.mul_mem (s.inv_mem hys) hxs },
 end, internal_sum_hom_surjective⟩
 
-noncomputable def internal_direct_sum_equiv {s t : subgroup A} (h : disjoint s t) :
+noncomputable def internal_direct_sum_of_disjoint {s t : subgroup A} (h : disjoint s t) :
   s × t ≃* (s ⊔ t : subgroup A) :=
 mul_equiv.of_bijective (internal_sum_hom s t) (internal_sum_hom_bijective_of_disjoint h)
+
+noncomputable def internal_direct_sum_of_is_compl {s t : subgroup A} (h : is_compl s t) :
+  s × t ≃* A :=
+(internal_direct_sum_of_disjoint h.disjoint).trans
+  (mul_equiv.of_bijective (subgroup.subtype (s ⊔ t)) sorry)
 
 end subgroup
