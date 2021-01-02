@@ -197,6 +197,13 @@ end
   -- (`adj_card_common_verts_lt_regular_degree`) l < k
   -- (`card_common_verts_le_regular_degree`) m ≤ k (this is the one where ≤ makes sense)
 
+-- leaving this for tomorrow
+theorem strongly_regular_parameter_rel (n k l m : ℕ) (h : G.is_SRG_of n k l m) :
+  (n - k - 1) * m = k * (k - l - 1) :=
+begin
+  sorry,
+end
+
 -- lemma idea 2:
 -- if I is identity and J is all-one matrix, then adj matrix A of SRG obeys relation
   -- A^2 = kI + lA + m(J - I - A)
