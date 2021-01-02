@@ -1272,11 +1272,14 @@ range_succ
 
 @[simp] theorem not_mem_range_self : n ∉ range n := not_mem_range_self
 
-@[simp] theorem self_mem_range_succ (n : ℕ) : n ∈ range (n + 1) := multiset.self_mem_range_succ n
+theorem self_mem_range_succ (n : ℕ) : n ∈ range (n + 1) := multiset.self_mem_range_succ n
 
 @[simp] theorem range_subset {n m} : range n ⊆ range m ↔ n ≤ m := range_subset
 
 theorem range_mono : monotone range := λ _ _, range_subset.2
+
+@[simp] lemma mem_range_succ_iff {a b : ℕ} : a ∈ finset.range b.succ ↔ a ≤ b :=
+finset.mem_range.trans nat.lt_succ_iff
 
 end range
 
@@ -1517,7 +1520,11 @@ end map
 
 lemma range_add_one' (n : ℕ) :
   range (n + 1) = insert 0 ((range n).map ⟨λi, i + 1, assume i j, nat.succ.inj⟩) :=
-by ext (⟨⟩ | ⟨n⟩); simp [nat.succ_eq_add_one, nat.zero_lt_succ n]
+begin
+  ext (⟨⟩ | ⟨n⟩),
+  { simp [nat.zero_lt_succ n] },
+  { simp [nat.succ_eq_add_one, succ_le_iff] },
+end
 
 /-! ### image -/
 section image

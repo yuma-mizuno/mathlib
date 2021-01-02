@@ -41,7 +41,7 @@ calc ∑ m in (range n.succ).filter (∣ n), φ m
       have 0 < (n / a), from nat.pos_of_ne_zero (λ h, by simp [*, lt_irrefl] at *),
       by rw [← nat.mul_left_inj this, ha, h, nat.mul_div_cancel' (mem_filter.1 hb).2])
     (λ b hb,
-      have hb : b < n.succ ∧ b ∣ n, by simpa [-range_succ] using hb,
+      have hb : b < n.succ ∧ b ∣ n, by simpa [-range_succ, lt_succ_iff] using hb,
       have hbn : (n / b) ∣ n, from ⟨b, by rw nat.div_mul_cancel hb.2⟩,
       have hnb0 : (n / b) ≠ 0, from λ h, by simpa [h, ne.symm hn0] using nat.div_mul_cancel hbn,
       ⟨n / b, mem_filter.2 ⟨mem_range.2 $ lt_succ_of_le $ nat.div_le_self _ _, hbn⟩,
