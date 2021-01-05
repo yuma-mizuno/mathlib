@@ -3,7 +3,7 @@ Copyright (c) 2018 Chris Hughes. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes, Johannes Hölzl, Scott Morrison, Jens Wagemaker
 -/
-import data.polynomial.degree
+import data.polynomial.reverse
 import algebra.associated
 import tactic.omega
 
@@ -99,6 +99,39 @@ by rwa [monic, add_comm, leading_coeff_add_of_degree_lt hpq]
 lemma monic_add_of_right {p q : polynomial R} (hq : monic q) (hpq : degree p < degree q) :
   monic (p + q) :=
 by rwa [monic, leading_coeff_add_of_degree_lt hpq]
+
+namespace monic
+
+@[simp]
+lemma degree_eq_zero_iff_eq_one {p : polynomial R} (hp : p.monic) :
+  p.nat_degree = 0 ↔ p = 1 :=
+begin
+  split; intro h,
+  swap, { rw h, exact nat_degree_one },
+  have : p = C (p.coeff 0),
+  { rw ← polynomial.degree_le_zero_iff,
+    rwa polynomial.nat_degree_eq_zero_iff_degree_le_zero at h },
+  rw this, convert C_1, rw ← h, apply hp,
+end
+
+lemma nat_degree_mul {p q : polynomial R} (hp : p.monic) (hq : q.monic) :
+  (p * q).nat_degree = p.nat_degree + q.nat_degree :=
+begin
+  nontriviality R,
+  apply nat_degree_mul',
+  simp [hp.leading_coeff, hq.leading_coeff]
+end
+
+lemma next_coeff_mul {p q : polynomial R} (hp : monic p) (hq : monic q) :
+  next_coeff (p * q) = next_coeff p + next_coeff q :=
+begin
+  nontriviality,
+  simp only [← coeff_one_reverse],
+  rw reverse_mul;
+    simp [coeff_mul, nat.antidiagonal, hp.leading_coeff, hq.leading_coeff, add_comm]
+end
+
+end monic
 
 end semiring
 
@@ -214,14 +247,10 @@ begin
   { simp only [finset.not_mem_empty, forall_prop_of_true, forall_prop_of_false, finset.sum_empty,
   finset.prod_empty, not_false_iff, forall_true_iff],
   rw ← C_1, rw next_coeff_C_eq_zero },
-  { intros a s ha hs monic,
-    rw finset.prod_insert ha,
-    rw finset.sum_insert ha,
-    rw next_coeff_mul (monic a (finset.mem_insert_self a s)), swap,
-    { apply monic_prod_of_monic, intros b bs,
-      apply monic, apply finset.mem_insert_of_mem bs },
-    { refine congr rfl (hs _),
-      intros b bs, apply monic, apply finset.mem_insert_of_mem bs }}
+  { intros a s ha hs H,
+    rw [finset.prod_insert ha, finset.sum_insert ha, monic.next_coeff_mul, hs],
+    exacts [λ i hi, H i (mem_insert_of_mem hi), H a (mem_insert_self _ _),
+      monic_prod_of_monic _ _ (λ b bs, H _ (finset.mem_insert_of_mem bs))] }
 end
 end monic
 end comm_ring
