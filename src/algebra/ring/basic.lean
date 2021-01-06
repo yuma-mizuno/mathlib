@@ -442,6 +442,10 @@ lemma add_mul_self_eq (a b : α) : (a + b) * (a + b) = a*a + 2*a*b + b*b :=
 calc (a + b)*(a + b) = a*a + (1+1)*a*b + b*b : by simp [add_mul, mul_add, mul_comm, add_assoc]
               ...     = a*a + 2*a*b + b*b    : by rw one_add_one_eq_two
 
+end comm_semiring
+
+section semiring
+variables [semiring α] [semiring β] {a b c : α}
 theorem dvd_add (h₁ : a ∣ b) (h₂ : a ∣ c) : a ∣ b + c :=
 dvd.elim h₁ (λ d hd, dvd.elim h₂ (λ e he, dvd.intro (d + e) (by simp [left_distrib, hd, he])))
 
@@ -450,7 +454,7 @@ dvd.elim h₁ (λ d hd, dvd.elim h₂ (λ e he, dvd.intro (d + e) (by simp [left
 lemma ring_hom.map_dvd (f : α →+* β) {a b : α} : a ∣ b → f a ∣ f b :=
 λ ⟨z, hz⟩, ⟨f z, by rw [hz, f.map_mul]⟩
 
-end comm_semiring
+end semiring
 
 /-!
 ### Rings
@@ -571,6 +575,11 @@ calc
   (a - b) * e + c = (a * e + c) - b * e : begin simp [sub_mul, sub_add_eq_add_sub] end
               ... = d                   : begin rw h, simp [@add_sub_cancel α] end
 
+theorem dvd_neg_of_dvd (h : a ∣ b) : (a ∣ -b) :=
+dvd.elim h
+  (assume c, assume : b = a * c,
+    dvd.intro (-c) (by simp [this]))
+
 end ring
 
 namespace units
@@ -684,11 +693,6 @@ protected def function.surjective.comm_ring_sub
 { .. hf.ring_sub f zero one add mul neg sub, .. hf.comm_semigroup f mul }
 
 local attribute [simp] add_assoc add_comm add_left_comm mul_comm
-
-theorem dvd_neg_of_dvd (h : a ∣ b) : (a ∣ -b) :=
-dvd.elim h
-  (assume c, assume : b = a * c,
-    dvd.intro (-c) (by simp [this]))
 
 theorem dvd_of_dvd_neg (h : a ∣ -b) : (a ∣ b) :=
 let t := dvd_neg_of_dvd h in by rwa neg_neg at t

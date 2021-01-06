@@ -42,6 +42,11 @@ lemma sum_boole_mul [decidable_eq α] (s : finset α) (f : α → β) (a : α) :
   (∑ x in s, (ite (a = x) 1 0) * f x) = ite (a ∈ s) (f a) 0 :=
 by simp
 
+lemma sum_mul_sum {ι₁ : Type*} {ι₂ : Type*} (s₁ : finset ι₁) (s₂ : finset ι₂)
+  (f₁ : ι₁ → β) (f₂ : ι₂ → β) :
+  (∑ x₁ in s₁, f₁ x₁) * (∑ x₂ in s₂, f₂ x₂) = ∑ p in s₁.product s₂, f₁ p.1 * f₂ p.2 :=
+by { rw [sum_product, sum_mul, sum_congr rfl], intros, rw mul_sum }
+
 end semiring
 
 lemma sum_div [division_ring β] {s : finset α} {f : α → β} {b : β} :
@@ -82,11 +87,6 @@ begin
     { exact λ _ _ _ _, subtype.eq ∘ subtype.mk.inj },
     { simp only [mem_image], rintro ⟨⟨_, hm⟩, _, rfl⟩, exact ha hm } }
 end
-
-lemma sum_mul_sum {ι₁ : Type*} {ι₂ : Type*} (s₁ : finset ι₁) (s₂ : finset ι₂)
-  (f₁ : ι₁ → β) (f₂ : ι₂ → β) :
-  (∑ x₁ in s₁, f₁ x₁) * (∑ x₂ in s₂, f₂ x₂) = ∑ p in s₁.product s₂, f₁ p.1 * f₂ p.2 :=
-by { rw [sum_product, sum_mul, sum_congr rfl], intros, rw mul_sum }
 
 open_locale classical
 
@@ -129,15 +129,6 @@ begin
   rw [prod_const, prod_const, ← card_sdiff (mem_powerset.1 ht)]
 end
 
-lemma prod_pow_eq_pow_sum {x : β} {f : α → ℕ} :
-  ∀ {s : finset α}, (∏ i in s, x ^ (f i)) = x ^ (∑ x in s, f x) :=
-begin
-  apply finset.induction,
-  { simp },
-  { assume a s has H,
-    rw [finset.prod_insert has, finset.sum_insert has, pow_add, H] }
-end
-
 theorem dvd_sum {b : β} {s : finset α} {f : α → β}
   (h : ∀ x ∈ s, b ∣ f x) : b ∣ ∑ x in s, f x :=
 multiset.dvd_sum (λ y hy, by rcases multiset.mem_map.1 hy with ⟨x, hx, rfl⟩; exact h x hx)
@@ -148,6 +139,20 @@ lemma prod_nat_cast (s : finset α) (f : α → ℕ) :
 (nat.cast_ring_hom β).map_prod f s
 
 end comm_semiring
+
+section comm_monoid
+
+open_locale classical
+lemma prod_pow_eq_pow_sum [comm_monoid β] {x : β} {f : α → ℕ} :
+  ∀ {s : finset α}, (∏ i in s, x ^ (f i)) = x ^ (∑ x in s, f x) :=
+begin
+  apply finset.induction,
+  { simp },
+  { assume a s has H,
+    rw [finset.prod_insert has, finset.sum_insert has, pow_add, H] }
+end
+
+end comm_monoid
 
 /-- A product over all subsets of `s ∪ {x}` is obtained by multiplying the product over all subsets
 of `s`, and over all subsets of `s` to which one adds `x`. -/

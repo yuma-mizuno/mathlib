@@ -115,9 +115,6 @@ instance [comm_monoid α] : comm_monoid (opposite α) :=
 instance [has_inv α] : has_inv (opposite α) :=
 { inv := λ x, op $ (unop x)⁻¹ }
 
-instance [has_sub α] : has_sub (opposite α) :=
-{ sub := λ x y, op $ unop x - unop y }
-
 instance [group α] : group (opposite α) :=
 { mul_left_inv := λ x, unop_injective $ mul_inv_self $ unop x,
   .. opposite.monoid α, .. opposite.has_inv α }

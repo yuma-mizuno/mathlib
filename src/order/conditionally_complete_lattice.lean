@@ -376,6 +376,15 @@ lemma csupr_mem_Inter_Icc_of_mono_decr_Icc_nat
 csupr_mem_Inter_Icc_of_mono_decr_Icc
   (@monotone_of_monotone_nat (order_dual $ set α) _ (λ n, Icc (f n) (g n)) h) h'
 
+/--Introduction rule to prove that b is the supremum of s: it suffices to check that
+1) b is an upper bound
+2) every other upper bound b' satisfies b ≤ b'.-/
+theorem cSup_intro' (_ : s.nonempty)
+  (h_is_ub : ∀ a ∈ s, a ≤ b) (h_b_le_ub : ∀ub, (∀ a ∈ s, a ≤ ub) → (b ≤ ub)) : Sup s = b :=
+le_antisymm
+  (show Sup s ≤ b, from cSup_le ‹s.nonempty› h_is_ub)
+  (show b ≤ Sup s, from h_b_le_ub _ $ assume a, le_cSup ⟨b, h_is_ub⟩)
+
 end conditionally_complete_lattice
 
 instance pi.conditionally_complete_lattice {ι : Type*} {α : Π i : ι, Type*}
@@ -425,15 +434,6 @@ When `infi f < a`, there is an element `i` such that `f i < a`.
 lemma exists_lt_of_cinfi_lt [nonempty ι] {f : ι → α} (h : infi f < a) :
   (∃i, f i < a) :=
 let ⟨_, ⟨i, rfl⟩, h⟩ := exists_lt_of_cInf_lt (range_nonempty f) h in ⟨i, h⟩
-
-/--Introduction rule to prove that b is the supremum of s: it suffices to check that
-1) b is an upper bound
-2) every other upper bound b' satisfies b ≤ b'.-/
-theorem cSup_intro' (_ : s.nonempty)
-  (h_is_ub : ∀ a ∈ s, a ≤ b) (h_b_le_ub : ∀ub, (∀ a ∈ s, a ≤ ub) → (b ≤ ub)) : Sup s = b :=
-le_antisymm
-  (show Sup s ≤ b, from cSup_le ‹s.nonempty› h_is_ub)
-  (show b ≤ Sup s, from h_b_le_ub _ $ assume a, le_cSup ⟨b, h_is_ub⟩)
 
 end conditionally_complete_linear_order
 
@@ -846,6 +846,7 @@ by simp [dif_pos h]
 
 end has_Inf
 
+section conditionally_complete_linear_order
 variables [conditionally_complete_linear_order α]
 
 local attribute [instance] subset_has_Sup
@@ -885,7 +886,10 @@ noncomputable def subset_conditionally_complete_linear_order [inhabited s]
   ..distrib_lattice.to_lattice s,
   ..(infer_instance : linear_order s) }
 
+end conditionally_complete_linear_order
+
 section ord_connected
+variables [conditionally_complete_lattice α]
 
 /-- The `Sup` function on a nonempty `ord_connected` set `s` in a conditionally complete linear
 order takes values within `s`, for all nonempty bounded-above subsets of `s`. -/
