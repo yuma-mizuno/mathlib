@@ -89,14 +89,7 @@ by simpa only [div_eq_mul_inv] using is_closed_map_mul_right (a⁻¹)
 
 @[to_additive]
 lemma nhds_translation_mul_inv (x : G) : comap (λ y : G, y * x⁻¹) (𝓝 1) = 𝓝 x :=
-begin
-  refine comap_eq_of_inverse (λ y : G, y * x) _ _ _,
-  { funext x, simp },
-  { rw ← mul_right_inv x,
-    exact tendsto_id.mul tendsto_const_nhds },
-  { suffices : tendsto (λ y : G, y * x) (𝓝 1) (𝓝 (1 * x)), { simpa },
-    exact tendsto_id.mul tendsto_const_nhds }
-end
+((homeomorph.mul_right x⁻¹).comap_nhds_eq 1).trans $ show 𝓝 (1 * x⁻¹⁻¹) = 𝓝 x, by simp
 
 end continuous_mul_group
 
@@ -200,10 +193,6 @@ have ((λp : G × G, p.1 * p.2⁻¹) ⁻¹' s) ∈ 𝓝 ((1, 1) : G × G),
   from continuous_at_fst.mul continuous_at_snd.inv (by simpa),
 by simpa only [div_eq_mul_inv, nhds_prod_eq, mem_prod_self_iff, prod_subset_iff, mem_preimage]
   using this
-
-@[to_additive]
-lemma nhds_translation_mul_inv (x : G) : comap (λ y : G, y * x⁻¹) (𝓝 1) = 𝓝 x :=
-((homeomorph.mul_right x⁻¹).comap_nhds_eq 1).trans $ show 𝓝 (1 * x⁻¹⁻¹) = 𝓝 x, by simp
 
 @[to_additive]
 lemma topological_group.ext {G : Type*} [group G] {t t' : topological_space G}
