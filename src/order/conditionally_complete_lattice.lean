@@ -916,6 +916,9 @@ begin
   { exact (subtype.mono_coe s).le_cInf_image ⟨c, hct⟩ hB },
   { exact (subtype.mono_coe s).cInf_image_le hct ⟨B, hB⟩ },
 end
+end ord_connected
+
+variables [conditionally_complete_linear_order α]
 
 /-- A nonempty `ord_connected` set in a conditionally complete linear order is naturally a
 conditionally complete linear order. -/
@@ -923,7 +926,5 @@ noncomputable instance ord_connected_subset_conditionally_complete_linear_order
   [inhabited s] [ord_connected s] :
   conditionally_complete_linear_order s :=
 subset_conditionally_complete_linear_order s Sup_within_of_ord_connected Inf_within_of_ord_connected
-
-end ord_connected
 
 end subtype
