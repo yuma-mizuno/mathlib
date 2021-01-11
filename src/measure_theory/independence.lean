@@ -157,13 +157,9 @@ end
 
 lemma indep2_sets.union_iff {α} [measurable_space α] {p₁ p₂ p' : set (set α)} {μ : measure α} :
   indep2_sets (p₁ ∪ p₂) p' μ ↔ indep2_sets p₁ p' μ ∧ indep2_sets p₂ p' μ :=
-begin
-  split; intro h,
-  { split,
-    { exact indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_left p₁ p₂), },
-    { exact indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_right p₁ p₂), }, },
-  { exact indep2_sets.union h.left h.right, },
-end
+⟨λ h, ⟨indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_left p₁ p₂),
+    indep2_sets_of_indep2_sets_of_le_left h (set.subset_union_right p₁ p₂)⟩,
+  λ h, indep2_sets.union h.left h.right⟩
 
 lemma indep2_sets.Union {α ι} [measurable_space α] {p : ι → set (set α)} {p' : set (set α)}
   {μ : measure α} (hyp : ∀ n, indep2_sets (p n) p' μ) :
@@ -463,8 +459,7 @@ begin
       by_contra,
       rw set.not_nonempty_iff_eq_empty at h,
       have h_empty :(⋂ (i : ι) (hp : i ∈ p1 ∪ p2), g i) = ∅,
-      { refine le_antisymm _ (set.empty_subset _),
-        refine set.Inter_subset_of_subset n _,
+      { refine le_antisymm (set.Inter_subset_of_subset n _) (set.empty_subset _),
         refine set.Inter_subset_of_subset hn _,
         have h_gn_eq : g n = f1 n ∩ f2 n,
         { change (ite (n ∈ p1) (f1 n) set.univ) ∩ (ite (n ∈ p2) (f2 n) set.univ) = f1 n ∩ f2 n,
@@ -950,12 +945,12 @@ begin
   let g := λ i, ite (i ∈ p1) (f1 i) set.univ ∩ ite (i ∈ p2) (f2 i) set.univ,
   have hf1m : ∀ (n : ℕ), n ∈ p1 → (s n).is_measurable' (f1 n), by rwa hpis at ht1_m,
   have hf2m : ∀ (n : ℕ), n ∈ p2 → (s n).is_measurable' (f2 n), by rwa hpis at ht2_m,
-  have hgm : ∀ i, i ∈ finset.range (N + r + 1) → (s i).is_measurable' (g i),
-  { refine (λ i _, @is_measurable.inter α (s i) _ _ _ _),
-    { exact @is_measurable.ite α (s i) _ _ _ (hf1m i) (λ _, @is_measurable.univ α (s i)), },
-    { exact @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
   have h_P_inter : μ (t1 ∩ t2) = ∏ n in finset.range (N+r+1), μ (g n),
-  { rw [ht1_eq, ht2_eq, aux_t1_inter_t2 N r f1 f2 p1 p2 hp1 hp2],
+  { have hgm : ∀ i, i ∈ finset.range (N + r + 1) → (s i).is_measurable' (g i),
+    { refine (λ i _, @is_measurable.inter α (s i) _ _ _ _),
+      { exact @is_measurable.ite α (s i) _ _ _ (hf1m i) (λ _, @is_measurable.univ α (s i)), },
+      { exact @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
+    rw [ht1_eq, ht2_eq, aux_t1_inter_t2 N r f1 f2 p1 p2 hp1 hp2],
     have h_almost := h_indep (finset.range (N+r+1)) hgm,
     dsimp only at h_almost,
     rw ←h_almost, },
@@ -1015,12 +1010,8 @@ end
 lemma head_n_indep_tail {α} {m : measurable_space α} (μ : measure α) [probability_measure μ]
   (s : ℕ → measurable_space α) (h_le : ∀ n, s n ≤ m) (h_indep : indep s μ) (n : ℕ) :
   indep2 (⨆ i < n, s i) (tail s) μ :=
-begin
-  apply indep2.symm,
-  apply indep2_of_indep2_of_le_left _ (tail_le_tail_n s n),
-  apply indep2.symm,
-  exact head_n_indep_tail_n μ s h_le h_indep n,
-end
+indep2.symm (indep2_of_indep2_of_le_left (indep2.symm (head_n_indep_tail_n μ s h_le h_indep n))
+  (tail_le_tail_n s n))
 
 lemma generate_from_supr_generate_from {α} {ι : Type} (s : ι → set (set α)) :
   (⨆ n, measurable_space.generate_from (s n))
@@ -1096,10 +1087,8 @@ end
 lemma tail_indep_tail {α} {m : measurable_space α} {μ : measure α} [probability_measure μ]
   {s : ℕ → measurable_space α} (h_le : ∀ n, s n ≤ m) (h_indep : indep s μ) :
   indep2 (tail s) (tail s) μ :=
-begin
-  refine indep2_of_indep2_of_le_left _ (le_trans (tail_le_tail_n s 0) (tail_n_le_supr s 0)),
-  exact supr_indep_tail μ s h_le h_indep,
-end
+indep2_of_indep2_of_le_left (supr_indep_tail μ s h_le h_indep)
+    (le_trans (tail_le_tail_n s 0) (tail_n_le_supr s 0))
 
 /-- Kolmogorov 0-1 law : any event in the tail σ-algebra has probability 0 or 1 -/
 theorem zero_or_one_of_tail {α} {m : measurable_space α} (μ : measure α) [probability_measure μ]
