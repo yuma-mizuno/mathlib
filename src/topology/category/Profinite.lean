@@ -63,7 +63,7 @@ rfl
 end Profinite
 
 /-- The fully faithful embedding of `Profinite` in `Top`. -/
-@[simps {rhs_md := semireducible}, derive [full, faithful]]
+@[simps, derive [full, faithful]]
 def Profinite_to_Top : Profinite ⥤ Top := induced_functor _
 
 instance : concrete_category Profinite :=

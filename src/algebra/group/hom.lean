@@ -668,8 +668,8 @@ def eval [monoid M] [comm_monoid N] : M →* (M →* N) →* N := (monoid_hom.id
 lemma eval_apply [monoid M] [comm_monoid N] (x : M) (f : M →* N) : eval x f = f x := rfl
 
 /-- Composition of monoid morphisms (`monoid_hom.comp`) as a monoid morphism. -/
-@[simps, to_additive "Composition of additive monoid morphisms
-(`add_monoid_hom.comp`) as an additive monoid morphism."]
+@[to_additive "Composition of additive monoid morphisms
+(`add_monoid_hom.comp`) as an additive monoid morphism.", simps]
 def comp_hom [monoid M] [comm_monoid N] [comm_monoid P] :
   (N →* P) →* (M →* N) →* (M →* P) :=
 { to_fun := λ g, { to_fun := g.comp, map_one' := comp_one g, map_mul' := comp_mul g },
@@ -702,15 +702,13 @@ lemma injective_iff {G H} [group G] [monoid H] (f : G →* H) :
  λ h x y hxy, mul_inv_eq_one.1 $ h _ $ by rw [f.map_mul, hxy, ← f.map_mul, mul_inv_self, f.map_one]⟩
 
 include mM
-/-- Makes a group homomomorphism from a proof that the map preserves multiplication. -/
-@[to_additive]
+/-- Makes a group homomorphism from a proof that the map preserves multiplication. -/
+@[to_additive "Makes an additive group homomorphism from a proof that the map preserves addition."]
 def mk' (f : M → G) (map_mul : ∀ a b : M, f (a * b) = f a * f b) : M →* G :=
 { to_fun := f,
   map_mul' := map_mul,
   map_one' := mul_self_iff_eq_one.1 $ by rw [←map_mul, mul_one] }
 
-/-- Makes an additive group homomomorphism from a proof that the map preserves multiplication. -/
-add_decl_doc add_monoid_hom.mk'
 
 @[simp, to_additive]
 lemma coe_mk' {f : M → G} (map_mul : ∀ a b : M, f (a * b) = f a * f b) :
@@ -749,10 +747,27 @@ add_decl_doc add_monoid_hom.has_neg
   (f : M →* G) (x : M) :
   f⁻¹ x = (f x)⁻¹ := rfl
 
+/-- If `f` and `g` are monoid homomorphisms to a commutative group, then `f / g` is the homomorphism
+sending `x` to `(f x) / (g x). -/
+@[to_additive]
+instance {M G} [monoid M] [comm_group G] : has_div (M →* G) :=
+⟨λ f g, mk' (λ x, f x / g x) $ λ a b,
+  by simp [div_eq_mul_inv, mul_assoc, mul_left_comm, mul_comm]⟩
+
+/-- If `f` and `g` are monoid homomorphisms to an additive commutative group, then `f - g`
+is the homomorphism sending `x` to `(f x) - (g x). -/
+add_decl_doc add_monoid_hom.has_sub
+
+@[simp, to_additive] lemma div_apply {M G} {mM : monoid M} {gG : comm_group G}
+  (f g : M →* G) (x : M) :
+  (f / g) x = f x / g x := rfl
+
 /-- If `G` is a commutative group, then `M →* G` a commutative group too. -/
 @[to_additive]
 instance {M G} [monoid M] [comm_group G] : comm_group (M →* G) :=
 { inv := has_inv.inv,
+  div := has_div.div,
+  div_eq_mul_inv := by { intros, ext, apply div_eq_mul_inv },
   mul_left_inv := by intros; ext; apply mul_left_inv,
   ..monoid_hom.comm_monoid }
 
@@ -775,10 +790,6 @@ of_map_add_neg f (by simpa only [sub_eq_add_neg] using hf)
 
 @[simp] lemma coe_of_map_sub (f : G → H) (hf : ∀ x y, f (x - y) = f x - f y) :
   ⇑(of_map_sub f hf) = f :=
-rfl
-
-@[simp] lemma sub_apply (f g : A →+ B) (a : A) :
-  (f - g) a = f a - g a :=
 rfl
 
 end add_monoid_hom

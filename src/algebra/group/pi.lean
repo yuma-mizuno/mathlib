@@ -37,18 +37,19 @@ instance comm_monoid [∀ i, comm_monoid $ f i] : comm_monoid (Π i : I, f i) :=
 by refine_struct { one := (1 : Π i, f i), mul := (*), .. }; tactic.pi_instance_derive_field
 
 @[to_additive]
-instance group [∀ i, group $ f i] : group (Π i : I, f i) :=
-by refine_struct { one := (1 : Π i, f i), mul := (*), inv := has_inv.inv, .. };
-  tactic.pi_instance_derive_field
+instance div_inv_monoid [∀ i, div_inv_monoid $ f i] :
+  div_inv_monoid (Π i : I, f i) :=
+{ div_eq_mul_inv := λ x y, funext (λ i, div_eq_mul_inv (x i) (y i)),
+  .. pi.monoid, .. pi.has_div, .. pi.has_inv }
 
--- TODO: derive this from `@[to_additive] pi.div_apply`,
--- when the `add_group -> has_sub` diamond is fixed
-@[simp] lemma sub_apply [∀ i, add_group $ f i] (x y : Π i : I, f i) (i : I) :
-  (x - y) i = x i - y i := rfl
+@[to_additive]
+instance group [∀ i, group $ f i] : group (Π i : I, f i) :=
+by refine_struct { one := (1 : Π i, f i), mul := (*), inv := has_inv.inv, div := has_div.div, .. };
+  tactic.pi_instance_derive_field
 
 @[to_additive]
 instance comm_group [∀ i, comm_group $ f i] : comm_group (Π i : I, f i) :=
-by refine_struct { one := (1 : Π i, f i), mul := (*), inv := has_inv.inv, .. };
+by refine_struct { one := (1 : Π i, f i), mul := (*), inv := has_inv.inv, div := has_div.div, .. };
   tactic.pi_instance_derive_field
 
 @[to_additive add_left_cancel_semigroup]
