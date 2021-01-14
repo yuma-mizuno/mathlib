@@ -114,10 +114,15 @@ end definitions
 
 section indep2
 
+lemma indep2_sets.symm {α} {p₁ p₂ : set (set α)}[measurable_space α] {μ : measure α}
+  (h : indep2_sets p₁ p₂ μ) :
+  indep2_sets p₂ p₁ μ :=
+by {intros t1 t2 ht1 ht2, rw [set.inter_comm, mul_comm], exact h t2 t1 ht2 ht1, }
+
 lemma indep2.symm {α} {m₁ m₂ : measurable_space α} [measurable_space α] {μ : measure α}
   (h : indep2 m₁ m₂ μ) :
   indep2 m₂ m₁ μ :=
-by {intros t1 t2 ht1 ht2, rw [set.inter_comm, mul_comm], exact h t2 t1 ht2 ht1, }
+indep2_sets.symm h
 
 lemma indep2_of_indep2_of_le_left {α} {m₁ m₂ m₃: measurable_space α} [measurable_space α]
   {μ : measure α} (h_indep : indep2 m₁ m₂ μ) (h31 : m₃ ≤ m₁) :
@@ -128,11 +133,6 @@ lemma indep2_of_indep2_of_le_right {α} {m₁ m₂ m₃: measurable_space α} [m
   {μ : measure α} (h_indep : indep2 m₁ m₂ μ) (h32 : m₃ ≤ m₂) :
   indep2 m₁ m₃ μ :=
 λ t1 t2 ht1 ht2, h_indep t1 t2 ht1 (h32 _ ht2)
-
-lemma indep2_sets.symm {α} {p₁ p₂ : set (set α)}[measurable_space α] {μ : measure α}
-  (h : indep2_sets p₁ p₂ μ) :
-  indep2_sets p₂ p₁ μ :=
-by {intros t1 t2 ht1 ht2, rw [set.inter_comm, mul_comm], exact h t2 t1 ht2 ht1, }
 
 lemma indep2_sets_of_indep2_sets_of_le_left {α} {p₁ p₂ p₃: set (set α)} [measurable_space α]
   {μ : measure α} (h_indep : indep2_sets p₁ p₂ μ) (h31 : p₃ ⊆ p₁) :
@@ -185,34 +185,6 @@ end indep2
 
 section from_indep_to_indep2
 
-lemma indep2_of_indep {α ι} {m : ι → measurable_space α} [measurable_space α] {μ : measure α}
-  (h_indep : indep m μ) {i j : ι} (hij : i ≠ j) :
-  indep2 (m i) (m j) μ :=
-begin
-  intros t₁ t₂ ht₁ ht₂,
-  have hf_m : ∀ (x : ι), x ∈ ({i, j} : finset ι) → (m x).is_measurable' (ite (x=i) t₁ t₂),
-  { intros x hx,
-    rw finset.mem_insert at hx,
-    cases hx,
-    { have ht₁' : (m i).is_measurable' t₁, by assumption,
-      simp [hx, ht₁'], },
-    { have ht₂' : (m j).is_measurable' t₂, by assumption,
-      simp [finset.mem_singleton.mp hx, hij.symm, ht₂'], }, },
-  have h1 : t₁ = ite (i = i) t₁ t₂, by simp only [if_true, eq_self_iff_true],
-  have h2 : t₂ = ite (j = i) t₁ t₂, by simp only [hij.symm, if_false],
-  have h_inter : (⋂ (t : ι) (H : t ∈ ({i, j} : finset ι)), ite (t = i) t₁ t₂)
-    = (ite (i = i) t₁ t₂) ∩ (ite (j = i) t₁ t₂),
-  by simp only [finset.bInter_singleton, finset.bInter_insert],
-  have h_prod : (∏ (t : ι) in ({i, j} : finset ι), μ (ite (t = i) t₁ t₂))
-    = μ (ite (i = i) t₁ t₂) * μ (ite (j = i) t₁ t₂),
-  by simp only [hij, finset.prod_singleton, finset.prod_insert, not_false_iff,
-    finset.mem_singleton],
-  rw h1,
-  nth_rewrite 1 h2,
-  nth_rewrite 3 h2,
-  rw [←h_inter, ←h_prod, h_indep {i, j} hf_m],
-end
-
 lemma indep2_sets_of_indep_sets {α ι} {m : ι → set (set α)} [measurable_space α] {μ : measure α}
   (h_indep : indep_sets m μ) {i j : ι} (hij : i ≠ j) :
   indep2_sets (m i) (m j) μ :=
@@ -237,6 +209,14 @@ begin
   nth_rewrite 1 h2,
   nth_rewrite 3 h2,
   rw [←h_inter, ←h_prod, h_indep {i, j} hf_m],
+end
+
+lemma indep2_of_indep {α ι} {m : ι → measurable_space α} [measurable_space α] {μ : measure α}
+  (h_indep : indep m μ) {i j : ι} (hij : i ≠ j) :
+  indep2 (m i) (m j) μ :=
+begin
+  change indep2_sets ((λ x, (m x).is_measurable') i) ((λ x, (m x).is_measurable') j) μ,
+  exact indep2_sets_of_indep_sets h_indep hij,
 end
 
 end from_indep_to_indep2
@@ -281,9 +261,8 @@ begin
   let ν := (μ t1) • μ,
   have h_univ : μ_inter set.univ = ν set.univ,
   by rw [measure.restrict_apply_univ, measure.smul_apply, measure_univ, mul_one],
-  have h_μ_finite : finite_measure μ_inter,
-  from @restrict.finite_measure α _ μ t1 (measure_lt_top μ t1),
-  have h_ν_finite : finite_measure ν, from μ.smul_finite (measure_lt_top μ t1),
+  have h_μ_finite := @restrict.finite_measure α _ μ t1 (measure_lt_top μ t1),
+  have h_ν_finite := μ.smul_finite (measure_lt_top μ t1),
   have h_agree : ∀ (t : set α), t ∈ p2 → μ_inter t = ν t,
   { intros t ht,
     have ht2 : m.is_measurable' t,
@@ -311,11 +290,9 @@ begin
   let ν := (μ t2) • μ,
   have h_univ : μ_inter set.univ = ν set.univ,
   by rw [measure.restrict_apply_univ, measure.smul_apply, measure_univ, mul_one],
-  have h_μ_finite : finite_measure μ_inter,
-  from @restrict.finite_measure α _ μ t2 (measure_lt_top μ t2),
-  have h_ν_finite : finite_measure ν, from μ.smul_finite (measure_lt_top μ t2),
-  have h_side1 : ∀ (t1 t2 : set α), t1 ∈ p1 → (m2.is_measurable' t2 → μ (t1 ∩ t2) = μ t1 * μ t2),
-  from indep2_of_indep2_sets_of_pi_system_aux h2 hp2 hpm2 hyp,
+  have h_μ_finite := @restrict.finite_measure α _ μ t2 (measure_lt_top μ t2),
+  have h_ν_finite := μ.smul_finite (measure_lt_top μ t2),
+  have h_side1 := indep2_of_indep2_sets_of_pi_system_aux h2 hp2 hpm2 hyp,
   have h_agree : ∀ (t : set α), t ∈ p1 → μ_inter t = ν t,
   { intros t ht,
     have ht1 : m.is_measurable' t,
@@ -363,12 +340,6 @@ def pi_system_Union_Inter {α ι} (π : ι → set (set α)) (S : set (finset ι
 /-- A set `s` is sup-closed if for all `t₁, t₂ ∈ s`, `t₁ ⊔ t₂ ∈ s`. -/
 def sup_closed {α} [has_sup α] (s : set α) : Prop := ∀ t1 t2, t1 ∈ s → t2 ∈ s → t1 ⊔ t2 ∈ s
 
-/-- A set of sets `s` is sup-closed if for all `t₁, t₂ ∈ s`, `t₁ ∪ t₂ ∈ s`. -/
-def set.union_closed {α} (s : set (set α)) : Prop := sup_closed s
-
-/-- A set of sets `s` is sup-closed if for all `t₁, t₂ ∈ s`, `t₁ ∪ t₂ ∈ s`. -/
-def finset.union_closed {α} (s : set (finset α)) : Prop := sup_closed s
-
 lemma sup_closed_singleton {α} [semilattice_sup α] (q : α) : sup_closed ({q} : set α) :=
 begin
   intros p1 p2 p1_mem p2_mem,
@@ -399,8 +370,8 @@ begin
   tauto,
 end
 
-lemma union_closed_tail_finset_set (N : ℕ) :
-  finset.union_closed {p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)} :=
+lemma sup_closed_tail_finset_set (N : ℕ) :
+  sup_closed {p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)} :=
 begin
   intros p1 p2 p1_mem p2_mem,
   rw set.mem_set_of_eq at *,
@@ -438,7 +409,7 @@ begin
 end
 
 lemma is_pi_system_pi_system_Union_Inter {α ι} (pi : ι → set (set α))
-  (hpi : ∀ x, is_pi_system (pi x)) (S : set (finset ι)) (h_sup : finset.union_closed S) :
+  (hpi : ∀ x, is_pi_system (pi x)) (S : set (finset ι)) (h_sup : sup_closed S) :
   is_pi_system (pi_system_Union_Inter pi S) :=
 begin
   intros t1 t2 ht1 ht2 h_nonempty,
@@ -612,8 +583,7 @@ begin
     { exact ht1_ft1_mem n h, },
     { exfalso,
       rw [finset.mem_insert, ←@not_not (n = a ∨ n ∈ S)] at prop_n,
-      refine prop_n _,
-      simp [hn, h], }, },
+      exact prop_n (by simp [hn, h]), }, },
   have h_f1_mem_S : ∀ n, n ∈ S → f1 n ∈ pi n,
   { intros x hxS,
     exact h_f1_mem x (by simp [hxS]), },
@@ -649,11 +619,9 @@ lemma indep_of_pi_system_indep {α ι} (m : measurable_space α) (s : ι → mea
   (hps : ∀ n, s n = measurable_space.generate_from (pi n)) (hp_ind : indep_sets pi μ) :
   indep s μ :=
 begin
-  refine finset.induction _ _,
-  { intros f hf_m,
-    simp [measure_univ], },
+  refine finset.induction (by simp [measure_univ]) _,
   intros a S ha_notin_S h_rec f hf_m,
-  have hf_m_S : ∀ (x : ι), x ∈ S → (s x).is_measurable' (f x), from (λ x hx, hf_m x (by simp [hx])),
+  have hf_m_S : ∀ x, x ∈ S → (s x).is_measurable' (f x), from λ x hx, hf_m x (by simp [hx]),
   rw [finset.bInter_insert, finset.prod_insert ha_notin_S, ←h_rec hf_m_S],
   -- define π systems and generated σ-algebras
   let p_ := pi_system_Union_Inter pi {S},
@@ -711,12 +679,9 @@ lemma head_n_mono {α} [complete_lattice α] (s : ℕ → α) {n m : ℕ} (h : n
 bsupr_le_of_mp (λ i hi, lt_of_lt_of_le hi h)
 
 lemma supr_eq_supr_head_n {α} [complete_lattice α] (s : ℕ → α) : supr s = ⨆ n, ⨆ i < n, s i :=
-begin
-  refine le_antisymm _ _ ,
-  { exact supr_le (λ i, le_trans (le_head_n s (nat.lt_succ_self i))
-    (le_supr (λ i, (⨆ (j : ℕ) (H : j < i), s j)) (i+1))), },
-  { exact supr_le (λ i, bsupr_le_supr (λ n, n < i) (λ n, s n)), },
-end
+le_antisymm (supr_le (λ i, le_trans (le_head_n s (nat.lt_succ_self i))
+    (le_supr (λ i, (⨆ (j : ℕ) (H : j < i), s j)) (i+1))))
+  (supr_le (λ i, bsupr_le_supr (λ n, n < i) (λ n, s n)))
 
 lemma le_tail_n {α} [complete_lattice α] (s : ℕ → α) {i n : ℕ} (hin : n ≤ i) : s i ≤ ⨆ i ≥ n, s i :=
 le_bsupr i hin
@@ -877,10 +842,8 @@ lemma aux_p1_remove_ite (N r : ℕ) {p1 : finset ℕ} (f : ℕ → ennreal)
     = ∏ (x : ℕ) in finset.range N, (f x) :=
 begin
   simp_rw [hp1, ←aux_p1_product (λ x, f x) N (r+1)],
-  --it looks like refl, but the `decidable` arguments of the ite are different.
   congr,
-  ext1 n,
-  by_cases hn : n < N + 1; simp [hn],
+  simp,
 end
 
 lemma aux_p2_remove_ite (N r : ℕ) {p2 : finset ℕ} (f : ℕ → ennreal)
@@ -893,7 +856,7 @@ begin
   --it looks like refl, but the `decidable` arguments of the ite are different.
   congr,
   ext1 n,
-  by_cases hn : N ≤ n ∧ n < N + r; simp [hn],
+  congr,
 end
 
 lemma aux_t1_inter_t2 {α} (N r : ℕ) (f1 f2 : ℕ → set α) (p1 p2 : finset ℕ)
@@ -910,16 +873,14 @@ begin
       nth_rewrite 0 ←add_zero N,
       exact add_le_add_left (zero_le _) N, },
     rw ←finset.Ico.union_consecutive (zero_le N) h_le,
-    ext, -- some decidable argument is not the same → do random stuff until it goes away.
-    repeat{ rw finset.mem_union,}, },
+    congr, },
   congr,
   ext1 i,
   congr,
   { exact h_congr, },
   ext1 x,
   { rw h_congr, },
-  intros a a' haa',
-  refl,
+  exact λ a a' haa', by refl,
 end
 
 lemma is_measurable.ite {α} [measurable_space α] {s t : set α} {p : Prop} (hs : p → is_measurable s)
@@ -983,28 +944,26 @@ lemma head_n_indep_tail_n {α} {m : measurable_space α} (μ : measure α) [prob
   indep2 (⨆ n < N, s n) (⨆ i ≥ N, s i) μ :=
 begin
   -- define a π-system family
-  let pi := λ n, (s n).is_measurable',
-  have hpis : pi = λ n, (s n).is_measurable', by refl,
-  have h_pi : ∀ n, is_pi_system (pi n),
+  have h_pi : ∀ n, is_pi_system ((s n).is_measurable'),
   from (λ n, @measurable_space.is_pi_system_is_measurable α (s n)),
   -- define generating π-systems for head and tail
-  let p_head := pi_system_Union_Inter pi {finset.range N},
+  let p_head := pi_system_Union_Inter (λ n, (s n).is_measurable') {finset.range N},
   have h_pi_head : is_pi_system p_head,
-  from is_pi_system_pi_system_Union_Inter pi h_pi {finset.range N}
+  from is_pi_system_pi_system_Union_Inter (λ n, (s n).is_measurable') h_pi {finset.range N}
     (sup_closed_singleton (finset.range N)),
   have h_generate_head : (⨆ n < N, s n) = measurable_space.generate_from p_head,
   from head_n_eq_generate_from_Union_Inter_range s N,
   let S_tail := {p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)},
-  let p_tail := pi_system_Union_Inter pi S_tail,
+  let p_tail := pi_system_Union_Inter (λ n, (s n).is_measurable') S_tail,
   have h_pi_tail : is_pi_system p_tail,
-  from is_pi_system_pi_system_Union_Inter pi h_pi S_tail (union_closed_tail_finset_set N),
+  from is_pi_system_pi_system_Union_Inter (λ n, (s n).is_measurable') h_pi S_tail
+    (sup_closed_tail_finset_set N),
   have h_generate_tail : (⨆ i ≥ N, s i) = measurable_space.generate_from p_tail,
   from tail_n_eq_generate_from_Union_Inter_Ico s N,
   -- if these π-systems are indep, head and tail are indep
   refine indep2_of_indep2_sets_of_pi_system (head_n_le s N h_le) (tail_n_le s N h_le)
     h_pi_head h_pi_tail h_generate_head h_generate_tail _,
-  -- now show the π-systems are indep.
-  exact head_n_indep_tail_n_pi_systems μ s h_indep N pi hpis,
+  exact head_n_indep_tail_n_pi_systems μ s h_indep N (λ n, (s n).is_measurable') rfl,
 end
 
 lemma head_n_indep_tail {α} {m : measurable_space α} (μ : measure α) [probability_measure μ]
@@ -1059,12 +1018,11 @@ lemma supr_indep_tail {α} {m : measurable_space α} (μ : measure α) [probabil
 begin
   let p : ℕ → set (set α) := λ n, (⨆ i < n, s i).is_measurable',
   have hp : ∀ n, is_pi_system (p n),
-  by {intro n, exact @measurable_space.is_pi_system_is_measurable α (⨆ i < n, s i),},
+  from λ n, @measurable_space.is_pi_system_is_measurable α (⨆ i < n, s i),
   have h_generate_n : ∀ n, (⨆ i < n, s i) = measurable_space.generate_from (p n),
-  from (λ n, (@measurable_space.generate_from_is_measurable α (⨆ i < n, s i)).symm),
+  from λ n, (@measurable_space.generate_from_is_measurable α (⨆ i < n, s i)).symm,
   have hp_mono : ∀ n m, n ≤ m → p n ⊆ p m, from (λ n m hnm, head_n_mono s hnm),
-  let p_Union := ⋃ n, p n,
-  have h_pi : is_pi_system p_Union, from is_pi_system_monotone_Union p hp hp_mono,
+  have h_pi : is_pi_system (⋃ n, p n), from is_pi_system_monotone_Union p hp hp_mono,
   let p' := {t : set α | (tail s).is_measurable' t},
   have hp'_pi : is_pi_system p', from @measurable_space.is_pi_system_is_measurable α (tail s),
   have h_generate' : tail s = measurable_space.generate_from p',
@@ -1076,12 +1034,10 @@ begin
     from head_n_indep_tail μ s h_le h_indep n,
     rw [h_generate_n n, h_generate'] at h_sigma_indep,
     exact indep2_sets_of_indep2 h_sigma_indep, },
-  have h_pi_system_indep : indep2_sets p_Union p' μ, from indep2_sets.Union h_indep_n,
+  have h_pi_system_indep : indep2_sets (⋃ n, p n) p' μ, from indep2_sets.Union h_indep_n,
   -- now go from π-systems to σ-algebras
-  have h_generate : supr s = measurable_space.generate_from p_Union,
-  from supr_eq_generate_from_Union_head_n s,
-  exact indep2_of_indep2_sets_of_pi_system (supr_le h_le) (tail_le h_le) h_pi hp'_pi
-    h_generate h_generate' h_pi_system_indep,
+  refine indep2_of_indep2_sets_of_pi_system (supr_le h_le) (tail_le h_le) h_pi hp'_pi
+    (supr_eq_generate_from_Union_head_n s) h_generate' h_pi_system_indep,
 end
 
 lemma tail_indep_tail {α} {m : measurable_space α} {μ : measure α} [probability_measure μ]
