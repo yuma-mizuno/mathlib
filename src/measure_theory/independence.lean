@@ -846,14 +846,14 @@ begin
     { rw add_assoc,
       nth_rewrite 0 ←add_zero N,
       exact add_le_add_left (zero_le _) N, },
-    rw ←finset.Ico.union_consecutive (zero_le N) h_le, },
+    rw ←finset.Ico.union_consecutive (zero_le N) h_le },
   congr,
   ext1 i,
   congr,
-  { exact h_congr, },
+  { convert h_congr, },
   ext1 x,
-  { rw h_congr, },
-  exact λ a a' haa', by refl,
+  { congr', convert h_congr, },
+  exact λ a a' haa', by congr',
 end
 
 lemma is_measurable.ite {α} [measurable_space α] {s t : set α} {p : Prop} (hs : p → is_measurable s)
@@ -882,8 +882,8 @@ begin
   have h_P_inter : μ (t1 ∩ t2) = ∏ n in finset.range (N+r+1), μ (g n),
   { have hgm : ∀ i, i ∈ finset.range (N + r + 1) → (s i).is_measurable' (g i),
     { refine (λ i _, @is_measurable.inter α (s i) _ _ _ _),
-      { exact @is_measurable.ite α (s i) _ _ _ (hf1m i) (λ _, @is_measurable.univ α (s i)), },
-      { exact @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
+      { convert @is_measurable.ite α (s i) _ _ _ (hf1m i) (λ _, @is_measurable.univ α (s i)), },
+      { convert @is_measurable.ite α (s i) _ _ _ (hf2m i) (λ _, @is_measurable.univ α (s i)), }, },
     rw [ht1_eq, ht2_eq, aux_t1_inter_t2 N r f1 f2 p1 p2 hp1 hp2],
     have h_almost := h_indep (finset.range (N+r+1)) hgm,
     dsimp only at h_almost,
@@ -923,14 +923,14 @@ begin
   let p_head := pi_system_Union_Inter (λ n, (s n).is_measurable') {finset.range N},
   have h_pi_head : is_pi_system p_head,
   from is_pi_system_pi_system_Union_Inter (λ n, (s n).is_measurable') h_pi {finset.range N}
-    (sup_closed_singleton (finset.range N)),
+    (by convert sup_closed_singleton (finset.range N)),
   have h_generate_head : (⨆ n < N, s n) = measurable_space.generate_from p_head,
   from head_n_eq_generate_from_Union_Inter_range s N,
   let S_tail := {p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)},
   let p_tail := pi_system_Union_Inter (λ n, (s n).is_measurable') S_tail,
   have h_pi_tail : is_pi_system p_tail,
   from is_pi_system_pi_system_Union_Inter (λ n, (s n).is_measurable') h_pi S_tail
-    (sup_closed_tail_finset_set N),
+    (by convert sup_closed_tail_finset_set N),
   have h_generate_tail : (⨆ i ≥ N, s i) = measurable_space.generate_from p_tail,
   from tail_n_eq_generate_from_Union_Inter_Ico s N,
   -- if these π-systems are indep, head and tail are indep
