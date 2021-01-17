@@ -5,6 +5,7 @@ Author: Rémy Degenne
 -/
 import measure_theory.measure_space
 import algebra.big_operators.intervals
+import data.finset.intervals
 
 /-!
 # Independence of sets of sets and measure spaces (σ-algebras)
@@ -55,8 +56,7 @@ Part A, Chapter 4.
 -/
 
 open measure_theory
-open_locale big_operators
-local attribute [instance] classical.prop_decidable
+open_locale big_operators classical
 
 section definitions
 
@@ -261,7 +261,7 @@ begin
   let ν := (μ t1) • μ,
   have h_univ : μ_inter set.univ = ν set.univ,
   by rw [measure.restrict_apply_univ, measure.smul_apply, measure_univ, mul_one],
-  have h_μ_finite := @restrict.finite_measure α _ μ t1 (measure_lt_top μ t1),
+  have h_μ_finite := @restrict.finite_measure α _ t1 μ (measure_lt_top μ t1),
   have h_ν_finite := μ.smul_finite (measure_lt_top μ t1),
   have h_agree : ∀ (t : set α), t ∈ p2 → μ_inter t = ν t,
   { intros t ht,
@@ -290,7 +290,7 @@ begin
   let ν := (μ t2) • μ,
   have h_univ : μ_inter set.univ = ν set.univ,
   by rw [measure.restrict_apply_univ, measure.smul_apply, measure_univ, mul_one],
-  have h_μ_finite := @restrict.finite_measure α _ μ t2 (measure_lt_top μ t2),
+  have h_μ_finite := @restrict.finite_measure α _ t2 μ (measure_lt_top μ t2),
   have h_ν_finite := μ.smul_finite (measure_lt_top μ t2),
   have h_side1 := indep2_of_indep2_sets_of_pi_system_aux h2 hp2 hpm2 hyp,
   have h_agree : ∀ (t : set α), t ∈ p1 → μ_inter t = ν t,
@@ -347,46 +347,20 @@ begin
   rw [p1_mem, p2_mem, sup_idem],
 end
 
-/-- The union of two intervals that overlap each other is also an interval -/
-lemma finset.Ico.union_connected {n m l k : ℕ} (hlm : l ≤ m) (hnk : n ≤ k) :
-  finset.Ico n m ∪ finset.Ico l k = finset.Ico (min n l) (max m k) :=
-begin
-  ext,
-  rw [finset.mem_union, finset.Ico.mem, finset.Ico.mem, finset.Ico.mem, min_le_iff, lt_max_iff],
-  by_cases hl : l ≤ a; by_cases hk : a < k,
-  { tauto, },
-  { have hna : n ≤ a, from le_trans hnk (le_of_not_gt hk),
-    simp [hl, hk, hna], },
-  { have ham : a < m, from lt_of_lt_of_le (lt_of_not_ge hl) hlm,
-    simp [hl, hk, ham], },
-  { tauto, },
-end
-
-lemma finset.Ico.inter {n m l k : ℕ} :
-  finset.Ico n m ∩ finset.Ico l k = finset.Ico (max n l) (min m k) :=
-begin
-  ext,
-  rw [finset.mem_inter, finset.Ico.mem, finset.Ico.mem, finset.Ico.mem, max_le_iff, lt_min_iff],
-  tauto,
-end
-
 lemma sup_closed_tail_finset_set (N : ℕ) :
-  sup_closed {p : finset ℕ | ∃ r : ℕ, p = finset.Ico N (N+r+1)} :=
+  sup_closed {s : finset ℕ | ∃ r : ℕ, s = finset.Ico N (N+r+1)} :=
 begin
-  intros p1 p2 p1_mem p2_mem,
-  rw set.mem_set_of_eq at *,
-  cases p1_mem with r1 hp1,
-  cases p2_mem with r2 hp2,
+  rintros s1 s2 ⟨r1, hs1⟩ ⟨r2, hs2⟩,
   use (r1 ⊔ r2),
   have hr : ∀ r : ℕ, N ≤ N + r + 1,
   { intro r,
     rw add_assoc,
     nth_rewrite 0 ←add_zero N,
     exact add_le_add_left (zero_le _) N, },
-  rw [finset.sup_eq_union p1 p2, hp1, hp2, finset.Ico.union_connected (hr r1) (hr r2), min_self,
-    sup_eq_max],
-  congr,
-  rw [←max_add_add_left, ←max_add_add_right],
+  rw [finset.sup_eq_union s1 s2, hs1, hs2, sup_eq_max, ←max_add_add_left, ←max_add_add_right],
+  have h := finset.Ico.union' (hr r1) (hr r2),
+  rw min_self at h,
+  exact h,
 end
 
 lemma finset.Inter_inter_Inter_eq_Inter_ite {α ι} (p1 p2 : finset ι) (f1 f2 : ι → set α) :
@@ -872,8 +846,7 @@ begin
     { rw add_assoc,
       nth_rewrite 0 ←add_zero N,
       exact add_le_add_left (zero_le _) N, },
-    rw ←finset.Ico.union_consecutive (zero_le N) h_le,
-    congr, },
+    rw ←finset.Ico.union_consecutive (zero_le N) h_le, },
   congr,
   ext1 i,
   congr,

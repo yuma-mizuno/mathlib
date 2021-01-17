@@ -1500,6 +1500,25 @@ Ioo_ae_eq_Ico.symm.trans Ioo_ae_eq_Ioc
 
 end no_atoms
 
+lemma ext_on_sigma_algebra_of_generate_finite {α} (m₀ : measurable_space α)
+  {μ ν : measure α} [finite_measure μ] [finite_measure ν]
+  (C : set (set α)) (hμν : ∀ s ∈ C, μ s = ν s) {m : measurable_space α}
+  (h : m ≤ m₀) (hA : m = measurable_space.generate_from C) (hC : is_pi_system C)
+  (h_univ : μ set.univ = ν set.univ) {s : set α} {hs : m.is_measurable' s}:
+  μ s = ν s :=
+begin
+  refine measurable_space.induction_on_inter hA hC (by simp) hμν _ _ hs,
+  { intros t h1t h2t,
+    have h1t_ : @is_measurable α m₀ t, from h _ h1t,
+    rw @measure_compl α m₀ μ t h1t_ (@measure_lt_top α m₀ μ _ t),
+    rw @measure_compl α m₀ ν t h1t_ (@measure_lt_top α m₀ ν _ t),
+    rw [h_univ, h2t], },
+  { intros f h1f h2f h3f,
+    have h2f_ : ∀ (i : ℕ), @is_measurable α m₀ (f i), from (λ i, h _ (h2f i)),
+    have h_Union : @is_measurable α m₀ (⋃ (i : ℕ), f i), from @is_measurable.Union α ℕ m₀ _ f h2f_,
+    simp [measure_Union, h_Union, h1f, h3f, h2f_], },
+end
+
 namespace measure
 
 /-- A measure is called finite at filter `f` if it is finite at some set `s ∈ f`.
@@ -1673,6 +1692,7 @@ begin
   refine ⟨_⟩,
   rw measure.smul_apply,
   exact ennreal.mul_lt_top hc (measure_lt_top μ set.univ),
+end
 
 lemma measure.exists_is_open_measure_lt_top [topological_space α] (μ : measure α)
   [locally_finite_measure μ] (x : α) :
