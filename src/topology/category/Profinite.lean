@@ -173,6 +173,10 @@ begin
   apply subset.trans connected_component_subset_Inter_clopen (Inter_subset _ ⟨Z, ⟨h, xZ⟩⟩),
 end
 
+#check subsingleton_empty
+#check subsingleton_coe
+#check not_nonempty_iff_eq_empty
+
 lemma totally_disconnected_space_iff_connected_component_singleton :
   totally_disconnected_space α ↔ (∀ x : α, subsingleton (connected_component x)) :=
 begin
@@ -183,12 +187,169 @@ begin
     exact (is_connected_connected_component).2 },
   intro h, constructor,
   intros s s_sub hs,
-  -- TODO subsingleton of subtype
+  rw subsingleton_coe,
+  by_cases (s.nonempty),
+  { choose x hx using h,
+    have H := h x,
+    rw subsingleton_coe at H,
+    apply subsingleton.mono H (subset_connected_component hs hx),
+  },
+  rw not_nonempty_iff_eq_empty at h,
+  rw h,
+  exact subsingleton_empty,
+end
+
+-- todo reduce to nonempty fibers
+lemma surjective_of_connected_fibers {β : Type*} [topological_space β] {f : α → β}
+  (connected_fibers : ∀ t : β, is_connected (f ⁻¹' {t})) : function.surjective f :=
+begin
+  intro t,
+  choose s hs using (connected_fibers t).1,
+  use s,
+  rw mem_preimage at hs,
+  apply hs,
+end
+
+#check bUnion_preimage_singleton
+#check nonempty_of_mem
+#check preimage_subset
+
+-- Version of stacks 0377
+lemma connected_bij {β : Type*} [topological_space β] {f : α → β}
+  (connected_fibers : ∀ t : β, is_connected (f ⁻¹' {t}))
+  (hcl : ∀ (T : set β), is_closed T ↔ is_closed (f ⁻¹' T))
+  : ∀ t : β, is_preconnected (f ⁻¹' connected_component t) :=
+begin
+  intro t,
+  -- T closed
+  have hT : is_closed (f ⁻¹' connected_component t),
+  { apply (hcl (connected_component t)).1,
+    apply is_closed_connected_component },
+  apply (is_preconnected_iff_subset_of_fully_disjoint_closed hT).2,
+  intros u v hu hv huv uv_disj,
+  -- TODO: rename
+  have h_decomp : ∀ t' ∈ connected_component t, f ⁻¹' {t'} ⊆ u ∨ f ⁻¹' {t'} ⊆ v,
+  { intros t' ht',
+    apply is_preconnected_iff_subset_of_disjoint_closed.1 (connected_fibers t').2 u v hu hv,
+    { apply subset.trans _ huv,
+      apply (preimage_subset_preimage_iff _).2 (singleton_subset_iff.2 ht'),
+      rw [singleton_subset_iff, mem_range],
+      choose s hs using (connected_fibers t').1,
+      use s,
+      rw mem_preimage at hs,
+      apply hs },
+    rw uv_disj,
+    exact inter_empty _,
+  },
+  let T₁ := {t' ∈ connected_component t | f ⁻¹' {t'} ⊆ u },
+  let T₂ := {t' ∈ connected_component t | f ⁻¹' {t'} ⊆ v },
+
+  have T₁_u :  f ⁻¹' T₁ =  (f ⁻¹' connected_component t) ∩ u,
+  { apply eq_of_subset_of_subset,
+    { rw ←bUnion_preimage_singleton,
+      apply bUnion_subset,
+      intros t' ht',
+      apply subset_inter _ ht'.2,
+      -- REUSED CODE
+      apply (preimage_subset_preimage_iff _).2 (singleton_subset_iff.2 ht'.1),
+      rw [singleton_subset_iff, mem_range],
+      choose s hs using (connected_fibers t').1,
+      use s,
+      rw mem_preimage at hs,
+      apply hs },
+    intros a ha,
+    cases ha with hat hau,
+    constructor,
+    -- TODO reuse code
+    { sorry },
+    simp,
+    cases h_decomp (f a) _,
+    { apply h },
+    { exfalso,
+      have hav : a ∈ v,
+      -- tidy proof
+      { cases hat, cases hat_h, cases hat_h_w, solve_by_elim },
+      rw ←not_nonempty_iff_eq_empty at uv_disj,
+      apply uv_disj,
+      apply nonempty_of_mem (mem_inter hau hav),
+     },
+    { sorry }, -- again reuse code
+  },
+  have T₂_v :  f ⁻¹' T₂ =  (f ⁻¹' connected_component t) ∩ v,
+  { sorry }, -- TODO : copy above lemma
+  have hT₁ : is_closed T₁,
+  { apply (hcl T₁).2,
+    rw T₁_u,
+    apply is_closed_inter hT hu},
+  have hT₂ : is_closed T₂,
+  { apply (hcl T₂).2,
+    rw T₂_v,
+    apply is_closed_inter hT hv},
+  have T_decomp : (connected_component t) = T₁ ∪ T₂,
+  { apply eq_of_subset_of_subset,
+    { intros t' ht',
+      apply (mem_union t' T₁ T₂).2,
+      cases h_decomp t' ht' with htu htv,
+      { left, exact ⟨ht', htu⟩ },
+      right, exact ⟨ht', htv⟩,
+    },
+    -- tidy proof
+    intros a ᾰ, cases ᾰ, work_on_goal 0 { cases ᾰ, assumption }, cases ᾰ, assumption,
+  },
+  -- show Ti are disjoint
+
+  -- show T is a subset of either
+
+  -- cases .....
+
   sorry,
 end
 
 #check is_clopen_inter_of_disjoint_cover_clopen
 #check is_closed.preimage
+#check function.surjective.preimage_subset_preimage_iff
+
+lemma preimage_image_conn {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
+begin
+  apply set.eq_of_subset_of_subset,
+  { intros a ha,
+    rw mem_preimage,
+    have H : ⟦a⟧ = ⟦t⟧,
+    { rw component_rel_iff,
+      exact eq.symm (connected_component_eq ha) },
+    rw H,
+    exact mem_singleton ⟦t⟧ },
+  intros a ha,
+  rw mem_preimage at ha,
+  simp only [mem_singleton_iff, component_rel_iff] at ha,
+  rw ←ha,
+  exact mem_connected_component,
+end
+
+-- TODO: potentially incorporate into theorem? Or better naming
+lemma preimage_component_quot (U : set α) :
+  quotient.mk ⁻¹' (quotient.mk '' U) = ⋃ (x : α) (h : x ∈ U), connected_component x :=
+begin
+  apply set.eq_of_subset_of_subset,
+  { intros a ha,
+    rw mem_preimage at ha,
+    rw mem_image _ _ ⟦a⟧ at ha,
+    rcases ha with ⟨b, hb, hab⟩,
+    apply mem_Union.2, use b,
+    apply mem_Union.2, use hb,
+    rw component_rel_iff at hab,
+    rw hab,
+    exact mem_connected_component },
+  apply Union_subset, intro a,
+  apply Union_subset, intro ha,
+  rw preimage_image_conn,
+  rw (function.surjective.preimage_subset_preimage_iff (surjective_quotient_mk _)),
+  rw singleton_subset_iff,
+  rw mem_image, use a,
+  exact ⟨ha , refl _⟩,
+end
+
+#check quotient_map.is_open_preimage
 
 instance component_quot.totally_disconnected_space :
   totally_disconnected_space (quotient (component_setoid α)) :=
@@ -210,50 +371,28 @@ begin
   dsimp,
   rw component_rel_iff,
   rw ←mem_preimage at hb,
-  have H : is_connected (quotient.mk ⁻¹' connected_component ⟦a⟧),
-  { refine ⟨nonempty_of_mem hb, _⟩,
-    apply (is_preconnected_iff_subset_of_fully_disjoint_closed
-      (is_closed.preimage continuous_quotient_mk is_closed_connected_component)).2,
-    intros u v hu hv uv_cover huv,
-    let T₁ := {t : quotient (component_setoid α) | (t ∈ connected_component ⟦a⟧) ∧ (quotient.mk ⁻¹ t) ⊆ u},
-    let T₂ := {t : quotient (component_setoid α) | (t ∈ connected_component ⟦a⟧) ∧ (quotient.mk ⁻¹ t) ⊆ v},
-    have H1 : connected_component ⟦a⟧ = T₁ ∪ T₂,
-    { apply set.eq_of_subset_of_subset,
-      { sorry
-
-      },
-      sorry
+  have H : is_preconnected (quotient.mk ⁻¹' connected_component ⟦a⟧),
+  { apply connected_bij,
+    { intro t,
+      apply quotient.induction_on t,
+      intro s,
+      rw ←preimage_image_conn,
+      exact is_connected_connected_component,
     },
-    have HT₁ : is_closed T₁,
-    {
-
-    },
-    have HT₂ : is_closed T₂,
-    {
-
-    },
-    /-
-    some Ti = ∅
-    connected_component ⟦a⟧ = Ti → subset thing.. DONE
-    ...
-
-    -/
-    sorry,
+    intro T,
+    split,
+    { exact λ hT, is_closed.preimage (continuous_quotient_mk) hT },
+    intro hT,
+    rw [←is_open_compl_iff, ←preimage_compl] at hT,
+    rw [←is_open_compl_iff, ←(quotient_map.is_open_preimage quotient_map_quotient_mk)],
+    exact hT,
   },
-
-  have h1 := subset_connected_component H.2 hb,
+  have h1 := subset_connected_component H hb,
   rw ←mem_preimage at hc,
   apply eq.symm,
   apply connected_component_eq,
   apply mem_of_subset_of_mem h1 hc,
 end
-
-#check quotient.lift
-#check function.comp
-#check quotient.sound
-#check quotient
-#check is_preconnected.image
-#check component_rel_iff
 
 def component_map {β : Type*} [topological_space β] (f : α → β) [h : continuous f] :
   quotient (component_setoid α) → quotient (component_setoid β) :=
@@ -281,61 +420,56 @@ begin
 end
 )
 
-
-
-#check quotient_map_iff.1
-#check is_compact.inter_Inter_nonempty
-#check is_compact.elim_finite_subfamily_closed
-#check subset_preimage_image
-#check preimage_injective
-#check preimage_empty
-
+-- Stacks tag 09000
 def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
 { obj := λ X,
   { to_Top := { α := quotient (component_setoid X.to_Top.α)},
     is_compact := quotient.compact_space,
     is_t2 :=
     begin
+      -- Fix 2 distinct connected components, with points a and b
       constructor, intros x y,
       apply quotient.induction_on x,
       apply quotient.induction_on y,
       intros a b ne,
       rw component_nrel_iff at ne,
       have h := connected_component_disjoint ne,
+      -- write ⟦b⟧ as the intersection of all clopen subsets containing it
       rw [connected_component_eq_Inter_clopen, disjoint_iff_inter_eq_empty, inter_comm] at h,
+      -- Now we show that this can be reduced to some clopen containing ⟦b⟧ being disjoint to ⟦a⟧
       cases is_compact.elim_finite_subfamily_closed
         (is_closed.compact (is_closed_connected_component)) _ _ h with fin_a ha,
+      -- todo... possible to incorporate in line above?
+      swap, exact (λ Z, Z.2.1.2),
+      -- NONTERMINAL SIMP... FIX!!!!!
       simp at ha,
       set U : set X.to_Top.α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
+      -- TODO: rename to something better?
+      have hu_clopen : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
       rw ←hU at ha,
+      -- This clopen and its complement will separate the points corresponding to ⟦a⟧ and ⟦b⟧
       use quotient.mk '' U,
       use quotient.mk '' Uᶜ,
-      have hu : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
-      have h1 := clopen_eq_union_connected_components hu,
+      -- Using the fact that clopens are unions of connected components, we show that
+      -- U and Uᶜ is the preimage of a clopen set in the quotient
+      -- TODO: renaming
+      have h1 := clopen_eq_union_connected_components hu_clopen,
       have h2 : (quotient.mk ⁻¹' (quotient.mk '' U)) = U,
-      { apply set.eq_of_subset_of_subset,
-        { conv {congr, skip, rw h1},
-          intros c hc,
-          rw mem_preimage at hc,
-          rw mem_image _ _ ⟦c⟧ at hc,
-          rcases hc with ⟨d, hd, hcd⟩,
-          apply mem_Union.2, use d,
-          apply mem_Union.2, use hd,
-          rw component_rel_iff at hcd,
-          rw hcd,
-          exact mem_connected_component },
-        exact subset_preimage_image _ _ },
+      { rw preimage_component_quot,
+        exact eq.symm h1 },
       have h3 : (quotient.mk ⁻¹' (quotient.mk '' Uᶜ)) = Uᶜ,
-      { --TODO : make h2 into lemma and apply here
-        sorry },
+      { rw preimage_component_quot,
+        exact eq.symm (clopen_eq_union_connected_components (is_clopen_compl hu_clopen)) },
+      -- showing that U and Uᶜ are open and separates ⟦a⟧ and ⟦b⟧
+      -- TODO, can I avoid all these splits?
       split,
       {  apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
          rw h2,
-         exact hu.1 },
+         exact hu_clopen.1 },
       split,
       { apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
         rw h3,
-        exact is_open_compl_iff.2 hu.2 },
+        exact is_open_compl_iff.2 hu_clopen.2 },
       split,
       { apply mem_image_of_mem,
         rw mem_Inter, intro Z,
@@ -347,8 +481,6 @@ def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
         exact subset_compl_iff_disjoint.2 ha },
       apply preimage_injective.2 (@surjective_quotient_mk _ _),
       rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
-      -- TOO SWAP GOAL TO AFTER have ha
-      exact (λ Z, Z.2.1.2),
     end
     },
   map := _,}
