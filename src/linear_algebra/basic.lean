@@ -209,7 +209,7 @@ rfl
 
 @[norm_cast] lemma coe_fn_sum {ι : Type*} (t : finset ι) (f : ι → M →ₗ[R] M₂) :
   ⇑(∑ i in t, f i) = ∑ i in t, (f i : M → M₂) :=
-add_monoid_hom.map_sum ⟨@to_fun R M M₂ _ _ _ _ _, rfl, λ x y, rfl⟩ _ _
+add_monoid_hom.map_sum ⟨@to_fun R R _ _ (ring_hom.id R) M M₂ _ _ _ _, rfl, λ x y, rfl⟩ _ _
 
 instance : monoid (M →ₗ[R] M) :=
 by refine {mul := (*), one := 1, ..}; { intros, apply linear_map.ext, simp {proj := ff} }
@@ -246,7 +246,7 @@ end
 def prod (f : M →ₗ[R] M₂) (g : M →ₗ[R] M₃) : M →ₗ[R] M₂ × M₃ :=
 { to_fun    := λ x, (f x, g x),
   map_add'  := λ x y, by simp only [prod.mk_add_mk, map_add],
-  map_smul' := λ c x, by simp only [prod.smul_mk, map_smul] }
+  map_smul' := λ c x, by simp [prod.smul_mk, map_smul] }
 
 @[simp] theorem prod_apply (f : M →ₗ[R] M₂) (g : M →ₗ[R] M₃) (x : M) :
   prod f g x = (f x, g x) := rfl
@@ -284,7 +284,7 @@ theorem inr_injective : function.injective (inr R M M₂) :=
 def coprod (f : M →ₗ[R] M₃) (g : M₂ →ₗ[R] M₃) : M × M₂ →ₗ[R] M₃ :=
 { to_fun    := λ x, f x.1 + g x.2,
   map_add'  := λ x y, by simp only [map_add, prod.snd_add, prod.fst_add]; cc,
-  map_smul' := λ x y, by simp only [smul_add, prod.smul_snd, prod.smul_fst, map_smul] }
+  map_smul' := λ x y, by simp [smul_add, prod.smul_snd, prod.smul_fst, map_smul] }
 
 @[simp] theorem coprod_apply (f : M →ₗ[R] M₃) (g : M₂ →ₗ[R] M₃) (x : M) (y : M₂) :
   coprod f g (x, y) = f x + g y := rfl
@@ -338,7 +338,7 @@ instance : has_sub (M →ₗ[R] M₂) :=
 ⟨λ f g,
   ⟨λ b, f b - g b,
    by { simp only [map_add, sub_eq_add_neg, neg_add], cc },
-   by { intros, simp only [map_smul, smul_sub] }⟩⟩
+   by { intros, simp [map_smul, smul_sub] }⟩⟩
 
 @[simp] lemma sub_apply (x : M) : (f - g) x = f x - g x := rfl
 
@@ -368,7 +368,7 @@ variables {S : Type*} [semiring R] [monoid S]
 
 instance : has_scalar S (M →ₗ[R] M₂) :=
 ⟨λ a f, ⟨λ b, a • f b, λ x y, by rw [f.map_add, smul_add],
-  λ c x, by simp only [f.map_smul, smul_comm c]⟩⟩
+  λ c x, by simp [f.map_smul, smul_comm c]⟩⟩
 
 @[simp] lemma smul_apply (a : S) (x : M) : (a • f) x = a • f x := rfl
 
