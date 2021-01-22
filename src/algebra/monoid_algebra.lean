@@ -483,6 +483,7 @@ def equivariant_of_linear_of_comm : V →ₗ[monoid_algebra k G] W :=
   map_add' := λ v v', by simp,
   map_smul' := λ c v,
   begin
+  change f (c • v) = c • f v,
   apply finsupp.induction c,
   { simp, },
   { intros g r c' nm nz w,
