@@ -148,7 +148,7 @@ begin
   let f_i : M →ₗ[R] R :=
   { to_fun := λ x, f x i,
     map_add' := λ _ _, by rw [hadd, pi.add_apply],
-    map_smul' := λ _ _, by rw [hsmul, pi.smul_apply] },
+    map_smul' := λ _ _, by simp [hsmul, pi.smul_apply] },
   show (finsupp.lapply i).comp hv.repr x = f_i x,
   congr' 1,
   refine hv.ext (λ j, _),
