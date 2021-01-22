@@ -519,7 +519,7 @@ theorem comp_assoc (φ₁ : C →ₐ[R] D) (φ₂ : B →ₐ[R] C) (φ₃ : A �
 ext $ λ x, rfl
 
 /-- R-Alg ⥤ R-Mod -/
-def to_linear_map : A →ₗ B :=
+def to_linear_map : A →ₗ[R] B :=
 { to_fun := φ,
   map_add' := φ.map_add,
   map_smul' := φ.map_smul }
