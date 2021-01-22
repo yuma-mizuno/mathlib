@@ -48,20 +48,23 @@ set_option old_structure_cmd true
 `f (x + y) = f x + f y` and `f (c • x) = c • f x`. Elements of `linear_map R M M₂` (available under
 the notation `M →ₗ[R] M₂`) are bundled versions of such maps. An unbundled version is available with
 the predicate `is_linear_map`, but it should be avoided most of the time. -/
-structure linear_map (R : Type u) (M : Type v) (M₂ : Type w)
-  [semiring R] [add_comm_monoid M] [add_comm_monoid M₂] [semimodule R M] [semimodule R M₂]
-  extends add_hom M M₂, M →[R] M₂
+structure linear_map {R : Type*} {S : Type*} [semiring R] [semiring S] (σ : R →+* S)
+  (M : Type*) (M₂ : Type*)
+  [add_comm_monoid M] [add_comm_monoid M₂] [semimodule R M] [semimodule S M₂]
+  extends add_hom M M₂ :=
+(map_smul' : ∀ (r : R) (x : M), to_fun (r • x) = (σ r) • to_fun x)
 
 end
 
 /-- The `add_hom` underlying a `linear_map`. -/
 add_decl_doc linear_map.to_add_hom
 
-/-- The `mul_action_hom` underlying a `linear_map`. -/
-add_decl_doc linear_map.to_mul_action_hom
+--/-- The `mul_action_hom` underlying a `linear_map`. -/
+--add_decl_doc linear_map.to_mul_action_hom
 
 infixr ` →ₗ `:25 := linear_map _
-notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map R M M₂
+notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_hom.id R) M M₂
+notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ M M₂
 
 namespace linear_map
 
@@ -218,7 +221,7 @@ def inverse [semimodule R M] [semimodule R M₂]
   M₂ →ₗ[R] M :=
 by dsimp [left_inverse, function.right_inverse] at h₁ h₂; exact
   ⟨g, λ x y, by { rw [← h₁ (g (x + y)), ← h₁ (g x + g y)]; simp [h₂] },
-      λ a b, by { rw [← h₁ (g (a • b)), ← h₁ (a • g b)]; simp [h₂] }⟩
+      λ a b, by { dsimp, rw [← h₁ (g (a • b)), ← h₁ (a • g b)]; simp [h₂] }⟩
 
 end add_comm_monoid
 
@@ -259,7 +262,7 @@ variables [semimodule R M] [semimodule R M₂]
 include R
 
 /-- Convert an `is_linear_map` predicate to a `linear_map` -/
-def mk' (f : M → M₂) (H : is_linear_map R f) : M →ₗ M₂ := ⟨f, H.1, H.2⟩
+def mk' (f : M → M₂) (H : is_linear_map R f) : M →ₗ[R] M₂ := ⟨f, H.1, H.2⟩
 
 @[simp] theorem mk'_apply {f : M → M₂} (H : is_linear_map R f) (x : M) :
   mk' f H x = f x := rfl
