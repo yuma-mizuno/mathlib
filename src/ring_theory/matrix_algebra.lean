@@ -60,7 +60,7 @@ def to_fun_right_linear (a : A) : matrix n n R →ₗ[R] matrix n n A :=
   map_add' := λ x y, by { dsimp only [to_fun], ext, simp [mul_add], },
   map_smul' := λ r x,
   begin
-    dsimp only [to_fun],
+    dsimp [to_fun],
     ext,
     simp only [matrix.smul_apply, pi.smul_apply, ring_hom.map_mul,
       algebra.id.smul_eq_mul, ring_hom.map_mul],
