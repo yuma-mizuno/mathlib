@@ -48,7 +48,7 @@ def mk₂ (f : M → N → P)
   (H1 : ∀ m₁ m₂ n, f (m₁ + m₂) n = f m₁ n + f m₂ n)
   (H2 : ∀ (c:R) m n, f (c • m) n = c • f m n)
   (H3 : ∀ m n₁ n₂, f m (n₁ + n₂) = f m n₁ + f m n₂)
-  (H4 : ∀ (c:R) m n, f m (c • n) = c • f m n) : M →ₗ N →ₗ P :=
+  (H4 : ∀ (c:R) m n, f m (c • n) = c • f m n) : M →ₗ[R] N →ₗ[R] P :=
 ⟨λ m, ⟨f m, H3 m, λ c, H4 c m⟩,
 λ m₁ m₂, linear_map.ext $ H1 m₁ m₂,
 λ c m, linear_map.ext $ H2 c m⟩
@@ -442,7 +442,7 @@ variable (f)
 /-- Constructing a linear map `M ⊗ N → P` given a bilinear map `M → N → P` with the property that
 its composition with the canonical bilinear map `M → N → M ⊗ N` is
 the given bilinear map `M → N → P`. -/
-def lift : M ⊗ N →ₗ P :=
+def lift : M ⊗ N →ₗ[R] P :=
 { map_smul' := lift_aux.smul,
   .. lift_aux f }
 variable {f}
@@ -692,13 +692,13 @@ open tensor_product
 def ltensor_hom : (N →ₗ[R] P) →ₗ[R] (M ⊗[R] N →ₗ[R] M ⊗[R] P) :=
 { to_fun := ltensor M,
   map_add' := λ f g, by { ext x y, simp only [add_apply, ltensor_tmul, tmul_add] },
-  map_smul' := λ r f, by { ext x y, simp only [tmul_smul, smul_apply, ltensor_tmul] } }
+  map_smul' := λ r f, by { ext x y, simp [tmul_smul, smul_apply, ltensor_tmul] } }
 
 /-- `rtensor_hom M` is the natural linear map that sends a linear map `f : N →ₗ P` to `M ⊗ f`. -/
 def rtensor_hom : (N →ₗ[R] P) →ₗ[R] (N ⊗[R] M →ₗ[R] P ⊗[R] M) :=
 { to_fun := λ f, f.rtensor M,
   map_add' := λ f g, by { ext x y, simp only [add_apply, rtensor_tmul, add_tmul] },
-  map_smul' := λ r f, by { ext x y, simp only [smul_tmul, tmul_smul, smul_apply, rtensor_tmul] } }
+  map_smul' := λ r f, by { ext x y, simp [smul_tmul, tmul_smul, smul_apply, rtensor_tmul] } }
 
 @[simp] lemma coe_ltensor_hom :
   (ltensor_hom M : (N →ₗ[R] P) → (M ⊗[R] N →ₗ[R] M ⊗[R] P)) = ltensor M := rfl
