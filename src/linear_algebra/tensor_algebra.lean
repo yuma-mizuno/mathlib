@@ -138,7 +138,7 @@ def ι_inv : tensor_algebra R M →ₗ[R] M :=
 (triv_sq_zero_ext.snd_hom R M).comp (lift R (triv_sq_zero_ext.inr_hom R M)).to_linear_map
 
 lemma ι_left_inverse : function.left_inverse ι_inv (ι R : M → tensor_algebra R M) :=
-λ x, by simp [ι_inv]
+λ x, by simp [ι_inv, triv_sq_zero_ext.snd_hom, triv_sq_zero_ext.inr_hom]
 
 end tensor_algebra
 
