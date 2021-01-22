@@ -142,9 +142,6 @@ open set
 lemma component_rel_iff {x y : α} : ⟦x⟧ = ⟦y⟧ ↔ connected_component x = connected_component y :=
 ⟨λ h, (quotient.exact h).symm, λ h, quotient.sound h.symm⟩
 
-#check subset_connected_component
-#check not_iff_not
-
 lemma connected_component_disjoint {x y : α} (h : connected_component x ≠ connected_component y) :
   disjoint (connected_component x) (connected_component y) :=
 set.disjoint_left.2 (λ a h1 h2, h (
@@ -172,10 +169,6 @@ begin
   intro xZ,
   apply subset.trans connected_component_subset_Inter_clopen (Inter_subset _ ⟨Z, ⟨h, xZ⟩⟩),
 end
-
-#check subsingleton_empty
-#check subsingleton_coe
-#check not_nonempty_iff_eq_empty
 
 lemma totally_disconnected_space_iff_connected_component_singleton :
   totally_disconnected_space α ↔ (∀ x : α, subsingleton (connected_component x)) :=
@@ -209,10 +202,6 @@ begin
   rw mem_preimage at hs,
   apply hs,
 end
-
-#check bUnion_preimage_singleton
-#check nonempty_of_mem
-#check preimage_subset
 
 -- Version of stacks 0377
 lemma connected_bij {β : Type*} [topological_space β] {f : α → β}
@@ -285,34 +274,38 @@ begin
   { apply (hcl T₂).2,
     rw T₂_v,
     apply is_closed_inter hT hv},
-  have T_decomp : (connected_component t) = T₁ ∪ T₂,
-  { apply eq_of_subset_of_subset,
-    { intros t' ht',
-      apply (mem_union t' T₁ T₂).2,
-      cases h_decomp t' ht' with htu htv,
-      { left, exact ⟨ht', htu⟩ },
-      right, exact ⟨ht', htv⟩,
-    },
-    -- tidy proof
-    intros a ᾰ, cases ᾰ, work_on_goal 0 { cases ᾰ, assumption }, cases ᾰ, assumption,
-  },
+  -- TODO, possibly only need 1 direction
+  have T_decomp : (connected_component t) ⊆ T₁ ∪ T₂,
+  { intros t' ht',
+    apply (mem_union t' T₁ T₂).2,
+    cases h_decomp t' ht' with htu htv,
+    { left, exact ⟨ht', htu⟩ },
+    right, exact ⟨ht', htv⟩ },
   -- show Ti are disjoint
-
+  have T_disjoint : T₁ ∩ T₂ = ∅,
+  -- TODO
+  { sorry },
   -- show T is a subset of either
-
-  -- cases .....
-
-  sorry,
+  have HH := (is_preconnected_iff_subset_of_fully_disjoint_closed is_closed_connected_component).1
+    (is_connected_connected_component).2 T₁ T₂ hT₁ hT₂ T_decomp T_disjoint,
+  cases HH,
+  { left,
+    rw subset.antisymm_iff at T₁_u,
+    suffices : f ⁻¹' connected_component t ⊆ f ⁻¹' T₁,
+    { exact (subset.trans (subset.trans this T₁_u.1) (inter_subset_right _ _)) },
+    apply preimage_mono HH,
+  },
+  right,
+  rw subset.antisymm_iff at T₂_v,
+  suffices : f ⁻¹' connected_component t ⊆ f ⁻¹' T₂,
+  { exact (subset.trans (subset.trans this T₂_v.1) (inter_subset_right _ _)) },
+  apply preimage_mono HH,
 end
-
-#check is_clopen_inter_of_disjoint_cover_clopen
-#check is_closed.preimage
-#check function.surjective.preimage_subset_preimage_iff
 
 lemma preimage_image_conn {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
 begin
   apply set.eq_of_subset_of_subset,
-  { intros a ha,
+  { intros a ha,def
     rw mem_preimage,
     have H : ⟦a⟧ = ⟦t⟧,
     { rw component_rel_iff,
@@ -417,9 +410,7 @@ begin
   { rw ←(component_rel_iff.1 (quotient.sound hab)),
     exact mem_connected_component },
   refl,
-end
-)
-
+end)
 -- Stacks tag 09000
 def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
 { obj := λ X,
@@ -442,7 +433,7 @@ def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
       -- todo... possible to incorporate in line above?
       swap, exact (λ Z, Z.2.1.2),
       -- NONTERMINAL SIMP... FIX!!!!!
-      simp at ha,
+      simp only at ha,
       set U : set X.to_Top.α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
       -- TODO: rename to something better?
       have hu_clopen : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
@@ -483,7 +474,40 @@ def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
       rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
     end
     },
-  map := _,}
+  map :=
+  begin
+    intros X Y f,
+    exact
+    { to_fun := quotient.lift (quotient.mk ∘ f.1) (λ a b hab,
+      begin
+        apply quotient.sound,
+        apply connected_component_eq,
+        -- TODO: make separate lemma:
+        have H : f.1 '' connected_component b ⊆ connected_component (f.1 b),
+        { apply subset_connected_component,
+          { exact is_preconnected.image (is_connected_connected_component).2 f.1 (continuous.continuous_on f.2)},
+          rw mem_image,
+          use b,
+          split,
+          { exact mem_connected_component },
+          refl,
+        },
+        apply mem_of_subset_of_mem H,
+        rw mem_image,
+        use a,
+        split,
+        { rw ←(component_rel_iff.1 (quotient.sound hab)),
+          exact mem_connected_component },
+        refl,
+      end),
+      continuous_to_fun :=
+      begin
+        apply continuous_quotient_lift,
+        apply continuous.comp _ f.2,
+        apply continuous_quotient_mk,
+      end },
+  end,
+  }
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
