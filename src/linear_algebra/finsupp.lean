@@ -550,8 +550,8 @@ def lcongr {ι κ : Sort*} (e₁ : ι ≃ κ) (e₂ : M ≃ₗ[R] N) : (ι →�
   map_add' := map_range_add e₂.map_add,
   map_smul' := λ c f, finsupp.induction f
     (by rw [smul_zero, map_range_zero, smul_zero]) $ λ a b f ha hb ih,
-    by rw [smul_add, smul_single, map_range_add e₂.map_add, map_range_single, e₂.map_smul, ih,
-      map_range_add e₂.map_add, smul_add, map_range_single, smul_single] }
+    by { dsimp at *, rw [smul_add, smul_single, map_range_add e₂.map_add, map_range_single,
+      e₂.map_smul, ih, map_range_add e₂.map_add, smul_add, map_range_single, smul_single] } }
 
 @[simp] theorem lcongr_single {ι κ : Sort*} (e₁ : ι ≃ κ) (e₂ : M ≃ₗ[R] N)
   (i : ι) (m : M) : lcongr e₁ e₂ (finsupp.single i m) = finsupp.single (e₁ i) (e₂ m) :=
