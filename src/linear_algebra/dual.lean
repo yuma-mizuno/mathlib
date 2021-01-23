@@ -133,7 +133,7 @@ omit de h
 def eval_finsupp_at (i : ι) : (ι →₀ K) →ₗ[K] K :=
 { to_fun    := λ f, f i,
   map_add'  := by intros; rw finsupp.add_apply,
-  map_smul' := by intros; rw finsupp.smul_apply }
+  map_smul' := by intros; rw finsupp.smul_apply; refl }
 include h
 
 /-- `h.coord_fun i` sends vectors to their `i`'th coordinate with respect to the basis `h`. -/
