@@ -305,7 +305,7 @@ end
 lemma preimage_image_conn {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
 begin
   apply set.eq_of_subset_of_subset,
-  { intros a ha,def
+  { intros a ha,
     rw mem_preimage,
     have H : ⟦a⟧ = ⟦t⟧,
     { rw component_rel_iff,
@@ -341,8 +341,6 @@ begin
   rw mem_image, use a,
   exact ⟨ha , refl _⟩,
 end
-
-#check quotient_map.is_open_preimage
 
 instance component_quot.totally_disconnected_space :
   totally_disconnected_space (quotient (component_setoid α)) :=
@@ -387,6 +385,62 @@ begin
   apply mem_of_subset_of_mem h1 hc,
 end
 
+instance component_quot.t2 [t2_space α] [compact_space α]: t2_space (quotient (component_setoid α)) :=
+begin
+  -- Fix 2 distinct connected components, with points a and b
+  constructor, intros x y,
+  apply quotient.induction_on x,
+  apply quotient.induction_on y,
+  intros a b ne,
+  rw component_nrel_iff at ne,
+  have h := connected_component_disjoint ne,
+  -- write ⟦b⟧ as the intersection of all clopen subsets containing it
+  rw [connected_component_eq_Inter_clopen, disjoint_iff_inter_eq_empty, inter_comm] at h,
+  -- Now we show that this can be reduced to some clopen containing ⟦b⟧ being disjoint to ⟦a⟧
+  cases is_compact.elim_finite_subfamily_closed
+    (is_closed.compact (is_closed_connected_component)) _ _ h with fin_a ha,
+  -- TODO... possible to incorporate in line above?
+  swap, exact (λ Z, Z.2.1.2),
+  set U : set α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
+  -- TODO: rename to something better?
+  have hu_clopen : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
+  rw ←hU at ha,
+  -- This clopen and its complement will separate the points corresponding to ⟦a⟧ and ⟦b⟧
+  use quotient.mk '' U,
+  use quotient.mk '' Uᶜ,
+  -- Using the fact that clopens are unions of connected components, we show that
+  -- U and Uᶜ is the preimage of a clopen set in the quotient
+  -- TODO: renaming
+  have h1 := clopen_eq_union_connected_components hu_clopen,
+  have h2 : (quotient.mk ⁻¹' (quotient.mk '' U)) = U,
+  { rw preimage_component_quot,
+    exact eq.symm h1 },
+  have h3 : (quotient.mk ⁻¹' (quotient.mk '' Uᶜ)) = Uᶜ,
+  { rw preimage_component_quot,
+    exact eq.symm (clopen_eq_union_connected_components (is_clopen_compl hu_clopen)) },
+  -- showing that U and Uᶜ are open and separates ⟦a⟧ and ⟦b⟧
+  -- TODO, can I avoid all these splits?
+  split,
+  {  apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
+      rw h2,
+      exact hu_clopen.1 },
+  split,
+  { apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
+    rw h3,
+    exact is_open_compl_iff.2 hu_clopen.2 },
+  split,
+  { apply mem_image_of_mem,
+    rw mem_Inter, intro Z,
+    rw mem_Inter, intro Zmem,
+    exact Z.2.2 },
+  split,
+  { apply mem_image_of_mem,
+    apply mem_of_subset_of_mem _ (@mem_connected_component _ _ a),
+    exact subset_compl_iff_disjoint.2 ha },
+  apply preimage_injective.2 (@surjective_quotient_mk _ _),
+  rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
+end
+
 def component_map {β : Type*} [topological_space β] (f : α → β) [h : continuous f] :
   quotient (component_setoid α) → quotient (component_setoid β) :=
 quotient.lift (quotient.mk ∘ f) (λ a b hab,
@@ -411,73 +465,16 @@ begin
     exact mem_connected_component },
   refl,
 end)
+
 -- Stacks tag 09000
 def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
 { obj := λ X,
-  { to_Top := { α := quotient (component_setoid X.to_Top.α)},
-    is_compact := quotient.compact_space,
-    is_t2 :=
-    begin
-      -- Fix 2 distinct connected components, with points a and b
-      constructor, intros x y,
-      apply quotient.induction_on x,
-      apply quotient.induction_on y,
-      intros a b ne,
-      rw component_nrel_iff at ne,
-      have h := connected_component_disjoint ne,
-      -- write ⟦b⟧ as the intersection of all clopen subsets containing it
-      rw [connected_component_eq_Inter_clopen, disjoint_iff_inter_eq_empty, inter_comm] at h,
-      -- Now we show that this can be reduced to some clopen containing ⟦b⟧ being disjoint to ⟦a⟧
-      cases is_compact.elim_finite_subfamily_closed
-        (is_closed.compact (is_closed_connected_component)) _ _ h with fin_a ha,
-      -- todo... possible to incorporate in line above?
-      swap, exact (λ Z, Z.2.1.2),
-      -- NONTERMINAL SIMP... FIX!!!!!
-      simp only at ha,
-      set U : set X.to_Top.α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
-      -- TODO: rename to something better?
-      have hu_clopen : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
-      rw ←hU at ha,
-      -- This clopen and its complement will separate the points corresponding to ⟦a⟧ and ⟦b⟧
-      use quotient.mk '' U,
-      use quotient.mk '' Uᶜ,
-      -- Using the fact that clopens are unions of connected components, we show that
-      -- U and Uᶜ is the preimage of a clopen set in the quotient
-      -- TODO: renaming
-      have h1 := clopen_eq_union_connected_components hu_clopen,
-      have h2 : (quotient.mk ⁻¹' (quotient.mk '' U)) = U,
-      { rw preimage_component_quot,
-        exact eq.symm h1 },
-      have h3 : (quotient.mk ⁻¹' (quotient.mk '' Uᶜ)) = Uᶜ,
-      { rw preimage_component_quot,
-        exact eq.symm (clopen_eq_union_connected_components (is_clopen_compl hu_clopen)) },
-      -- showing that U and Uᶜ are open and separates ⟦a⟧ and ⟦b⟧
-      -- TODO, can I avoid all these splits?
-      split,
-      {  apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
-         rw h2,
-         exact hu_clopen.1 },
-      split,
-      { apply ((quotient_map_iff.1 quotient_map_quotient_mk).2 _).2,
-        rw h3,
-        exact is_open_compl_iff.2 hu_clopen.2 },
-      split,
-      { apply mem_image_of_mem,
-        rw mem_Inter, intro Z,
-        rw mem_Inter, intro Zmem,
-        exact Z.2.2 },
-      split,
-      { apply mem_image_of_mem,
-        apply mem_of_subset_of_mem _ (@mem_connected_component _ _ a),
-        exact subset_compl_iff_disjoint.2 ha },
-      apply preimage_injective.2 (@surjective_quotient_mk _ _),
-      rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
-    end
-    },
-  map :=
-  begin
-    intros X Y f,
-    exact
+    { to_Top := { α := quotient (component_setoid X.to_Top.α) },
+      is_compact := by apply_instance,
+      is_t2 := by apply_instance,
+      is_totally_disconnected := by apply_instance },
+  map := λ X Y f,
+    -- TODO move out of definition, rewrites?
     { to_fun := quotient.lift (quotient.mk ∘ f.1) (λ a b hab,
       begin
         apply quotient.sound,
@@ -500,14 +497,8 @@ def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
           exact mem_connected_component },
         refl,
       end),
-      continuous_to_fun :=
-      begin
-        apply continuous_quotient_lift,
-        apply continuous.comp _ f.2,
-        apply continuous_quotient_mk,
-      end },
-  end,
-  }
+    continuous_to_fun := continuous_quotient_lift _
+      (continuous.comp (continuous_quotient_mk) f.2) } }
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
