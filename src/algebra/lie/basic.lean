@@ -138,7 +138,7 @@ set_option old_structure_cmd true
 /-- A morphism of Lie algebras is a linear map respecting the bracket operations. -/
 structure morphism (R : Type u) (L : Type v) (L' : Type w)
   [comm_ring R] [lie_ring L] [lie_algebra R L] [lie_ring L'] [lie_algebra R L']
-  extends linear_map R L L' :=
+  extends L →ₗ[R] L' :=
 (map_lie : ∀ {x y : L}, to_fun ⁅x, y⁆ = ⁅to_fun x, to_fun y⁆)
 
 attribute [nolint doc_blame] lie_algebra.morphism.to_linear_map
