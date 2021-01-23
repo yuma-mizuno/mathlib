@@ -179,7 +179,7 @@ def ι_inv : exterior_algebra R M →ₗ[R] M :=
   (lift R ⟨triv_sq_zero_ext.inr_hom R M, λ m, triv_sq_zero_ext.inr_mul_inr R _ m m⟩).to_linear_map
 
 lemma ι_left_inverse : function.left_inverse ι_inv (ι R : M → exterior_algebra R M) :=
-λ x, by simp [ι_inv]
+λ x, by simp [ι_inv, triv_sq_zero_ext.inr_hom, triv_sq_zero_ext.snd_hom]
 
 @[simp]
 lemma ι_add_mul_swap (x y : M) : ι R x * ι R y + ι R y * ι R x = 0 :=
