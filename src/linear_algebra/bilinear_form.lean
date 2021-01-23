@@ -299,7 +299,7 @@ def congr (e : M₂ ≃ₗ[R₂] M₂') : bilin_form R₂ M₂ ≃ₗ[R₂] bili
   right_inv :=
     λ B, ext (λ x y, by simp only [comp_apply, linear_equiv.coe_coe, e.apply_symm_apply]),
   map_add' := λ B B', ext (λ x y, by simp only [comp_apply, add_apply]),
-  map_smul' := λ B B', ext (λ x y, by simp only [comp_apply, smul_apply]) }
+  map_smul' := λ B B', ext (λ x y, by simp [comp_apply, smul_apply]) }
 
 @[simp] lemma congr_apply (e : M₂ ≃ₗ[R₂] M₂') (B : bilin_form R₂ M₂) (x y : M₂') :
   congr e B x y = B (e.symm x) (e.symm y) := rfl
