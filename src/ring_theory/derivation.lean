@@ -203,7 +203,7 @@ variables [is_scalar_tower R A M] [is_scalar_tower R A N]
 def comp_der (f : M →ₗ[A] N) (D : derivation R A M) : derivation R A N :=
 { to_fun := λ a, f (D a),
   map_add' := λ a1 a2, by rw [D.map_add, f.map_add],
-  map_smul' := λ r a, by rw [derivation.map_smul, map_smul_of_tower],
+  map_smul' := λ r a, by simp [derivation.map_smul, map_smul_of_tower],
   leibniz' := λ a b, by simp only [derivation.leibniz, linear_map.map_smul, linear_map.map_add, add_comm] }
 
 @[simp] lemma comp_der_apply (f : M →ₗ[A] N) (D : derivation R A M) (a : A) :
