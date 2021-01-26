@@ -210,6 +210,11 @@ instance : bounded_lattice (satfin (n + 1)) :=
   bot_le := zero_le,
   .. satfin.linear_order, .. lattice_of_linear_order }
 
+@[simp] lemma bot_eq_zero : (⊥ : satfin (n + 1)) = 0 := rfl
+@[simp] lemma top_eq_last : (⊤ : satfin (n + 1)) = last _ := rfl
+
+@[simp] lemma last_le_iff {a : satfin (n + 1)} : last n ≤ a ↔ a = last n := top_le_iff
+
 instance : fintype (satfin n) :=
 { elems := finset.subtype (λ x, x < n) (finset.range n),
   complete := λ ⟨x, h⟩, by simp [h] }
