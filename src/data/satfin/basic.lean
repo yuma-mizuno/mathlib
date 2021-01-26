@@ -219,6 +219,9 @@ instance : fintype (satfin n) :=
 { elems := finset.subtype (λ x, x < n) (finset.range n),
   complete := λ ⟨x, h⟩, by simp [h] }
 
+@[simp] lemma card : fintype.card (satfin n) = n :=
+by simp [fintype.card, finset.univ, fintype.elems]
+
 end order
 
 section add
