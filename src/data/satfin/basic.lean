@@ -224,14 +224,15 @@ section add
 
 /-- convert a `ℕ` to `satfin (n + 1)`. -/
 def of_nat (a : ℕ) : satfin (n + 1) :=
-⟨min n a, by simp⟩
+⟨if n ≤ a then n else a,
+  by { split_ifs with h, exact lt_succ_self n, exact lt_succ_of_lt (not_le.mp h) }⟩
 
 /-- convert a `ℕ` to `satfin n`, provided `n` is positive -/
 def of_nat' [h : fact (0 < n)] (i : ℕ) : satfin n :=
-⟨min (n - 1) i, min_lt_iff.mpr (or.inl (pred_lt (ne_of_gt h)))⟩
+⟨if n - 1 ≤ i then n - 1 else i, min_lt_iff.mpr (or.inl (pred_lt (ne_of_gt h)))⟩
 
 @[simp] lemma of_nat_le {a : ℕ} (ha : a ≤ n) : @of_nat n a = ⟨a, lt_succ_of_le ha⟩ :=
-by simp [of_nat, ha]
+by { suffices : n ≤ a → n = a, { simpa [of_nat] using this }, exact (λ h, (le_antisymm ha h).symm) }
 
 @[simp] lemma of_nat_lt {a : ℕ} (ha : a < n + 1) : @of_nat n a = ⟨a, ha⟩ :=
 of_nat_le (le_of_lt_succ ha)
@@ -251,7 +252,8 @@ by simp [eq_iff_veq]
 
 protected def add : Π {n}, satfin n → satfin n → satfin n
 | 0       ⟨a, ha⟩ _       := absurd ha (not_lt_of_le a.zero_le)
-| (n + 1) ⟨a, ha⟩ ⟨b, hb⟩ := ⟨min n (a + b), by simp⟩
+| (n + 1) ⟨a, ha⟩ ⟨b, hb⟩ := ⟨if n ≤ (a + b) then n else (a + b),
+  by { split_ifs with h, exact lt_succ_self n, exact lt_succ_of_lt (not_le.mp h) }⟩
 
 instance : has_add (satfin n) := ⟨satfin.add⟩
 
@@ -262,7 +264,7 @@ begin
   { cases a,
     cases b,
     unfold has_add.add,
-    simp [satfin.add] }
+    simp [satfin.add, min] }
 end
 
 @[simp] protected lemma add_zero (k : satfin (n + 1)) : k + 0 = k :=
