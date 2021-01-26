@@ -227,7 +227,7 @@ end order
 section add
 
 -- We use a saturating addition, which can correspond to a tropical semiring structure
--- with `(min, +)` as the operations.
+-- with `(min, +)` as the operations. For reducability, the `min` is expanded out into an `ite`.
 -- For mathlib convenience, `(+)` is directly defined instead of using `⊗`.
 
 /-- convert a `ℕ` to `satfin (n + 1)`. -/
