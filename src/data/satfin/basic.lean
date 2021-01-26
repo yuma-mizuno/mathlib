@@ -177,6 +177,9 @@ instance : linear_order (satfin n) :=
   decidable_eq := satfin.decidable_eq _,
  ..linear_order.lift (coe : satfin n → ℕ) (@satfin.eq_of_veq _) }
 
+def coe_as_order_preserving : satfin n ↪o ℕ :=
+⟨embedding.subtype _, by simp⟩
+
 instance : has_zero (satfin (n + 1)) := ⟨⟨0, succ_pos n⟩⟩
 
 @[simp] lemma coe_zero : ((0 : satfin (n + 1)) : ℕ) = 0 := rfl
@@ -340,6 +343,45 @@ begin
 end
 
 end bit
+
+section of_nat_coe
+
+@[simp] lemma of_nat_eq_coe (n : ℕ) (a : ℕ) : (of_nat a : satfin (n + 1)) = a :=
+begin
+  induction a with a ih, { simp },
+  cases n,
+  { simp },
+  ext,
+  rcases lt_trichotomy a.succ n.succ with H|H|H,
+  { simp [←ih, of_nat, not_le_of_lt H, not_le_of_gt (lt_of_succ_lt H), le_of_lt H] },
+  { simp [←ih, ←H, of_nat, not_le_of_gt (lt_succ_self a)] },
+  { simp [←ih, of_nat, le_of_lt H, le_of_lt_succ H] }
+end
+
+/-- Coercing an in-range number to `satfin (n + 1)`, and converting back
+to `ℕ`, results in that number. -/
+lemma coe_coe_of_lt {a : ℕ} (h : a < n + 1) :
+  ((a : satfin (n + 1)) : ℕ) = a :=
+by { rw [←of_nat_eq_coe, of_nat_lt h], refl }
+
+/-- Coercing an out-of-range number to `satfin (n + 1)`, and converting back
+to `ℕ`, results in `n`. -/
+lemma coe_coe_of_le {a : ℕ} (h : n + 1 ≤ a) :
+  ((a : satfin (n + 1)) : ℕ) = n :=
+begin
+  rw ←of_nat_eq_coe,
+  suffices : a < n → a = n,
+    { simpa [of_nat] using this },
+  intro H,
+  exact absurd (lt_of_succ_le h) (not_lt_of_gt H)
+end
+
+/-- Converting a `satfin (n + 1)` to `ℕ` and back results in the same
+value. -/
+@[simp] lemma coe_coe_eq_self (a : satfin (n + 1)) : ((a : ℕ) : satfin (n + 1)) = a :=
+by { ext, simp [coe_coe_of_lt a.is_lt] }
+
+end of_nat_coe
 
 end add
 
