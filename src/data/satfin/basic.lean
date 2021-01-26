@@ -261,6 +261,8 @@ lemma val_one : (1 : satfin (n + 2)).val = 1 := by simp
 @[simp] lemma mk_one : (⟨1, succ_lt_succ (succ_pos n)⟩ : satfin (n + 2)) = (1 : satfin _) :=
 by simp [eq_iff_veq]
 
+instance : nontrivial (fin (n + 2)) := ⟨⟨0, 1, dec_trivial⟩⟩
+
 protected def add : Π {n}, satfin n → satfin n → satfin n
 | 0       ⟨a, ha⟩ _       := absurd ha (not_lt_of_le a.zero_le)
 | (n + 1) ⟨a, ha⟩ ⟨b, hb⟩ := ⟨if n ≤ (a + b) then n else (a + b),
