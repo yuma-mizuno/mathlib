@@ -1,12 +1,26 @@
 import data.nat.cast
-import order.bounded_lattice
+import order.complete_lattice
 import data.fintype.basic
 
-lemma nat.le_of_add_le_left {k l m : ℕ} (h : k + l ≤ m) : k ≤ m :=
+lemma nat.le_of_add_le_left {a b c : ℕ} (h : a + b ≤ c) : a ≤ c :=
 by { refine le_trans _ h, simp }
 
-lemma nat.le_of_add_le_right {k l m : ℕ} (h : k + l ≤ m) : l ≤ m :=
+lemma nat.le_of_add_le_right {a b c : ℕ} (h : a + b ≤ c) : b ≤ c :=
 by { refine le_trans _ h, simp }
+
+lemma nat.min_add_distrib (a b c : ℕ) :
+  min a (b + c) = min a (min a b + min a c) :=
+begin
+  cases le_total a b with hb hb,
+  { simp [hb, le_add_right] },
+  { cases le_total a c with hc hc,
+    { simp [hc, le_add_left] },
+    { simp [hb, hc] } }
+end
+
+lemma nat.min_add_distrib' (a b c : ℕ) :
+  min (a + b) c = min (min a c + min b c) c :=
+by simpa [min_comm _ c] using nat.min_add_distrib c a b
 
 open nat function
 
@@ -145,11 +159,11 @@ lemma is_lt (i : satfin n) : (i : ℕ) < n := i.property
 lemma is_le (i : satfin (n + 1)) : (i : ℕ) ≤ n := le_of_lt_succ i.is_lt
 
 /-- `a < b` as natural numbers if and only if `a < b` in `satfin n`. -/
-@[norm_cast, simp] lemma coe_fin_lt : (a : ℕ) < (b : ℕ) ↔ a < b :=
+@[norm_cast] lemma coe_satfin_lt : (a : ℕ) < (b : ℕ) ↔ a < b :=
 iff.rfl
 
 /-- `a ≤ b` as natural numbers if and only if `a ≤ b` in `satfin n`. -/
-@[norm_cast, simp] lemma coe_fin_le : (a : ℕ) ≤ (b : ℕ) ↔ a ≤ b :=
+@[norm_cast] lemma coe_satfin_le : (a : ℕ) ≤ (b : ℕ) ↔ a ≤ b :=
 iff.rfl
 
 lemma mk_lt_of_lt_coe {a : ℕ} (h : a < b) : (⟨a, h.trans b.is_lt⟩ : satfin n) < b := h
@@ -257,27 +271,39 @@ by simp [eq_iff_veq, add_def, k.is_le]
 @[simp] protected lemma zero_add (k : satfin (n + 1)) : (0 : satfin (n + 1)) + k = k :=
 by simp [eq_iff_veq, add_def, k.is_le]
 
-instance add_comm_monoid (n : ℕ) : add_comm_monoid (satfin (n + 1)) :=
+instance {n : ℕ} : add_comm_monoid (satfin (n + 1)) :=
 { add := (+),
   add_assoc := λ a b c, by {
-    have hd : ∀ (k l m : ℕ), min m (k + l) = min m (min m k + min m l),
-      { intros k l m,
-        by_cases ha : k + l ≤ m,
-        { have hk : k ≤ m := le_of_add_le_left ha,
-          have hl : l ≤ m := le_of_add_le_right ha,
-          simp [hk, ha, hl] },
-        { sorry },
-      },
-    simp [eq_iff_veq],
-    by_cases ha : a ≤ n,
-    by_cases hb : b ≤ n,
-    by_cases hc : c ≤ n,
-    all_goals {sorry}
-  },
+    simp only [eq_iff_veq, add_zero, add_succ_sub_one, add_def],
+    rw [←min_eq_right c.is_le, ←nat.min_add_distrib],
+    symmetry,
+    rw [←min_eq_right a.is_le, ←nat.min_add_distrib, min_eq_right a.is_le, min_eq_right c.is_le,
+        add_assoc] },
   zero := 0,
   zero_add := satfin.zero_add,
   add_zero := satfin.add_zero,
-  add_comm := by simp [eq_iff_veq, add_def, add_comm] }
+  add_comm := λ a b, by simp [eq_iff_veq, add_comm] }
+
+instance {n : ℕ} : canonically_ordered_add_monoid (satfin (n + 1)) :=
+{ add_le_add_left := λ a b h c, by {
+    cases le_total ((c : ℕ) + a) n with H H,
+    { simp [le_iff_vle, le_refl, h, H] },
+    { replace H : n ≤ c + b := le_trans H ((add_le_add_iff_left _).mpr h),
+      simp [le_iff_vle, le_refl, h, H] } },
+  lt_of_add_lt_add_left := λ a b c h, by {
+    simp [lt_iff_vlt, -fin.coe_fin_lt, -subtype.coe_lt_coe, lt_irrefl] at h ⊢,
+    exact h.right },
+  le_iff_exists_add := λ a b, begin
+    split,
+    { rw [le_iff_vle, le_iff_exists_add],
+      rintro ⟨c, h⟩,
+      have : c < n + 1 := lt_of_le_of_lt (le_trans (le_add_left _ _) (le_of_eq h.symm)) b.is_lt,
+      refine ⟨⟨c, this⟩, _⟩,
+      simp [eq_iff_veq, ←h, b.is_le] },
+    { rintro ⟨c, h⟩,
+      simp [h, le_iff_vle, a.is_le] }
+  end,
+  ..satfin.add_comm_monoid, ..satfin.bounded_lattice  }
 
 section bit
 
