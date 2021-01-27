@@ -8,6 +8,7 @@ import ring_theory.ideal.operations
 import ring_theory.multiplicity
 import ring_theory.algebra_tower
 import tactic.linarith
+import algebra.big_operators.nat_antidiagonal
 
 /-!
 # Formal power series
@@ -933,6 +934,11 @@ begin
     { rw prod.mk.inj_iff, dsimp,
       exact ⟨finsupp.unique_single f, finsupp.unique_single g⟩ } }
 end
+
+lemma coeff_mul' (n : ℕ) (φ ψ : power_series R) :
+  coeff R n (φ * ψ) = ∑ m in finset.range (n + 1), coeff R m φ * coeff R (n - m) ψ :=
+by rw [coeff_mul,
+  finset.nat.sum_antidiagonal_eq_sum_range_succ (λ i j, (coeff R i) φ * (coeff R j) ψ)]
 
 @[simp] lemma coeff_mul_C (n : ℕ) (φ : power_series R) (a : R) :
   coeff R n (φ * C R a) = coeff R n φ * a :=
