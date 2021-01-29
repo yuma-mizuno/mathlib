@@ -376,7 +376,6 @@ begin
   -- TODO... possible to incorporate in line above?
   swap, exact (λ Z, Z.2.1.2),
   set U : set α := (⋂ (i : {Z // is_clopen Z ∧ b ∈ Z}) (H : i ∈ fin_a), ↑i) with hU,
-  -- TODO: rename to something better?
   have hu_clopen : is_clopen U, { apply is_clopen_bInter _, exact (λ i j, i.2.1) },
   rw ←hU at ha,
   -- This clopen and its complement will separate the points corresponding to ⟦a⟧ and ⟦b⟧
@@ -442,10 +441,8 @@ instance : is_right_adjoint Profinite_to_CompHaus :=
     { app := λ X,
       begin
         simp only [functor.id_obj, functor.comp_obj],
-        fsplit,
-        {apply quotient.mk},
-        -- TODO: FIX
-        dsimp at *, fsplit, intros s ᾰ, assumption,
+        exact { to_fun := quotient.mk,
+                continuous_to_fun := continuous_quotient_mk },
       end
     },
     counit :=
