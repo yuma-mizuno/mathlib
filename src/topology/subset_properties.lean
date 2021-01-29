@@ -1159,6 +1159,11 @@ theorem connected_component_eq {x y : α} : y ∈ connected_component x →
     (set.mem_of_mem_of_subset mem_connected_component
       (subset_connected_component is_connected_connected_component.2 h1)))
 
+lemma connected_component_disjoint {x y : α} (h : connected_component x ≠ connected_component y) :
+  disjoint (connected_component x) (connected_component y) :=
+set.disjoint_left.2 (λ a h1 h2, h (
+  eq.trans (connected_component_eq h1) (connected_component_eq h2).symm))
+
 theorem is_closed_connected_component {x : α} :
   is_closed (connected_component x) :=
 closure_eq_iff_is_closed.1 $ subset.antisymm
@@ -1166,6 +1171,18 @@ closure_eq_iff_is_closed.1 $ subset.antisymm
     is_connected_connected_component.closure.is_preconnected
     (subset_closure mem_connected_component))
   subset_closure
+
+lemma image_connected_component_sub {β : Type*} [topological_space β] (f : α → β) (h : continuous f) (a : α):
+  f '' connected_component a ⊆ connected_component (f a) :=
+begin
+  apply subset_connected_component,
+  { exact is_preconnected.image (is_connected_connected_component).2 f (continuous.continuous_on h)},
+  rw mem_image,
+  use a,
+  split,
+  { exact mem_connected_component },
+  refl,
+end
 
 theorem irreducible_component_subset_connected_component {x : α} :
   irreducible_component x ⊆ connected_component x :=
@@ -1482,7 +1499,119 @@ instance subtype.totally_disconnected_space {α : Type*} {p : α → Prop} [topo
     totally_disconnected_space.is_totally_disconnected_univ (subtype.val '' s) (set.subset_univ _)
       ((is_preconnected.image h2 _) (continuous.continuous_on (@continuous_subtype_val _ _ p))))⟩
 
+lemma totally_disconnected_space_iff_connected_component_subsingleton :
+  totally_disconnected_space α ↔ (∀ x : α, subsingleton (connected_component x)) :=
+begin
+  split,
+  { intros h x,
+    apply h.1,
+    { apply subset_univ },
+    exact (is_connected_connected_component).2 },
+  intro h, constructor,
+  intros s s_sub hs,
+  rw subsingleton_coe,
+  by_cases (s.nonempty),
+  { choose x hx using h,
+    have H := h x,
+    rw subsingleton_coe at H,
+    apply subsingleton.mono H (subset_connected_component hs hx),
+  },
+  rw not_nonempty_iff_eq_empty at h,
+  rw h,
+  exact subsingleton_empty,
+end
+
+lemma totally_disconnected_space_iff_connected_component_singleton :
+  totally_disconnected_space α ↔ (∀ x : α, (connected_component x) = {x}) :=
+begin
+  split,
+  { intros h x,
+    have hx := totally_disconnected_space_iff_connected_component_subsingleton.1 h x,
+    rw subsingleton_coe at hx,
+    apply subsingleton.eq_singleton_of_mem hx,
+    exact mem_connected_component,
+  },
+  intro h,
+  apply totally_disconnected_space_iff_connected_component_subsingleton.2,
+  intro x,
+  rw [h x, subsingleton_coe],
+  exact subsingleton_singleton,
+end
+
+lemma image_connected_component {β : Type*} [topological_space β] [totally_disconnected_space β]
+  {f : α → β} (h : continuous f) (a : α) : f '' connected_component a = {f a} :=
+begin
+  have ha : subsingleton (f '' connected_component a),
+  { apply _inst_3.1,
+    {exact subset_univ _},
+    apply is_preconnected.image is_connected_connected_component.2,
+    exact (continuous.continuous_on h)},
+  rw subsingleton_coe at ha,
+  apply subsingleton.eq_singleton_of_mem ha,
+  simp only [mem_image],
+  use a,
+  exact ⟨mem_connected_component, refl (f a)⟩,
+end
+
 end totally_disconnected
+
+section component_setoid
+
+def component_setoid (α : Type*) [topological_space α] : setoid α :=
+⟨ λ x y, connected_component y = connected_component x,
+  ⟨ λ x, by trivial, λ x y h1, eq.symm h1, λ x y z h1 h2, eq.trans h2 h1 ⟩⟩
+local attribute [instance] component_setoid
+
+lemma component_rel_iff {x y : α} : ⟦x⟧ = ⟦y⟧ ↔ connected_component x = connected_component y :=
+⟨λ h, (quotient.exact h).symm, λ h, quotient.sound h.symm⟩
+
+-- TODO FIX PRIORITY
+notation `π₀` α := quotient (component_setoid α)
+
+lemma image_eq_of_equiv {β : Type*} [topological_space β] [totally_disconnected_space β] {f : α → β}
+  (h : continuous f) : ∀ (a b : α) (hab : a ≈ b), f a = f b :=
+begin
+  intros a b hab,
+  rw [←singleton_eq_singleton_iff, ←(image_connected_component h), ←(image_connected_component h)],
+  -- todo change:
+  rw ←(component_rel_iff.1 (quotient.sound hab)),
+end
+
+def pi0_map {β : Type*} [topological_space β] (f : α → β) (h : continuous f) :
+  (π₀ α) → π₀ β :=
+-- Potential todo: rewrite using pi0_lift, after having pi0.totally_disconnected
+quotient.map f (
+begin
+  intros a b hab,
+  apply connected_component_eq,
+  apply mem_of_subset_of_mem (image_connected_component_sub f h b),
+  rw mem_image,
+  use a,
+  refine ⟨_ , refl (f a)⟩,
+  rw ←(component_rel_iff.1 (quotient.sound hab)),
+    exact mem_connected_component,
+end)
+
+
+-- TOO: notation?
+def pi0.lift {β : Type*} [topological_space β] [totally_disconnected_space β] (f : α → β)
+  (h : continuous f) : (π₀ α) → β :=
+quotient.lift f (image_eq_of_equiv h)
+
+lemma pi0.lift.continuous {β : Type*} [topological_space β] [totally_disconnected_space β] (f : α → β)
+  (h : continuous f) : continuous (pi0.lift f h) :=
+continuous_quotient_lift (image_eq_of_equiv h) h
+
+lemma pi0.lift.factors {β : Type*} [topological_space β] [totally_disconnected_space β] (f : α → β)
+  (h : continuous f) : (pi0.lift f h) ∘ quotient.mk = f := by refl
+
+lemma pi0.lift.unique {β : Type*} [topological_space β] [totally_disconnected_space β] (f : α → β)
+  (h : continuous f) (g : (π₀ α) → β) (hg : g ∘ quotient.mk = f) : g = pi0.lift f h :=
+begin
+  induction hg, ext1, induction x, work_on_goal 0 { refl }, refl,
+end
+
+end component_setoid
 
 section totally_separated
 

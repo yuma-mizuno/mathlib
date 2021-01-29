@@ -7,6 +7,9 @@ Authors: Kevin Buzzard
 import topology.category.CompHaus
 import category_theory.sites.pretopology
 import category_theory.Fintype
+import topology.subset_properties
+import category_theory.adjunction.reflective
+
 
 /-!
 # The category of Profinite Types
@@ -131,22 +134,12 @@ instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
 
-def component_setoid (α : Type*) [topological_space α] : setoid α :=
-⟨ λ x y, connected_component y = connected_component x,
-  ⟨ λ x, by trivial, λ x y h1, eq.symm h1, λ x y z h1 h2, eq.trans h2 h1 ⟩⟩
-local attribute [instance] component_setoid
 
 variables {α : Type*} [topological_space α]
 open set
+local attribute [instance] component_setoid
 
-lemma component_rel_iff {x y : α} : ⟦x⟧ = ⟦y⟧ ↔ connected_component x = connected_component y :=
-⟨λ h, (quotient.exact h).symm, λ h, quotient.sound h.symm⟩
-
-lemma connected_component_disjoint {x y : α} (h : connected_component x ≠ connected_component y) :
-  disjoint (connected_component x) (connected_component y) :=
-set.disjoint_left.2 (λ a h1 h2, h (
-  eq.trans (connected_component_eq h1) (connected_component_eq h2).symm))
-
+--
 lemma component_nrel_iff {x y : α} : ⟦x⟧ ≠ ⟦y⟧ ↔ connected_component x ≠ connected_component y :=
 begin
 rw not_iff_not,
@@ -170,27 +163,7 @@ begin
   apply subset.trans connected_component_subset_Inter_clopen (Inter_subset _ ⟨Z, ⟨h, xZ⟩⟩),
 end
 
-lemma totally_disconnected_space_iff_connected_component_singleton :
-  totally_disconnected_space α ↔ (∀ x : α, subsingleton (connected_component x)) :=
-begin
-  split,
-  { intros h x,
-    apply h.1,
-    { apply subset_univ },
-    exact (is_connected_connected_component).2 },
-  intro h, constructor,
-  intros s s_sub hs,
-  rw subsingleton_coe,
-  by_cases (s.nonempty),
-  { choose x hx using h,
-    have H := h x,
-    rw subsingleton_coe at H,
-    apply subsingleton.mono H (subset_connected_component hs hx),
-  },
-  rw not_nonempty_iff_eq_empty at h,
-  rw h,
-  exact subsingleton_empty,
-end
+-- TODO USE IMAGE_CONNECTED_COMPONENT TO REWRITE LATER PROOF
 
 -- todo reduce to nonempty fibers
 lemma surjective_of_connected_fibers {β : Type*} [topological_space β] {f : α → β}
@@ -206,8 +179,8 @@ end
 -- Version of stacks 0377
 lemma connected_bij {β : Type*} [topological_space β] {f : α → β}
   (connected_fibers : ∀ t : β, is_connected (f ⁻¹' {t}))
-  (hcl : ∀ (T : set β), is_closed T ↔ is_closed (f ⁻¹' T))
-  : ∀ t : β, is_preconnected (f ⁻¹' connected_component t) :=
+  (hcl : ∀ (T : set β), is_closed T ↔ is_closed (f ⁻¹' T)) :
+  ∀ t : β, is_preconnected (f ⁻¹' connected_component t) :=
 begin
   intro t,
   -- T closed
@@ -302,6 +275,7 @@ begin
   apply preimage_mono HH,
 end
 
+--
 lemma preimage_image_conn {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
 begin
   apply set.eq_of_subset_of_subset,
@@ -342,10 +316,10 @@ begin
   exact ⟨ha , refl _⟩,
 end
 
-instance component_quot.totally_disconnected_space :
-  totally_disconnected_space (quotient (component_setoid α)) :=
+instance pi0.totally_disconnected_space :
+  totally_disconnected_space (π₀ α) :=
 begin
-  rw totally_disconnected_space_iff_connected_component_singleton,
+  rw totally_disconnected_space_iff_connected_component_subsingleton,
   intro x,
   apply quotient.induction_on x,
   intro a,
@@ -385,7 +359,7 @@ begin
   apply mem_of_subset_of_mem h1 hc,
 end
 
-instance component_quot.t2 [t2_space α] [compact_space α]: t2_space (quotient (component_setoid α)) :=
+instance component_quot.t2 [t2_space α] [compact_space α]: t2_space (π₀ α) :=
 begin
   -- Fix 2 distinct connected components, with points a and b
   constructor, intros x y,
@@ -441,64 +415,63 @@ begin
   rw [preimage_inter, preimage_empty, h2, h3, inter_compl_self _],
 end
 
-def component_map {β : Type*} [topological_space β] (f : α → β) [h : continuous f] :
-  quotient (component_setoid α) → quotient (component_setoid β) :=
-quotient.lift (quotient.mk ∘ f) (λ a b hab,
-begin
-  apply quotient.sound,
-  apply connected_component_eq,
-  -- TODO: make separate lemma:
-  have H : f '' connected_component b ⊆ connected_component (f b),
-  { apply subset_connected_component,
-    { exact is_preconnected.image (is_connected_connected_component).2 f (continuous.continuous_on h)},
-    rw mem_image,
-    use b,
-    split,
-    { exact mem_connected_component },
-    refl,
-  },
-  apply mem_of_subset_of_mem H,
-  rw mem_image,
-  use a,
-  split,
-  { rw ←(component_rel_iff.1 (quotient.sound hab)),
-    exact mem_connected_component },
-  refl,
-end)
-
 -- Stacks tag 09000
 def CompHaus_to_Profinite : CompHaus ⥤ Profinite :=
 { obj := λ X,
-    { to_Top := { α := quotient (component_setoid X.to_Top.α) },
-      is_compact := by apply_instance,
-      is_t2 := by apply_instance,
-      is_totally_disconnected := by apply_instance },
+    { to_Top := { α := (π₀ X.to_Top.α) } },
   map := λ X Y f,
-    -- TODO move out of definition, rewrites?
-    { to_fun := quotient.lift (quotient.mk ∘ f.1) (λ a b hab,
+    { to_fun := pi0_map f.1 f.2,
+    continuous_to_fun := continuous_quotient_lift _ (continuous.comp (continuous_quotient_mk) f.2)}}
+    -- possible TODO: pi0_map.continuous
+
+instance : is_right_adjoint Profinite_to_CompHaus :=
+{ left := CompHaus_to_Profinite,
+  adj :=
+    { hom_equiv := λ X Y,
+      { to_fun := λ f,
+        { to_fun := f.1 ∘ quotient.mk,
+          continuous_to_fun := continuous.comp f.2 (continuous_quotient_mk) },
+        inv_fun := λ g,
+        { to_fun := pi0.lift g.1 g.2,
+          continuous_to_fun := pi0.lift.continuous g.1 g.2 },
+  -- TODO: REMOVE BAD TIDY CODE
+        left_inv := by {intros x, dsimp at *, simp at *, ext1, induction x_1,
+          work_on_goal 0 { refl }, refl},
+        right_inv := by {intros x, dsimp at *, simp at *, ext1, refl}},
+    unit :=
+    { app := λ X,
       begin
-        apply quotient.sound,
-        apply connected_component_eq,
-        -- TODO: make separate lemma:
-        have H : f.1 '' connected_component b ⊆ connected_component (f.1 b),
-        { apply subset_connected_component,
-          { exact is_preconnected.image (is_connected_connected_component).2 f.1 (continuous.continuous_on f.2)},
-          rw mem_image,
-          use b,
-          split,
-          { exact mem_connected_component },
-          refl,
-        },
-        apply mem_of_subset_of_mem H,
-        rw mem_image,
-        use a,
-        split,
-        { rw ←(component_rel_iff.1 (quotient.sound hab)),
-          exact mem_connected_component },
-        refl,
-      end),
-    continuous_to_fun := continuous_quotient_lift _
-      (continuous.comp (continuous_quotient_mk) f.2) } }
+        simp only [functor.id_obj, functor.comp_obj],
+        fsplit,
+        {apply quotient.mk},
+        -- TODO: FIX
+        dsimp at *, fsplit, intros s ᾰ, assumption,
+      end
+    },
+    counit :=
+      { app := λ Y,
+      begin
+        simp only [functor.id_obj, functor.comp_obj],
+        fsplit,
+        { change ((π₀ Y.to_Top.α) → Y.to_Top.α),
+          apply pi0.lift (𝟙 Y.to_Top),
+          -- TODO: FIX
+          dsimp at *, fsplit, intros s ᾰ, assumption},
+        -- TODO: FIX
+        dsimp at *, simp at *, fsplit, intros s ᾰ, assumption,
+      end}}}
+
+instance : reflective Profinite_to_CompHaus :=
+{ .. Profinite_to_CompHaus.category_theory.is_right_adjoint,
+  .. Profinite_to_CompHaus.category_theory.full,
+  .. Profinite_to_CompHaus.category_theory.faithful}
+
+#check Profinite_to_CompHaus.category_theory.reflective
+
+/-
+{ right_adjoint_proof := by apply_instance,
+  full_proof := by apply_instance,
+  faithful_proof := by apply_instance } -/
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
