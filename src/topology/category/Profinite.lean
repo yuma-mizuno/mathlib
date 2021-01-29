@@ -276,7 +276,7 @@ begin
 end
 
 --
-lemma preimage_image_conn {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
+lemma preimage_singleton_pi0 {t : α} : connected_component t = quotient.mk ⁻¹' {⟦t⟧} :=
 begin
   apply set.eq_of_subset_of_subset,
   { intros a ha,
@@ -294,7 +294,7 @@ begin
 end
 
 -- TODO: potentially incorporate into theorem? Or better naming
-lemma preimage_component_quot (U : set α) :
+lemma preimage_image_pi0 (U : set α) :
   quotient.mk ⁻¹' (quotient.mk '' U) = ⋃ (x : α) (h : x ∈ U), connected_component x :=
 begin
   apply set.eq_of_subset_of_subset,
@@ -309,7 +309,7 @@ begin
     exact mem_connected_component },
   apply Union_subset, intro a,
   apply Union_subset, intro ha,
-  rw preimage_image_conn,
+  rw preimage_singleton_pi0,
   rw (function.surjective.preimage_subset_preimage_iff (surjective_quotient_mk _)),
   rw singleton_subset_iff,
   rw mem_image, use a,
@@ -341,7 +341,7 @@ begin
     { intro t,
       apply quotient.induction_on t,
       intro s,
-      rw ←preimage_image_conn,
+      rw ←preimage_singleton_pi0,
       exact is_connected_connected_component,
     },
     intro T,
@@ -359,7 +359,7 @@ begin
   apply mem_of_subset_of_mem h1 hc,
 end
 
-instance component_quot.t2 [t2_space α] [compact_space α]: t2_space (π₀ α) :=
+instance pi0.t2 [t2_space α] [compact_space α]: t2_space (π₀ α) :=
 begin
   -- Fix 2 distinct connected components, with points a and b
   constructor, intros x y,
@@ -387,10 +387,10 @@ begin
   -- TODO: renaming
   have h1 := clopen_eq_union_connected_components hu_clopen,
   have h2 : (quotient.mk ⁻¹' (quotient.mk '' U)) = U,
-  { rw preimage_component_quot,
+  { rw preimage_image_pi0,
     exact eq.symm h1 },
   have h3 : (quotient.mk ⁻¹' (quotient.mk '' Uᶜ)) = Uᶜ,
-  { rw preimage_component_quot,
+  { rw preimage_image_pi0,
     exact eq.symm (clopen_eq_union_connected_components (is_clopen_compl hu_clopen)) },
   -- showing that U and Uᶜ are open and separates ⟦a⟧ and ⟦b⟧
   -- TODO, can I avoid all these splits?
