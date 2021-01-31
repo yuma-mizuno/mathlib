@@ -299,7 +299,7 @@ instance {n : ℕ} : add_comm_monoid (satfin (n + 1)) :=
   add_zero := satfin.add_zero,
   add_comm := λ a b, by simp [eq_iff_veq, add_comm] }
 
-instance {n : ℕ} : canonically_ordered_add_monoid (satfin (n + 1)) :=
+instance {n : ℕ} : canonically_linear_ordered_add_monoid (satfin (n + 1)) :=
 { add_le_add_left := λ a b h c, by {
     cases le_total ((c : ℕ) + a) n with H H,
     { simp [le_iff_vle, le_refl, h, H] },
@@ -318,7 +318,7 @@ instance {n : ℕ} : canonically_ordered_add_monoid (satfin (n + 1)) :=
     { rintro ⟨c, h⟩,
       simp [h, le_iff_vle, a.is_le] }
   end,
-  ..satfin.add_comm_monoid, ..satfin.bounded_lattice  }
+  ..satfin.add_comm_monoid, ..satfin.bounded_lattice, ..satfin.linear_order }
 
 section bit
 
