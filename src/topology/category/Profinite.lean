@@ -166,6 +166,7 @@ end
 -- TODO USE IMAGE_CONNECTED_COMPONENT TO REWRITE LATER PROOF
 
 -- todo reduce to nonempty fibers
+-- TODO: use...
 lemma surjective_of_connected_fibers {β : Type*} [topological_space β] {f : α → β}
   (connected_fibers : ∀ t : β, is_connected (f ⁻¹' {t})) : function.surjective f :=
 begin
@@ -176,7 +177,10 @@ begin
   apply hs,
 end
 
+#check mem_preimage
+
 -- Version of stacks 0377
+-- TODO: better naming
 lemma connected_bij {β : Type*} [topological_space β] {f : α → β}
   (connected_fibers : ∀ t : β, is_connected (f ⁻¹' {t}))
   (hcl : ∀ (T : set β), is_closed T ↔ is_closed (f ⁻¹' T)) :
@@ -189,17 +193,23 @@ begin
     apply is_closed_connected_component },
   apply (is_preconnected_iff_subset_of_fully_disjoint_closed hT).2,
   intros u v hu hv huv uv_disj,
+
+  -- TODO: move out?
+  have HH : ∀ t' ∈ connected_component t, f ⁻¹' {t'} ⊆ f ⁻¹' connected_component t,
+  { intros t' ht',
+    apply (preimage_subset_preimage_iff _).2 (singleton_subset_iff.2 ht'),
+    rw [singleton_subset_iff, mem_range],
+    choose s hs using (connected_fibers t').1,
+    use s,
+    rw mem_preimage at hs,
+    apply hs },
+
   -- TODO: rename
   have h_decomp : ∀ t' ∈ connected_component t, f ⁻¹' {t'} ⊆ u ∨ f ⁻¹' {t'} ⊆ v,
   { intros t' ht',
     apply is_preconnected_iff_subset_of_disjoint_closed.1 (connected_fibers t').2 u v hu hv,
     { apply subset.trans _ huv,
-      apply (preimage_subset_preimage_iff _).2 (singleton_subset_iff.2 ht'),
-      rw [singleton_subset_iff, mem_range],
-      choose s hs using (connected_fibers t').1,
-      use s,
-      rw mem_preimage at hs,
-      apply hs },
+      apply HH t' ht'},
     rw uv_disj,
     exact inter_empty _,
   },
@@ -212,20 +222,13 @@ begin
       apply bUnion_subset,
       intros t' ht',
       apply subset_inter _ ht'.2,
-      -- REUSED CODE
-      apply (preimage_subset_preimage_iff _).2 (singleton_subset_iff.2 ht'.1),
-      rw [singleton_subset_iff, mem_range],
-      choose s hs using (connected_fibers t').1,
-      use s,
-      rw mem_preimage at hs,
-      apply hs },
+      apply HH t' ht'.1 },
     intros a ha,
     cases ha with hat hau,
     constructor,
-    -- TODO reuse code
-    { sorry },
+    { apply mem_preimage.1 hat },
     simp,
-    cases h_decomp (f a) _,
+    cases h_decomp (f a) (mem_preimage.1 hat),
     { apply h },
     { exfalso,
       have hav : a ∈ v,
@@ -233,12 +236,30 @@ begin
       { cases hat, cases hat_h, cases hat_h_w, solve_by_elim },
       rw ←not_nonempty_iff_eq_empty at uv_disj,
       apply uv_disj,
-      apply nonempty_of_mem (mem_inter hau hav),
-     },
-    { sorry }, -- again reuse code
-  },
+      apply nonempty_of_mem (mem_inter hau hav) } },
+  -- TODO: same proof as T₁_u.... Move out?
   have T₂_v :  f ⁻¹' T₂ =  (f ⁻¹' connected_component t) ∩ v,
-  { sorry }, -- TODO : copy above lemma
+  { apply eq_of_subset_of_subset,
+    { rw ←bUnion_preimage_singleton,
+      apply bUnion_subset,
+      intros t' ht',
+      apply subset_inter _ ht'.2,
+      apply HH t' ht'.1 },
+    intros a ha,
+    cases ha with hat hav,
+    constructor,
+    { apply mem_preimage.1 hat },
+    simp,
+    cases h_decomp (f a) (mem_preimage.1 hat),
+    { exfalso,
+      have hau : a ∈ u,
+      -- tidy proof
+      { cases hat, cases hat_h, cases hat_h_w, solve_by_elim },
+      rw ←not_nonempty_iff_eq_empty at uv_disj,
+      apply uv_disj,
+      apply nonempty_of_mem (mem_inter hau hav) },
+    { apply h }},
+
   have hT₁ : is_closed T₁,
   { apply (hcl T₁).2,
     rw T₁_u,
@@ -257,22 +278,38 @@ begin
   -- show Ti are disjoint
   have T_disjoint : T₁ ∩ T₂ = ∅,
   -- TODO
-  { sorry },
+  { have asdf : f ⁻¹' T₁ ∩ f ⁻¹' T₂ = ∅,
+    { rw [T₁_u, T₂_v],
+      rw inter_comm at uv_disj,
+      conv
+      begin
+        congr,
+        rw [inter_assoc],
+        congr, skip,
+        rw [←inter_assoc, inter_comm, ←inter_assoc],
+        rw [uv_disj, empty_inter],
+      end,
+      apply inter_empty },
+    -- TODO: fix proof.
+    rw ←preimage_inter at asdf,
+    rw ←(image_preimage_eq (T₁ ∩ T₂) (surjective_of_connected_fibers connected_fibers)),
+    rw asdf,
+    apply image_empty },
   -- show T is a subset of either
-  have HH := (is_preconnected_iff_subset_of_fully_disjoint_closed is_closed_connected_component).1
+  have HHH := (is_preconnected_iff_subset_of_fully_disjoint_closed is_closed_connected_component).1
     (is_connected_connected_component).2 T₁ T₂ hT₁ hT₂ T_decomp T_disjoint,
-  cases HH,
+  cases HHH,
   { left,
     rw subset.antisymm_iff at T₁_u,
     suffices : f ⁻¹' connected_component t ⊆ f ⁻¹' T₁,
     { exact (subset.trans (subset.trans this T₁_u.1) (inter_subset_right _ _)) },
-    apply preimage_mono HH,
+    apply preimage_mono HHH,
   },
   right,
   rw subset.antisymm_iff at T₂_v,
   suffices : f ⁻¹' connected_component t ⊆ f ⁻¹' T₂,
   { exact (subset.trans (subset.trans this T₂_v.1) (inter_subset_right _ _)) },
-  apply preimage_mono HH,
+  apply preimage_mono HHH,
 end
 
 --
