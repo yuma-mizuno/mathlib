@@ -197,7 +197,7 @@ rfl
 @[simp] theorem coe_refl : ⇑(equiv.refl α) = id := rfl
 
 @[simp] theorem perm.coe_subsingleton {α : Type*} [subsingleton α] (e : perm α) : ⇑(e) = id :=
-by rw [perm.subsingleton_eq_refl e, coe_refl]
+subsingleton.elim _ _
 
 theorem refl_apply (x : α) : equiv.refl α x = x := rfl
 
