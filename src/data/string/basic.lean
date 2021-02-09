@@ -80,13 +80,9 @@ end
 
 @[simp] lemma popn_empty {n : ℕ} : "".popn n = "" :=
 begin
-  induction n with n hn,
+  induction n with n ih,
   { refl },
-  { rcases hs : "" with ⟨_ | ⟨hd, tl⟩⟩,
-    { rw hs at hn,
-      conv_rhs { rw ←hn },
-      simp only [popn, mk_iterator, iterator.nextn, iterator.next] },
-    { simpa only [←to_list_inj] using hs } }
+  { cases n : (n : ℕ) with m, refl, simpa * using ih}
 end
 
 instance : linear_order string :=
