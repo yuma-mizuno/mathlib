@@ -107,11 +107,16 @@ def limit_cone (F : J ⥤ Profinite) : cone F :=
         is_compact :=
           compact_iff_compact_space.1 (compact_of_is_closed_subset compact_univ
             ( begin
-                convert (_:is_closed (⋂ (j j' : J) (f : j ⟶ j'), {u : Π j, F.obj j | F.map f (u j) = u j'})),
-                  { ext1, simp only [forall_apply_eq_imp_iff', set.mem_sInter, set.mem_range, set.mem_Inter, set.mem_set_of_eq, exists_imp_distrib], refl },
+                convert (_:
+                  is_closed (⋂ (j j' : J) (f : j ⟶ j'), {u : Π j, F.obj j | F.map f (u j) = u j'})),
+                { ext1,
+                  simp only [forall_apply_eq_imp_iff', set.mem_sInter, set.mem_range,
+                            set.mem_Inter, set.mem_set_of_eq, exists_imp_distrib],
+                  refl },
                 exact (
                   is_closed_Inter (λ j, is_closed_Inter (λ j', is_closed_Inter
-                  (λ f, is_closed_eq ((F.map f).2.comp (continuous_apply _)) (continuous_apply _))))),
+                    (λ f, is_closed_eq ((F.map f).2.comp (continuous_apply _))
+                      (continuous_apply _))))),
               end )
             (set.subset_univ _)),
         is_t2 := subtype.t2_space,
@@ -138,6 +143,7 @@ instance Profinite_has_limits : has_limits Profinite :=
 
 variables {α : Type*} [topological_space α]
 open set
+/-
 local attribute [instance] component_setoid
 
 --
@@ -260,6 +266,88 @@ instance : reflective Profinite_to_CompHaus :=
   .. Profinite_to_CompHaus.category_theory.faithful}
 
 #check Profinite_to_CompHaus.category_theory.reflective
+#check compact_of_finite_subcover
+-/
+
+--def prof_limit_skeleton (X : Profinite) : set (set (topological_space.opens X.to_Top.α)) :=
+--{ I | (⋃ (u : I), ↥u) = X.to_Top.α }
+
+universe u
+open topological_space
+
+--def prof_limit_skeleton' (X : Profinite) :=
+--{I : set (set X.to_Top.α) | (∀ U : I, is_open U)}
+--{ ((ι : Type*), (U : ι → (set X.to_Top.α))) | (∀ i : ι, is_open (U i)) ∧ ((⋃ i, U i) = X.to_Top.α)}
+
+#check sUnion
+
+-- https://stacks.math.columbia.edu/tag/08ZY
+
+def profinite_skeleton (X : Profinite) :=
+{ I : set (set (X.to_Top.α)) // (I.finite) ∧ (∀ U ∈ I, is_open U ∧ U ≠ ∅) ∧
+  (⋃₀ I = univ) ∧ (∀ U V ∈ I, (U ≠ V) → (U ∩ V = ∅) )}
+
+instance profinite_limit_category (X : Profinite) : category (profinite_skeleton X) :=
+{ hom := λ I J, plift (∀ U ∈ I.1, ∃ V ∈ J.1, U ⊆ V),
+  id := λ I, ⟨λ U hU, exists.intro U $ exists.intro hU $ subset.refl U⟩,
+  comp := λ I J K f g,
+    begin
+      split,
+      intros U hU,
+      rcases (f.1 U hU) with ⟨V, hV, hUV⟩,
+      rcases (g.1 V hV) with ⟨W, hW, hVW⟩,
+      use W,
+      refine ⟨hW, subset.trans hUV hVW⟩,
+    end }
+
+lemma refinement_unique {X : Profinite} {I J : profinite_skeleton X} (f : I ⟶ J) :
+  ∀ U ∈ I.1, ∃! V ∈ J.1, U ⊆ V := sorry
+
+/-
+lemma refinement_unique {X : Profinite} {I J : profinite_skeleton X} (f : I ⟶ J) :
+  ∀ U ∈ I.1, ∃! V : set X.to_Top.α, ∃ hV : V ∈ J.1, U ⊆ V :=
+λ U hU,
+begin
+  apply exists_unique_of_exists_of_unique (f.1 U hU),
+  intros V W hUV hUW,
+  cases hUV with hV hUV,
+  cases hUW with hW hUW,
+  by_contra,
+  have hVW := J.2.2.2.2 V W hV hW h,
+  apply (I.2.2.1 U hU).2,
+  apply eq_empty_of_subset_empty,
+  -- NONOPTIMAL PROOF:
+  rw ←hVW,
+  apply subset_inter hUV hUW,
+end -/
+
+#check classical.some_spec
+
+-- TODO: need noncomputable def?
+noncomputable def profinite_diagram' (X : Profinite) : profinite_skeleton X ⥤ Fintype :=
+{ obj := λ I, ⟨I.1, finite.fintype I.2.1⟩,
+  map := λ I J f U, ⟨(classical.some (f.1 U.1 U.2)),
+                      classical.some (classical.some_spec (f.1 U.1 U.2))⟩,
+  map_id' := sorry,
+  map_comp' := sorry, }
+
+noncomputable def profinite_diagram (X : Profinite) : profinite_skeleton X ⥤ Profinite :=
+(profinite_diagram' X) ⋙ Fintype_to_Profinite
+
+noncomputable def profinite_limit (X : Profinite) : Profinite := limit (profinite_diagram X)
+
+noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram X) :=
+{ X := X,
+  π := {
+    app := λ I,
+    { to_fun := sorry,
+      continuous_to_fun := sorry },
+    naturality' := sorry } }
+
+variables (X : Profinite) (A B : profinite_skeleton X)
+variables (f : A ⟶ B) (U : set X.to_Top.α) (hU : U ∈ A.val)
+#check f.1 U hU
+#check is_compact.finite_compact_cover
 
 /-
 { right_adjoint_proof := by apply_instance,
