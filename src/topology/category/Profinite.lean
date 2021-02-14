@@ -283,9 +283,33 @@ open topological_space
 
 -- https://stacks.math.columbia.edu/tag/08ZY
 
+/-
+Outline:
+Good definition of profinite_skeleton.... (making type stuff as easy as possible)
+- demand clopen in definition?
+
+Show that its a pos (needed for surjectivity)
+
+Deduce that it forms a category from being a pos
+
+Define functor to FinType (classical.some.....) and compose to get functor to Profinite
+
+Show X forms a cone over the diagram.
+- X → i: x gets sent to clopen it is contained in
+
+Show induced function from X to limit is bijective:
+- Injectivity: points are intersection of all clopens containing it
+
+- Surjectivity: pos => finite intersections nonempty => whole intersection nonempty
+
+-/
+
 def profinite_skeleton (X : Profinite) :=
-{ I : set (set (X.to_Top.α)) // (I.finite) ∧ (∀ U ∈ I, is_open U ∧ U ≠ ∅) ∧
+{ I : set (set (X.to_Top.α)) | (I.finite) ∧ (∀ U ∈ I, is_open U ∧ U ≠ ∅) ∧
   (⋃₀ I = univ) ∧ (∀ U V ∈ I, (U ≠ V) → (U ∩ V = ∅) )}
+
+--{ I : (Σ (I : Type*), (ι : I → set (X.to_Top.α))) // }
+--{ Σ (I : Type*), (ι : I → set (X.to_Top.α)) //  }
 
 instance profinite_limit_category (X : Profinite) : category (profinite_skeleton X) :=
 { hom := λ I J, plift (∀ U ∈ I.1, ∃ V ∈ J.1, U ⊆ V),
@@ -336,12 +360,27 @@ noncomputable def profinite_diagram (X : Profinite) : profinite_skeleton X ⥤ P
 
 noncomputable def profinite_limit (X : Profinite) : Profinite := limit (profinite_diagram X)
 
+#check functor.const
+
 noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram X) :=
 { X := X,
   π := {
     app := λ I,
-    { to_fun := sorry,
-      continuous_to_fun := sorry },
+    { to_fun := λ x,
+    begin
+      have H : x ∈ ⋃₀ I.1 := (I.2.2.2.1).symm ▸ (mem_univ x),
+      have H1 := mem_sUnion.1 H,
+      exact ⟨classical.some H1, classical.some (classical.some_spec H1)⟩,
+    end,
+      continuous_to_fun :=
+    begin
+      split,
+      intros J hJ,
+      dsimp [functor.const.obj_obj],
+      sorry,
+      -- convert to ⋃₀ J somehow...
+
+    end,},
     naturality' := sorry } }
 
 variables (X : Profinite) (A B : profinite_skeleton X)
