@@ -372,6 +372,13 @@ begin
 
 end
 
+lemma profinite_limit_map.surjective (X : Profinite) :
+  function.surjective (profinite_limit_map X) :=
+begin
+  intro x, sorry,
+end
+
+
 
 --noncomputable def profinite_limit_iso (X : Profinite) : X ≅ profinite_limit X :=
 
