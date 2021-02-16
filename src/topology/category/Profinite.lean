@@ -213,9 +213,6 @@ instance profinite_skeleton.partial_order : partial_order (profinite_skeleton X)
     rwa eq_of_subset_of_subset hUV hVW,
   end }
 
--- TODO: make sure to use the right ≤.....
-variables (I K : profinite_skeleton X) (i : I ≤ K) (U : set (X.to_Top.α)) (H : U ∈ I.1)
-
 -- TODO: MAKE SURE the right ≤ is the one used!!
 instance profinite_limit_category : small_category (profinite_skeleton X) :=
 @preorder.small_category _ (@partial_order.to_preorder _ profinite_skeleton.partial_order)
@@ -420,23 +417,43 @@ begin
   sorry,
 end
 
-#check is_compact.inter_Inter_nonempty
+def section_to_set {X : Profinite} (u : X.profinite_limit.to_Top) :
+ Π (I : X.profinite_skeleton), set X.to_Top.α := λ I, (u.1 I).1
+
+/-
+TODO:
+profinite_inter_map,
+
+show section is directed
+
+show "elements" of section are clopen, nonempty
+-/
+--def profinite_inter_map {X : Profinite} (I J : profinite_skeleton X) :=
+
+--⟨(λ U, ∃ (V W : set X.to_Top.α), (V ∈ I.1) ∧ (W ∈ J.1) ∧ U = V ∩ W), _⟩
+
+lemma limit_section_directed {X : Profinite} (u : X.profinite_limit.to_Top) :
+  directed (⊇) (section_to_set u) :=
+begin
+  intros I J, sorry,
+end
+
+#check is_compact.nonempty_Inter_of_directed_nonempty_compact_closed
 
 lemma profinite_limit_map.surjective (X : Profinite) :
   function.surjective (profinite_limit_map X) :=
 begin
   intro u,
   rw [profinite_limit.α X] at u,
-  have H : (⋂ (I : (X.profinite_skeleton)), (u.1 I).1).nonempty,
+  have H : (⋂ (I : (X.profinite_skeleton)), section_to_set u I).nonempty,
   {
-    /-
-    TODO:
-    define "set" function assoc to u
-    show its a directed superset
+    -- TODO:
+    have : nonempty ↥(X.profinite_skeleton), {sorry },
 
-    then:
-    apply is_compact.nonempty_Inter_of_directed_nonempty_compact_closed u.1,
-    -/
+    apply @is_compact.nonempty_Inter_of_directed_nonempty_compact_closed _ _ _ this (section_to_set u)
+      (limit_section_directed u); intro I,
+    { sorry },
+    { sorry },
     sorry },
   cases H with x hx,
   use x,
@@ -451,22 +468,9 @@ begin
   apply mem_of_subset_of_mem (Inter_subset _ _) hx,
 end
 
-
-
 --noncomputable def profinite_limit_iso (X : Profinite) : X ≅ profinite_limit X :=
 
 /-
--- is this even useful?
-lemma refinement_unique' {I J : profinite_skeleton X} (h : I ≤ J) :
-  ∀ U ∈ I.1, ∃! V : set X.to_Top.α, V ∈ J.1 ∧ U ⊆ V :=
-begin
-  intros U hU,
-  apply exists_unique_of_exists_of_unique (h U hU),
-  rintros V W ⟨hV, hUV⟩ ⟨hW, hUW⟩,
-  by_contra,
-  have hVW := J.2.2.2.2 V W hV hW h,
-  exact (I.2.2.1 U hU).2 (eq_empty_of_subset_empty (hVW ▸ (subset_inter hUV hUW))),
-end
 
 
 { right_adjoint_proof := by apply_instance,
