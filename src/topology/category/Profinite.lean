@@ -339,11 +339,37 @@ noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram
 noncomputable def profinite_limit_map (X : Profinite) : X ⟶ profinite_limit X :=
 limit.lift (profinite_diagram X) (profinite_limit_cone X)
 
+#check Inter_subset
+
 -- https://stacks.math.columbia.edu/tag/08ZY
 lemma profinite_limit_map.injective (X : Profinite) : function.injective (profinite_limit_map X) :=
 begin
   intros x y hxy,
-  rw totally_disconnected_space_iff_connected_component_singleton,
+  rw ←singleton_eq_singleton_iff,
+  rw ←(totally_disconnected_space_iff_connected_component_singleton.1 X.is_totally_disconnected),
+  rw connected_component_eq_Inter_clopen,
+  rw ←(totally_disconnected_space_iff_connected_component_singleton.1 X.is_totally_disconnected),
+  rw connected_component_eq_Inter_clopen,
+  suffices : ∀ Z : set X.to_Top.α, is_clopen Z → (x ∈ Z ↔ y ∈ Z),
+  { apply eq_of_subset_of_subset,
+    -- TODO: symmetry??
+    { apply subset_Inter,
+      rintro ⟨Z, ⟨hZ, hyZ⟩⟩,
+      exact Inter_subset (λ Z : {Z // is_clopen Z ∧ x ∈ Z}, ↑Z) ⟨Z, ⟨hZ, (this Z hZ).2 hyZ⟩⟩ },
+    apply subset_Inter,
+    rintro ⟨Z, ⟨hZ, hxZ⟩⟩,
+    exact Inter_subset (λ Z : {Z // is_clopen Z ∧ y ∈ Z}, ↑Z) ⟨Z, ⟨hZ, (this Z hZ).1 hxZ⟩⟩ },
+  intros Z hZ,
+  -- TODO: symmetry??
+  split,
+  { intro hx, sorry },
+  intro hy, sorry,
+  /-
+  TODO:
+  Defie I := {Z, Zᶜ}, show I ∈ profinite_diagram X
+  "specialize?" profinite limit map to I and get y ∈ Z
+  -/
+
 end
 
 
