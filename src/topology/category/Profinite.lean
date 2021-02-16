@@ -178,11 +178,6 @@ def profinite_skeleton (X : Profinite) :=
   (⋃₀ I = univ) ∧ (∀ U V ∈ I, (U ∩ V : set X.to_Top.α).nonempty → (U = V) )}
 
 variable {X : Profinite}
-#check nonempty_of_nonempty_subtype
-#check nonempty.mono
-#check not_nonempty_iff_eq_empty
-#check nonempty_of_mem
-#check set.nonempty
 
 lemma refinement_unique {I J : profinite_skeleton X} {U V W : set X.to_Top.α} (hU : U ∈ I.1)
   (hV : V ∈ J.1) (hW : W ∈ J.1) (hUV : U ⊆ V) (hUW : U ⊆ W) : V = W :=
@@ -277,7 +272,8 @@ noncomputable def profinite_diagram' (X : Profinite) : profinite_skeleton X ⥤ 
 noncomputable def profinite_diagram (X : Profinite) : profinite_skeleton X ⥤ Profinite :=
 (profinite_diagram' X) ⋙ Fintype_to_Profinite
 
-noncomputable def profinite_limit (X : Profinite) : Profinite := limit (profinite_diagram X)
+lemma profinite_diagram.map {X : Profinite} {I J : profinite_skeleton X} (f : I ⟶ J) :
+  (X.profinite_diagram.map f).to_fun = (profinite_diagram_map f) := rfl
 
 def X_to_partition_map (I : profinite_skeleton X) : X → (profinite_diagram_obj I) :=
 λ x, by { have H := mem_sUnion.1 ((I.2.2.2.1).symm ▸ (mem_univ x) : x ∈ ⋃₀ I.1),
@@ -336,10 +332,28 @@ noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram
       end },
     naturality' := sorry } }
 
-noncomputable def profinite_limit_map (X : Profinite) : X ⟶ profinite_limit X :=
-limit.lift (profinite_diagram X) (profinite_limit_cone X)
+noncomputable def profinite_limit (X : Profinite) : Profinite :=
+  (limit_cone (profinite_diagram X)).X
 
-#check Inter_subset
+noncomputable def profinite_limit_map (X : Profinite) : X ⟶ profinite_limit X :=
+(limit_cone_is_limit (profinite_diagram X)).lift (profinite_limit_cone X)
+
+lemma profinite_limit.α (X : Profinite) : ↥(profinite_limit X).to_Top =
+{ u : Π (I : profinite_skeleton X), (profinite_diagram X).obj I // ∀ {I J} (f : I ⟶ J),
+  (profinite_diagram X).map f (u I) = (u J)} := rfl
+
+-- { u : Π j, F.obj j // ∀ {j j'} (f : j ⟶ j'), F.map f (u j) = u j' }
+
+def profinite_limit.image_elem {X : Profinite} (x : X) :
+  (profinite_limit X).to_Top.α :=
+⟨(λ I, X_to_partition_map I x), λ I J f, subtype.ext $ eq.symm $ X_to_partition_map_unique J x
+  (profinite_diagram_map f (X_to_partition_map I x)).1
+  (profinite_diagram_map f (X_to_partition_map I x)).2
+  (mem_of_subset_of_mem (profinite_diagram_map_sub _ _) (X_to_partition_map_point_mem I x))⟩
+
+lemma profinite_limit_map_elem {X : Profinite} (x : X) :
+  (X.profinite_limit_map).1 x = profinite_limit.image_elem x := rfl
+
 
 -- https://stacks.math.columbia.edu/tag/08ZY
 lemma profinite_limit_map.injective (X : Profinite) : function.injective (profinite_limit_map X) :=
@@ -362,20 +376,58 @@ begin
   intros Z hZ,
   -- TODO: symmetry??
   split,
-  { intro hx, sorry },
-  intro hy, sorry,
-  /-
-  TODO:
-  Defie I := {Z, Zᶜ}, show I ∈ profinite_diagram X
-  "specialize?" profinite limit map to I and get y ∈ Z
-  -/
-
+  { intro hx,
+    change (X.profinite_limit_map).1 x = (X.profinite_limit_map).1 y at hxy,
+    rw [profinite_limit_map_elem x, profinite_limit_map_elem y] at hxy,
+    have I : ↥(profinite_skeleton X),
+    { refine ⟨{Z, Zᶜ}, ⟨_,_,_,_⟩⟩,
+      { simp only [finite.insert, finite_singleton] },
+      { rintros U ⟨hU, _⟩,
+        { refine ⟨hZ.1, nonempty_of_mem hx⟩ },
+        rw mem_singleton_iff at H,
+        rw H,
+        -- TODO DO CASES ON Zᶜ nonempty before....
+        refine ⟨is_open_compl_iff.2 hZ.2, _⟩,
+        sorry },
+      { simp only [sUnion_singleton, union_compl_self, sUnion_insert] },
+      intros U V hU hV hUV,
+      cases hU with hU hU,
+      { cases hV with hV hV,
+        { rwa [hU, hV] },
+        rw mem_singleton_iff at hV,
+        rw [hU, hV, inter_compl_self] at hUV,
+        exfalso,
+        revert hUV,
+        exact empty_not_nonempty },
+      rw mem_singleton_iff at hU,
+      cases hV with hV hV,
+      { rw [hU, hV, inter_comm, inter_compl_self] at hUV,
+        exfalso,
+        revert hUV,
+        exact empty_not_nonempty },
+      rw mem_singleton_iff at hV,
+      rwa [hU, hV] },
+    have hXY : (X_to_partition_map I x).1 = (X_to_partition_map I y).1,
+    { change ((profinite_limit.image_elem x).1 I).1 = ((profinite_limit.image_elem y).1 I).1,
+      rw hxy },
+    -- TODO: fix
+    have hZI : Z ∈ I.1, {sorry},
+    rw X_to_partition_map_unique I x Z hZI hx at hXY,
+    rw hXY,
+    exact X_to_partition_map_point_mem I y,
+  },
+  intro hy,
+  sorry,
 end
+
+#check is_compact.inter_Inter_nonempty
 
 lemma profinite_limit_map.surjective (X : Profinite) :
   function.surjective (profinite_limit_map X) :=
 begin
-  intro x, sorry,
+  intro u,
+  rw [profinite_limit.α X] at u, sorry,
+
 end
 
 
