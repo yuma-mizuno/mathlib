@@ -140,10 +140,11 @@ instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
   { has_limit := λ F, has_limit.mk { cone := limit_cone F, is_limit := limit_cone_is_limit F } } }
 
-
+end Profinite
+/-
 variables {α : Type*} [topological_space α]
 open set
-/-
+
 local attribute [instance] component_setoid
 
 --
@@ -273,13 +274,8 @@ instance : reflective Profinite_to_CompHaus :=
 --{ I | (⋃ (u : I), ↥u) = X.to_Top.α }
 
 universe u
+open set
 open topological_space
-
---def prof_limit_skeleton' (X : Profinite) :=
---{I : set (set X.to_Top.α) | (∀ U : I, is_open U)}
---{ ((ι : Type*), (U : ι → (set X.to_Top.α))) | (∀ i : ι, is_open (U i)) ∧ ((⋃ i, U i) = X.to_Top.α)}
-
-#check sUnion
 
 -- https://stacks.math.columbia.edu/tag/08ZY
 
@@ -300,95 +296,154 @@ Show X forms a cone over the diagram.
 Show induced function from X to limit is bijective:
 - Injectivity: points are intersection of all clopens containing it
 
-- Surjectivity: pos => finite intersections nonempty => whole intersection nonempty
+- Surjectivity: pos????? => finite intersections nonempty => whole intersection nonempty
 
 -/
 
-def profinite_skeleton (X : Profinite) :=
+#check partial_order
+
+variable (X : Profinite)
+
+def profinite_skeleton :=
 { I : set (set (X.to_Top.α)) | (I.finite) ∧ (∀ U ∈ I, is_open U ∧ U ≠ ∅) ∧
   (⋃₀ I = univ) ∧ (∀ U V ∈ I, (U ≠ V) → (U ∩ V = ∅) )}
 
---{ I : (Σ (I : Type*), (ι : I → set (X.to_Top.α))) // }
---{ Σ (I : Type*), (ι : I → set (X.to_Top.α)) //  }
-
-instance profinite_limit_category (X : Profinite) : category (profinite_skeleton X) :=
-{ hom := λ I J, plift (∀ U ∈ I.1, ∃ V ∈ J.1, U ⊆ V),
-  id := λ I, ⟨λ U hU, exists.intro U $ exists.intro hU $ subset.refl U⟩,
-  comp := λ I J K f g,
-    begin
-      split,
-      intros U hU,
-      rcases (f.1 U hU) with ⟨V, hV, hUV⟩,
-      rcases (g.1 V hV) with ⟨W, hW, hVW⟩,
-      use W,
-      refine ⟨hW, subset.trans hUV hVW⟩,
-    end }
-
-lemma refinement_unique {X : Profinite} {I J : profinite_skeleton X} (f : I ⟶ J) :
-  ∀ U ∈ I.1, ∃! V ∈ J.1, U ⊆ V := sorry
-
-/-
-lemma refinement_unique {X : Profinite} {I J : profinite_skeleton X} (f : I ⟶ J) :
-  ∀ U ∈ I.1, ∃! V : set X.to_Top.α, ∃ hV : V ∈ J.1, U ⊆ V :=
-λ U hU,
+lemma refinement_unique {I J : profinite_skeleton X} {U V W : set X.to_Top.α} (hU : U ∈ I.1)
+  (hV : V ∈ J.1) (hW : W ∈ J.1) (hUV : U ⊆ V) (hUW : U ⊆ W) : V = W :=
 begin
-  apply exists_unique_of_exists_of_unique (f.1 U hU),
-  intros V W hUV hUW,
-  cases hUV with hV hUV,
-  cases hUW with hW hUW,
   by_contra,
   have hVW := J.2.2.2.2 V W hV hW h,
-  apply (I.2.2.1 U hU).2,
-  apply eq_empty_of_subset_empty,
-  -- NONOPTIMAL PROOF:
-  rw ←hVW,
-  apply subset_inter hUV hUW,
-end -/
+  exact (I.2.2.1 U hU).2 (eq_empty_of_subset_empty (hVW ▸ (subset_inter hUV hUW))),
+end
 
-#check classical.some_spec
+instance profinite_skeleton.partial_order : partial_order (profinite_skeleton X) :=
+{ le := λ I J, (∀ (U ∈ I.1), (∃ V : set X.to_Top.α, V ∈ J.1 ∧ U ⊆ V)),
+  le_refl := λ I U hU, exists.intro U ⟨hU, subset.refl U⟩,
+  le_trans :=
+  begin
+    intros I J K hIJ hJK U hU,
+    rcases hIJ U hU with ⟨V, hV, hUV⟩,
+    rcases hJK V hV with ⟨W, hW, hVW⟩,
+    use W,
+    exact ⟨hW, subset.trans hUV hVW⟩,
+  end,
+  le_antisymm :=
+  begin
+    intros I J hIJ hJI,
+    ext U,
+    split; intro hU,
+    -- TODO: make a separate lemma...
+    { rcases hIJ U hU with ⟨V, ⟨hV, hUV⟩⟩,
+      rcases hJI V hV with ⟨W, ⟨hW, hVW⟩⟩,
+      have H := refinement_unique X hU hU hW (subset.refl U) (subset.trans hUV hVW),
+      rw ←H at hVW,
+      rwa eq_of_subset_of_subset hUV hVW },
 
--- TODO: need noncomputable def?
-noncomputable def profinite_diagram' (X : Profinite) : profinite_skeleton X ⥤ Fintype :=
-{ obj := λ I, ⟨I.1, finite.fintype I.2.1⟩,
-  map := λ I J f U, ⟨(classical.some (f.1 U.1 U.2)),
-                      classical.some (classical.some_spec (f.1 U.1 U.2))⟩,
-  map_id' := sorry,
-  map_comp' := sorry, }
+    rcases hJI U hU with ⟨V, ⟨hV, hUV⟩⟩,
+    rcases hIJ V hV with ⟨W, ⟨hW, hVW⟩⟩,
+    have H := refinement_unique X hU hU hW (subset.refl U) (subset.trans hUV hVW),
+    rw ←H at hVW,
+    rwa eq_of_subset_of_subset hUV hVW,
+  end }
 
-noncomputable def profinite_diagram (X : Profinite) : profinite_skeleton X ⥤ Profinite :=
+-- TODO: make sure to use the right ≤.....
+variables (I K : profinite_skeleton X) (i : I ≤ K) (U : set (X.to_Top.α)) (H : U ∈ I.1)
+
+-- TODO: MAKE SURE the right ≤ is the one used!!
+instance profinite_limit_category : small_category (profinite_skeleton X) :=
+@preorder.small_category _ (@partial_order.to_preorder _ (profinite_skeleton.partial_order X))
+/-
+{ hom  := λ I J, ulift (plift (I ≤ J)),
+  id   := λ I, ⟨ ⟨ le_refl I ⟩ ⟩,
+  comp := λ I J K f g, ⟨ ⟨ le_trans f.down.down g.down.down ⟩ ⟩ } -/
+
+-- TODO: need noncomputable?? i.e. remove finite.fintype?
+noncomputable def profinite_diagram_obj (I : profinite_skeleton X) : Fintype :=
+{ α := I,
+  str := finite.fintype I.2.1 }
+
+@[simp]
+lemma profinite_diagram_obj_eq (I : profinite_skeleton X) : (profinite_diagram_obj X I).1 = I := rfl
+
+lemma profinite_diagram_obj' {I : profinite_skeleton X} (U : (profinite_diagram_obj X I).α) :
+U.1 ∈ I.1 := U.2
+
+-- Q: How to work with fintype?!?! "carrier???"
+--lemma profinite_diagram_obj_eq (I : profinite_skeleton X) : (profinite_diagram_obj X I) = I.1 :=
+
+-- TODO: termmode????
+def profinite_diagram_map {I J : profinite_skeleton X} (f : I ⟶ J) :
+  (profinite_diagram_obj X I) ⟶ (profinite_diagram_obj X J) :=
+by {exact λ U, ⟨(classical.some (f.1.1 U.1 U.2)), (classical.some_spec (f.1.1 U.1 U.2)).1⟩}
+
+@[simp]
+lemma profinite_diagram_map_sub {I J : profinite_skeleton X} (f : I ⟶ J)
+  (U : (profinite_diagram_obj X I).α) : U.1 ⊆ (profinite_diagram_map X f U).1 :=
+(classical.some_spec (f.1.1 U.1 U.2)).2
+
+@[simp]
+lemma profinite_diagram_map_unique {I J : profinite_skeleton X} (f : I ⟶ J)
+  (U : (profinite_diagram_obj X I).α) (V : (profinite_diagram_obj X J).α)
+  (hUV : U.1 ⊆ V.1) : profinite_diagram_map X f U = V :=
+subtype.ext $
+  refinement_unique X U.2 (profinite_diagram_map X f U).2 V.2 (profinite_diagram_map_sub X f U) hUV
+
+-- TODO: remove finite.fintype...?
+-- TODO: make interactions with "choice" of classical.some
+noncomputable def profinite_diagram' : profinite_skeleton X ⥤ Fintype :=
+{ obj := profinite_diagram_obj X,
+  map := λ I J, @profinite_diagram_map X I J,
+  map_id' := by {refine λ I, funext (λ U, profinite_diagram_map_unique _ _ _ _ (subset.refl U.1)) },
+  map_comp' :=
+  begin
+    refine λ I J K f g, funext (λ U, profinite_diagram_map_unique _ _ _ _ _),
+    -- TODO: change this line
+    change U.val ⊆ ((profinite_diagram_map X g) ((profinite_diagram_map X f) U)).1,
+    exact subset.trans (profinite_diagram_map_sub X f U) (profinite_diagram_map_sub X g _),
+  end, }
+
+noncomputable def profinite_diagram : profinite_skeleton X ⥤ Profinite :=
 (profinite_diagram' X) ⋙ Fintype_to_Profinite
 
-noncomputable def profinite_limit (X : Profinite) : Profinite := limit (profinite_diagram X)
+noncomputable def profinite_limit : Profinite := limits.limit (profinite_diagram X)
 
-#check functor.const
-
-noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram X) :=
+-- TODO: make separate definition of the map
+-- and prove lemmas about the choice...
+-- TODO: need to consider the right type of union....
+noncomputable def profinite_limit_cone (X : Profinite) : limits.cone (profinite_diagram X) :=
 { X := X,
   π := {
     app := λ I,
     { to_fun := λ x,
     begin
-      have H : x ∈ ⋃₀ I.1 := (I.2.2.2.1).symm ▸ (mem_univ x),
-      have H1 := mem_sUnion.1 H,
-      exact ⟨classical.some H1, classical.some (classical.some_spec H1)⟩,
+      have H := mem_sUnion.1 ((I.2.2.2.1).symm ▸ (mem_univ x) : x ∈ ⋃₀ I.1),
+      exact ⟨classical.some H, classical.some (classical.some_spec H)⟩,
     end,
       continuous_to_fun :=
     begin
       split,
-      intros J hJ,
-      dsimp [functor.const.obj_obj],
+      -- A is a set of "opens in I"
+      intros A hA,
+      dsimp only [functor.const.obj_obj],
       sorry,
       -- convert to ⋃₀ J somehow...
 
-    end,},
-    naturality' := sorry } }
-
-variables (X : Profinite) (A B : profinite_skeleton X)
-variables (f : A ⟶ B) (U : set X.to_Top.α) (hU : U ∈ A.val)
-#check f.1 U hU
-#check is_compact.finite_compact_cover
+    end,} } }
 
 /-
+-- is this even useful?
+lemma refinement_unique' {I J : profinite_skeleton X} (h : I ≤ J) :
+  ∀ U ∈ I.1, ∃! V : set X.to_Top.α, V ∈ J.1 ∧ U ⊆ V :=
+begin
+  intros U hU,
+  apply exists_unique_of_exists_of_unique (h U hU),
+  rintros V W ⟨hV, hUV⟩ ⟨hW, hUW⟩,
+  by_contra,
+  have hVW := J.2.2.2.2 V W hV hW h,
+  exact (I.2.2.1 U hU).2 (eq_empty_of_subset_empty (hVW ▸ (subset_inter hUV hUW))),
+end
+
+
 { right_adjoint_proof := by apply_instance,
   full_proof := by apply_instance,
   faithful_proof := by apply_instance } -/
