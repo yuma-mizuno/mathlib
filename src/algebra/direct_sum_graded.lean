@@ -73,7 +73,7 @@ section defs
 
 /-- A graded version of `monoid`. -/
 class gmonoid [add_monoid ι] [∀ i, add_comm_monoid (A i)] extends ghas_mul A, ghas_one A :=
-(one_mul {i} (a : A i) : (⟨_, ᵍ1 ᵍ* a⟩ : Σ i, A i) = ⟨i, a⟩)
+(one_mul {i} (a : A i) : (zero_add i).rec (ᵍ1 ᵍ* a) = a)
 (mul_one {i} (a : A i) : (⟨_, a ᵍ* ᵍ1⟩ : Σ i, A i) = ⟨i, a⟩)
 (mul_assoc {i j k} (a : A i) (b : A j) (c : A k) :
   (⟨_, a ᵍ* b ᵍ* c⟩ : Σ i, A i) = ⟨_, a ᵍ* (b ᵍ* c)⟩)
@@ -130,12 +130,15 @@ def gmonoid.of_submonoids {R : Type*} [semiring R] [add_monoid ι]
   gmonoid (λ i, carriers i) :=
 { one_mul := λ i a,
   begin
-    have h := zero_add i,
-    congr,
-    exact h,
-    rw subtype.heq_iff_coe_eq,
-    { exact one_mul _ },
-    { exact λ x, h.symm ▸ iff.rfl, }
+    generalize_proofs h,
+    set j := 0 + i with hj,
+    subst h,
+    -- have h := zero_add i,
+    -- congr,
+    -- exact h,
+    -- rw subtype.heq_iff_coe_eq,
+    -- { exact one_mul _ },
+    -- { exact λ x, h.symm ▸ iff.rfl, }
   end,
   mul_one := λ i a,
   begin
