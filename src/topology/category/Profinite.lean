@@ -426,8 +426,29 @@ lemma profinite_limit_map.surjective (X : Profinite) :
   function.surjective (profinite_limit_map X) :=
 begin
   intro u,
-  rw [profinite_limit.α X] at u, sorry,
+  rw [profinite_limit.α X] at u,
+  have H : (⋂ (I : (X.profinite_skeleton)), (u.1 I).1).nonempty,
+  {
+    /-
+    TODO:
+    define "set" function assoc to u
+    show its a directed superset
 
+    then:
+    apply is_compact.nonempty_Inter_of_directed_nonempty_compact_closed u.1,
+    -/
+    sorry },
+  cases H with x hx,
+  use x,
+  suffices : (X.profinite_limit_map).1 x = u,
+  { sorry },
+  rw profinite_limit_map_elem,
+  refine subtype.ext (funext (λ I, _)),
+  change X_to_partition_map I x = u.1 I,
+  apply subtype.ext,
+  apply X_to_partition_map_unique,
+  { apply profinite_diagram_obj' },
+  apply mem_of_subset_of_mem (Inter_subset _ _) hx,
 end
 
 
