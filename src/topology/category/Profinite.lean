@@ -278,7 +278,8 @@ lemma X_to_partition_map_mem' (I : profinite_skeleton X) (x : X) :
   (X_to_partition_map I x).1 ∈ I.1 :=
 classical.some (classical.some_spec (mem_sUnion.1 ((I.2.2.2.1).symm ▸ (mem_univ x) : x ∈ ⋃₀ I.1)))
 
-lemma X_to_partition_map_point_mem (I : profinite_skeleton X) (x : X) : x ∈ (X_to_partition_map I x).1 :=
+lemma X_to_partition_map_point_mem (I : profinite_skeleton X) (x : X) :
+  x ∈ (X_to_partition_map I x).1 :=
 classical.some_spec $ classical.some_spec
   (mem_sUnion.1 ((I.2.2.2.1).symm ▸ (mem_univ x) : x ∈ ⋃₀ I.1))
 
@@ -312,13 +313,23 @@ noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram
       continuous_to_fun :=
       begin
         fsplit,
-        -- A is a set of "opens in I"
         intros A hA,
         rw X_to_partition_map_preimage,
         refine is_open_Union (λ U, _),
         exact (I.2.2.1 U.1.1 U.1.2).1,
       end },
-    naturality' := sorry } }
+    naturality' :=
+    begin
+      intros I J f,
+      apply continuous_map.ext, intro x, apply subtype.ext,
+      simp only [coe_id, functor.const.obj_map, coe_comp],
+      change ↑(X_to_partition_map J x) =
+        ↑(profinite_diagram_map f (X_to_partition_map I x)),
+      apply X_to_partition_map_unique J x,
+      { exact (profinite_diagram_map f (X_to_partition_map I x)).2 },
+      apply mem_of_subset_of_mem (profinite_diagram_map_sub f _),
+      exact X_to_partition_map_point_mem I x
+    end } }
 
 
 /-
