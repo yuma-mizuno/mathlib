@@ -498,8 +498,14 @@ begin
           (profinite_inter_obj_injection I J ⟨U, hU⟩).1.2).1 },
       apply (J.2.2.1 (profinite_inter_obj_injection I J ⟨U, hU⟩).2.1
           (profinite_inter_obj_injection I J ⟨U, hU⟩).2.2).1 } },
-  { apply eq_univ_of_subset _ (eq.refl univ),
-    intros x hx, sorry },
+  { refine eq_univ_of_subset (λ x hx, _) (eq.refl univ),
+    have hI : x ∈ ⋃₀I.val, { rwa I.2.2.2.1 },
+    have hJ : x ∈ ⋃₀J.val, { rwa J.2.2.2.1 },
+    rw mem_sUnion at hI hJ,
+    rw mem_sUnion,
+    rcases hI with ⟨U,⟨hU, hxU⟩⟩,
+    rcases hJ with ⟨V,⟨hV, hxV⟩⟩,
+    refine ⟨U ∩ V, ⟨U, V, hU, hV, ⟨rfl, nonempty_of_mem (mem_inter hxU hxV)⟩⟩, mem_inter hxU hxV⟩ },
   /-
   -- disgustin proof :'(
   intros U V hU hV hUV,
@@ -552,13 +558,6 @@ begin
   refine ⟨K, ⟨⟨hKI⟩⟩, ⟨⟨hKJ⟩⟩, by trivial⟩,
 end
 
-
-
-
-
-
-
-
 def section_to_set {X : Profinite} (u : X.profinite_limit.to_Top) :
  Π (I : X.profinite_skeleton), set X.to_Top.α := λ I, (u.1 I).1
 
@@ -605,10 +604,10 @@ end
 instance profinite_skeleton_nonempty (X : Profinite) [hX : nonempty X] :
   nonempty X.profinite_skeleton := ⟨profinite_skeleton_univ X⟩
 
--- TODO: Implement cases on nonempty X
 lemma profinite_limit_map.surjective (X : Profinite) [hX : nonempty X] :
   function.surjective (profinite_limit_map X) :=
 begin
+  -- TODO: here implement cases on wether X is nonempty or not....
   intro u,
   rw [profinite_limit.α X] at u,
   have H : (⋂ (I : (X.profinite_skeleton)), section_to_set u I).nonempty,
