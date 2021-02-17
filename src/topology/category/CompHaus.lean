@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2020 Adam Topaz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Adam Topaz
+Authors: Adam Topaz, Bhavik Mehta
 -/
 
+import category_theory.adjunction.reflective
 import topology.category.Top
+import topology.stone_cech
 
 /-!
 
@@ -46,52 +48,71 @@ instance category : category CompHaus := induced_category.category to_Top
 lemma coe_to_Top {X : CompHaus} : (X.to_Top : Type*) = X :=
 rfl
 
-end  CompHaus
+variables (X : Type*) [topological_space X] [compact_space X] [t2_space X]
+
+/-- A constructor for objects of the category `CompHaus`,
+taking a type, and bundling the compact Hausdorff topology
+found by typeclass inference. -/
+def of : CompHaus :=
+{ to_Top := Top.of X,
+  is_compact := ‹_›,
+  is_hausdorff := ‹_› }
+
+@[simp] lemma coe_of : (CompHaus.of X : Type _) = X := rfl
+
+end CompHaus
 
 /-- The fully faithful embedding of `CompHaus` in `Top`. -/
-@[simps, derive [full, faithful]]
+@[simps {rhs_md := semireducible}, derive [full, faithful]]
 def CompHaus_to_Top : CompHaus ⥤ Top := induced_functor _
 
---namespace Top
+/--
+(Implementation) The object part of the compactification functor from topological spaces to
+compact Hausdorff spaces.
+-/
+@[simps]
+def StoneCech_obj (X : Top) : CompHaus := CompHaus.of (stone_cech X)
 
---open category_theory.limits
+/--
+(Implementation) The bijection of homsets to establish the reflective adjunction of compact
+Hausdorff spaces in topological spaces.
+-/
+noncomputable def stone_cech_equivalence (X : Top) (Y : CompHaus) :
+  (StoneCech_obj X ⟶ Y) ≃ (X ⟶ CompHaus_to_Top.obj Y) :=
+{ to_fun := λ f,
+  { to_fun := f ∘ stone_cech_unit,
+    continuous_to_fun := f.2.comp (@continuous_stone_cech_unit X _) },
+  inv_fun := λ f,
+  { to_fun := stone_cech_extend f.2,
+    continuous_to_fun := continuous_stone_cech_extend f.2 },
+  left_inv :=
+  begin
+    rintro ⟨f : stone_cech X ⟶ Y, hf : continuous f⟩,
+    ext (x : stone_cech X),
+    refine congr_fun _ x,
+    apply continuous.ext_on dense_range_stone_cech_unit (continuous_stone_cech_extend _) hf,
+    rintro _ ⟨y, rfl⟩,
+    apply congr_fun (stone_cech_extend_extends (hf.comp _)) y,
+  end,
+  right_inv :=
+  begin
+    rintro ⟨f : ↥X ⟶ Y, hf : continuous f⟩,
+    ext,
+    exact congr_fun (stone_cech_extend_extends hf) x,
+  end }
 
--- lemma limit_compact (J : Type*)
---   (𝒥 : small_category J)
---   (F : J ⥤ Top)
---   [∀ j, compact_space (F.obj j)] :
---   compact_space (Top.limit_cone F).X :=
--- begin
---   set f : (Top.limit_cone F).X → Π (j : J), F.obj j := λ x, x.val with hf,
---   have hfc : continuous f,
---     sorry,
---   sorry
--- end
+/--
+The Stone-Cech compactification functor from topological spaces to compact Hausdorff spaces,
+left adjoint to the inclusion functor.
+-/
+noncomputable def Top_to_CompHaus : Top ⥤ CompHaus :=
+adjunction.left_adjoint_of_equiv stone_cech_equivalence (λ _ _ _ _ _, rfl)
 
--- lemma limit_t2 (J : Type*)
---   (𝒥 : small_category J)
---   (F : J ⥤ Top)
---   [∀ j, t2_space (F.obj j)] :
---   t2_space (Top.limit_cone F).X :=
--- begin
---   set f : (Top.limit_cone F).X → Π (j : J), F.obj j := λ x, x.val with hf,
---   have hfc : continuous f,
---     sorry,
---   sorry
--- end
+lemma Top_to_CompHaus_obj (X : Top) : ↥(Top_to_CompHaus.obj X) = stone_cech X :=
+rfl
 
--- end Top
-
--- namespace CompHaus
-
--- open Top
-
--- def limit_aux (J : Type*)
---   (𝒥 : small_category J)
---   (F : J ⥤ CompHaus) :
---   CompHaus :=
--- { to_Top := (limit_cone (F ⋙ CompHaus_to_Top)).X,
---   is_compact := @limit_compact J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_compact),
---   is_hausdorff := @limit_t2 J 𝒥 (F ⋙ CompHaus_to_Top) (λ j, (F.obj j).is_hausdorff)}
-
--- end CompHaus
+/--
+The category of compact Hausdorff spaces is reflective in the category of topological spaces.
+-/
+noncomputable instance : reflective CompHaus_to_Top :=
+{ to_is_right_adjoint := ⟨Top_to_CompHaus, adjunction.adjunction_of_equiv_left _ _⟩ }
