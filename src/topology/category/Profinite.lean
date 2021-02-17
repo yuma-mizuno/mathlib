@@ -365,6 +365,7 @@ that profinite_limit_map is a homeomorphism.
 
 First we show injectivity, to do this we make a short API for defining points of.....
 -/
+
 -- TODO: naming
 def profinite_limit_map.obj {X : Profinite} {Z : set X.to_Top.α} (hZ : is_clopen Z)
   (hZ_ne : Z.nonempty) (hZ_compl : Zᶜ.nonempty) : profinite_skeleton X :=
@@ -406,13 +407,13 @@ lemma profinite_limit_map.mem {X : Profinite} {x y : X} {Z : set X.to_Top.α} (h
 begin
   rw [profinite_limit_map_elem x, profinite_limit_map_elem y] at hxy,
   by_cases (Zᶜ).nonempty,
-  { have I := profinite_limit_map.obj hZ (nonempty_of_mem hx) h,
+  { set I := profinite_limit_map.obj hZ (nonempty_of_mem hx) h,
     have hXY : (X_to_partition_map I x).1 = (X_to_partition_map I y).1,
     { change ((profinite_limit.image_elem x).1 I).1 = ((profinite_limit.image_elem y).1 I).1,
       rw hxy },
-    rw X_to_partition_map_unique I x Z _ hx at hXY,
-    { rw hXY, exact X_to_partition_map_point_mem I y },
-    sorry },
+    rw X_to_partition_map_unique I x Z (by {left, refl}) hx at hXY,
+    rw hXY, exact X_to_partition_map_point_mem I y,
+  },
   rw [not_nonempty_iff_eq_empty, compl_empty_iff] at h,
   rw h,
   exact mem_univ y,
