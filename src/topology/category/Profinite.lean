@@ -157,7 +157,7 @@ following: https://stacks.math.columbia.edu/tag/08ZY
 
 /-- (Implementation) The skeleton, i.e. the points, of the diagram which X is the limit of -/
 def profinite_skeleton (X : Profinite) :=
-{ I : set (set (X.to_Top.α)) | (I.finite) ∧ (∀ U ∈ I, is_open U ∧ U.nonempty) ∧
+{ I : set (set (X.to_Top.α)) // (I.finite) ∧ (∀ U ∈ I, is_clopen U ∧ U.nonempty) ∧
   (⋃₀ I = univ) ∧ (∀ U V ∈ I, (U ∩ V : set X.to_Top.α).nonempty → (U = V) )}
 
 variable {X : Profinite}
@@ -201,7 +201,9 @@ instance profinite_skeleton.partial_order : partial_order (profinite_skeleton X)
 
 /-- profinite_skeleton forms a category, this will be the codomain of our diagram -/
 instance profinite_limit_category : small_category (profinite_skeleton X) :=
-@preorder.small_category _ (@partial_order.to_preorder _ profinite_skeleton.partial_order)
+preorder.small_category (profinite_skeleton X)
+
+def foo : has_le (profinite_skeleton X) := by apply_instance
 
 /-
 To define our diagram we first make a short API in order to work with the associated maps
@@ -212,11 +214,11 @@ on objects and morphisms
 
 /-- Map on objects of profinite_diagram -/
 noncomputable def profinite_diagram_obj (I : profinite_skeleton X) : Fintype :=
-{ α := I,
+{ α := I.1,
   str := finite.fintype I.2.1 }
 
 @[simp]
-lemma profinite_diagram_obj_eq (I : profinite_skeleton X) : (profinite_diagram_obj I).1 = I := rfl
+lemma profinite_diagram_obj_eq (I : profinite_skeleton X) : (profinite_diagram_obj I).1 = I.1 := rfl
 
 lemma profinite_diagram_obj' {I : profinite_skeleton X} (U : (profinite_diagram_obj I).α) :
 U.1 ∈ I.1 := U.2
@@ -316,7 +318,7 @@ noncomputable def profinite_limit_cone (X : Profinite) : cone (profinite_diagram
         intros A hA,
         rw X_to_partition_map_preimage,
         refine is_open_Union (λ U, _),
-        exact (I.2.2.1 U.1.1 U.1.2).1,
+        exact (I.2.2.1 U.1.1 U.1.2).1.1,
       end },
     naturality' :=
     begin
@@ -373,10 +375,10 @@ begin
   refine ⟨{Z, Zᶜ}, ⟨_,_,_,_⟩⟩,
   { simp only [finite.insert, finite_singleton] },
   { rintros U ⟨hU, _⟩,
-    { refine ⟨hZ.1, hZ_ne⟩ },
+    { refine ⟨hZ, hZ_ne⟩ },
     rw mem_singleton_iff at H,
     rw H,
-    refine ⟨is_open_compl_iff.2 hZ.2, hZ_compl⟩ },
+    refine ⟨is_clopen_compl_iff.2 hZ, hZ_compl⟩ },
   { simp only [sUnion_singleton, union_compl_self, sUnion_insert] },
   intros U V hU hV hUV,
     cases hU with hU hU,
@@ -441,20 +443,6 @@ begin
   refine ⟨λ hx, profinite_limit_map.mem hZ hxy hx, λ hy, profinite_limit_map.mem hZ hxy.symm hy⟩,
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /-
 TODO:
 profinite_inter_map,
@@ -462,14 +450,17 @@ profinite_inter_map,
 show section is directed
 
 show "elements" of section are clopen, nonempty
+
+
 -/
+
 #check finite_of_finite_image
 
 def profinite_inter_obj {X : Profinite} (I J : profinite_skeleton X) : set (set X.to_Top.α) :=
 λ U, ∃ (V W : set X.to_Top.α), (V ∈ I.1) ∧ (W ∈ J.1) ∧ U = V ∩ W ∧ U.nonempty
 
 def profinite_inter_obj_injection {X : Profinite} (I J : profinite_skeleton X) :
-  (profinite_inter_obj I J) → (prod I J) :=
+  (profinite_inter_obj I J) → (prod I.1 J.1) :=
 λ U,
 { fst := ⟨classical.some U.2, (classical.some_spec (classical.some_spec U.2)).1⟩,
   snd := ⟨classical.some (classical.some_spec U.2),
@@ -487,14 +478,6 @@ begin
   rw [profinite_inter_obj_injection_eq U, profinite_inter_obj_injection_eq V, hUV],
 end
 
-
-
-
-
-
-
-
-
 #check function.injective.inj_on
 #check finite.prod
 #check finite.of_fintype
@@ -510,14 +493,14 @@ begin
     have H : U = (profinite_inter_obj_injection I J ⟨U, hU⟩).1.1 ∩
       (profinite_inter_obj_injection I J ⟨U, hU⟩).2.1 := profinite_inter_obj_injection_eq ⟨U, hU⟩,
     rw H,
-    { apply is_open_inter,
+    { apply is_clopen_inter,
       { apply (I.2.2.1 (profinite_inter_obj_injection I J ⟨U, hU⟩).1.1
           (profinite_inter_obj_injection I J ⟨U, hU⟩).1.2).1 },
       apply (J.2.2.1 (profinite_inter_obj_injection I J ⟨U, hU⟩).2.1
           (profinite_inter_obj_injection I J ⟨U, hU⟩).2.2).1 } },
   { apply eq_univ_of_subset _ (eq.refl univ),
     intros x hx, sorry },
-
+  /-
   -- disgustin proof :'(
   intros U V hU hV hUV,
   have hUi : U = (profinite_inter_obj_injection I J ⟨U, hU⟩).1.1 ∩
@@ -541,40 +524,99 @@ begin
     apply nonempty.mono _ hUV,
     -- TODO: remove tidy
     tidy },
-  rw [hUi, hVi, hI, hJ],
+  rw [hUi, hVi, hI, hJ], -/
+  sorry,
 
 end⟩
 
+lemma profinite_skeleton_directed {X : Profinite} (I J : profinite_skeleton X) :
+  ∃ K : profinite_skeleton X, K ≤ I ∧ K ≤ J :=
+begin
+  refine ⟨profinite_inter_map I J,_,_⟩; intros U hU,
+  { refine ⟨(profinite_inter_obj_injection I J ⟨U, hU⟩).1.1,
+            (profinite_inter_obj_injection I J ⟨U, hU⟩).1.2,_⟩,
+    change ↑(⟨U, hU⟩ : profinite_inter_obj I J ) ⊆ (profinite_inter_obj_injection I J ⟨U, hU⟩).1.1,
+    rw [profinite_inter_obj_injection_eq ⟨U, hU⟩],
+    exact inter_subset_left _ _ },
+  refine ⟨(profinite_inter_obj_injection I J ⟨U, hU⟩).2.1,
+          (profinite_inter_obj_injection I J ⟨U, hU⟩).2.2,_⟩,
+  change ↑(⟨U, hU⟩ : profinite_inter_obj I J ) ⊆ (profinite_inter_obj_injection I J ⟨U, hU⟩).2.1,
+  rw [profinite_inter_obj_injection_eq ⟨U, hU⟩],
+  exact inter_subset_right _ _,
+end
+
+lemma profinite_category_directed {X : Profinite} (I J : profinite_skeleton X) :
+  ∃ (K : profinite_skeleton X) (f : K ⟶ I) (g : K ⟶ J), true :=
+begin
+  rcases (profinite_skeleton_directed I J) with ⟨K,⟨hKI,hKJ⟩⟩,
+  refine ⟨K, ⟨⟨hKI⟩⟩, ⟨⟨hKJ⟩⟩, by trivial⟩,
+end
+
+
+
+
+
+
+
+
 def section_to_set {X : Profinite} (u : X.profinite_limit.to_Top) :
  Π (I : X.profinite_skeleton), set X.to_Top.α := λ I, (u.1 I).1
+
+@[simp]
+lemma section_to_set_eq {X : Profinite} (u : X.profinite_limit.to_Top)
+  (I : X.profinite_skeleton) : section_to_set u I = (u.1 I).1 := rfl
+
+@[simp]
+lemma section_to_set_mem {X : Profinite } (u : X.profinite_limit.to_Top)
+  (I : X.profinite_skeleton) : section_to_set u I ∈ I.1 := (u.1 I).2
 
 lemma limit_section_directed {X : Profinite} (u : X.profinite_limit.to_Top) :
   directed (⊇) (section_to_set u) :=
 begin
   rw profinite_limit.α X at u,
   intros I J,
-  refine ⟨profinite_inter_map I J,_,_⟩,
-  { sorry, -- TODO: separate lemma about ≤
-  }, sorry,
+  rcases (profinite_category_directed I J) with ⟨K,⟨f,⟨g, _⟩⟩⟩,
+  refine ⟨K,_,_⟩,
+  { suffices : section_to_set u K ⊆ section_to_set u I,
+    { sorry },
+    rw [section_to_set_eq u I, section_to_set_eq u K, ←(u.2 f)],
+    apply profinite_diagram_map_sub f,
+  },
+  suffices : section_to_set u K ⊆ section_to_set u J,
+    { sorry },
+  rw [section_to_set_eq u J, section_to_set_eq u K, ←(u.2 g)],
+  apply profinite_diagram_map_sub g,
 end
 
-#check is_compact.nonempty_Inter_of_directed_nonempty_compact_closed
+def profinite_skeleton_univ (X : Profinite) [hX : nonempty X] : X.profinite_skeleton :=
+begin
+  refine ⟨{univ},finite_singleton _,λ U hU, _,_,_⟩,
+  { rw mem_singleton_iff at hU,
+    rw hU,
+    refine ⟨is_clopen_univ,_⟩,
+    apply univ_nonempty },
+  { simp only [sUnion_singleton] },
+  intros U V hU hV hUV,
+  rw mem_singleton_iff at hU,
+  rw mem_singleton_iff at hV,
+  rw [hU, hV],
+end
 
-lemma profinite_limit_map.surjective (X : Profinite) :
+instance profinite_skeleton_nonempty (X : Profinite) [hX : nonempty X] :
+  nonempty X.profinite_skeleton := ⟨profinite_skeleton_univ X⟩
+
+-- TODO: Implement cases on nonempty X
+lemma profinite_limit_map.surjective (X : Profinite) [hX : nonempty X] :
   function.surjective (profinite_limit_map X) :=
 begin
   intro u,
   rw [profinite_limit.α X] at u,
   have H : (⋂ (I : (X.profinite_skeleton)), section_to_set u I).nonempty,
-  {
-    -- TODO:
-    have : nonempty ↥(X.profinite_skeleton), {sorry },
-
-    apply @is_compact.nonempty_Inter_of_directed_nonempty_compact_closed _ _ _ this (section_to_set u)
+  { apply @is_compact.nonempty_Inter_of_directed_nonempty_compact_closed _ _ _ _ (section_to_set u)
       (limit_section_directed u); intro I,
-    { sorry },
-    { sorry },
-    sorry },
+    { exact (I.2.2.1 (section_to_set u I) (u.1 I).2).2 },
+    { exact (I.2.2.1 (section_to_set u I) (u.1 I).2).1.2.compact },
+    exact (I.2.2.1 (section_to_set u I) (u.1 I).2).1.2 },
   cases H with x hx,
   use x,
   suffices : (X.profinite_limit_map).1 x = u,
