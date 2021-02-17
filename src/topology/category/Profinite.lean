@@ -351,9 +351,61 @@ lemma profinite_limit_map_elem {X : Profinite} (x : X) :
 /-
 As in https://stacks.math.columbia.edu/tag/08ZY, what remains now is to show
 that profinite_limit_map is a homeomorphism.
+
+First we show injectivity, to do this we make a short API for defining points of.....
 -/
+-- TODO: naming
+def profinite_limit_map.obj {X : Profinite} {Z : set X.to_Top.α} (hZ : is_clopen Z)
+  (hZ_ne : Z.nonempty) (hZ_compl : Zᶜ.nonempty) : profinite_skeleton X :=
+begin
+  refine ⟨{Z, Zᶜ}, ⟨_,_,_,_⟩⟩,
+  { simp only [finite.insert, finite_singleton] },
+  { rintros U ⟨hU, _⟩,
+    { refine ⟨hZ.1, hZ_ne⟩ },
+    rw mem_singleton_iff at H,
+    rw H,
+    refine ⟨is_open_compl_iff.2 hZ.2, hZ_compl⟩ },
+  { simp only [sUnion_singleton, union_compl_self, sUnion_insert] },
+  intros U V hU hV hUV,
+    cases hU with hU hU,
+    { cases hV with hV hV,
+      { rwa [hU, hV] },
+      rw mem_singleton_iff at hV,
+      rw [hU, hV, inter_compl_self] at hUV,
+      exfalso,
+      revert hUV,
+      exact empty_not_nonempty },
+    rw mem_singleton_iff at hU,
+    cases hV with hV hV,
+    { rw [hU, hV, inter_comm, inter_compl_self] at hUV,
+      exfalso,
+      revert hUV,
+      exact empty_not_nonempty },
+    rw mem_singleton_iff at hV,
+    rwa [hU, hV],
+end
+
+lemma profinite_limit_map.obj_val {X : Profinite} {Z : set X.to_Top.α} (hZ : is_clopen Z)
+  (hZ_ne : Z.nonempty) (hZ_compl : Zᶜ.nonempty) :
+  (profinite_limit_map.obj hZ hZ_ne hZ_compl).1 = {Z, Zᶜ} := rfl
 
 
+lemma profinite_limit_map.mem {X : Profinite} {x y : X} {Z : set X.to_Top.α} (hZ : is_clopen Z)
+  (hxy : (X.profinite_limit_map).1 x = (X.profinite_limit_map).1 y) (hx : x ∈ Z) : y ∈ Z :=
+begin
+  rw [profinite_limit_map_elem x, profinite_limit_map_elem y] at hxy,
+  by_cases (Zᶜ).nonempty,
+  { have I := profinite_limit_map.obj hZ (nonempty_of_mem hx) h,
+    have hXY : (X_to_partition_map I x).1 = (X_to_partition_map I y).1,
+    { change ((profinite_limit.image_elem x).1 I).1 = ((profinite_limit.image_elem y).1 I).1,
+      rw hxy },
+    rw X_to_partition_map_unique I x Z _ hx at hXY,
+    { rw hXY, exact X_to_partition_map_point_mem I y },
+    sorry },
+  rw [not_nonempty_iff_eq_empty, compl_empty_iff] at h,
+  rw h,
+  exact mem_univ y,
+end
 
 /-- Injectivity of profinite_limit_map -/
 lemma profinite_limit_map.injective (X : Profinite) : function.injective (profinite_limit_map X) :=
@@ -374,50 +426,7 @@ begin
     rintro ⟨Z, ⟨hZ, hxZ⟩⟩,
     exact Inter_subset (λ Z : {Z // is_clopen Z ∧ y ∈ Z}, ↑Z) ⟨Z, ⟨hZ, (this Z hZ).1 hxZ⟩⟩ },
   intros Z hZ,
-  -- TODO: symmetry??
-  split,
-  { intro hx,
-    change (X.profinite_limit_map).1 x = (X.profinite_limit_map).1 y at hxy,
-    rw [profinite_limit_map_elem x, profinite_limit_map_elem y] at hxy,
-    have I : ↥(profinite_skeleton X),
-    { refine ⟨{Z, Zᶜ}, ⟨_,_,_,_⟩⟩,
-      { simp only [finite.insert, finite_singleton] },
-      { rintros U ⟨hU, _⟩,
-        { refine ⟨hZ.1, nonempty_of_mem hx⟩ },
-        rw mem_singleton_iff at H,
-        rw H,
-        -- TODO DO CASES ON Zᶜ nonempty before....
-        refine ⟨is_open_compl_iff.2 hZ.2, _⟩,
-        sorry },
-      { simp only [sUnion_singleton, union_compl_self, sUnion_insert] },
-      intros U V hU hV hUV,
-      cases hU with hU hU,
-      { cases hV with hV hV,
-        { rwa [hU, hV] },
-        rw mem_singleton_iff at hV,
-        rw [hU, hV, inter_compl_self] at hUV,
-        exfalso,
-        revert hUV,
-        exact empty_not_nonempty },
-      rw mem_singleton_iff at hU,
-      cases hV with hV hV,
-      { rw [hU, hV, inter_comm, inter_compl_self] at hUV,
-        exfalso,
-        revert hUV,
-        exact empty_not_nonempty },
-      rw mem_singleton_iff at hV,
-      rwa [hU, hV] },
-    have hXY : (X_to_partition_map I x).1 = (X_to_partition_map I y).1,
-    { change ((profinite_limit.image_elem x).1 I).1 = ((profinite_limit.image_elem y).1 I).1,
-      rw hxy },
-    -- TODO: fix
-    have hZI : Z ∈ I.1, {sorry},
-    rw X_to_partition_map_unique I x Z hZI hx at hXY,
-    rw hXY,
-    exact X_to_partition_map_point_mem I y,
-  },
-  intro hy,
-  sorry,
+  refine ⟨λ hx, profinite_limit_map.mem hZ hxy hx, λ hy, profinite_limit_map.mem hZ hxy.symm hy⟩,
 end
 
 
