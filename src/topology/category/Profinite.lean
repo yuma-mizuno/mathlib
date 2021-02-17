@@ -91,7 +91,8 @@ def Fintype_to_Profinite : Fintype ⥤ Profinite :=
 { obj := λ X,
   { to_Top := ⟨X, ⊥⟩,
     is_t2 := @t2_space_discrete _ _ ⟨rfl⟩,
-    is_totally_disconnected := by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩; apply_instance },
+    is_totally_disconnected := by letI:topological_space X := ⊥;
+                                  letI:discrete_topology X := ⟨rfl⟩; apply_instance },
   map := λ X Y f, by letI:topological_space X := ⊥; letI:discrete_topology X := ⟨rfl⟩;
                   by letI:topological_space Y := ⊥; letI:discrete_topology Y := ⟨rfl⟩;
                   exact ⟨f, continuous_of_discrete_topology⟩ }
@@ -136,7 +137,8 @@ def limit_cone_is_limit (F : J ⥤ Profinite) : is_limit (limit_cone F) :=
               have H1 : (s.π.app j ≫ F.map f).to_fun = (s.π.app j').to_fun, { rw cone.w s f },
               apply congr_fun H1 _,}⟩,
     continuous_subtype_mk _ (continuous_pi (λ i, (s.π.app i).2)) ⟩,
-  uniq' := by {intros, ext x j, apply (congr_fun (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x), } }
+  uniq' := by {intros, ext x j, apply (congr_fun
+    (congr_arg (@continuous_map.to_fun s.X ( F.obj j) _ _) (w j)) x), } }
 
 instance Profinite_has_limits : has_limits Profinite :=
 { has_limits_of_shape := λ J 𝒥, by exactI
@@ -594,8 +596,6 @@ lemma profinite_limit_map.bijective (X : Profinite) : function.bijective (profin
 variables {α : Type*} {β : Type*}
 variables [topological_space α] [topological_space β]
 
-#check continuous_iff_is_closed
-
 lemma continuous.is_closed [compact_space α] [t2_space β] (f : α → β) (h : continuous f) :
   is_closed_map f := λ Z hZ, (hZ.compact.image h).is_closed
 
@@ -627,26 +627,22 @@ noncomputable instance profinite_lift_is_iso (X : Profinite) : is_iso (profinite
   begin
     refine continuous_map.ext (λ x, _),
     rw [coe_comp, ←(profinite_lift_homeomorph_to_fun X)],
-    change X.profinite_lift_homeomorph.to_equiv.symm (X.profinite_lift_homeomorph.to_equiv.to_fun x) = x,
+    change X.profinite_lift_homeomorph.to_equiv.symm
+      (X.profinite_lift_homeomorph.to_equiv.to_fun x) = x,
     simp only [equiv.to_fun_as_coe, equiv.symm_apply_apply],
   end,
   inv_hom_id' :=
   begin
     refine continuous_map.ext (λ x, _),
     rw [coe_comp, ←(profinite_lift_homeomorph_to_fun X)],
-    change X.profinite_lift_homeomorph.to_equiv.to_fun (X.profinite_lift_homeomorph.to_equiv.symm x) = x,
+    change X.profinite_lift_homeomorph.to_equiv.to_fun
+      (X.profinite_lift_homeomorph.to_equiv.symm x) = x,
     simp only [equiv.to_fun_as_coe, equiv.apply_symm_apply],
   end, }
 
 noncomputable lemma profinite_cone_is_limit (X : Profinite) : is_limit (profinite_limit_cone X) :=
 @is_limit.of_point_iso _ _ _ _ _ _ _ (limit_cone_is_limit (profinite_diagram X))
   (Profinite.profinite_lift_is_iso X)
-
-
-/-
-{ right_adjoint_proof := by apply_instance,
-  full_proof := by apply_instance,
-  faithful_proof := by apply_instance } -/
 
 -- inductive finite_jointly_surjective (Y : Profinite)
 -- | mk {ι : Type*} [fintype ι] (X : ι → Profinite) (f : Π (i : ι), X i ⟶ Y)
