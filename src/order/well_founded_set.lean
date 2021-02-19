@@ -167,6 +167,21 @@ theorem is_wf_singleton (a) : is_wf ({a} : set α) :=
 theorem is_wf.insert (a) (hs : is_wf s) : is_wf (insert a s) :=
 by { rw ← union_singleton, exact hs.union (is_wf_singleton a) }
 
+/-- `is_wf.min` returns a minimal element of a nonempty well-founded set. -/
+noncomputable def is_wf.min (hs : is_wf s) (hn : s.nonempty) : α :=
+hs.min univ (nonempty_iff_univ_nonempty.1 hn.to_subtype)
+
+lemma is_wf.min_mem (hs : is_wf s) (hn : s.nonempty) : hs.min hn ∈ s :=
+(well_founded.min hs univ (nonempty_iff_univ_nonempty.1 hn.to_subtype)).2
+
+lemma is_wf.not_lt_min (hs : is_wf s) (hn : s.nonempty) (ha : a ∈ s) : ¬ a < hs.min hn :=
+hs.not_lt_min univ (nonempty_iff_univ_nonempty.1 hn.to_subtype) (mem_univ (⟨a, ha⟩ : s))
+
+@[simp]
+lemma is_wf_min_singleton {hs : is_wf ({a} : set α)} {hn : ({a} : set α).nonempty} :
+  hs.min hn = a :=
+eq_of_mem_singleton (is_wf.min_mem hs hn)
+
 end set
 
 namespace set
