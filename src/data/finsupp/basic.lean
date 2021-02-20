@@ -122,7 +122,7 @@ set.ext $ λ x, mem_support_iff.symm
 lemma not_mem_support_iff {f : α →₀ M} {a} : a ∉ f.support ↔ f a = 0 :=
 not_iff_comm.1 mem_support_iff.symm
 
-lemma coe_fn_injective : function.injective (λ (f : α →₀ M) (x : α), f x)
+lemma coe_fn_injective : @function.injective (α →₀ M) (α → M) coe_fn
 | ⟨s, f, hf⟩ ⟨t, g, hg⟩ h :=
   begin
     change f = g at h, subst h,
@@ -178,33 +178,29 @@ variables [has_zero M] {a a' : α} {b : M}
 /-- `single a b` is the finitely supported function which has
   value `b` at `a` and zero otherwise. -/
 def single (a : α) (b : M) : α →₀ M :=
-⟨if b = 0 then ∅ else {a}, λ a', if a = a' then b else 0, λ a', begin
-  by_cases hb : b = 0; by_cases a = a';
-    simp only [hb, h, if_pos, if_false, mem_singleton],
-  { exact ⟨false.elim, λ H, H rfl⟩ },
-  { exact ⟨false.elim, λ H, H rfl⟩ },
-  { exact ⟨λ _, hb, λ _, rfl⟩ },
-  { exact ⟨λ H _, h H.symm, λ H, (H rfl).elim⟩ }
-end⟩
+⟨if b = 0 then ∅ else {a}, pi.single a b, λ a', by
+  by_cases h : a' = a;
+    [ rw [h, pi.single_eq_same], rw pi.single_eq_of_ne h ];
+    by_cases hb : b = 0;
+    simp [hb, h] ⟩
 
 lemma single_apply : single a b a' = if a = a' then b else 0 :=
-rfl
+by { rw [@eq_comm _ a a'], convert function.update_apply 0 _ b _, }
 
 lemma single_eq_indicator : ⇑(single a b) = set.indicator {a} (λ _, b) :=
 by { ext, simp [single_apply, set.indicator, @eq_comm _ a] }
 
 @[simp] lemma single_eq_same : (single a b : α →₀ M) a = b :=
-if_pos rfl
+pi.single_eq_same a b
 
 @[simp] lemma single_eq_of_ne (h : a ≠ a') : (single a b : α →₀ M) a' = 0 :=
-if_neg h
+pi.single_eq_of_ne h.symm b
 
 lemma single_eq_update : ⇑(single a b) = function.update 0 a b :=
-by rw [single_eq_indicator, ← set.piecewise_eq_indicator, set.piecewise_singleton]
+rfl
 
 @[simp] lemma single_zero : (single a 0 : α →₀ M) = 0 :=
-coe_fn_injective $ by simpa only [single_eq_update, coe_zero]
-  using function.update_eq_self a (0 : α → M)
+coe_fn_injective $ pi.single_zero a
 
 lemma single_of_single_apply (a a' : α) (b : M) :
   single a ((single a' b) a) = single a' (single a' b) a :=
@@ -372,7 +368,7 @@ support_on_finset_subset
 
 @[simp] lemma map_range_single {f : M → N} {hf : f 0 = 0} {a : α} {b : M} :
   map_range f hf (single a b) = single a (f b) :=
-ext $ λ a', show f (ite _ _ _) = ite _ _ _, by split_ifs; [refl, exact hf]
+ext $ pi.apply_single _ (λ _, hf) a b
 
 end map_range
 
@@ -656,12 +652,7 @@ le_antisymm support_zip_with $ assume a ha,
     simpa only [add_apply, this, zero_add])
 
 @[simp] lemma single_add {a : α} {b₁ b₂ : M} : single a (b₁ + b₂) = single a b₁ + single a b₂ :=
-ext $ assume a',
-begin
-  by_cases h : a = a',
-  { rw [h, add_apply, single_eq_same, single_eq_same, single_eq_same] },
-  { rw [add_apply, single_eq_of_ne h, single_eq_of_ne h, single_eq_of_ne h, zero_add] }
-end
+coe_fn_injective $ pi.single_add a b₁ b₂
 
 instance : add_monoid (α →₀ M) :=
 { add_monoid .
@@ -879,17 +870,11 @@ instance [add_comm_group G] : add_comm_group (α →₀ G) :=
 
 lemma single_multiset_sum [add_comm_monoid M] (s : multiset M) (a : α) :
   single a s.sum = (s.map (single a)).sum :=
-multiset.induction_on s single_zero $ λ a s ih,
-by rw [multiset.sum_cons, single_add, ih, multiset.map_cons, multiset.sum_cons]
+(single_add_hom a : M →+ _).map_multiset_sum s
 
 lemma single_finset_sum [add_comm_monoid M] (s : finset ι) (f : ι → M) (a : α) :
   single a (∑ b in s, f b) = ∑ b in s, single a (f b) :=
-begin
-  transitivity,
-  apply single_multiset_sum,
-  rw [multiset.map_map],
-  refl
-end
+(single_add_hom a : M →+ _).map_sum f s
 
 lemma single_sum [has_zero M] [add_comm_monoid N] (s : ι →₀ M) (f : ι → M → N) (a : α) :
   single a (s.sum f) = s.sum (λd c, single a (f d c)) :=
