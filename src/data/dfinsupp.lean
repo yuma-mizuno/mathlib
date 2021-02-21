@@ -62,7 +62,9 @@ instance : has_coe_to_fun (Π₀ i, β i) :=
 instance : has_zero (Π₀ i, β i) := ⟨⟦⟨λ i, 0, ∅, λ i, or.inr rfl⟩⟧⟩
 instance : inhabited (Π₀ i, β i) := ⟨0⟩
 
-@[simp] lemma zero_apply (i : ι) : (0 : Π₀ i, β i) i = 0 := rfl
+@[simp] lemma coe_zero : ⇑(0 : Π₀ i, β i) = 0 := rfl
+
+lemma zero_apply (i : ι) : (0 : Π₀ i, β i) i = 0 := rfl
 
 @[ext] lemma ext {f g : Π₀ i, β i} (H : ∀ i, f i = g i) : f = g :=
 quotient.induction_on₂ f g (λ _ _ H, quotient.sound H) H
@@ -106,9 +108,13 @@ section algebra
 instance [Π i, add_monoid (β i)] : has_add (Π₀ i, β i) :=
 ⟨zip_with (λ _, (+)) (λ _, add_zero 0)⟩
 
-@[simp] lemma add_apply [Π i, add_monoid (β i)] (g₁ g₂ : Π₀ i, β i) (i : ι) :
+lemma add_apply [Π i, add_monoid (β i)] (g₁ g₂ : Π₀ i, β i) (i : ι) :
   (g₁ + g₂) i = g₁ i + g₂ i :=
 zip_with_apply _ _ g₁ g₂ i
+
+@[simp] lemma coe_add [Π i, add_monoid (β i)] (g₁ g₂ : Π₀ i, β i) :
+  ⇑(g₁ + g₂) = g₁ + g₂ :=
+funext $ add_apply _ _
 
 instance [Π i, add_monoid (β i)] : add_monoid (Π₀ i, β i) :=
 { add_monoid .
@@ -288,26 +294,29 @@ def single (i : ι) (b : β i) : Π₀ i, β i :=
 mk {i} $ λ j, eq.rec_on (finset.mem_singleton.1 j.prop).symm b
 
 @[simp] lemma single_apply {i i' b} :
-  (single i b : Π₀ i, β i) i' = (if h : i = i' then eq.rec_on h b else 0) :=
+  (single i b : Π₀ i, β i) i' = pi.single i b i' :=
 begin
   dsimp only [single],
   by_cases h : i = i',
   { have h1 : i' ∈ ({i} : finset ι) := finset.mem_singleton.2 h.symm,
-    simp only [mk_apply, dif_pos h, dif_pos h1], refl },
+    subst h, rw [pi.single_eq_same],
+    simp only [mk_apply, dif_pos h1], refl },
   { have h1 : i' ∉ ({i} : finset ι) := finset.not_mem_singleton.2 (ne.symm h),
-    simp only [mk_apply, dif_neg h, dif_neg h1] }
+    simp only [mk_apply, dif_neg h, dif_neg h1, pi.single_eq_of_ne (ne.symm h)], }
 end
 
+lemma coe_single {i b} :
+  ⇑(single i b : Π₀ i, β i) = pi.single i b :=
+funext $ λ _, single_apply
+
 @[simp] lemma single_zero {i} : (single i 0 : Π₀ i, β i) = 0 :=
-quotient.sound $ λ j, if H : j ∈ ({i} : finset _)
-then by dsimp only; rw [dif_pos H]; cases finset.mem_singleton.1 H; refl
-else dif_neg H
+ext $ congr_fun $ by rw [coe_single, coe_zero, pi.single_zero]
 
 @[simp] lemma single_eq_same {i b} : (single i b : Π₀ i, β i) i = b :=
-by simp only [single_apply, dif_pos rfl]
+by simp only [single_apply, pi.single_eq_same]
 
-lemma single_eq_of_ne {i i' b} (h : i ≠ i') : (single i b : Π₀ i, β i) i' = 0 :=
-by simp only [single_apply, dif_neg h]
+@[simp] lemma single_eq_of_ne {i i' b} (h : i ≠ i') : (single i b : Π₀ i, β i) i' = 0 :=
+by simp only [single_apply, pi.single_eq_of_ne h.symm]
 
 lemma single_injective {i} : function.injective (single i : β i → Π₀ i, β i) :=
 λ x y H, congr_fun (mk_injective _ H) ⟨i, by simp⟩
@@ -364,12 +373,7 @@ section add_monoid
 variable [Π i, add_monoid (β i)]
 
 @[simp] lemma single_add {i : ι} {b₁ b₂ : β i} : single i (b₁ + b₂) = single i b₁ + single i b₂ :=
-ext $ assume i',
-begin
-  by_cases h : i = i',
-  { subst h, simp only [add_apply, single_eq_same] },
-  { simp only [add_apply, single_eq_of_ne h, zero_add] }
-end
+ext $ congr_fun $ by simp only [coe_single, coe_add, pi.single_add]
 
 variables (β)
 
@@ -382,14 +386,14 @@ variables {β}
 lemma single_add_erase {i : ι} {f : Π₀ i, β i} : single i (f i) + f.erase i = f :=
 ext $ λ i',
 if h : i = i'
-then by subst h; simp only [add_apply, single_apply, erase_apply, dif_pos rfl, if_pos, add_zero]
-else by simp only [add_apply, single_apply, erase_apply, dif_neg h, if_neg (ne.symm h), zero_add]
+then by subst h; simp only [add_apply, single_eq_same, erase_apply, if_pos, add_zero]
+else by simp only [add_apply, single_eq_of_ne h, erase_apply, if_neg (ne.symm h), zero_add]
 
 lemma erase_add_single {i : ι} {f : Π₀ i, β i} : f.erase i + single i (f i) = f :=
 ext $ λ i',
 if h : i = i'
-then by subst h; simp only [add_apply, single_apply, erase_apply, dif_pos rfl, if_pos, zero_add]
-else by simp only [add_apply, single_apply, erase_apply, dif_neg h, if_neg (ne.symm h), add_zero]
+then by subst h; simp only [add_apply, single_eq_same, erase_apply, if_pos, zero_add]
+else by simp only [add_apply, single_eq_of_ne h, erase_apply, if_neg (ne.symm h), add_zero]
 
 protected theorem induction {p : (Π₀ i, β i) → Prop} (f : Π₀ i, β i)
   (h0 : p 0) (ha : ∀i b (f : Π₀ i, β i), f i = 0 → b ≠ 0 → p f → p (single i b + f)) :
@@ -505,7 +509,7 @@ ext $ λ i, by simp only [smul_apply, mk_apply]; split_ifs; [refl, rw smul_zero]
 
 @[simp] lemma single_smul {i : ι} {c : γ} {x : β i} :
   single i (c • x) = c • single i x :=
-ext $ λ i, by simp only [smul_apply, single_apply]; split_ifs; [cases h, rw smul_zero]; refl
+ext $ λ i, by simp only [smul_apply, single_apply, pi.single_smul, pi.smul_apply]
 
 end
 
