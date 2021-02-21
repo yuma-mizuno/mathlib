@@ -2,6 +2,7 @@ import analysis.normed_space.basic
 import topology.instances.real
 import dynamics.fixed_points.basic
 import analysis.special_functions.pow
+import topology.uniform_space.compact_separated
 
 section brouwer
 variables {ι : Type*} [fintype ι] [nonempty ι] (f : set.Icc (0 : ι → ℝ) 1 → set.Icc (0 : ι → ℝ) 1)
@@ -23,7 +24,14 @@ include hf
 
 lemma brouwer_aux_aux : ∀ (ε : ℝ) (hε : ε > 0), ∃ x : set.Icc (0 : ι → ℝ) 1, ∀ i : ι,
   (f x).1 i - x.1 i ≤ ε ∧ x.1 i - (f x).1 i ≤ ε :=
-sorry
+begin
+  intros ε hε,
+  haveI : compact_space (set.Icc (0 : ι → ℝ) 1) := by
+  { exact ⟨compact_iff_compact_univ.1 compact_pi_Icc⟩, },
+  have huf : uniform_continuous f,
+  { exact compact_space.uniform_continuous_of_continuous hf },
+
+end
 
 lemma brouwer_aux : ∀ ε > 0, ∃ x, dist (f x) x < ε :=
 begin
@@ -39,7 +47,7 @@ begin
   { rintros i -,
     rw [nnreal.lt_of_real_iff_coe_lt, coe_nndist],
     obtain ⟨hx₁, hx₂⟩ := hx i,
-    unfold dist,
+    unfold dist, -- TODO
     rw abs_lt,
     split; linarith },
   { simpa only [bot_eq_zero, nnreal.of_real_pos] }
