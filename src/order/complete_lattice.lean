@@ -943,10 +943,9 @@ lemma bsupr_eq_sup_bsupr_if [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop
 begin
   rw supr_split (λ i, ⨆ (hp : p i), f i) (λ i, f i = a),
   have ha : (⨆ (i : ℕ) (h : f i = a) (hp : p i), f i) = a,
-  { apply le_antisymm,
-    { exact bsupr_le  (λ i hfia, supr_le_iff.mpr (λ hpi, by rw hfia)), },
-    { have han : (⨆ (h : f n = a) (hp : p n), f n) = a, by simp [hfan],
-      exact (le_of_eq han.symm).trans (le_supr _ n), }, },
+  { refine le_antisymm (bsupr_le  (λ i hfia, supr_le_iff.mpr (λ hpi, by rw hfia))) _,
+    have han : (⨆ (h : f n = a) (hp : p n), f n) = a, by simp [hfan],
+    exact (le_of_eq han.symm).trans (le_supr _ n), },
   simp only [ha],
   congr,
   ext1 i,
