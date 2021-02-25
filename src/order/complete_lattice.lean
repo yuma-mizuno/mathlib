@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Johannes Hölzl
 -/
 import order.bounds
+import tactic.nth_rewrite
 
 /-!
 # Theory of complete lattices
@@ -940,24 +941,20 @@ lemma bsupr_eq_sup_bsupr_if [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop
   (hfan : f n = a ∧ p n) :
   (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i), ite (f i = a) ⊥ (f i)) :=
 begin
-  haveI : decidable_pred p := classical.dec_pred p,
-  have hf : ∀ i, f i = ite (f i = a) a ⊥ ⊔ ite (f i = a) ⊥ (f i),
-  { intro i, split_ifs; simp [h], },
-  have hf_supr : (⨆ i (hp : p i), f i)
-    = (⨆ i, ite (f i = a ∧ p i) a ⊥) ⊔ (⨆ i (hp : p i), ite (f i = a) ⊥ (f i)),
-  { rw ← supr_sup_eq,
-    congr' 1 with i,
-    by_cases hi : f i = a ∧ p i,
-    { simp [hi], },
-    { simp only [bot_sup_eq, if_congr, if_false, hi],
-      by_cases hp : p i,
-      { have hi' : ¬ f i = a, by simpa only [hp, and_true] using hi,
-        simp [hp, hi'], },
-      { simp [hp], }, }, },
-  rw hf_supr,
+  rw supr_split (λ i, ⨆ (hp : p i), f i) (λ i, f i = a),
+  have ha : (⨆ (i : ℕ) (h : f i = a) (hp : p i), f i) = a,
+  { apply le_antisymm,
+    { refine bsupr_le  (λ i hfia, _),
+      rw supr_le_iff,
+      intro hpi,
+      rw hfia, },
+    { have han : (⨆ (h : f n = a) (hp : p n), f n) = a, by simp [hfan],
+      nth_rewrite 0 ← han,
+      exact le_supr (λ n, ⨆ (h : f n = a) (hp : p n), f n) n, }, },
+  simp only [ha],
   congr,
-  rw ←bsupr_eq_supr_if,
-  exact (bsupr_le (λ i hi, le_refl a)).antisymm (le_bsupr n hfan),
+  ext1 i,
+  by_cases hpi : p i; by_cases hfia : f i = a; simp [hpi, hfia],
 end
 
 lemma supr_eq_sup_supr_if [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
