@@ -203,9 +203,10 @@ begin
   exact not_lt_of_le hle (f.lt_iff_lt.2 hlt),
 end
 
-theorem is_partially_well_ordered.exists_monotone_subseq (h : s.is_partially_well_ordered) :
-  ∀ f : ℕ → α, range f ⊆ s → ∃ (g : ℕ ↪o ℕ), monotone (f ∘ g) :=
-λ f hf, begin
+theorem is_partially_well_ordered.exists_monotone_subseq
+  (h : s.is_partially_well_ordered) (f : ℕ → α) (hf : range f ⊆ s) :
+  ∃ (g : ℕ ↪o ℕ), monotone (f ∘ g) :=
+begin
   obtain ⟨g, h1 | h2⟩ := exists_increasing_or_nonincreasing_subseq (≤) f,
   { refine ⟨g, λ m n hle, _⟩,
     obtain hlt | heq := lt_or_eq_of_le hle,
@@ -251,7 +252,7 @@ begin
   exact ⟨h1 (g2.le_iff_le.2 mn), h2 mn⟩,
 end
 
-theorem is_partially_well_ordered.monotone_image {β : Type*} [partial_order β]
+theorem is_partially_well_ordered.image_of_monotone {β : Type*} [partial_order β]
   (hs : s.is_partially_well_ordered) {f : α → β} (hf : monotone f) :
   is_partially_well_ordered (f '' s) :=
 λ g hg, begin
@@ -292,13 +293,11 @@ theorem is_partially_well_ordered.mul
   is_partially_well_ordered (s * t) :=
 begin
   rw ← image_mul_prod,
-  exact (is_partially_well_ordered.prod hs ht).monotone_image (λ _ _ h, mul_le_mul' h.1 h.2),
+  exact (is_partially_well_ordered.prod hs ht).image_of_monotone (λ _ _ h, mul_le_mul' h.1 h.2),
 end
 
 @[to_additive]
-theorem is_wf.mul
-  (hs : s.is_wf) (ht : t.is_wf) :
-  is_wf (s * t) :=
+theorem is_wf.mul (hs : s.is_wf) (ht : t.is_wf) : is_wf (s * t) :=
 (hs.is_partially_well_ordered.mul ht.is_partially_well_ordered).is_wf
 
 end
@@ -467,5 +466,24 @@ end)
 theorem is_wf_support_mul_antidiagonal :
   { a : α | (mul_antidiagonal hs ht a).nonempty }.is_wf :=
 (hs.mul ht).mono support_mul_antidiagonal_subset_mul
+
+@[to_additive]
+theorem mul_antidiagonal_min_mul_min (hns : s.nonempty) (hnt : t.nonempty) :
+  mul_antidiagonal hs ht ((hs.min hns) * (ht.min hnt)) = {(hs.min hns, ht.min hnt)} :=
+begin
+  ext ⟨a1, a2⟩,
+  rw [mem_mul_antidiagonal, finset.mem_singleton, prod.ext_iff],
+  split,
+  { rintro ⟨hast, has, hat⟩,
+    cases eq_or_lt_of_le (hs.min_le hns has) with heq hlt,
+    { refine ⟨heq.symm, _⟩,
+      rw heq at hast,
+      exact mul_left_cancel hast },
+    { contrapose hast,
+      exact ne_of_gt (mul_lt_mul_of_lt_of_le hlt (ht.min_le hnt hat)) } },
+  { rintro ⟨ha1, ha2⟩,
+    rw [ha1, ha2],
+    exact ⟨rfl, hs.min_mem _, ht.min_mem _⟩ }
+end
 
 end finset
