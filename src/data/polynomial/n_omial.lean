@@ -34,33 +34,15 @@ section kth_power
 variables {R : Type*} [semiring R] (p : polynomial R) {n : ℕ}
 
 /-- the `k`th smallest exponent of p -/
-def kth_power (h : p.support.card = n) (k : fin n) : ℕ :=
-list.nth_le (p.support.sort nat.le) k (by { rw [finset.length_sort, h], exact fin.is_lt k })
+def kth_power (h : p.support.card = n) : fin n ↪o ℕ :=
+p.support.order_emb_of_fin h
 
 lemma kth_power_mem_support (h : p.support.card = n) (k : fin n) : p.kth_power h k ∈ p.support :=
-(finset.mem_sort nat.le).mp (list.nth_le_mem _ _ _)
-
-lemma kth_power_lt_kth_power (h : p.support.card = n) {i j : fin n} (hij : i < j) :
-  p.kth_power h i < p.kth_power h j :=
-list.sorted.rel_nth_le_of_lt p.support.sort_sorted_lt _ _ hij
-
-lemma kth_power_injective (h : p.support.card = n) :
-  function.injective (p.kth_power h) :=
-λ i j hij, le_antisymm
-  (le_of_not_lt (λ j_lt_i, ne_of_lt (p.kth_power_lt_kth_power h j_lt_i) hij.symm))
-  (le_of_not_lt (λ i_lt_j, ne_of_lt (p.kth_power_lt_kth_power h i_lt_j) hij))
+p.support.order_emb_of_fin_mem h k
 
 lemma mem_support_iff_exists_kth_power (h : p.support.card = n) (j : ℕ) :
   j ∈ p.support ↔ ∃ k, p.kth_power h k = j :=
-begin
-  split,
-  { intro hj,
-    obtain ⟨k, hk, rfl⟩ := list.mem_iff_nth_le.mp ((finset.mem_sort nat.le).mpr hj),
-    rw [finset.length_sort, h] at hk,
-    exact ⟨fin.mk k hk, rfl⟩ },
-  { rintros ⟨k, rfl⟩,
-    exact p.kth_power_mem_support h k },
-end
+(set.ext_iff.mp (p.support.range_order_emb_of_fin h) j).symm
 
 end kth_power
 
@@ -79,9 +61,8 @@ end
 
 structure n_omial (R : Type*) (n : ℕ) [semiring R] :=
 (coeffs : fin n → R)
-(powers : fin n → ℕ)
+(powers : fin n ↪o ℕ)
 (h_coeffs : ∀ i, coeffs i ≠ 0)
-(h_powers : strict_mono powers)
 
 namespace n_omial
 
@@ -102,9 +83,8 @@ noncomputable def to_polynomial : polynomial R :=
 /-- bundle an n_omial -/
 def of_polynomial {p : polynomial R} (h : p.support.card = n) : n_omial R n :=
 { coeffs := λ k, p.coeff (p.kth_power h k),
-  powers := λ k, p.kth_power h k,
-  h_coeffs := λ k, mem_support_iff_coeff_ne_zero.mp (p.kth_power_mem_support h k),
-  h_powers := λ i j, p.kth_power_lt_kth_power h }
+  powers := p.kth_power h,
+  h_coeffs := λ k, mem_support_iff_coeff_ne_zero.mp (p.kth_power_mem_support h k) }
 
 lemma of_polynomial_to_polynomial {p : polynomial R} (h : p.support.card = n) :
   (of_polynomial h).to_polynomial = p :=
@@ -113,7 +93,7 @@ begin
   { exact p.as_sum_support.symm },
   { exact λ k _, p.kth_power_mem_support h k },
   { exact λ k _, rfl },
-  { exact λ i j _ _ hij, p.kth_power_injective h hij },
+  { exact λ i j _ _ hij, (p.kth_power h).injective hij },
   { intros j hj,
     obtain ⟨k, hk⟩ := (p.mem_support_iff_exists_kth_power h j).mp hj,
     refine ⟨k, finset.mem_univ k, hk.symm⟩, },
@@ -124,7 +104,7 @@ begin
   rw [to_polynomial, finset_sum_coeff],
   refine (finset.sum_eq_single k _ _).trans _,
   { intros b h1 h2,
-    rw [coeff_monomial, if_neg (λ h, h2 (strict_mono.injective t.h_powers h))] },
+    rw [coeff_monomial, if_neg (λ h, h2 (t.powers.injective h))] },
   { exact λ h, false.elim (h (finset.mem_univ k)) },
   { rw [coeff_monomial, if_pos rfl] },
 end
@@ -146,7 +126,7 @@ end
 lemma card_support_to_polynomial : t.to_polynomial.support.card = n :=
 begin
   rw [support_to_polynomial, finset.card_image_of_inj_on, finset.card_fin],
-  exact λ _ _ _ _ h, strict_mono.injective t.h_powers h,
+  exact λ _ _ _ _ h, t.powers.injective h,
 end
 
 lemma powers_sorted : list.sorted nat.le (list.of_fn t.powers) :=
@@ -154,14 +134,14 @@ begin
   rw [list.sorted, list.pairwise_iff_nth_le],
   intros i j hi hij,
   rw [list.nth_le_of_fn', list.nth_le_of_fn'],
-  exact nat.le_of_lt (h_powers _ hij)
+  exact nat.le_of_lt (t.powers.strict_mono hij)
 end
 
 lemma to_polynomial_of_polynomial : of_polynomial t.card_support_to_polynomial = t :=
 begin
   suffices : (of_polynomial t.card_support_to_polynomial).powers = t.powers,
   { refine ext (funext (λ k, _)) this,
-    rw [←t.coeff_to_polynomial k, ←congr_fun this k],
+    rw [←t.coeff_to_polynomial k, ←this],
     refl },
   suffices : list.of_fn (of_polynomial t.card_support_to_polynomial).powers = list.of_fn t.powers,
   { ext k,
@@ -172,8 +152,8 @@ begin
       rw [list.mem_of_fn, set.mem_range, list.mem_of_fn, ←mem_image_univ_iff_mem_range,
         ←support_to_polynomial, t.to_polynomial.mem_support_iff_exists_kth_power],
       refl },
-    { exact list.nodup_of_fn (t.to_polynomial.kth_power_injective t.card_support_to_polynomial) },
-    { exact list.nodup_of_fn (strict_mono.injective (t.h_powers)) } },
+    { exact list.nodup_of_fn (t.to_polynomial.kth_power t.card_support_to_polynomial).injective },
+    { exact list.nodup_of_fn t.powers.injective } },
   { exact powers_sorted _ },
   { exact powers_sorted _ },
 end
@@ -208,8 +188,7 @@ end
 def twist (u : units R) : n_omial R n :=
 { coeffs := λ k, u * (t.coeffs k),
   powers := t.powers,
-  h_coeffs := λ k, mt u.mul_right_eq_zero.mp (t.h_coeffs k),
-  h_powers := t.h_powers }
+  h_coeffs := λ k, mt u.mul_right_eq_zero.mp (t.h_coeffs k) }
 
 lemma twist_one : t.twist 1 = t :=
 ext (one_mul t.coeffs) rfl
@@ -236,8 +215,7 @@ by rw [smul_smul, units.neg_mul_neg, one_mul, one_smul]
 def reverse : n_omial R n :=
 { coeffs := λ k, (list.of_fn t.coeffs).reverse.nth_le k (by { sorry  }),
   powers := sorry,
-  h_coeffs := sorry,
-  h_powers := sorry, }
+  h_coeffs := sorry, }
 
 lemma reverse_smul (u : units R) : (u • t).reverse = u • t.reverse := sorry
 
