@@ -646,7 +646,7 @@ lemma finite.bdd_below_bUnion {I : set β} {S : β → set α} (H : finite I) :
 
 end
 
-section function_into_finite_set
+section function_into_finite
 
 lemma supr_eq_bsupr_le_of_finite {α} [complete_lattice α] {s : set α} (hs : finite s) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
@@ -681,7 +681,7 @@ lemma infi_eq_binfi_le_of_finite_range {α} [complete_lattice α] (f : ℕ → �
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite_range (order_dual α) _ f hf
 
-end function_into_finite_set
+end function_into_finite
 
 end set
 

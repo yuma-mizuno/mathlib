@@ -671,7 +671,7 @@ lemma infi_bUnion (s : finset γ) (t : γ → finset α) (f : α → β) :
 
 end lattice
 
-section function_into_a_finset
+section function_into_finset
 
 lemma supr_eq_bsupr_le {α} [complete_lattice α] (s : finset α) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
@@ -708,7 +708,7 @@ lemma infi_eq_binfi_le {α} [complete_lattice α] (s : finset α) (f : ℕ → �
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le (order_dual α) _ s f hfs
 
-end function_into_a_finset
+end function_into_finset
 
 @[simp] theorem set_bUnion_coe (s : finset α) (t : α → set β) :
   (⋃ x ∈ (↑s : set α), t x) = ⋃ x ∈ s, t x :=
