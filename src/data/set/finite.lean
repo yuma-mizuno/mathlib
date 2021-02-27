@@ -648,7 +648,35 @@ end
 
 section function_into_finite
 
-lemma supr_eq_bsupr_le_of_finite {α} [complete_lattice α] {s : set α} (hs : finite s) (f : ℕ → α)
+variables {α} [complete_lattice α]
+
+lemma supr_eq_bsupr_finset_of_finite {ι} {s : set α} (hs : finite s) (f : ι → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
+  ∃ (t : finset ι), (⨆ i, f i) = ⨆ i (him : i ∈ t), f i :=
+begin
+  have hfs' : ∀ i, f i ∈ hs.to_finset ∨ f i = ⊥,
+  { intro i,
+    cases hfs i,
+    { refine or.inl _, rwa finite.mem_to_finset, },
+    { exact or.inr h, }, },
+  haveI : decidable_eq α := classical.dec_eq α,
+  exact finset.supr_eq_bsupr_finset hs.to_finset f hfs',
+end
+
+lemma infi_eq_binfi_finset_of_finite {ι} {s : set α} (hs : finite s) (f : ι → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
+  ∃ (t : finset ι), (⨅ i, f i) = ⨅ i (him : i ∈ t), f i :=
+@supr_eq_bsupr_finset_of_finite (order_dual α) _ ι s hs f hfs
+
+lemma supr_eq_bsupr_finset_of_finite_range {ι} (f : ι → α) (hf : (range f).finite) :
+  ∃ (t : finset ι), (⨆ i, f i) = ⨆ i (him : i ∈ t), f i :=
+supr_eq_bsupr_finset_of_finite hf f (λ i, or.inl (mem_range_self i))
+
+lemma infi_eq_binfi_finset_of_finite_range {ι} (f : ι → α) (hf : (range f).finite) :
+  ∃ (t : finset ι), (⨅ i, f i) = ⨅ i (him : i ∈ t), f i :=
+@supr_eq_bsupr_finset_of_finite_range (order_dual α) _ ι f hf
+
+lemma supr_eq_bsupr_le_of_finite {s : set α} (hs : finite s) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
   ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
 begin
@@ -661,23 +689,16 @@ begin
   exact finset.supr_eq_bsupr_le hs.to_finset f hfs',
 end
 
-lemma infi_eq_binfi_le_of_finite {α} [complete_lattice α] {s : set α} (hs : finite s) (f : ℕ → α)
+lemma infi_eq_binfi_le_of_finite {s : set α} (hs : finite s) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite (order_dual α) _ s hs f hfs
 
-lemma supr_eq_bsupr_le_of_finite_range {α} [complete_lattice α] (f : ℕ → α)
-  (hf : (range f).finite) :
+lemma supr_eq_bsupr_le_of_finite_range (f : ℕ → α) (hf : (range f).finite) :
   ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
-begin
-  have hfs' : ∀ (i : ℕ), f i ∈ hf.to_finset ∨ f i = ⊥,
-    from λ i, or.inl (finite.mem_to_finset.mpr (mem_range_self i)),
-  haveI : decidable_eq α := classical.dec_eq α,
-  exact finset.supr_eq_bsupr_le hf.to_finset f hfs',
-end
+supr_eq_bsupr_le_of_finite hf f (λ i, or.inl (mem_range_self i))
 
-lemma infi_eq_binfi_le_of_finite_range {α} [complete_lattice α] (f : ℕ → α)
-  (hf : (range f).finite) :
+lemma infi_eq_binfi_le_of_finite_range (f : ℕ → α) (hf : (range f).finite) :
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite_range (order_dual α) _ f hf
 
