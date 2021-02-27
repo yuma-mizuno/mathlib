@@ -703,6 +703,11 @@ begin
   by rw bsupr_eq_sup_bsupr_if_ne f (λ i, i ≤ max i_a m) a i_a ⟨hia, le_max_left _ _⟩,
 end
 
+lemma infi_eq_binfi_le {α} [complete_lattice α] (s : finset α) (f : ℕ → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
+  ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
+@supr_eq_bsupr_le (order_dual α) _ s f hfs
+
 end function_into_a_finset
 
 @[simp] theorem set_bUnion_coe (s : finset α) (t : α → set β) :

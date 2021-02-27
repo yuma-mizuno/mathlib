@@ -661,6 +661,11 @@ begin
   exact finset.supr_eq_bsupr_le hs.to_finset f hfs',
 end
 
+lemma infi_eq_binfi_le_of_finite {α} [complete_lattice α] {s : set α} (hs : finite s) (f : ℕ → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
+  ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
+@supr_eq_bsupr_le_of_finite (order_dual α) _ s hs f hfs
+
 lemma supr_eq_bsupr_le_of_finite_range {α} [complete_lattice α] (f : ℕ → α)
   (hf : (range f).finite) :
   ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
@@ -670,6 +675,11 @@ begin
   haveI : decidable_eq α := classical.dec_eq α,
   exact finset.supr_eq_bsupr_le hf.to_finset f hfs',
 end
+
+lemma infi_eq_binfi_le_of_finite_range {α} [complete_lattice α] (f : ℕ → α)
+  (hf : (range f).finite) :
+  ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
+@supr_eq_bsupr_le_of_finite_range (order_dual α) _ f hf
 
 lemma bsupr_nat_succ {α} [complete_lattice α] (f : ℕ → α) (m : ℕ) :
   (⨆ i ≤ m.succ, f i) = (⨆ i ≤ m, f i) ⊔ f m.succ :=
