@@ -806,7 +806,7 @@ lemma supr_split_single (f : β → α) (i₀ : β) :
   (⨆ i, f i) = f i₀ ⊔ (⨆ i (h : i ≠ i₀), f i) :=
 @infi_split_single (order_dual α) _ _ _ _
 
-lemma bsupr_eq_sup_bsupr_ne {ι : Type*} [decidable_eq α] (f : ι → α) (p : ι → Prop) (a : α) (n : ι)
+lemma bsupr_eq_sup_bsupr_ne {ι : Type*} (f : ι → α) (p : ι → Prop) (a : α) (n : ι)
   (hfan : f n = a ∧ p n) :
   (⨆ i (hp : p i), f i) = a ⊔ (⨆ i (hp : p i ∧ f i ≠ a), f i) :=
 begin
@@ -821,12 +821,12 @@ begin
   by_cases hpi : p i; by_cases hfia : f i = a; simp [hpi, hfia],
 end
 
-lemma binfi_eq_inf_binfi_ne {ι : Type*} [decidable_eq α] (f : ι → α) (p : ι → Prop) (a : α) (n : ι)
+lemma binfi_eq_inf_binfi_ne {ι : Type*} (f : ι → α) (p : ι → Prop) (a : α) (n : ι)
   (hfan : f n = a ∧ p n) :
   (⨅ i (hp : p i), f i) = a ⊓ (⨅ i (hp : p i ∧ f i ≠ a), f i) :=
-@bsupr_eq_sup_bsupr_ne (order_dual α) _ _ _ f p a n hfan
+@bsupr_eq_sup_bsupr_ne (order_dual α) _ _ f p a n hfan
 
-lemma supr_eq_sup_bsupr_ne {ι : Type*} [decidable_eq α] (f : ι → α) (a : α) (n : ι)
+lemma supr_eq_sup_bsupr_ne {ι : Type*} (f : ι → α) (a : α) (n : ι)
   (hfan : f n = a) :
   (⨆ i, f i) = a ⊔ (⨆ i (hi : f i ≠ a), f i) :=
 begin
@@ -835,10 +835,10 @@ begin
   simp,
 end
 
-lemma infi_eq_infi_binfi_ne {ι : Type*} [decidable_eq α] (f : ι → α) (a : α) (n : ι)
+lemma infi_eq_infi_binfi_ne {ι : Type*} (f : ι → α) (a : α) (n : ι)
   (hfan : f n = a) :
   (⨅ i, f i) = a ⊓ (⨅ i (hi : f i ≠ a), f i) :=
-@supr_eq_sup_bsupr_ne (order_dual α) _ _ _ f a n hfan
+@supr_eq_sup_bsupr_ne (order_dual α) _ _ f a n hfan
 
 lemma bsupr_eq_sup_bsupr_if_ne {ι : Type*} [decidable_eq α] (f : ι → α) (p : ι → Prop) (a : α)
   (n : ι) (hfan : f n = a ∧ p n) :
