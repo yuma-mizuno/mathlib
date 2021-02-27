@@ -945,12 +945,12 @@ begin
   { simp_rw [infi_ge_eq_infi_nat_add, ←nat.add_assoc], },
 end
 
-lemma bsupr_eq_sup_bsupr_ne [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop) (a : α) (n : ℕ)
+lemma bsupr_eq_sup_bsupr_ne {ι : Type*} [decidable_eq α] (f : ι → α) (p : ι → Prop) (a : α) (n : ι)
   (hfan : f n = a ∧ p n) :
-  (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i ∧ f i ≠ a), f i) :=
+  (⨆ i (hp : p i), f i) = a ⊔ (⨆ i (hp : p i ∧ f i ≠ a), f i) :=
 begin
   rw supr_split (λ i, ⨆ (hp : p i), f i) (λ i, f i = a),
-  have ha : (⨆ (i : ℕ) (h : f i = a) (hp : p i), f i) = a,
+  have ha : (⨆ i (h : f i = a) (hp : p i), f i) = a,
   { refine le_antisymm (bsupr_le  (λ i hfia, supr_le_iff.mpr (λ hpi, by rw hfia))) _,
     have han : (⨆ (h : f n = a) (hp : p n), f n) = a, by simp [hfan],
     exact (le_of_eq han.symm).trans (le_supr _ n), },
@@ -960,17 +960,18 @@ begin
   by_cases hpi : p i; by_cases hfia : f i = a; simp [hpi, hfia],
 end
 
-lemma supr_eq_sup_bsupr_ne [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
+lemma supr_eq_sup_bsupr_ne {ι : Type*} [decidable_eq α] (f : ι → α) (a : α) (n : ι)
+  (hfan : f n = a) :
   (⨆ i, f i) = a ⊔ (⨆ i (hi : f i ≠ a), f i) :=
 begin
-  have h_true : (⨆ (i : ℕ), f i) = (⨆ (i : ℕ) (hp : true), f i), by simp only [supr_true],
+  have h_true : (⨆ i, f i) = (⨆ i (hp : true), f i), by simp only [supr_true],
   rw [h_true, bsupr_eq_sup_bsupr_ne f (λ i, true) a n (by simp [hfan])],
   simp,
 end
 
-lemma bsupr_eq_sup_bsupr_if_ne [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop) (a : α) (n : ℕ)
-  (hfan : f n = a ∧ p n) :
-  (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i), ite (f i ≠ a) (f i) ⊥) :=
+lemma bsupr_eq_sup_bsupr_if_ne {ι : Type*} [decidable_eq α] (f : ι → α) (p : ι → Prop) (a : α)
+  (n : ι) (hfan : f n = a ∧ p n) :
+  (⨆ i (hp : p i), f i) = a ⊔ (⨆ i (hp : p i), ite (f i ≠ a) (f i) ⊥) :=
 begin
   rw [bsupr_eq_sup_bsupr_ne f p a n hfan, bsupr_and],
   congr,
@@ -980,10 +981,11 @@ begin
   rw supr_eq_if,
 end
 
-lemma supr_eq_sup_supr_if_ne [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
+lemma supr_eq_sup_supr_if_ne {ι : Type*} [decidable_eq α] (f : ι → α) (a : α) (n : ι)
+  (hfan : f n = a) :
   (⨆ i, f i) = a ⊔ (⨆ i, ite (f i ≠ a) (f i) ⊥) :=
 begin
-  have h_true : (⨆ (i : ℕ), f i) = (⨆ (i : ℕ) (hp : true), f i), by simp only [supr_true],
+  have h_true : (⨆ i, f i) = (⨆ i (hp : true), f i), by simp only [supr_true],
   rw [h_true, bsupr_eq_sup_bsupr_if_ne f (λ i, true) a n (by simp [hfan])],
   simp,
 end
