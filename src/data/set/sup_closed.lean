@@ -18,8 +18,8 @@ Properties of sets `s` such that for `x, y ∈ s`, `x ⊔ y ∈ s`.
 
 ## Highlighted results
 
-* `supr_mem_of_sup_closed_of_finite`: a finite sup_closed set `s` is such that for all `f : ℕ → α`,
-  `(⨆ n, f n) ∈ s`.
+* `supr_mem_of_sup_closed_of_finite`: a finite sup_closed set `s` is such that for all `f : ι → α`,
+  `(⨆ i, f i) ∈ s`.
 
 -/
 
@@ -68,29 +68,40 @@ begin
   cases ha; cases hb; simp [ha, hb],
 end
 
-section nat_function
-variables {α : Type*} [complete_lattice α]
+section supr
+variables {α ι : Type*} [complete_lattice α]
 
-lemma bsupr_le_mem_of_sup_closed {s : set α} (hs : sup_closed s) (f : ℕ → α) (hfs : ∀ i, f i ∈ s)
-  (m : ℕ) :
-  (⨆ i ≤ m, f i) ∈ s :=
+lemma bsupr_finset_mem_of_sup_closed {s : set α} (hs : sup_closed s) (f : ι → α)
+  (hfs : ∀ i, f i ∈ s) (t : finset ι) (ht : t.nonempty) :
+  (⨆ i (hi : i ∈ t), f i) ∈ s :=
 begin
-  induction m with m hm,
-  { simp [hfs 0], },
-  { rw bsupr_nat_succ,
-    exact hs _ _ hm (hfs m.succ), },
+  haveI : decidable_eq ι := classical.dec_eq ι,
+  revert t,
+  refine finset.induction (by simp) _,
+  intros a t ha_notin_t ht ht_insert_nonempty,
+  by_cases ht_nonempty : t.nonempty,
+  { rw finset.supr_insert,
+    exact hs (f a) _ (hfs a) (ht ht_nonempty), },
+  { rw finset.not_nonempty_iff_eq_empty at ht_nonempty,
+    simp [ht_nonempty, hfs a], },
 end
 
-lemma supr_mem_of_sup_closed_of_finite {s : set α} (hs : sup_closed s) (hfin : finite s)
-  (f : ℕ → α) (hfs : ∀ i, f i ∈ s) :
+lemma supr_mem_of_sup_closed_of_finite [hι : nonempty ι] {s : set α} (hs : sup_closed s)
+  (hfin : finite s) (f : ι → α) (hfs : ∀ i, f i ∈ s) :
   (⨆ i, f i) ∈ s :=
 begin
-  obtain ⟨m, h⟩ := supr_eq_bsupr_le_of_finite hfin f (λ i, or.inl (hfs i)),
+  obtain ⟨t, h⟩ := supr_eq_bsupr_finset_of_finite hfin f (λ i, or.inl (hfs i)),
   rw h,
-  exact bsupr_le_mem_of_sup_closed hs f hfs m,
+  by_cases ht : t.nonempty,
+  { exact bsupr_finset_mem_of_sup_closed hs f hfs t ht, },
+  rw finset.not_nonempty_iff_eq_empty at ht,
+  suffices h_bot : ⊥ ∈ s, by simp [ht, h_bot],
+  have hf_bot : ∀ i, f i = ⊥, by simpa [ht] using h,
+  rw ← hf_bot hι.some,
+  exact hfs hι.some,
 end
 
-end nat_function
+end supr
 
 section useful_examples
 
