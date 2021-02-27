@@ -1010,6 +1010,28 @@ begin
   { simp_rw [infi_ge_eq_infi_nat_add, ←nat.add_assoc], },
 end
 
+lemma bsupr_nat_succ {α} [complete_lattice α] (f : ℕ → α) (m : ℕ) :
+  (⨆ i ≤ m.succ, f i) = (⨆ i ≤ m, f i) ⊔ f m.succ :=
+begin
+  refine le_antisymm _ _,
+  { refine bsupr_le (λ i him_succ, _),
+    cases nat.eq_or_lt_of_le him_succ,
+    { refine le_trans _ le_sup_right,
+      rw h, },
+    { have h' := nat.le_of_lt_succ h,
+      exact le_trans (le_bsupr i h') le_sup_left, }, },
+  { refine sup_le _ _,
+    { refine supr_le_supr_of_subset (λ i hi, _),
+      change i ≤ m at hi,
+      change i ≤ m.succ,
+      exact hi.trans (nat.le_succ m), },
+    { exact @le_bsupr _ _ _ (λ i, i ≤ m.succ) (λ i _, f i) m.succ (le_refl m.succ)}, },
+end
+
+lemma binfi_nat_succ {α} [complete_lattice α] (f : ℕ → α) (m : ℕ) :
+  (⨅ i ≤ m.succ, f i) = (⨅ i ≤ m, f i) ⊓ f m.succ :=
+@bsupr_nat_succ (order_dual α) _ f m
+
 end
 
 section complete_linear_order

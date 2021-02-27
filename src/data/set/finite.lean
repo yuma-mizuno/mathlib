@@ -681,28 +681,6 @@ lemma infi_eq_binfi_le_of_finite_range {α} [complete_lattice α] (f : ℕ → �
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite_range (order_dual α) _ f hf
 
-lemma bsupr_nat_succ {α} [complete_lattice α] (f : ℕ → α) (m : ℕ) :
-  (⨆ i ≤ m.succ, f i) = (⨆ i ≤ m, f i) ⊔ f m.succ :=
-begin
-  refine le_antisymm _ _,
-  { refine bsupr_le (λ i him_succ, _),
-    cases nat.of_le_succ him_succ,
-    { exact le_trans (le_bsupr i h) le_sup_left, },
-    { refine le_trans _ le_sup_right,
-      rw h, }, },
-  { refine sup_le _ _,
-    { refine supr_le_supr_of_subset (λ i hi, _),
-      change i ≤ m at hi,
-      change i ≤ m.succ,
-      exact hi.trans (nat.le_succ m), },
-    { exact @le_bsupr _ _ _ (λ i, i ≤ m.succ) (λ i _, f i) m.succ (le_refl m.succ)}, },
-end
-
-lemma binfi_nat_succ {α} [complete_lattice α] (f : ℕ → α) (m : ℕ) :
-  (⨅ i ≤ m.succ, f i) = (⨅ i ≤ m, f i) ⊓ f m.succ :=
-@bsupr_nat_succ (order_dual α) _ f m
-
-
 end function_into_finite_set
 
 end set
