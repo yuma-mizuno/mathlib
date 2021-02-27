@@ -685,12 +685,12 @@ begin
   by_cases h_exists_a : ∃ i, f i = a,
   swap, { exact hs f (λ i, by simpa [not_exists.mp h_exists_a i] using hf i), },
   cases h_exists_a with i_a hia,
-  let g := λ i, ite (f i = a) ⊥ (f i),
+  let g := λ i, ite (f i ≠ a) (f i) ⊥,
   have hg : ∀ i, g i ∈ s ∨ g i = ⊥,
-    by { intro i, simp_rw g, split_ifs, simp, simpa [h] using hf i, },
+    by { intro i, simp_rw g, split_ifs, simpa [h] using hf i, simp, },
   cases hs g hg with m hs,
   use max i_a m,
-  calc (⨆ (i : ℕ), f i) = a ⊔ (⨆ (i : ℕ), g i) : by rw supr_eq_sup_supr_if f a i_a hia
+  calc (⨆ (i : ℕ), f i) = a ⊔ (⨆ (i : ℕ), g i) : by rw supr_eq_sup_supr_if_ne f a i_a hia
     ... = a ⊔ (⨆ i ≤ m, g i) : by rw hs
     ... = a ⊔ (⨆ i ≤ max i_a m, g i) :
   begin
@@ -700,7 +700,7 @@ begin
       @le_bsupr _ _ _ (λ i, i ≤ max i_a m) (λ i _, g i) i (him.trans (le_max_right i_a m))),
   end
     ... = (⨆ i ≤ max i_a m, f i) :
-  by rw bsupr_eq_sup_bsupr_if f (λ i, i ≤ max i_a m) a i_a ⟨hia, le_max_left _ _⟩,
+  by rw bsupr_eq_sup_bsupr_if_ne f (λ i, i ≤ max i_a m) a i_a ⟨hia, le_max_left _ _⟩,
 end
 
 end function_into_a_finset

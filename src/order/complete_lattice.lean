@@ -724,6 +724,14 @@ lemma supr_and' {p q : Prop} {s : p → q → α} :
   (⨆ (h₁ : p) (h₂ : q), s h₁ h₂) = ⨆ (h : p ∧ q), s h.1 h.2 :=
 by { symmetry, exact supr_and }
 
+lemma bsupr_and {p q : ι → Prop} {f : ι → α} :
+  (⨆ i (hpq : p i ∧ q i), f i) = ⨆ i (hp : p i) (hq : q i), f i :=
+by { congr, ext1 i, rw supr_and', }
+
+lemma binfi_and {p q : ι → Prop} {f : ι → α} :
+  (⨅ i (hpq : p i ∧ q i), f i) = ⨅ i (hp : p i) (hq : q i), f i :=
+by { congr, ext1 i, rw infi_and', }
+
 theorem infi_or {p q : Prop} {s : p ∨ q → α} :
   infi s = (⨅ h : p, s (or.inl h)) ⊓ (⨅ h : q, s (or.inr h)) :=
 le_antisymm
@@ -937,9 +945,9 @@ begin
   { simp_rw [infi_ge_eq_infi_nat_add, ←nat.add_assoc], },
 end
 
-lemma bsupr_eq_sup_bsupr_if [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop) (a : α) (n : ℕ)
+lemma bsupr_eq_sup_bsupr_ne [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop) (a : α) (n : ℕ)
   (hfan : f n = a ∧ p n) :
-  (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i), ite (f i = a) ⊥ (f i)) :=
+  (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i ∧ f i ≠ a), f i) :=
 begin
   rw supr_split (λ i, ⨆ (hp : p i), f i) (λ i, f i = a),
   have ha : (⨆ (i : ℕ) (h : f i = a) (hp : p i), f i) = a,
@@ -952,11 +960,31 @@ begin
   by_cases hpi : p i; by_cases hfia : f i = a; simp [hpi, hfia],
 end
 
-lemma supr_eq_sup_supr_if [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
-  (⨆ i, f i) = a ⊔ (⨆ i, ite (f i = a) ⊥ (f i)) :=
+lemma supr_eq_sup_bsupr_ne [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
+  (⨆ i, f i) = a ⊔ (⨆ i (hi : f i ≠ a), f i) :=
 begin
   have h_true : (⨆ (i : ℕ), f i) = (⨆ (i : ℕ) (hp : true), f i), by simp only [supr_true],
-  rw [h_true, bsupr_eq_sup_bsupr_if f (λ i, true) a n (by simp [hfan])],
+  rw [h_true, bsupr_eq_sup_bsupr_ne f (λ i, true) a n (by simp [hfan])],
+  simp,
+end
+
+lemma bsupr_eq_sup_bsupr_if_ne [decidable_eq α] (f : ℕ → α) (p : ℕ → Prop) (a : α) (n : ℕ)
+  (hfan : f n = a ∧ p n) :
+  (⨆ (i : ℕ) (hp : p i), f i) = a ⊔ (⨆ (i : ℕ) (hp : p i), ite (f i ≠ a) (f i) ⊥) :=
+begin
+  rw [bsupr_eq_sup_bsupr_ne f p a n hfan, bsupr_and],
+  congr,
+  ext1 i,
+  congr,
+  ext1 hpi,
+  rw supr_eq_if,
+end
+
+lemma supr_eq_sup_supr_if_ne [decidable_eq α] (f : ℕ → α) (a : α) (n : ℕ) (hfan : f n = a) :
+  (⨆ i, f i) = a ⊔ (⨆ i, ite (f i ≠ a) (f i) ⊥) :=
+begin
+  have h_true : (⨆ (i : ℕ), f i) = (⨆ (i : ℕ) (hp : true), f i), by simp only [supr_true],
+  rw [h_true, bsupr_eq_sup_bsupr_if_ne f (λ i, true) a n (by simp [hfan])],
   simp,
 end
 
