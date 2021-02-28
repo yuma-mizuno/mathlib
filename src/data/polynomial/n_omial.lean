@@ -78,7 +78,7 @@ end
 
 /-- unbundle an n_omial -/
 noncomputable def to_polynomial : polynomial R :=
-∑ (k : fin n), (monomial (t.powers k) (t.coeffs k))
+∑ (k : fin n), monomial (t.powers k) (t.coeffs k)
 
 /-- bundle an n_omial -/
 def of_polynomial {p : polynomial R} (h : p.support.card = n) : n_omial R n :=
@@ -129,45 +129,29 @@ begin
   exact λ _ _ _ _ h, t.powers.injective h,
 end
 
-lemma powers_sorted : list.sorted nat.le (list.of_fn t.powers) :=
-begin
-  rw [list.sorted, list.pairwise_iff_nth_le],
-  intros i j hi hij,
-  rw [list.nth_le_of_fn', list.nth_le_of_fn'],
-  exact nat.le_of_lt (t.powers.strict_mono hij)
-end
-
 lemma to_polynomial_of_polynomial : of_polynomial t.card_support_to_polynomial = t :=
 begin
   suffices : (of_polynomial t.card_support_to_polynomial).powers = t.powers,
   { refine ext (funext (λ k, _)) this,
     rw [←t.coeff_to_polynomial k, ←this],
     refl },
-  suffices : list.of_fn (of_polynomial t.card_support_to_polynomial).powers = list.of_fn t.powers,
-  { ext k,
-    simp_rw [←list.nth_le_of_fn t.powers k, ←this, list.nth_le_of_fn] },
-  apply @list.eq_of_perm_of_sorted ℕ nat.le,
-  { rw list.perm_ext,
-    { intro k,
-      rw [list.mem_of_fn, set.mem_range, list.mem_of_fn, ←mem_image_univ_iff_mem_range,
-        ←support_to_polynomial, t.to_polynomial.mem_support_iff_exists_kth_power],
-      refl },
-    { exact list.nodup_of_fn (t.to_polynomial.kth_power t.card_support_to_polynomial).injective },
-    { exact list.nodup_of_fn t.powers.injective } },
-  { exact powers_sorted _ },
-  { exact powers_sorted _ },
+  refine (finset.order_emb_of_fin_unique' _ $ λ x, _).symm,
+  rw [t.support_to_polynomial, finset.mem_image],
+  exact ⟨_, finset.mem_univ _, rfl⟩,
 end
+
+noncomputable def to_polynomial_equiv : n_omial R n ≃ {p : polynomial R // p.support.card = n} :=
+{ to_fun := λ pn, ⟨pn.to_polynomial, pn.card_support_to_polynomial⟩,
+  inv_fun := λ p, of_polynomial p.prop,
+  left_inv := λ pn, to_polynomial_of_polynomial _,
+  right_inv := λ pn, subtype.ext $ of_polynomial_to_polynomial _ }
+
+lemma to_polynomial_injective : function.injective (to_polynomial : n_omial R n → polynomial R) :=
+subtype.val_injective.comp to_polynomial_equiv.injective
 
 lemma to_polynomial_inj {s t : n_omial R n} :
   s.to_polynomial = t.to_polynomial ↔ s = t :=
-begin
-  split,
-  { intro h,
-    rw [←s.to_polynomial_of_polynomial, ←t.to_polynomial_of_polynomial],
-    simp_rw h },
-  { intro h,
-    rw h }
-end
+to_polynomial_injective.eq_iff
 
 lemma to_polynomial_eq_zero : t.to_polynomial = 0 ↔ n = 0 :=
 by rw [←finsupp.card_support_eq_zero, card_support_to_polynomial]
