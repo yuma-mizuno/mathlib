@@ -676,6 +676,7 @@ lemma infi_eq_binfi_finset_of_finite_range {ι} (f : ι → α) (hf : (range f).
   ∃ (t : finset ι), (⨅ i, f i) = ⨅ i (him : i ∈ t), f i :=
 @supr_eq_bsupr_finset_of_finite_range (order_dual α) _ ι f hf
 
+/-- This is `supr_eq_bsupr_finset_of_finite` specialized to `ℕ`. -/
 lemma supr_eq_bsupr_le_of_finite {s : set α} (hs : finite s) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
   ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
@@ -689,15 +690,18 @@ begin
   exact finset.supr_eq_bsupr_le hs.to_finset f hfs',
 end
 
+/-- This is `infi_eq_binfi_finset_of_finite` specialized to `ℕ`. -/
 lemma infi_eq_binfi_le_of_finite {s : set α} (hs : finite s) (f : ℕ → α)
   (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite (order_dual α) _ s hs f hfs
 
+/-- This is `supr_eq_bsupr_finset_of_finite_range` specialized to `ℕ`. -/
 lemma supr_eq_bsupr_le_of_finite_range (f : ℕ → α) (hf : (range f).finite) :
   ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
 supr_eq_bsupr_le_of_finite hf f (λ i, or.inl (mem_range_self i))
 
+/-- This is `infi_eq_binfi_finset_of_finite_range` specialized to `ℕ`. -/
 lemma infi_eq_binfi_le_of_finite_range (f : ℕ → α) (hf : (range f).finite) :
   ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
 @supr_eq_bsupr_le_of_finite_range (order_dual α) _ f hf
