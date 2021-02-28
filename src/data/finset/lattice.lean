@@ -671,6 +671,63 @@ lemma infi_bUnion (s : finset γ) (t : γ → finset α) (f : α → β) :
 
 end lattice
 
+section function_into_finset
+
+lemma supr_eq_bsupr_finset {α ι} [complete_lattice α] (s : finset α) (f : ι → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
+  ∃ (t : finset ι), (⨆ i, f i) = ⨆ i (him : i ∈ t), f i :=
+begin
+  revert s f hfs,
+  haveI : decidable_eq α := classical.dec_eq α,
+  haveI : decidable_eq ι := classical.dec_eq ι,
+  refine finset.induction _ _,
+  { intros f h, simp only [finset.not_mem_empty, false_or] at h, simp [h], },
+  intros a s ha_notin_s hs f hf,
+  by_cases h_exists_a : ∃ i, f i = a,
+  swap, { exact hs f (λ i, by simpa [not_exists.mp h_exists_a i] using hf i), },
+  cases h_exists_a with i_a hia,
+  let g := λ i, ite (f i ≠ a) (f i) ⊥,
+  have hg : ∀ i, g i ∈ s ∨ g i = ⊥,
+    by { intro i, simp_rw g, split_ifs, simpa [h] using hf i, simp, },
+  cases hs g hg with tg htg,
+  use insert i_a tg,
+  calc (⨆ i, f i) = a ⊔ (⨆ i, g i) : by rw supr_eq_sup_supr_if_ne f a i_a hia
+    ... = a ⊔ (⨆ i (h : i ∈ tg), g i) : by rw htg
+    ... = a ⊔ (⨆ i (h : i ∈ insert i_a tg), g i) :
+  begin
+    congr' 1,
+    refine le_antisymm (bsupr_le (λ i him, _)) (by { rw ← htg, exact bsupr_le_supr _ _, }),
+    exact @le_bsupr _ _ _ (λ i, i ∈ insert i_a tg) (λ i _, g i) i (mem_insert.mpr (or.inr him)),
+  end
+    ... = (⨆ i (h : i ∈ insert i_a tg), f i) :
+  by rw bsupr_eq_sup_bsupr_if_ne f (λ i, i ∈ insert i_a tg) a i_a
+    ⟨hia, mem_insert.mpr (or.inl rfl)⟩,
+end
+
+lemma infi_eq_binfi_finset {α ι} [complete_lattice α] (s : finset α) (f : ι → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
+  ∃ (t : finset ι), (⨅ i, f i) = ⨅ i (him : i ∈ t), f i :=
+@supr_eq_bsupr_finset (order_dual α) _ _ s f hfs
+
+lemma supr_eq_bsupr_le {α} [complete_lattice α] (s : finset α) (f : ℕ → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊥) :
+  ∃ m : ℕ, (⨆ i, f i) = ⨆ i (him : i ≤ m), f i :=
+begin
+  obtain ⟨t, ht⟩ := supr_eq_bsupr_finset s f hfs,
+  obtain ⟨m, htm⟩ := exists_nat_subset_range t,
+  use m,
+  refine le_antisymm _ (bsupr_le_supr _ _),
+  rw ht,
+  exact supr_le_supr_of_subset (λ i hit, (mem_range.mp (htm hit)).le),
+end
+
+lemma infi_eq_binfi_le {α} [complete_lattice α] (s : finset α) (f : ℕ → α)
+  (hfs : ∀ i, f i ∈ s ∨ f i = ⊤) :
+  ∃ m : ℕ, (⨅ i, f i) = ⨅ i (him : i ≤ m), f i :=
+@supr_eq_bsupr_le (order_dual α) _ s f hfs
+
+end function_into_finset
+
 @[simp] theorem set_bUnion_coe (s : finset α) (t : α → set β) :
   (⋃ x ∈ (↑s : set α), t x) = ⋃ x ∈ s, t x :=
 rfl
