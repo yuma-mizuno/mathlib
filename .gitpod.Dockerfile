@@ -13,3 +13,5 @@ RUN curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | s
 RUN python3 -m pip install --user pipx && python3 -m pipx ensurepath && . ~/.profile && pipx install mathlibtools
 
 ENV PATH="/home/gitpod/.elan/bin:${PATH}"
+
+ENV VSCODE_API_VERSION="1.50.0"
