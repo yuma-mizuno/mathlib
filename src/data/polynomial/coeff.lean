@@ -18,6 +18,7 @@ noncomputable theory
 
 open finsupp finset add_monoid_algebra
 open_locale big_operators
+open multiplicative
 
 namespace polynomial
 universes u v
@@ -39,16 +40,24 @@ lemma coeff_sum [semiring S] (n : ℕ) (f : ℕ → R → polynomial S) :
 @[simp] lemma coeff_smul (p : polynomial R) (r : R) (n : ℕ) :
 coeff (r • p) n = r * coeff p n := finsupp.smul_apply _ _ _
 
-lemma mem_support_iff_coeff_ne_zero : n ∈ p.support ↔ p.coeff n ≠ 0 :=
-by { rw mem_support_to_fun, refl }
+lemma mem_support_iff : n ∈ p.support ↔ p.coeff n ≠ 0 :=
+by { rw [support, mem_map_equiv, mem_support_to_fun], refl }
 
 lemma not_mem_support_iff_coeff_zero : n ∉ p.support ↔ p.coeff n = 0 :=
-by { rw [mem_support_to_fun, not_not], refl, }
+by { rw [support, mem_map_equiv, mem_support_to_fun, not_not], refl, }
+
+lemma card_support_eq_one :
+  p.support.card = 1 ↔ ∃ n, p.coeff n ≠ 0 ∧ p = monomial n (p.coeff n) :=
+by { simp [support, card_support_eq_one, exists_multiplicative_iff], refl }
+
+lemma card_support_eq_one' :
+  p.support.card = 1 ↔ ∃ n a, a ≠ 0 ∧ p = monomial n a :=
+by { simp [support, card_support_eq_one', exists_multiplicative_iff], refl }
 
 variable (R)
 /-- The nth coefficient, as a linear map. -/
 def lcoeff (n : ℕ) : polynomial R →ₗ[R] R :=
-finsupp.lapply n
+finsupp.lapply (of_add n)
 variable {R}
 
 @[simp] lemma lcoeff_apply (n : ℕ) (f : polynomial R) : lcoeff R n f = coeff f n := rfl
@@ -62,7 +71,12 @@ over `nat.antidiagonal`. A version which sums over `range (n + 1)` can be obtain
 by using `finset.nat.sum_antidiagonal_eq_sum_range_succ`. -/
 lemma coeff_mul (p q : polynomial R) (n : ℕ) :
   coeff (p * q) n = ∑ x in nat.antidiagonal n, coeff p x.1 * coeff q x.2 :=
-add_monoid_algebra.mul_apply_antidiagonal p q n _ (λ x, nat.mem_antidiagonal)
+begin
+  rw [coeff, add_monoid_algebra.mul_apply_antidiagonal,
+    finset.sum_map _ (equiv.prod_congr of_add of_add).to_embedding],
+  refl,
+  simp [multiplicative.ext_iff]
+end
 
 @[simp] lemma mul_coeff_zero (p q : polynomial R) : coeff (p * q) 0 = coeff p 0 * coeff q 0 :=
 by simp [coeff_mul]
@@ -75,21 +89,21 @@ by simp
 
 lemma coeff_C_mul_X (x : R) (k n : ℕ) :
   coeff (C x * X^k : polynomial R) n = if n = k then x else 0 :=
-by rw [← single_eq_C_mul_X]; simp [monomial, single, eq_comm, coeff]; congr
+by rw [← monomial_eq_C_mul_X]; simp [monomial, single, eq_comm, coeff]; congr
 
 @[simp] lemma coeff_C_mul (p : polynomial R) : coeff (C a * p) n = a * coeff p n :=
-add_monoid_algebra.single_zero_mul_apply p a n
+by simp [coeff, C, single_zero_ring_hom, add_monoid_algebra.single_zero_mul_apply]
 
 lemma C_mul' (a : R) (f : polynomial R) : C a * f = a • f :=
 ext $ λ n, coeff_C_mul f
 
 @[simp] lemma coeff_mul_C (p : polynomial R) (n : ℕ) (a : R) :
   coeff (p * C a) n = coeff p n * a :=
-add_monoid_algebra.mul_single_zero_apply p a n
+by simp [C, coeff, single_zero_ring_hom, add_monoid_algebra.mul_single_zero_apply]
 
 lemma coeff_X_pow (k n : ℕ) :
   coeff (X^k : polynomial R) n = if n = k then 1 else 0 :=
-by { simp only [X_pow_eq_monomial, monomial, single, eq_comm], congr }
+by simpa using coeff_C_mul_X (1 : R) k n
 
 @[simp]
 lemma coeff_X_pow_self (n : ℕ) :
@@ -146,10 +160,8 @@ begin
     use ψ,
     ext i,
     simp only [ψ, c', coeff_C_mul, mem_support_iff, coeff_monomial,
-               finset_sum_coeff, finset.sum_ite_eq'],
-    split_ifs with hi hi,
-    { rw hc },
-    { rw [not_not] at hi, rwa mul_zero } },
+               finset_sum_coeff, finset.sum_ite_eq', ne.def, ite_not],
+    split_ifs; simp * }
 end
 
 end coeff
@@ -172,7 +184,9 @@ lemma mem_span_C_coeff :
   f ∈ span (polynomial R) {g : polynomial R | ∃ i : ℕ, g = (C (coeff f i))} :=
 begin
   rw [← f.sum_single] {occs := occurrences.pos [1]},
-  refine sum_mem _ (λ i hi, _),
+  refine sum_mem _ _,
+  rw forall_multiplicative_iff,
+  intros i x,
   change monomial i _ ∈ span _ _,
   rw [← C_mul_X_pow_eq_monomial, ← X_pow_mul],
   exact smul_mem _ _ (subset_span ⟨i, rfl⟩),

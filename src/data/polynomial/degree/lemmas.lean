@@ -95,7 +95,7 @@ lemma degree_pos_of_root {p : polynomial R} (hp : p ≠ 0) (h : is_root p a) : 0
 lt_of_not_ge $ λ hlt, begin
   have := eq_C_of_degree_le_zero hlt,
   rw [is_root, this, eval_C] at h,
-  exact hp (finsupp.ext (λ n, show coeff p n = 0, from
+  exact hp (ext (λ n, show coeff p n = 0, from
     nat.cases_on n h (λ _, coeff_eq_zero_of_degree_lt (lt_of_le_of_lt hlt
       (with_bot.coe_lt_coe.2 (nat.succ_pos _)))))),
 end
@@ -145,7 +145,7 @@ lemma nat_degree_mul_C_eq_of_mul_ne_zero (h : p.leading_coeff * a ≠ 0) :
   (p * C a).nat_degree = p.nat_degree :=
 begin
   refine eq_nat_degree_of_le_mem_support (nat_degree_mul_C_le p a) _,
-  refine mem_support_iff_coeff_ne_zero.mpr _,
+  refine mem_support_iff.mpr _,
   rwa coeff_mul_C,
 end
 
@@ -158,7 +158,7 @@ lemma nat_degree_C_mul_eq_of_mul_ne_zero (h : a * p.leading_coeff ≠ 0) :
   (C a * p).nat_degree = p.nat_degree :=
 begin
   refine eq_nat_degree_of_le_mem_support (nat_degree_C_mul_le a p) _,
-  refine mem_support_iff_coeff_ne_zero.mpr _,
+  refine mem_support_iff.mpr _,
   rwa coeff_C_mul,
 end
 
@@ -179,7 +179,7 @@ lemma nat_degree_pos_of_eval₂_root {p : polynomial R} (hp : p ≠ 0) (f : R �
   0 < nat_degree p :=
 lt_of_not_ge $ λ hlt, begin
   rw [eq_C_of_nat_degree_le_zero hlt, eval₂_C] at hz,
-  refine hp (finsupp.ext (λ n, _)),
+  refine hp (ext (λ n, _)),
   cases n,
   { exact inj _ hz },
   { exact coeff_eq_zero_of_nat_degree_lt (lt_of_le_of_lt hlt (nat.succ_pos _)) }
@@ -225,9 +225,9 @@ lemma monomial_nat_degree_leading_coeff_eq_self (h : f.support.card ≤ 1) :
   monomial f.nat_degree f.leading_coeff = f :=
 begin
   interval_cases f.support.card with H,
-  { have : f = 0 := finsupp.card_support_eq_zero.1 H,
+  { have : f = 0 := card_support_eq_zero.1 H,
     simp [this] },
-  { obtain ⟨n, x, hx, rfl : f = monomial n x⟩ := finsupp.card_support_eq_one'.1 H,
+  { obtain ⟨n, x, hx, rfl⟩ := card_support_eq_one'.1 H,
     simp [hx] }
 end
 

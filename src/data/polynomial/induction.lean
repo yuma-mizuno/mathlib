@@ -23,29 +23,25 @@ variables {R : Type u} {S : Type v} {T : Type w} {ι : Type x} {k : Type y} {A :
 section semiring
 variables [semiring R] {p q r : polynomial R}
 
-lemma sum_C_mul_X_eq (p : polynomial R) : p.sum (λn a, C a * X^n) = p :=
-eq.trans (sum_congr rfl $ assume n hn, single_eq_C_mul_X.symm) (finsupp.sum_single _)
-
-lemma sum_monomial_eq (p : polynomial R) : p.sum (λn a, monomial n a) = p :=
-by simp only [single_eq_C_mul_X, sum_C_mul_X_eq]
-
 @[elab_as_eliminator] protected lemma induction_on {M : polynomial R → Prop} (p : polynomial R)
   (h_C : ∀a, M (C a))
   (h_add : ∀p q, M p → M q → M (p + q))
   (h_monomial : ∀(n : ℕ) (a : R), M (C a * X^n) → M (C a * X^(n+1))) :
   M p :=
-have ∀{n:ℕ} {a}, M (C a * X^n),
+have ∀ (n : ℕ) a, M (C a * X^n),
 begin
   assume n a,
   induction n with n ih,
   { simp only [pow_zero, mul_one, h_C] },
   { exact h_monomial _ _ ih }
 end,
-finsupp.induction p
-  (suffices M (C 0), by { convert this, exact single_zero.symm, },
-    h_C 0)
-  (assume n a p _ _ hp, suffices M (C a * X^n + p), by { convert this, exact single_eq_C_mul_X },
-    h_add _ _ this hp)
+finsupp.induction p (by simpa using this 0 0)
+  begin
+    rw forall_multiplicative_iff,
+    intros n a p _ _ hp,
+    rw [single_eq_C_mul_X, to_add_of_add],
+    exact h_add _ _ (this _ _) hp
+  end
 
 /--
 To prove something about polynomials,
@@ -57,18 +53,18 @@ and it holds for monomials.
   (h_monomial : ∀(n : ℕ) (a : R), M (monomial n a)) :
   M p :=
 polynomial.induction_on p (h_monomial 0) h_add
-(λ n a h, begin rw ← single_eq_C_mul_X at ⊢, exact h_monomial _ _, end)
+(λ n a h, begin rw ← monomial_eq_C_mul_X at ⊢, exact h_monomial _ _, end)
 
 
 section coeff
 
 theorem coeff_mul_monomial (p : polynomial R) (n d : ℕ) (r : R) :
   coeff (p * monomial n r) (d + n) = coeff p d * r :=
-by rw [single_eq_C_mul_X, ←X_pow_mul, ←mul_assoc, coeff_mul_C, coeff_mul_X_pow]
+by rw [monomial_eq_C_mul_X, ←X_pow_mul, ←mul_assoc, coeff_mul_C, coeff_mul_X_pow]
 
 theorem coeff_monomial_mul (p : polynomial R) (n d : ℕ) (r : R) :
   coeff (monomial n r * p) (d + n) = r * coeff p d :=
-by rw [single_eq_C_mul_X, mul_assoc, coeff_C_mul, X_pow_mul, coeff_mul_X_pow]
+by rw [monomial_eq_C_mul_X, mul_assoc, coeff_C_mul, X_pow_mul, coeff_mul_X_pow]
 
 -- This can already be proved by `simp`.
 theorem coeff_mul_monomial_zero (p : polynomial R) (d : ℕ) (r : R) :

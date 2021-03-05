@@ -31,7 +31,7 @@ variables [semiring R]
 
 /-- `derivative p` is the formal derivative of the polynomial `p` -/
 def derivative : polynomial R →ₗ[R] polynomial R :=
-finsupp.total ℕ (polynomial R) R (λ n, C ↑n * X^(n - 1))
+finsupp.total _ (polynomial R) R (λ n, C ↑n.to_add * X^(n.to_add - 1))
 
 lemma derivative_apply (p : polynomial R) :
   derivative p = p.sum (λn a, C (a * n) * X^(n - 1)) :=
@@ -47,7 +47,7 @@ lemma coeff_derivative (p : polynomial R) (n : ℕ) :
 begin
   rw [derivative_apply],
   simp only [coeff_X_pow, coeff_sum, coeff_C_mul],
-  rw [finsupp.sum, finset.sum_eq_single (n + 1)],
+  rw [sum_def, finset.sum_eq_single (n + 1)],
   simp only [nat.add_succ_sub_one, add_zero, mul_one, if_true, eq_self_iff_true], norm_cast,
   swap,
   { rw [if_pos (nat.add_sub_cancel _ _).symm, mul_one, nat.cast_add, nat.cast_one, mem_support_iff],
@@ -171,17 +171,20 @@ calc derivative (f * g) = f.sum (λn a, g.sum (λm b, C ((a * b) * (n + m : ℕ)
   end
   ... = f.sum (λn a, g.sum (λm b,
       (C (a * n) * X^(n - 1)) * (C b * X^m) + (C a * X^n) * (C (b * m) * X^(m - 1)))) :
-    sum_congr rfl $ assume n hn, sum_congr rfl $ assume m hm,
-      by simp only [nat.cast_add, mul_add, add_mul, C_add, C_mul];
-      cases n; simp only [nat.succ_sub_succ, pow_zero];
-      cases m; simp only [nat.cast_zero, C_0, nat.succ_sub_succ, zero_mul, mul_zero,
-        nat.sub_zero, pow_zero, pow_add, one_mul, pow_succ, mul_comm, mul_left_comm]
+    sum_congr rfl $ forall_multiplicative_iff.2 $ assume n hn,
+      sum_congr rfl $ forall_multiplicative_iff.2 $ assume m hm,
+      begin
+        simp only [nat.cast_add, mul_add, add_mul, C_add, C_mul],
+        cases n; simp [nat.succ_sub_succ, pow_zero];
+        cases m; simp only [nat.cast_zero, C_0, nat.succ_sub_succ, zero_mul, mul_zero,
+          nat.sub_zero, pow_zero, pow_add, one_mul, pow_succ, mul_comm, mul_left_comm]
+      end
   ... = derivative f * g + f * derivative g :
     begin
       conv { to_rhs, congr,
         { rw [← sum_C_mul_X_eq g] },
         { rw [← sum_C_mul_X_eq f] } },
-      simp only [finsupp.sum, sum_add_distrib, finset.mul_sum, finset.sum_mul, derivative_apply]
+      simp [sum_def, sum_add_distrib, finset.mul_sum, finset.sum_mul, derivative_apply],
     end
 
 theorem derivative_pow_succ (p : polynomial R) (n : ℕ) :
@@ -240,7 +243,7 @@ polynomial.induction_on p
 
 theorem of_mem_support_derivative {p : polynomial R} {n : ℕ} (h : n ∈ p.derivative.support) :
   n + 1 ∈ p.support :=
-finsupp.mem_support_iff.2 $ λ (h1 : p.coeff (n+1) = 0), finsupp.mem_support_iff.1 h $
+mem_support_iff.2 $ λ (h1 : p.coeff (n+1) = 0), mem_support_iff.1 h $
 show p.derivative.coeff n = 0, by rw [coeff_derivative, h1, zero_mul]
 
 theorem degree_derivative_lt {p : polynomial R} (hp : p ≠ 0) : p.derivative.degree < p.degree :=
@@ -292,7 +295,7 @@ variables [integral_domain R]
 lemma mem_support_derivative [char_zero R] (p : polynomial R) (n : ℕ) :
   n ∈ (derivative p).support ↔ n + 1 ∈ p.support :=
 suffices (¬(coeff p (n + 1) = 0 ∨ ((n + 1:ℕ) : R) = 0)) ↔ coeff p (n + 1) ≠ 0,
-  by simpa only [mem_support_iff_coeff_ne_zero, coeff_derivative, ne.def, mul_eq_zero],
+  by simpa only [mem_support_iff, coeff_derivative, ne.def, mul_eq_zero],
 by { rw [nat.cast_eq_zero], simp only [nat.succ_ne_zero, or_false] }
 
 @[simp] lemma degree_derivative_eq [char_zero R] (p : polynomial R) (hp : 0 < nat_degree p) :
@@ -305,7 +308,8 @@ begin
   { rw derivative_apply,
     apply le_trans (degree_sum_le _ _) (sup_le (λ n hn, _)),
     apply le_trans (degree_C_mul_X_pow_le _ _) (with_bot.coe_le_coe.2 (nat.sub_le_sub_right _ _)),
-    apply le_nat_degree_of_mem_supp _ hn },
+    apply le_nat_degree_of_mem_supp,
+    simpa [support] using hn },
   { refine le_sup _,
     rw [mem_support_derivative, nat.sub_add_cancel, mem_support_iff],
     { show ¬ leading_coeff p = 0,

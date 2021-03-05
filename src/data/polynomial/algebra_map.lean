@@ -52,7 +52,7 @@ lemma alg_hom_eval₂_algebra_map
   f (eval₂ (algebra_map R A) a p) = eval₂ (algebra_map R B) (f a) p :=
 begin
   dsimp [eval₂, finsupp.sum],
-  simp only [f.map_sum, f.map_mul, f.map_pow, ring_hom.eq_int_cast, ring_hom.map_int_cast,
+  simp [sum_def, f.map_sum, f.map_mul, f.map_pow, ring_hom.eq_int_cast, ring_hom.map_int_cast,
     alg_hom.commutes],
 end
 
@@ -63,7 +63,7 @@ lemma eval₂_algebra_map_X {R A : Type*} [comm_ring R] [ring A] [algebra R A]
 begin
   conv_rhs { rw [←polynomial.sum_C_mul_X_eq p], },
   dsimp [eval₂, finsupp.sum],
-  simp only [f.map_sum, f.map_mul, f.map_pow, ring_hom.eq_int_cast, ring_hom.map_int_cast],
+  simp only [sum_def, f.map_sum, f.map_mul, f.map_pow, ring_hom.eq_int_cast, ring_hom.map_int_cast],
   simp [polynomial.C_eq_algebra_map],
 end
 
@@ -202,6 +202,7 @@ begin
   { simp [hf] },
   by_cases hi : i ∈ f.support,
   { unfold polynomial.eval polynomial.eval₂ finsupp.sum id at dvd_eval,
+    simp only [sum_def] at dvd_eval,
     rw [←finset.insert_erase hi, finset.sum_insert (finset.not_mem_erase _ _)] at dvd_eval,
     refine (dvd_add_left _).mp dvd_eval,
     apply finset.dvd_sum,
@@ -209,7 +210,7 @@ begin
     exact dvd_terms j (finset.ne_of_mem_erase hj) },
   { convert dvd_zero p,
     convert _root_.zero_mul _,
-    exact finsupp.not_mem_support_iff.mp hi }
+    exact not_mem_support_iff_coeff_zero.mp hi }
 end
 
 lemma dvd_term_of_is_root_of_dvd_terms {r p : S} {f : polynomial S} (i : ℕ)
@@ -267,7 +268,7 @@ lemma aeval_endomorphism {M : Type*}
   aeval f p v = p.sum (λ n b, b • (f ^ n) v) :=
 begin
   rw [aeval_def, eval₂],
-  exact (finset.sum_hom p.support (λ h : M →ₗ[R] M, h v)).symm
+  exact (finset.sum_hom _ (λ h : M →ₗ[R] M, h v)).symm
 end
 
 end polynomial

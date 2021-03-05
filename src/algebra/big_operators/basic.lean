@@ -225,9 +225,19 @@ lemma prod_map'' {γ} [∀ P, decidable P] (s : finset α) (e : α ≃ γ) (f : 
   (∏ x in e <$> s, f x) = ∏ x in s, f (e x) :=
 prod_map' s e.to_embedding f
 
+@[simp, to_additive]
+lemma prod_map''' {γ} (s : finset α) (e : α ≃ γ) (f : γ → β) :
+  (∏ x in s.map e.to_embedding, f x) = ∏ x in s, f (e x) :=
+prod_map s e.to_embedding f
+
+@[to_additive]
+lemma prod_reindex (e : α ≃ γ) (s : finset α) (f : α → β) :
+  ∏ x in s, f x = ∏ x in s.map e.to_embedding, f (e.symm x) :=
+by simp
+
 lemma prod_multiplicative (s : finset (multiplicative α)) (f : multiplicative α → β) :
   ∏ x in s, f x = ∏ x in s.map to_add.to_embedding, f (of_add x) :=
-by simp
+prod_reindex _ _ _
 
 @[congr, to_additive]
 lemma prod_congr (h : s₁ = s₂) : (∀x∈s₂, f x = g x) → s₁.prod f = s₂.prod g :=

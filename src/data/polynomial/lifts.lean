@@ -107,14 +107,13 @@ end
 /-- If `p` lifts then `p.erase n` lifts. -/
 lemma erase_mem_lifts {p : polynomial S} (n : ℕ) (h : p ∈ lifts f) : p.erase n ∈ lifts f :=
 begin
-  rw [lifts_iff_set_range, mem_map_range, coeff] at h ⊢,
+  rw [lifts_iff_set_range, mem_map_range] at h ⊢,
   intros k,
   by_cases hk : k = n,
-  { use 0,
-    simp only [hk, ring_hom.map_zero, finsupp.erase_same] },
+  { subst hk, use 0, simp },
   obtain ⟨i, hi⟩ := h k,
   use i,
-  simp only [hi, hk, finsupp.erase_ne, ne.def, not_false_iff],
+  simp [hi, hk, coeff_erase]
 end
 
 section lift_deg
@@ -131,15 +130,13 @@ begin
   have hcoeff : f (q.coeff n) = s,
   { simp [coeff_monomial] at hq,
     exact hq },
+  subst hcoeff,
   use (monomial n (q.coeff n)),
   split,
-  { simp only [hcoeff, map_monomial] },
+  { simp only [map_monomial] },
   have hqzero : q.coeff n ≠ 0,
-  { intro habs,
-    simp only [habs, ring_hom.map_zero] at hcoeff,
-    exact hzero hcoeff.symm },
-  repeat {rw single_eq_C_mul_X},
-  simp only [hzero, hqzero, ne.def, not_false_iff, degree_C_mul_X_pow],
+  { intro habs, simpa [habs] using hzero },
+  simp [degree_monomial, hzero, hqzero]
 end
 
 /-- A polynomial lifts if and only if it can be lifted to a polynomial of the same degree. -/
@@ -165,7 +162,7 @@ begin
   obtain ⟨lead, hlead⟩ := monomial_mem_lifts_and_degree_eq (monomial_mem_lifts p.nat_degree
     ((lifts_iff_coeff_lifts p).1 hlifts p.nat_degree)),
   have deg_lead : lead.degree = p.nat_degree,
-  { rw [hlead.2, single_eq_C_mul_X, degree_C_mul_X_pow p.nat_degree lead_zero] },
+  { rw [hlead.2, degree_monomial p.nat_degree lead_zero] },
   rw hdeg at deg_erase,
   obtain ⟨erase, herase⟩ := hn p.erase_lead.nat_degree deg_erase
     (erase_mem_lifts p.nat_degree hlifts) (refl p.erase_lead.nat_degree),

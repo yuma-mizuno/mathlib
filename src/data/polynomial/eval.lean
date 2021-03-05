@@ -16,7 +16,7 @@ We give several lemmas about their interaction with each other and with module o
 
 noncomputable theory
 
-open finsupp finset add_monoid_algebra
+open finsupp finset add_monoid_algebra multiplicative
 open_locale big_operators
 
 namespace polynomial
@@ -45,13 +45,13 @@ lemma eval₂_congr {R S : Type*} [semiring R] [semiring S]
 by rintro rfl rfl rfl; refl
 
 @[simp] lemma eval₂_zero : (0 : polynomial R).eval₂ f x = 0 :=
-finsupp.sum_zero_index
+by simp [eval₂]
 
 @[simp] lemma eval₂_C : (C a).eval₂ f x = f a :=
-(sum_single_index $ by rw [f.map_zero, zero_mul]).trans $ by simp [pow_zero, mul_one]
+(C_sum_index $ by rw [f.map_zero, zero_mul]).trans $ by simp [pow_zero, mul_one]
 
 @[simp] lemma eval₂_X : X.eval₂ f x = x :=
-(sum_single_index $ by rw [f.map_zero, zero_mul]).trans $ by rw [f.map_one, one_mul, pow_one]
+(X_sum_index $ by rw [f.map_zero, zero_mul]).trans $ by rw [f.map_one, one_mul, pow_one]
 
 @[simp] lemma eval₂_monomial {n : ℕ} {r : R} : (monomial n r).eval₂ f x = (f r) * x^n :=
 begin
@@ -67,7 +67,7 @@ begin
 end
 
 @[simp] lemma eval₂_add : (p + q).eval₂ f x = p.eval₂ f x + q.eval₂ f x :=
-finsupp.sum_add_index
+add_sum_index
   (λ _, by rw [f.map_zero, zero_mul])
   (λ _ _ _, by rw [f.map_add, add_mul])
 
@@ -82,10 +82,7 @@ by rw [bit1, eval₂_add, eval₂_bit0, eval₂_one, bit1]
 
 @[simp] lemma eval₂_smul (g : R →+* S) (p : polynomial R) (x : S) {s : R} :
   eval₂ g x (s • p) = g s * eval₂ g x p :=
-begin
-  simp only [eval₂, sum_smul_index, forall_const, zero_mul, g.map_zero, g.map_mul, mul_assoc],
-  rw [←finsupp.mul_sum],
-end
+by simp [eval₂, smul_sum_index, mul_assoc, mul_sum]
 
 @[simp] lemma eval₂_C_X : eval₂ C X p = p :=
 polynomial.induction_on' p (λ p q hp hq, by simp [hp, hq])
@@ -115,7 +112,10 @@ lemma eval₂_mul_noncomm (hf : ∀ k, commute (f $ q.coeff k) x) :
   eval₂ f x (p * q) = eval₂ f x p * eval₂ f x q :=
 begin
   simp only [eval₂_eq_lift_nc],
-  exact lift_nc_mul _ _ p q (λ k n hn, (hf k).pow_right n)
+  refine lift_nc_mul _ _ p q _,
+  rw forall_multiplicative_iff, intro k,
+  rw forall_multiplicative_iff, intros n hn,
+  exact (hf k).pow_right n
 end
 
 @[simp] lemma eval₂_mul_X : eval₂ f x (p * X) = eval₂ f x p * x :=
@@ -276,9 +276,13 @@ instance [decidable_eq R] : decidable (is_root p a) := by unfold is_root; apply_
 
 lemma coeff_zero_eq_eval_zero (p : polynomial R) :
   coeff p 0 = p.eval 0 :=
-calc coeff p 0 = coeff p 0 * 0 ^ 0 : by simp
-... = p.eval 0 : eq.symm $
-  finset.sum_eq_single _ (λ b _ hb, by simp [zero_pow (nat.pos_of_ne_zero hb)]) (by simp)
+begin
+  simp only [eval, eval₂, sum_def],
+  rw finset.sum_eq_single 0,
+  { simp },
+  { intros n hb hb0, rw [zero_pow, mul_zero], rwa pos_iff_ne_zero },
+  { simp [mem_support_iff] }
+end
 
 lemma zero_is_root_of_coeff_zero_eq_zero {p : polynomial R} (hp : p.coeff 0 = 0) :
   is_root p 0 :=
@@ -295,18 +299,15 @@ lemma comp_eq_sum_left : p.comp q = p.sum (λ e a, C a * q ^ e) :=
 rfl
 
 @[simp] lemma comp_X : p.comp X = p :=
-begin
-  simp only [comp, eval₂, ← single_eq_C_mul_X],
-  exact finsupp.sum_single _,
-end
+by simp only [comp, eval₂, sum_C_mul_X_eq]
 
 @[simp] lemma X_comp : X.comp p = p := eval₂_X _ _
 
 @[simp] lemma comp_C : p.comp (C a) = C (p.eval a) :=
 begin
-  dsimp [comp, eval₂, eval, finsupp.sum],
-  rw [← p.support.sum_hom (@C R _)],
-  apply finset.sum_congr rfl; simp
+  simp only [comp, eval₂, eval, sum_def],
+  rw ← p.support.sum_hom (@C R _),
+  simp
 end
 
 @[simp] lemma C_comp : (C a).comp p = C a := eval₂_C _ _
@@ -376,10 +377,7 @@ is_semiring_hom.comp _ _
 @[simp] lemma map_X : X.map f = X := eval₂_X _ _
 
 @[simp] lemma map_monomial {n a} : (monomial n a).map f = monomial n (f a) :=
-begin
-  dsimp only [map],
-  rw [eval₂_monomial, single_eq_C_mul_X], refl,
-end
+by { rw [map, eval₂_monomial], simp [monomial_eq_C_mul_X] }
 
 @[simp] lemma map_zero : (0 : polynomial R).map f = 0 :=  eval₂_zero _ _
 
@@ -393,8 +391,8 @@ nat.rec_on n rfl $ λ n ih, by rw [n.cast_succ, map_add, ih, map_one, n.cast_suc
 @[simp]
 lemma coeff_map (n : ℕ) : coeff (p.map f) n = f (coeff p n) :=
 begin
-  rw [map, eval₂, coeff_sum],
-  conv_rhs { rw [← sum_C_mul_X_eq p, coeff_sum, finsupp.sum,
+  rw [map, eval₂, coeff_sum, sum_def],
+  conv_rhs { rw [← sum_C_mul_X_eq p, coeff_sum, sum_def,
     ← p.support.sum_hom f], },
   refine finset.sum_congr rfl (λ x hx, _),
   simp [function.comp, coeff_C_mul_X, f.map_mul],
@@ -444,13 +442,13 @@ open is_semiring_hom
 begin
   dunfold map,
   dunfold eval₂,
-  rw [add_monoid_algebra.mul_def, finsupp.sum_mul _ p], simp only [finsupp.mul_sum _ q],
+  rw [mul_def],
+  simp only [ring_hom.coe_comp, function.comp_app, monomial_eq_C_mul_X, C_mul_X_eq_single],
+  unfold sum,
+  rw [finsupp.sum_mul _ p], simp only [finsupp.mul_sum _ q],
   rw [sum_sum_index],
-  { apply sum_congr rfl, assume i hi, dsimp only, rw [sum_sum_index],
-    { apply sum_congr rfl, assume j hj, dsimp only,
-      rw [sum_single_index, (C.comp f).map_mul, pow_add],
-      { simp [←mul_assoc], conv_lhs { rw ←@X_pow_mul_assoc _ _ _ _ i }, },
-      { simp, } },
+  { apply sum_congr rfl, rw forall_multiplicative_iff, assume i hi, dsimp only, rw [sum_sum_index],
+    { apply sum_congr rfl, rw forall_multiplicative_iff, assume j hj, simp },
     { intro, simp, },
     { intros, simp [add_mul], } },
   { intro, simp, },
@@ -491,16 +489,25 @@ begin
     rw [map_mul, map_C, hc, map_pow, map_X] }
 end
 
+lemma support_map_subset (p : polynomial R) : (map f p).support ⊆ p.support :=
+begin
+  intros x,
+  simp only [mem_support_iff],
+  contrapose!,
+  change p.coeff x = 0 → (map f p).coeff x = 0,
+  rw coeff_map,
+  intro hx,
+  rw hx,
+  exact ring_hom.map_zero f,
+end
+
 lemma eval₂_map [semiring T] (g : S →+* T) (x : T) :
   (p.map f).eval₂ g x = p.eval₂ (g.comp f) x :=
 begin
-  convert finsupp.sum_map_range_index _,
-  { change map f p = map_range f _ p,
-    ext,
-    rw map_range_apply,
-    exact coeff_map f a, },
-  { exact f.map_zero, },
-  { intro a, simp only [ring_hom.map_zero, zero_mul], },
+  simp only [eval₂, sum_def],
+  rw sum_subset (support_map_subset _ _),
+  { simp },
+  { simp [mem_support_iff] {contextual := tt} }
 end
 
 lemma eval_map (x : S) : (p.map f).eval x = p.eval₂ f x :=
@@ -624,18 +631,6 @@ eq.symm $ multiset.prod_hom _ (monoid_hom.of (map f))
 lemma map_prod {ι : Type*} (g : ι → polynomial R) (s : finset ι) :
   (∏ i in s, g i).map f = ∏ i in s, (g i).map f :=
 eq.symm $ prod_hom _ _
-
-lemma support_map_subset (p : polynomial R) : (map f p).support ⊆ p.support :=
-begin
-  intros x,
-  simp only [mem_support_iff],
-  contrapose!,
-  change p.coeff x = 0 → (map f p).coeff x = 0,
-  rw coeff_map,
-  intro hx,
-  rw hx,
-  exact ring_hom.map_zero f,
-end
 
 lemma map_comp (p q : polynomial R) : map f (p.comp q) = (map f p).comp (map f q) :=
 polynomial.induction_on p

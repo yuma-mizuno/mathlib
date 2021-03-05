@@ -217,6 +217,8 @@ begin
   { rw [zero_apply, single_apply, if_t_t], },
 end
 
+lemma support_single : (single a b).support = if b = 0 then ∅ else {a} := rfl
+
 lemma support_single_ne_zero (hb : b ≠ 0) : (single a b).support = {a} :=
 if_neg hb
 

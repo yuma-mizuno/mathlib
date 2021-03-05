@@ -79,8 +79,7 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra
-open_locale big_operators
+open set function finsupp add_monoid_algebra multiplicative
 
 universes u v w x
 variables {R : Type u} {S₁ : Type v} {S₂ : Type w} {S₃ : Type x}
@@ -103,17 +102,13 @@ instance : has_scalar R (mv_polynomial σ R) := add_monoid_algebra.has_scalar
 instance : semimodule R (mv_polynomial σ R) := add_monoid_algebra.semimodule
 instance : algebra R (mv_polynomial σ R) := add_monoid_algebra.algebra
 
-/-- The coercion turning an `mv_polynomial` into the function which reports the coefficient
-of a given monomial. -/
-def coeff_coe_to_fun : has_coe_to_fun (mv_polynomial σ R) :=
-finsupp.has_coe_to_fun
-
-local attribute [instance] coeff_coe_to_fun
-
 /-- `monomial s a` is the monomial with coefficient `a` and exponents given by `s`  -/
-def monomial (s : σ →₀ ℕ) (a : R) : mv_polynomial σ R := single s a
+def monomial (s : σ →₀ ℕ) (a : R) : mv_polynomial σ R :=
+single (of_add s) a
 
-lemma single_eq_monomial (s : σ →₀ ℕ) (a : R) : single s a = monomial s a := rfl
+lemma single_eq_monomial (s : multiplicative (σ →₀ ℕ)) (a : R) :
+  single s a = monomial s.to_add a :=
+by simp [monomial]
 
 /-- `C a` is the constant polynomial with value `a` -/
 def C : R →+* mv_polynomial σ R :=
@@ -151,8 +146,9 @@ finsupp.single_injective _
 lemma C_surjective {R : Type*} [comm_semiring R] (σ : Type*) (hσ : ¬ nonempty σ) :
   function.surjective (C : R → mv_polynomial σ R) :=
 begin
-  refine λ p, ⟨p.to_fun 0, finsupp.ext (λ a, _)⟩,
-  simpa [(finsupp.ext (λ x, absurd (nonempty.intro x) hσ) : a = 0), C, monomial],
+  refine λ p, ⟨p.to_fun 1, finsupp.ext (λ a, _)⟩,
+  have : a = 1, { ext x, cases hσ ⟨x⟩ },
+  simp [this, C, monomial], refl
 end
 
 lemma C_surjective_fin_0 {R : Type*} [comm_ring R] :
@@ -174,8 +170,8 @@ infinite.of_injective (λ i : ℕ, monomial (single (classical.arbitrary σ) i) 
 begin
   intros m n h,
   have := (single_eq_single_iff _ _ _ _).mp h,
-  simp only [and_true, eq_self_iff_true, or_false, one_ne_zero, and_self,
-             single_eq_single_iff, eq_self_iff_true, true_and] at this,
+  simp only [single_eq_single_iff, true_and, equiv.apply_eq_iff_eq, and_true, eq_self_iff_true,
+    or_false, one_ne_zero, and_self] at this,
   rcases this with (rfl|⟨rfl, rfl⟩); refl
 end
 
@@ -223,7 +219,7 @@ by simp [monomial]
 
 @[simp] lemma monomial_mul {s s' : σ →₀ ℕ} {a b : R} :
   monomial s a * monomial s' b = monomial (s + s') (a * b) :=
-by rw [monomial, monomial, monomial, add_monoid_algebra.single_mul_single]
+by simp [monomial]
 
 @[simp] lemma monomial_zero {s : σ →₀ ℕ}: monomial s (0 : R) = 0 :=
 by rw [monomial, single_zero]; refl
@@ -263,16 +259,16 @@ begin
 end,
 finsupp.induction p
   (by have : M (C 0) := h_C 0; rwa [C_0] at this)
-  (assume s a p hsp ha hp, h_add _ _ (this s a) hp)
+  (assume s a p hsp ha hp, h_add _ _ (by simpa [monomial] using this s.to_add a) hp)
 
 attribute [elab_as_eliminator]
 theorem induction_on' {P : mv_polynomial σ R → Prop} (p : mv_polynomial σ R)
     (h1 : ∀ (u : σ →₀ ℕ) (a : R), P (monomial u a))
     (h2 : ∀ (p q : mv_polynomial σ R), P p → P q → P (p + q)) : P p :=
-finsupp.induction p (suffices P (monomial 0 0), by rwa monomial_zero at this,
-                     show P (monomial 0 0), from h1 0 0)
-                    (λ a b f ha hb hPf, h2 _ _ (h1 _ _) hPf)
-
+finsupp.induction p
+  (suffices P (monomial 0 0), by rwa monomial_zero at this,
+    show P (monomial 0 0), from h1 0 0)
+  (λ a b f ha hb hPf, h2 _ _ (by simpa [monomial] using h1 a.to_add _) hPf)
 
 @[ext] lemma ring_hom_ext {A : Type*} [semiring A] {f g : mv_polynomial σ R →+* A}
   (hC : ∀ r, f (C r) = g (C r)) (hX : ∀ i, f (X i) = g (X i)) :
@@ -299,31 +295,40 @@ by { ext, exact hf _ }
   f (C r) = C r :=
 f.commutes r
 
+section support
+
+/-- Powers of non-zero coefficients. -/
+def support (p : mv_polynomial σ R) : finset (σ →₀ ℕ) :=
+p.support.map to_add.to_embedding
+
+end support
+
 section coeff
 
 section
--- While setting up `coeff`, we make `mv_polynomial` reducible so we can treat it as a function.
-local attribute [reducible] mv_polynomial
 
 /-- The coefficient of the monomial `m` in the multi-variable polynomial `p`. -/
-def coeff (m : σ →₀ ℕ) (p : mv_polynomial σ R) : R := p m
+def coeff (m : σ →₀ ℕ) (p : mv_polynomial σ R) : R :=
+@coe_fn _ (add_monoid_algebra.has_coe_to_fun _ _) p (of_add m)
+
 end
 
-@[ext] lemma ext (p q : mv_polynomial σ R) :
-  (∀ m, coeff m p = coeff m q) → p = q := ext
+@[ext] lemma ext (p q : mv_polynomial σ R) (h : ∀ m, coeff m p = coeff m q) : p = q :=
+ext $ forall_multiplicative_iff.2 h
 
 lemma ext_iff (p q : mv_polynomial σ R) :
   p = q ↔ (∀ m, coeff m p = coeff m q) :=
 ⟨ λ h m, by rw h, ext p q⟩
 
 @[simp] lemma coeff_add (m : σ →₀ ℕ) (p q : mv_polynomial σ R) :
-  coeff m (p + q) = coeff m p + coeff m q := add_apply p q m
+  coeff m (p + q) = coeff m p + coeff m q :=
+by simp [coeff]
 
 @[simp] lemma coeff_zero (m : σ →₀ ℕ) :
   coeff m (0 : mv_polynomial σ R) = 0 := rfl
 
 @[simp] lemma coeff_zero_X (i : σ) : coeff 0 (X i : mv_polynomial σ R) = 0 :=
-single_eq_of_ne (λ h, by cases single_eq_zero.1 h)
+single_eq_of_ne $ λ h, by cases single_eq_zero.1 (of_add.apply_eq_iff_eq.1 h)
 
 instance coeff.is_add_monoid_hom (m : σ →₀ ℕ) :
   is_add_monoid_hom (coeff m : mv_polynomial σ R → R) :=
@@ -339,11 +344,11 @@ by simp [monomial_eq]
 
 @[simp] lemma coeff_monomial (m n) (a) :
   coeff m (monomial n a : mv_polynomial σ R) = if n = m then a else 0 :=
-by convert single_apply
+by simp [coeff, monomial, single_apply]
 
 @[simp] lemma coeff_C (m) (a) :
   coeff m (C a : mv_polynomial σ R) = if 0 = m then a else 0 :=
-by convert single_apply
+by simp [C]
 
 lemma coeff_X_pow (i : σ) (m) (k : ℕ) :
   coeff m (X i ^ k : mv_polynomial σ R) = if single i k = m then 1 else 0 :=
