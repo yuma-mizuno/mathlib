@@ -178,9 +178,36 @@ lemma is_wf.not_lt_min (hs : is_wf s) (hn : s.nonempty) (ha : a ∈ s) : ¬ a < 
 hs.not_lt_min univ (nonempty_iff_univ_nonempty.1 hn.to_subtype) (mem_univ (⟨a, ha⟩ : s))
 
 @[simp]
-lemma is_wf_min_singleton {hs : is_wf ({a} : set α)} {hn : ({a} : set α).nonempty} :
+lemma is_wf_min_singleton (a) {hs : is_wf ({a} : set α)} {hn : ({a} : set α).nonempty} :
   hs.min hn = a :=
 eq_of_mem_singleton (is_wf.min_mem hs hn)
+
+end set
+
+namespace set
+variables [linear_order α] {s t : set α} {a : α}
+
+lemma is_wf.min_le
+  (hs : s.is_wf) (hn : s.nonempty) (ha : a ∈ s) : hs.min hn ≤ a :=
+le_of_not_lt (hs.not_lt_min hn ha)
+
+lemma is_wf.le_min_iff
+  (hs : s.is_wf) (hn : s.nonempty) :
+  a ≤ hs.min hn ↔ ∀ b, b ∈ s → a ≤ b :=
+⟨λ ha b hb, le_trans ha (hs.min_le hn hb), λ h, h _ (hs.min_mem _)⟩
+
+lemma is_wf.min_le_min_of_subset
+  {hs : s.is_wf} {hsn : s.nonempty} {ht : t.is_wf} {htn : t.nonempty} (hst : s ⊆ t) :
+  ht.min htn ≤ hs.min hsn :=
+(is_wf.le_min_iff _ _).2 (λ b hb, ht.min_le htn (hst hb))
+
+lemma is_wf.min_union (hs : s.is_wf) (hsn : s.nonempty) (ht : t.is_wf) (htn : t.nonempty) :
+  (hs.union ht).min (union_nonempty.2 (or.intro_left _ hsn)) = min (hs.min hsn) (ht.min htn) :=
+begin
+  refine le_antisymm (le_min (is_wf.min_le_min_of_subset (subset_union_left _ _))
+      (is_wf.min_le_min_of_subset (subset_union_right _ _))) _,
+  rw min_le_iff,
+end
 
 end set
 
@@ -299,6 +326,16 @@ end
 @[to_additive]
 theorem is_wf.mul (hs : s.is_wf) (ht : t.is_wf) : is_wf (s * t) :=
 (hs.is_partially_well_ordered.mul ht.is_partially_well_ordered).is_wf
+
+@[to_additive]
+theorem is_wf.min_mul (hs : s.is_wf) (ht : t.is_wf) (hsn : s.nonempty) (htn : t.nonempty) :
+  (hs.mul ht).min (hsn.mul htn) = hs.min hsn * ht.min htn :=
+begin
+  refine le_antisymm (is_wf.min_le _ _ (mem_mul.2 ⟨_, _, hs.min_mem _, ht.min_mem _, rfl⟩)) _,
+  rw is_wf.le_min_iff,
+  rintros _ ⟨x, y, hx, hy, rfl⟩,
+  exact mul_le_mul' (hs.min_le _ hx) (ht.min_le _ hy),
+end
 
 end
 
