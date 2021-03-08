@@ -61,7 +61,7 @@ private lemma poly_binom_aux3 (f : polynomial R) (x y : R) : f.eval (x + y) =
   f.sum (λ e a, a * x^e) +
   f.sum (λ e a, (a * e * x^(e-1)) * y) +
   f.sum (λ e a, (a *(poly_binom_aux1 x y e a).val)*y^2) :=
-by rw poly_binom_aux2; simp [left_distrib, finsupp.sum_add, mul_assoc]
+by rw poly_binom_aux2; simp [left_distrib, sum, finsupp.sum_add, mul_assoc]
 
 def binom_expansion (f : polynomial R) (x y : R) :
   {k : R // f.eval (x + y) = f.eval x + (f.derivative.eval x) * y + k * y^2} :=
@@ -93,6 +93,7 @@ def eval_sub_factor (f : polynomial R) (x y : R) :
 begin
   refine ⟨f.sum (λ i r, r * (pow_sub_pow_factor x y i).val), _⟩,
   delta eval eval₂,
+  unfold sum,
   rw ← finsupp.sum_sub,
   rw finsupp.sum_mul,
   delta finsupp.sum,

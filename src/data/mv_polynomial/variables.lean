@@ -58,8 +58,7 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra
-open_locale big_operators
+open set function finsupp monoid_algebra multiplicative
 
 universes u v w
 variables {R : Type u} {S : Type v}
@@ -81,12 +80,12 @@ The maximal degrees of each variable in a multi-variable polynomial, expressed a
 (For example, `degrees (x^2 * y + y^3)` would be `{x, x, y, y, y}`.)
 -/
 def degrees (p : mv_polynomial σ R) : multiset σ :=
-p.support.sup (λs:σ →₀ ℕ, s.to_multiset)
+p.support.sup (λ s : σ →₀ ℕ, s.to_multiset)
 
 lemma degrees_monomial (s : σ →₀ ℕ) (a : R) : degrees (monomial s a) ≤ s.to_multiset :=
 finset.sup_le $ assume t h,
 begin
-  have := finsupp.support_single_subset h,
+  have := support_monomial_subset h,
   rw [finset.mem_singleton] at this,
   rw this
 end
@@ -94,7 +93,8 @@ end
 lemma degrees_monomial_eq (s : σ →₀ ℕ) (a : R) (ha : a ≠ 0) :
   degrees (monomial s a) = s.to_multiset :=
 le_antisymm (degrees_monomial s a) $ finset.le_sup $
-  by rw [monomial, finsupp.support_single_ne_zero ha, finset.mem_singleton]
+  by rw [monomial, support, finset.mem_map_equiv,
+    finsupp.support_single_ne_zero ha, finset.mem_singleton]; refl
 
 lemma degrees_C (a : R) : degrees (C a : mv_polynomial σ R) = 0 :=
 multiset.le_zero.1 $ degrees_monomial _ _
@@ -113,7 +113,7 @@ by { rw ← C_0, exact degrees_C 0 }
 lemma degrees_add (p q : mv_polynomial σ R) : (p + q).degrees ≤ p.degrees ⊔ q.degrees :=
 begin
   refine finset.sup_le (assume b hb, _),
-  have := finsupp.support_add hb, rw finset.mem_union at this,
+  have := support_add hb, rw finset.mem_union at this,
   cases this,
   { exact le_sup_left_of_le (finset.le_sup this) },
   { exact le_sup_right_of_le (finset.le_sup this) },
@@ -132,7 +132,7 @@ end
 lemma degrees_mul (p q : mv_polynomial σ R) : (p * q).degrees ≤ p.degrees + q.degrees :=
 begin
   refine finset.sup_le (assume b hb, _),
-  have := support_mul p q hb,
+  have := support_mul hb,
   simp only [finset.mem_bUnion, finset.mem_singleton] at this,
   rcases this with ⟨a₁, h₁, a₂, h₂, rfl⟩,
   rw [finsupp.to_multiset_add],
@@ -156,8 +156,7 @@ lemma degrees_pow (p : mv_polynomial σ R) :
 
 lemma mem_degrees {p : mv_polynomial σ R} {i : σ} :
   i ∈ p.degrees ↔ ∃ d, p.coeff d ≠ 0 ∧ i ∈ d.support :=
-by simp only [degrees, multiset.mem_sup, ← finsupp.mem_support_iff, coeff,
-    finsupp.mem_to_multiset, exists_prop]
+by simp [degrees, multiset.mem_sup, coeff]
 
 lemma le_degrees_add {p q : mv_polynomial σ R} (h : p.degrees.disjoint q.degrees) :
   p.degrees ≤ (p + q).degrees :=
@@ -172,13 +171,13 @@ begin
   by_cases h0 : d = 0,
   { simp only [h0, zero_le, finsupp.zero_apply], },
   { refine @finset.le_sup _ _ _ (p + q).support _ d _,
-    rw [finsupp.mem_support_iff, ← coeff, coeff_add],
+    rw [mem_support_iff, coeff_add],
     suffices : q.coeff d = 0,
-    { rwa [this, add_zero, coeff, ← finsupp.mem_support_iff], },
+    { rwa [this, add_zero, ← mem_support_iff], },
     rw [← finsupp.support_eq_empty, ← ne.def, ← finset.nonempty_iff_ne_empty] at h0,
     obtain ⟨j, hj⟩ := h0,
     contrapose! h,
-    rw finsupp.mem_support_iff at hd,
+    rw mem_support_iff at hd,
     refine ⟨j, _, j, _, rfl⟩,
     all_goals { rw mem_degrees, refine ⟨d, _, hj⟩, assumption } }
 end
@@ -210,7 +209,7 @@ begin
   rw [mem_degrees, multiset.mem_map],
   rintro ⟨d, hd, hi⟩,
   obtain ⟨x, rfl, hx⟩ := coeff_rename_ne_zero _ _ _ hd,
-  simp only [map_domain, mem_support_iff] at hi,
+  simp only [map_domain, finsupp.map_domain, finsupp.mem_support_iff] at hi,
   rw [sum_apply, finsupp.sum] at hi,
   contrapose! hi,
   rw [finset.sum_eq_zero],
@@ -247,7 +246,7 @@ by rw [X, vars_monomial (@one_ne_zero R _ _), finsupp.support_single_ne_zero (on
 
 lemma mem_vars (i : σ) :
   i ∈ p.vars ↔ ∃ (d : σ →₀ ℕ) (H : d ∈ p.support), i ∈ d.support :=
-by simp only [vars, multiset.mem_to_finset, mem_degrees, coeff, finsupp.mem_support_iff,
+by simp only [vars, multiset.mem_to_finset, mem_degrees, coeff, mem_support_iff,
   exists_prop]
 
 lemma mem_support_not_mem_vars_zero
@@ -255,7 +254,7 @@ lemma mem_support_not_mem_vars_zero
   x v = 0 :=
 begin
   rw [vars, multiset.mem_to_finset] at h,
-  rw ←not_mem_support_iff,
+  rw ← finsupp.not_mem_support_iff,
   contrapose! h,
   unfold degrees,
   rw (show f.support = insert x f.support, from eq.symm $ finset.insert_eq_of_mem H),
@@ -290,7 +289,7 @@ begin
   intro i,
   simp only [mem_vars, finset.mem_union],
   rintro ⟨d, hd, hi⟩,
-  rw [finsupp.mem_support_iff, ← coeff, coeff_mul] at hd,
+  rw [mem_support_iff, coeff_mul] at hd,
   contrapose! hd, cases hd,
   rw finset.sum_eq_zero,
   rintro ⟨d₁, d₂⟩ H,
@@ -299,9 +298,9 @@ begin
   obtain H|H : i ∈ d₁.support ∨ i ∈ d₂.support,
   { simpa only [finset.mem_union] using finsupp.support_add hi, },
   { suffices : coeff d₁ φ = 0, by simp [this],
-    rw [coeff, ← finsupp.not_mem_support_iff], intro, solve_by_elim, },
+    rw [← not_mem_support_iff], intro, solve_by_elim, },
   { suffices : coeff d₂ ψ = 0, by simp [this],
-    rw [coeff, ← finsupp.not_mem_support_iff], intro, solve_by_elim, },
+    rw [← not_mem_support_iff], intro, solve_by_elim, },
 end
 
 @[simp] lemma vars_one : (1 : mv_polynomial σ R).vars = ∅ :=
@@ -337,11 +336,11 @@ variables {A : Type*} [integral_domain A]
 lemma vars_C_mul (a : A) (ha : a ≠ 0) (φ : mv_polynomial σ A) : (C a * φ).vars = φ.vars :=
 begin
   ext1 i,
-  simp only [mem_vars, exists_prop, finsupp.mem_support_iff],
+  simp only [mem_vars, exists_prop, mem_support_iff],
   apply exists_congr,
   intro d,
   apply and_congr _ iff.rfl,
-  rw [← coeff, ← coeff, coeff_C_mul, mul_ne_zero_iff, eq_true_intro ha, true_and],
+  rw [coeff_C_mul, mul_ne_zero_iff, eq_true_intro ha, true_and],
 end
 
 end integral_domain
@@ -441,7 +440,7 @@ end
 
 @[simp] lemma total_degree_C (a : R) : (C a : mv_polynomial σ R).total_degree = 0 :=
 nat.eq_zero_of_le_zero $ finset.sup_le $ assume n hn,
-  have _ := finsupp.support_single_subset hn,
+  have _ := support_monomial_subset hn,
   begin
     rw [finset.mem_singleton] at this,
     subst this,
@@ -457,14 +456,15 @@ total_degree_C (1 : R)
 @[simp] lemma total_degree_X {R} [comm_semiring R] [nontrivial R] (s : σ) :
   (X s : mv_polynomial σ R).total_degree = 1 :=
 begin
-  rw [total_degree, X, monomial, finsupp.support_single_ne_zero (one_ne_zero : (1 : R) ≠ 0)],
-  simp only [finset.sup, sum_single_index, finset.fold_singleton, sup_bot_eq],
+  rw [total_degree, X, monomial, support,
+    finsupp.support_single_ne_zero (one_ne_zero : (1 : R) ≠ 0)],
+  simp
 end
 
 lemma total_degree_add (a b : mv_polynomial σ R) :
   (a + b).total_degree ≤ max a.total_degree b.total_degree :=
 finset.sup_le $ assume n hn,
-  have _ := finsupp.support_add hn,
+  have _ := support_add hn,
   begin
     rw finset.mem_union at this,
     cases this,
@@ -475,7 +475,7 @@ finset.sup_le $ assume n hn,
 lemma total_degree_mul (a b : mv_polynomial σ R) :
   (a * b).total_degree ≤ a.total_degree + b.total_degree :=
 finset.sup_le $ assume n hn,
-  have _ := add_monoid_algebra.support_mul a b hn,
+  have _ := support_mul hn,
   begin
     simp only [finset.mem_bUnion, finset.mem_singleton] at this,
     rcases this with ⟨a₁, h₁, a₂, h₂, rfl⟩,
@@ -550,12 +550,18 @@ lemma total_degree_rename_le (f : σ → τ) (p : mv_polynomial σ R) :
 finset.sup_le $ assume b,
 begin
   assume h,
-  rw rename_eq at h,
+  rw [rename_eq, support, finset.mem_map_equiv] at h,
   have h' := finsupp.map_domain_support h,
-  rw finset.mem_image at h',
+  simp only [to_add_symm_eq, exists_prop, exists_multiplicative_iff, to_add_of_add,
+    equiv.apply_eq_iff_eq, finsupp.mem_support_iff, finset.mem_image] at h',
   rcases h' with ⟨s, hs, rfl⟩,
   rw finsupp.sum_map_domain_index,
-  exact le_trans (le_refl _) (finset.le_sup hs),
+  { show _ ≥ _,
+    transitivity,
+    refine finset.le_sup _,
+    exact s,
+    simpa [support],
+    simp [finsupp.sum] },
   exact assume _, rfl,
   exact assume _ _ _, rfl
 end
@@ -585,14 +591,14 @@ begin
     intros d hd hd0, },
   repeat
   { obtain ⟨i, hi⟩ : d.support.nonempty,
-    { rw [constant_coeff_eq, coeff, ← finsupp.not_mem_support_iff] at h0,
+    { rw [constant_coeff_eq, ← not_mem_support_iff] at h0,
       rw [finset.nonempty_iff_ne_empty, ne.def, finsupp.support_eq_empty],
       rintro rfl, contradiction },
     rw [finsupp.prod, finset.prod_eq_zero hi, mul_zero],
     rw [hp, zero_pow (nat.pos_of_ne_zero $ finsupp.mem_support_iff.mp hi)],
     rw [mem_vars],
     exact ⟨d, hd, hi⟩ },
-  { rw [constant_coeff_eq, coeff, ← ne.def, ← finsupp.mem_support_iff] at h0,
+  { rw [constant_coeff_eq, ← not_mem_support_iff] at h0,
     intro, contradiction }
 end
 

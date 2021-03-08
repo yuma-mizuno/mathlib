@@ -37,7 +37,7 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra
+open set function finsupp monoid_algebra
 open_locale big_operators
 
 universes u v
@@ -50,7 +50,7 @@ section comm_ring
 variable [comm_ring R]
 variables {p q : mv_polynomial σ R}
 
-instance : comm_ring (mv_polynomial σ R) := add_monoid_algebra.comm_ring
+instance : comm_ring (mv_polynomial σ R) := monoid_algebra.comm_ring
 
 instance C.is_ring_hom : is_ring_hom (C : R → mv_polynomial σ R) :=
 by apply is_ring_hom.of_semiring
@@ -70,12 +70,16 @@ instance coeff.is_add_group_hom (m : σ →₀ ℕ) :
   is_add_group_hom (coeff m : mv_polynomial σ R → R) :=
 { map_add := coeff_add m }
 
+@[simp] lemma support_neg : (-p).support = p.support :=
+by simp [support]
+
 variables {σ} (p)
 
 section degrees
 
+@[simp]
 lemma degrees_neg (p : mv_polynomial σ R) : (- p).degrees = p.degrees :=
-by rw [degrees, finsupp.support_neg]; refl
+by simp [degrees]
 
 lemma degrees_sub (p q : mv_polynomial σ R) :
   (p - q).degrees ≤ p.degrees ⊔ q.degrees :=
@@ -142,7 +146,7 @@ section total_degree
 
 @[simp] lemma total_degree_neg (a : mv_polynomial σ R) :
   (-a).total_degree = a.total_degree :=
-by simp only [total_degree, finsupp.support_neg]
+by simp [total_degree]
 
 lemma total_degree_sub (a b : mv_polynomial σ R) :
   (a - b).total_degree ≤ max a.total_degree b.total_degree :=

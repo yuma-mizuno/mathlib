@@ -16,7 +16,7 @@ The theorems include formulas for computing coefficients, such as
 
 noncomputable theory
 
-open finsupp finset add_monoid_algebra
+open finsupp finset monoid_algebra
 open_locale big_operators
 open multiplicative
 
@@ -40,10 +40,10 @@ lemma coeff_sum [semiring S] (n : ℕ) (f : ℕ → R → polynomial S) :
 @[simp] lemma coeff_smul (p : polynomial R) (r : R) (n : ℕ) :
 coeff (r • p) n = r * coeff p n := finsupp.smul_apply _ _ _
 
-lemma mem_support_iff : n ∈ p.support ↔ p.coeff n ≠ 0 :=
+@[simp] lemma mem_support_iff : n ∈ p.support ↔ p.coeff n ≠ 0 :=
 by { rw [support, mem_map_equiv, mem_support_to_fun], refl }
 
-lemma not_mem_support_iff_coeff_zero : n ∉ p.support ↔ p.coeff n = 0 :=
+lemma not_mem_support_iff : n ∉ p.support ↔ p.coeff n = 0 :=
 by { rw [support, mem_map_equiv, mem_support_to_fun, not_not], refl, }
 
 lemma card_support_eq_one :
@@ -72,7 +72,7 @@ by using `finset.nat.sum_antidiagonal_eq_sum_range_succ`. -/
 lemma coeff_mul (p q : polynomial R) (n : ℕ) :
   coeff (p * q) n = ∑ x in nat.antidiagonal n, coeff p x.1 * coeff q x.2 :=
 begin
-  rw [coeff, add_monoid_algebra.mul_apply_antidiagonal,
+  rw [coeff, monoid_algebra.mul_apply_antidiagonal,
     finset.sum_map _ (equiv.prod_congr of_add of_add).to_embedding],
   refl,
   simp [multiplicative.ext_iff]
@@ -88,18 +88,18 @@ lemma coeff_X_mul_zero (p : polynomial R) : coeff (X * p) 0 = 0 :=
 by simp
 
 lemma coeff_C_mul_X (x : R) (k n : ℕ) :
-  coeff (C x * X^k : polynomial R) n = if n = k then x else 0 :=
+  coeff (C x * X^k) n = if n = k then x else 0 :=
 by rw [← monomial_eq_C_mul_X]; simp [monomial, single, eq_comm, coeff]; congr
 
 @[simp] lemma coeff_C_mul (p : polynomial R) : coeff (C a * p) n = a * coeff p n :=
-by simp [coeff, C, single_zero_ring_hom, add_monoid_algebra.single_zero_mul_apply]
+by simp [coeff, C, single_one_ring_hom, single_one_mul_apply]
 
 lemma C_mul' (a : R) (f : polynomial R) : C a * f = a • f :=
 ext $ λ n, coeff_C_mul f
 
 @[simp] lemma coeff_mul_C (p : polynomial R) (n : ℕ) (a : R) :
   coeff (p * C a) n = coeff p n * a :=
-by simp [C, coeff, single_zero_ring_hom, add_monoid_algebra.mul_single_zero_apply]
+by simp [C, coeff, single_one_ring_hom, mul_single_one_apply]
 
 lemma coeff_X_pow (k n : ℕ) :
   coeff (X^k : polynomial R) n = if n = k then 1 else 0 :=

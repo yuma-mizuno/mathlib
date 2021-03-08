@@ -18,7 +18,7 @@ coefficients of `f` and `g` do not multiply to zero.
 
 namespace polynomial
 
-open polynomial finsupp finset
+open polynomial finsupp finset multiplicative
 open_locale classical
 
 section semiring
@@ -74,6 +74,13 @@ begin
   repeat {rw nat.add_sub_cancel_left},
 end
 
+/-- Version of `polynomial.rev_at` for multiplicative natural numbers. -/
+def rev_at' (N : ℕ) : multiplicative ℕ ↪ multiplicative ℕ :=
+to_add.to_embedding.trans $ (rev_at N).trans of_add.to_embedding
+
+@[simp] lemma rev_at'_apply {N i} : rev_at' N i = of_add (rev_at N i.to_add) :=
+rfl
+
 /-- `reflect N f` is the polynomial such that `(reflect N f).coeff i = f.coeff (rev_at N i)`.
 In other words, the terms with exponent `[0, ..., N]` now have exponent `[N, ..., 0]`.
 
@@ -81,20 +88,17 @@ In practice, `reflect` is only used when `N` is at least as large as the degree 
 
 Eventually, it will be used with `N` exactly equal to the degree of `f`.  -/
 noncomputable def reflect (N : ℕ) (f : polynomial R) : polynomial R :=
-finsupp.emb_domain (rev_at N) f
+f.emb_domain (rev_at' N)
 
 lemma reflect_support (N : ℕ) (f : polynomial R) :
   (reflect N f).support = image (rev_at N) f.support :=
-begin
-  ext1,
-  rw [reflect, mem_image, support_emb_domain, mem_map],
-end
+by { ext, simp [reflect, support, exists_multiplicative_iff, coeff] }
 
 @[simp] lemma coeff_reflect (N : ℕ) (f : polynomial R) (i : ℕ) :
   coeff (reflect N f) i = f.coeff (rev_at N i) :=
-calc finsupp.emb_domain (rev_at N) f i
-    = finsupp.emb_domain (rev_at N) f (rev_at N (rev_at N i)) : by rw rev_at_invol
-... = f.coeff (rev_at N i) : finsupp.emb_domain_apply _ _ _
+calc finsupp.emb_domain (rev_at' N) f (of_add i)
+    = finsupp.emb_domain (rev_at' N) f (rev_at' N (rev_at' N (of_add i))) : by simp
+... = f.coeff (rev_at N i) : by rw finsupp.emb_domain_apply; refl
 
 @[simp] lemma reflect_zero {N : ℕ} : reflect N (0 : polynomial R) = 0 := rfl
 
@@ -104,7 +108,7 @@ begin
   split,
   { intros a,
     injection a with f0 f1,
-    rwa [map_eq_empty, support_eq_empty] at f0, },
+    rwa [map_eq_empty, finsupp.support_eq_empty] at f0, },
   { rintro rfl,
     refl, },
 end
@@ -124,7 +128,7 @@ begin
   rw [reflect_C_mul, coeff_C_mul, coeff_C_mul, coeff_X_pow, coeff_reflect],
   split_ifs with h j,
   { rw [h, rev_at_invol, coeff_X_pow_self], },
-  { rw [not_mem_support_iff_coeff_zero.mp],
+  { rw [not_mem_support_iff.mp],
     intro a,
     rw [← one_mul (X ^ n), ← C_1] at a,
     apply h,

@@ -39,8 +39,7 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra
-open_locale big_operators
+open set function finsupp monoid_algebra multiplicative
 
 variables {σ τ α R S : Type*} [comm_semiring R] [comm_semiring S]
 
@@ -87,10 +86,13 @@ begin
   { exact assume n i₁ i₂, pow_add _ _ _ }
 end
 
+def map_domain (f : (σ →₀ ℕ) → (τ →₀ ℕ)) (p : mv_polynomial σ R) : mv_polynomial τ R :=
+p.map_domain (λ m, of_add (f m.to_add))
+
 lemma rename_eq (f : σ → τ) (p : mv_polynomial σ R) :
-  rename f p = finsupp.map_domain (finsupp.map_domain f) p :=
+  rename f p = p.map_domain (finsupp.map_domain f) :=
 begin
-  simp only [rename, aeval_def, eval₂, finsupp.map_domain, ring_hom.coe_of],
+  simp only [rename, aeval_def, eval₂, finsupp.map_domain, ring_hom.coe_of, map_domain, sum],
   congr' with s a : 2,
   rw [← monomial, monomial_eq, finsupp.prod_sum_index],
   congr' with n i : 2,
@@ -103,10 +105,13 @@ end
 lemma rename_injective (f : σ → τ) (hf : function.injective f) :
   function.injective (rename f : mv_polynomial σ R → mv_polynomial τ R) :=
 have (rename f : mv_polynomial σ R → mv_polynomial τ R) =
-  finsupp.map_domain (finsupp.map_domain f) := funext (rename_eq f),
+  map_domain (finsupp.map_domain f) := funext (rename_eq f),
 begin
   rw this,
-  exact finsupp.map_domain_injective (finsupp.map_domain_injective hf)
+  refine finsupp.map_domain_injective _,
+  refine of_add.injective.comp _,
+  refine (finsupp.map_domain_injective hf).comp _,
+  refine to_add.injective
 end
 
 section
@@ -195,10 +200,11 @@ lemma coeff_rename_eq_zero (f : σ → τ) (φ : mv_polynomial σ R) (d : τ →
   (h : ∀ u : σ →₀ ℕ, u.map_domain f = d → φ.coeff u = 0) :
   (rename f φ).coeff d = 0 :=
 begin
-  rw [rename_eq, coeff, ← not_mem_support_iff],
+  rw [rename_eq, coeff],
+  rw [map_domain, finsupp.map_domain, ← finsupp.not_mem_support_iff],
   intro H,
   replace H := map_domain_support H,
-  rw [finset.mem_image] at H,
+  simp only [finset.mem_image, equiv.apply_eq_iff_eq, exists_multiplicative_iff] at H,
   obtain ⟨u, hu, rfl⟩ := H,
   specialize h u rfl,
   simp [mem_support_iff, coeff] at h hu,

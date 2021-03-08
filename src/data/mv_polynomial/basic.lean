@@ -79,14 +79,15 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra multiplicative
+open set function finsupp monoid_algebra multiplicative
 
 universes u v w x
 variables {R : Type u} {S₁ : Type v} {S₂ : Type w} {S₃ : Type x}
 
 /-- Multivariate polynomial, where `σ` is the index set of the variables and
   `R` is the coefficient ring -/
-def mv_polynomial (σ : Type*) (R : Type*) [comm_semiring R] := add_monoid_algebra R (σ →₀ ℕ)
+def mv_polynomial (σ : Type*) (R : Type*) [comm_semiring R] :=
+monoid_algebra R (multiplicative (σ →₀ ℕ))
 
 namespace mv_polynomial
 variables {σ : Type*} {a a' a₁ a₂ : R} {e : ℕ} {n m : σ} {s : σ →₀ ℕ}
@@ -96,15 +97,15 @@ variables [comm_semiring R] {p q : mv_polynomial σ R}
 
 instance decidable_eq_mv_polynomial [decidable_eq σ] [decidable_eq R] :
   decidable_eq (mv_polynomial σ R) := finsupp.decidable_eq
-instance : comm_semiring (mv_polynomial σ R) := add_monoid_algebra.comm_semiring
+instance : comm_semiring (mv_polynomial σ R) := monoid_algebra.comm_semiring
 instance : inhabited (mv_polynomial σ R) := ⟨0⟩
-instance : has_scalar R (mv_polynomial σ R) := add_monoid_algebra.has_scalar
-instance : semimodule R (mv_polynomial σ R) := add_monoid_algebra.semimodule
-instance : algebra R (mv_polynomial σ R) := add_monoid_algebra.algebra
+instance : has_scalar R (mv_polynomial σ R) := monoid_algebra.has_scalar
+instance : semimodule R (mv_polynomial σ R) := monoid_algebra.semimodule
+instance : algebra R (mv_polynomial σ R) := monoid_algebra.algebra
 
 /-- `monomial s a` is the monomial with coefficient `a` and exponents given by `s`  -/
-def monomial (s : σ →₀ ℕ) (a : R) : mv_polynomial σ R :=
-single (of_add s) a
+def monomial (s : σ →₀ ℕ) : R → mv_polynomial σ R :=
+single (of_add s)
 
 lemma single_eq_monomial (s : multiplicative (σ →₀ ℕ)) (a : R) :
   single s a = monomial s.to_add a :=
@@ -184,10 +185,10 @@ begin
   { exact (mul_zero $ mv_polynomial.C a).trans (@smul_zero R (mv_polynomial σ R) _ _ _ a).symm },
   intros p b f haf hb0 ih,
   rw [mul_add, ih, @smul_add R (mv_polynomial σ R) _ _ _ a], congr' 1,
-  rw [add_monoid_algebra.mul_def, finsupp.smul_single],
+  rw [monoid_algebra.mul_def, finsupp.smul_single],
   simp only [mv_polynomial.C],
   dsimp [mv_polynomial.monomial],
-  rw [finsupp.sum_single_index, finsupp.sum_single_index, zero_add],
+  rw [finsupp.sum_single_index, finsupp.sum_single_index, one_mul],
   { rw [mul_zero, finsupp.single_zero] },
   { rw finsupp.sum_single_index,
     all_goals { rw [zero_mul, finsupp.single_zero] }, }
@@ -200,7 +201,7 @@ begin
   induction e,
   { simp [X], refl },
   { simp [pow_succ, e_ih],
-    simp [X, monomial, single_mul_single, nat.succ_eq_add_one, add_comm] }
+    simp [X, monomial, single_mul_single, nat.succ_eq_add_one, mul_comm] }
 end
 
 lemma monomial_add_single : monomial (s + single n e) a = (monomial s a * X n ^ e) :=
@@ -223,6 +224,9 @@ by simp [monomial]
 
 @[simp] lemma monomial_zero {s : σ →₀ ℕ}: monomial s (0 : R) = 0 :=
 by rw [monomial, single_zero]; refl
+
+def sum {A : Type*} [add_comm_monoid A] (p : mv_polynomial σ R) (b : (σ →₀ ℕ) → R → A) : A :=
+p.sum (λ n, b n.to_add)
 
 @[simp] lemma sum_monomial  {A : Type*} [add_comm_monoid A]
   {u : σ →₀ ℕ} {r : R} {b : (σ →₀ ℕ) → R → A} (w : b u 0 = 0) :
@@ -301,6 +305,21 @@ section support
 def support (p : mv_polynomial σ R) : finset (σ →₀ ℕ) :=
 p.support.map to_add.to_embedding
 
+lemma support_monomial_subset : (monomial s a).support ⊆ {s} :=
+begin
+  rw [support, finset.map_subset_iff_subset_preimage],
+  refine trans finsupp.support_single_subset _,
+  simp
+end
+
+lemma support_add : (p + q).support ⊆ p.support ∪ q.support :=
+begin
+  rw [support, finset.map_subset_iff_subset_preimage],
+  refine trans support_add _,
+  rw ← finset.map_subset_iff_subset_preimage,
+  simp [finset.map_union, support],
+end
+
 end support
 
 section coeff
@@ -309,7 +328,28 @@ section
 
 /-- The coefficient of the monomial `m` in the multi-variable polynomial `p`. -/
 def coeff (m : σ →₀ ℕ) (p : mv_polynomial σ R) : R :=
-@coe_fn _ (add_monoid_algebra.has_coe_to_fun _ _) p (of_add m)
+@coe_fn _ (monoid_algebra.has_coe_to_fun _ _) p (of_add m)
+
+@[simp] lemma mem_support_iff {p : mv_polynomial σ R} {m : σ →₀ ℕ} :
+  m ∈ p.support ↔ p.coeff m ≠ 0 :=
+by simp [support, coeff]
+
+lemma not_mem_support_iff {p : mv_polynomial σ R} {m : σ →₀ ℕ} :
+  m ∉ p.support ↔ p.coeff m = 0 :=
+by simp
+
+lemma sum_eq {A : Type*} [add_comm_monoid A] {p : mv_polynomial σ R} {b : (σ →₀ ℕ) → R → A} :
+  p.sum b = ∑ m in p.support, b m (p.coeff m) :=
+by simp [sum, support, finsupp.sum, coeff]
+
+lemma support_mul : (p * q).support ⊆ p.support.bUnion (λ a, q.support.bUnion $ λ b, {a + b}) :=
+begin
+  rw [support, finset.map_subset_iff_subset_preimage],
+  refine trans (monoid_algebra.support_mul _ _) _,
+  rw ← finset.map_subset_iff_subset_preimage,
+  intros m h,
+  simpa [exists_multiplicative_iff, support, ← of_add_add] using h
+end
 
 end
 
@@ -369,15 +409,15 @@ by rw [coeff_X', if_pos rfl]
 
 @[simp] lemma coeff_C_mul (m) (a : R) (p : mv_polynomial σ R) : coeff m (C a * p) = a * coeff m p :=
 begin
-  rw [mul_def], simp only [C, monomial], dsimp, rw [monomial],
+  rw [mul_def], simp only [C, monomial], dsimp,
   rw sum_single_index,
-  { simp only [zero_add],
+  { simp only [of_add_zero, one_mul],
     convert sum_apply,
     simp only [single_apply, finsupp.sum],
-    rw finset.sum_eq_single m,
+    rw finset.sum_eq_single,
     { rw if_pos rfl, refl },
     { intros m' hm' H, apply if_neg, exact H },
-    { intros hm, rw if_pos rfl, rw not_mem_support_iff at hm, simp [hm] } },
+    { intros hm, rw if_pos rfl, rw finsupp.not_mem_support_iff at hm, simp [hm] } },
   simp only [zero_mul, single_zero, zero_add, sum_zero],
 end
 
@@ -390,9 +430,12 @@ begin
   have := @finset.sum_product (σ →₀ ℕ) R _ _ p.support q.support
     (λ x, if (x.1 + x.2 = n) then coeff x.1 p * coeff x.2 q else 0),
   convert this.symm using 1; clear this,
-  { rw [coeff],
+  { simp only [support, finset.sum_map'''],
+    rw coeff,
     iterate 2 { rw sum_apply, apply finset.sum_congr rfl, intros, dsimp only },
-    convert single_apply },
+    rw single_apply,
+    simp only [coeff, multiplicative.ext_iff, of_add_to_add, to_add_mul, to_add_of_add],
+    congr },
   symmetry,
   -- We are now ready to show that both sums are equal using `finset.sum_bij_ne_zero`.
   apply finset.sum_bij_ne_zero (λ (x : (σ →₀ ℕ) × (σ →₀ ℕ)) _ _, (x.1, x.2)),
@@ -437,14 +480,14 @@ begin
     congr' with  t,
     by_cases hj : s = t,
     { subst t, simp only [nat_sub_apply, add_apply, single_eq_same],
-      refine (nat.sub_add_cancel $ nat.pos_of_ne_zero _).symm, rwa mem_support_iff at h },
+      refine (nat.sub_add_cancel $ nat.pos_of_ne_zero _).symm, rwa finsupp.mem_support_iff at h },
     { simp [single_eq_of_ne hj] } },
-  { delta coeff, rw ← not_mem_support_iff, intro hm, apply h,
-    have H := support_mul _ _ hm, simp only [finset.mem_bUnion] at H,
+  { delta coeff, rw ← finsupp.not_mem_support_iff, intro hm, apply h,
+    have H := monoid_algebra.support_mul _ _ hm, simp only [finset.mem_bUnion] at H,
     rcases H with ⟨j, hj, i', hi', H⟩,
     delta X monomial at hi', rw mem_support_single at hi', cases hi', subst i',
-    erw finset.mem_singleton at H, subst m,
-    rw [mem_support_iff, add_apply, single_apply, if_pos rfl],
+    simp [finset.mem_singleton, multiplicative.ext_iff] at H, subst m,
+    rw [finsupp.mem_support_iff, add_apply, single_apply, if_pos rfl],
     intro H, rw [_root_.add_eq_zero_iff] at H, exact one_ne_zero H.2 }
 end
 
@@ -475,7 +518,7 @@ begin
     simp only [coeff_C_mul, coeff_sum, coeff_monomial, finset.sum_ite_eq', c'],
     split_ifs with hi hi,
     { rw hc },
-    { rw finsupp.not_mem_support_iff at hi, rwa mul_zero } },
+    { rw not_mem_support_iff at hi, rwa mul_zero } },
 end
 
 end coeff
@@ -488,7 +531,7 @@ This is a ring homomorphism.
 -/
 def constant_coeff : mv_polynomial σ R →+* R :=
 { to_fun := coeff 0,
-  map_one' := by simp [coeff, add_monoid_algebra.one_def],
+  map_one' := by simp [coeff, monoid_algebra.one_def],
   map_mul' := by simp [coeff_mul, finsupp.support_single_ne_zero],
   map_zero' := coeff_zero _,
   map_add' := coeff_add _ }
@@ -525,7 +568,7 @@ section as_sum
 
 @[simp] lemma support_sum_monomial_coeff (p : mv_polynomial σ R) :
   ∑ v in p.support, monomial v (coeff v p) = p :=
-finsupp.sum_single p
+by simp_rw [← sum_eq, sum, monomial, of_add_to_add, finsupp.sum_single]
 
 lemma as_sum (p : mv_polynomial σ R) : p = ∑ v in p.support, monomial v (coeff v p) :=
 (support_sum_monomial_coeff p).symm
@@ -544,14 +587,14 @@ p.sum (λs a, f a * s.prod (λn e, g n ^ e))
 
 lemma eval₂_eq (g : R →+* S₁) (x : σ → S₁) (f : mv_polynomial σ R) :
   f.eval₂ g x = ∑ d in f.support, g (f.coeff d) * ∏ i in d.support, x i ^ d i :=
-rfl
+by simp [eval₂, sum_eq, finsupp.prod]
 
 lemma eval₂_eq' [fintype σ] (g : R →+* S₁) (x : σ → S₁) (f : mv_polynomial σ R) :
   f.eval₂ g x = ∑ d in f.support, g (f.coeff d) * ∏ i, x i ^ d i :=
 by { simp only [eval₂_eq, ← finsupp.prod_pow], refl }
 
 @[simp] lemma eval₂_zero : (0 : mv_polynomial σ R).eval₂ f g = 0 :=
-finsupp.sum_zero_index
+by simp [eval₂, sum]
 
 section
 
@@ -663,7 +706,8 @@ begin
   apply finset.prod_congr rfl,
   intros i hi, dsimp, congr' 1,
   apply h hi,
-  rwa finsupp.mem_support_iff at hc
+  rw [coeff, of_add_to_add],
+  rwa finsupp.mem_support_iff at hc,
 end
 
 @[simp] lemma eval₂_prod (s : finset S₂) (p : S₂ → mv_polynomial σ R) :
@@ -693,7 +737,7 @@ def eval (f : σ → R) : mv_polynomial σ R →+* R := eval₂_hom (ring_hom.id
 
 lemma eval_eq (x : σ → R) (f : mv_polynomial σ R) :
   eval x f = ∑ d in f.support, f.coeff d * ∏ i in d.support, x i ^ d i :=
-rfl
+by simp [eval, eval₂_eq]
 
 lemma eval_eq' [fintype σ] (x : σ → R) (f : mv_polynomial σ R) :
   eval x f = ∑ d in f.support, f.coeff d * ∏ i, x i ^ d i :=
@@ -835,7 +879,7 @@ by { ext; simp }
 lemma support_map_subset (p : mv_polynomial σ R) : (map f p).support ⊆ p.support :=
 begin
   intro x,
-  simp only [finsupp.mem_support_iff],
+  simp only [mem_support_iff],
   contrapose!,
   change p.coeff x = 0 → (map f p).coeff x = 0,
   rw coeff_map,
@@ -850,9 +894,9 @@ begin
   apply finset.subset.antisymm,
   { exact mv_polynomial.support_map_subset _ _ },
   intros x hx,
-  rw finsupp.mem_support_iff,
+  rw mem_support_iff,
   contrapose! hx,
-  simp only [not_not, finsupp.mem_support_iff],
+  simp only [not_not, mem_support_iff],
   change (map f p).coeff x = 0 at hx,
   rw [coeff_map, ← f.map_zero] at hx,
   exact hf hx
@@ -946,7 +990,7 @@ lemma eval₂_hom_eq_zero (f : R →+* S₂) (g : σ → S₂) (φ : mv_polynomi
 begin
   rw [φ.as_sum, ring_hom.map_sum, finset.sum_eq_zero],
   intros d hd,
-  obtain ⟨i, hi, hgi⟩ : ∃ i ∈ d.support, g i = 0 := h d (finsupp.mem_support_iff.mp hd),
+  obtain ⟨i, hi, hgi⟩ : ∃ i ∈ d.support, g i = 0 := h d (mem_support_iff.mp hd),
   rw [eval₂_hom_monomial, finsupp.prod, finset.prod_eq_zero hi, mul_zero],
   rw [hgi, zero_pow],
   rwa [pos_iff_ne_zero, ← finsupp.mem_support_iff]

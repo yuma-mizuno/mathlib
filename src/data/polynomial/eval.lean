@@ -16,7 +16,7 @@ We give several lemmas about their interaction with each other and with module o
 
 noncomputable theory
 
-open finsupp finset add_monoid_algebra multiplicative
+open finsupp finset monoid_algebra multiplicative
 open_locale big_operators
 
 namespace polynomial

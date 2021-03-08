@@ -25,7 +25,7 @@ variables [semiring R] {p q r : polynomial R}
 `C a` is the constant polynomial `a`.
 `C` is provided as a ring homomorphism.
 -/
-def C : R →+* polynomial R := add_monoid_algebra.single_zero_ring_hom
+def C : R →+* polynomial R := monoid_algebra.single_one_ring_hom
 
 lemma C_support [decidable_eq R] : (C a).support = if a = 0 then ∅ else {0} :=
 if h : a = 0 then

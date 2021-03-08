@@ -43,7 +43,7 @@ noncomputable theory
 
 open_locale classical big_operators
 
-open set function finsupp add_monoid_algebra
+open set function finsupp monoid_algebra
 open_locale big_operators
 
 universes u
@@ -61,7 +61,7 @@ def pderiv (i : σ) : mv_polynomial σ R →ₗ[R] mv_polynomial σ R :=
 { to_fun := λ p, p.sum (λ A B, monomial (A - single i 1) (B * (A i))),
   map_smul' := begin
     intros c x,
-    rw [sum_smul_index', smul_sum],
+    rw [sum, sum, sum_smul_index', smul_sum],
     { simp_rw [monomial, smul_single, smul_eq_mul, mul_assoc] },
     { intros s,
       simp only [monomial_zero, zero_mul] }

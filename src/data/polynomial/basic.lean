@@ -11,7 +11,8 @@ import data.finset.sort
 /-!
 # Theory of univariate polynomials
 
-Polynomials are represented as `add_monoid_algebra R ℕ`, where `R` is a commutative semiring.
+Polynomials are represented as `monoid_algebra R (multiplicative ℕ)`,
+where `R` is a commutative semiring.
 In this file, we define `polynomial`, provide basic instances, and prove an `ext` lemma.
 -/
 
@@ -21,9 +22,10 @@ noncomputable theory
 
 Polynomials should be seen as (semi-)rings with the additional constructor `X`.
 The embedding from `R` is called `C`. -/
-def polynomial (R : Type*) [semiring R] := add_monoid_algebra R ℕ
+def polynomial (R : Type*) [semiring R] :=
+monoid_algebra R (multiplicative ℕ)
 
-open finsupp add_monoid_algebra multiplicative
+open finsupp monoid_algebra multiplicative
 open_locale big_operators
 
 namespace polynomial
@@ -33,12 +35,12 @@ variables {R : Type u} {a : R} {m n : ℕ}
 section semiring
 variables [semiring R] {p q : polynomial R}
 
-instance : inhabited (polynomial R) := add_monoid_algebra.inhabited _ _
-instance : semiring (polynomial R) := add_monoid_algebra.semiring
+instance : inhabited (polynomial R) := monoid_algebra.inhabited _ _
+instance : semiring (polynomial R) := monoid_algebra.semiring
 instance {S} [semiring S] [semimodule S R] : semimodule S (polynomial R) :=
-add_monoid_algebra.semimodule
+monoid_algebra.semimodule
 
-instance [subsingleton R] : unique (polynomial R) := add_monoid_algebra.unique
+instance [subsingleton R] : unique (polynomial R) := monoid_algebra.unique
 
 /--
 Powers of non-zero coefficients.
@@ -93,7 +95,7 @@ finsupp.single_add
 
 lemma monomial_mul_monomial (n m : ℕ) (r s : R) :
   monomial n r * monomial m s = monomial (n + m) (r * s) :=
-add_monoid_algebra.single_mul_single
+monoid_algebra.single_mul_single
 
 lemma smul_monomial {S} [semiring S] [semimodule S R] (a : S) (n : ℕ) (b : R) :
   a • monomial n b = monomial n (a • b) :=
@@ -113,7 +115,7 @@ def X : polynomial R := monomial 1 1
 
 /-- `X` commutes with everything, even when the coefficients are noncommutative. -/
 lemma X_mul : X * p = p * X :=
-by { ext, simp [X, monomial, add_monoid_algebra.mul_apply, sum_single_index, mul_comm] }
+by { ext, simp [X, monomial, monoid_algebra.mul_apply, sum_single_index, mul_comm] }
 
 lemma X_pow_mul {n : ℕ} : X^n * p = p * X^n :=
 begin
@@ -291,26 +293,27 @@ variable {p}
 end sum
 
 lemma mul_def : p * q = p.sum (λ i pi, q.sum (λ j qj, monomial (i + j) (pi * qj))) :=
-by simp [sum_def, add_monoid_algebra.mul_def, support, monomial, finsupp.sum, coeff]
+by simp [sum_def, monoid_algebra.mul_def, support, monomial, finsupp.sum, coeff]
 
 end semiring
 
 section comm_semiring
 variables [comm_semiring R]
 
-instance : comm_semiring (polynomial R) := add_monoid_algebra.comm_semiring
+instance : comm_semiring (polynomial R) := monoid_algebra.comm_semiring
 
 end comm_semiring
 
 section ring
 variables [ring R]
 
-instance : ring (polynomial R) := add_monoid_algebra.ring
+instance : ring (polynomial R) := monoid_algebra.ring
 
 @[simp] lemma coeff_neg (p : polynomial R) (n : ℕ) : coeff (-p) n = -coeff p n := rfl
 
 @[simp]
-lemma coeff_sub (p q : polynomial R) (n : ℕ) : coeff (p - q) n = coeff p n - coeff q n := rfl
+lemma coeff_sub (p q : polynomial R) (n : ℕ) : coeff (p - q) n = coeff p n - coeff q n :=
+rfl
 
 @[simp] lemma monomial_neg (n : ℕ) (a : R) : monomial n (-a) = -(monomial n a) :=
 by rw [eq_neg_iff_add_eq_zero, ←monomial_add, neg_add_self, monomial_zero_right]
@@ -320,12 +323,12 @@ by simp [support]
 
 end ring
 
-instance [comm_ring R] : comm_ring (polynomial R) := add_monoid_algebra.comm_ring
+instance [comm_ring R] : comm_ring (polynomial R) := monoid_algebra.comm_ring
 
 section nonzero_semiring
 
 variables [semiring R] [nontrivial R]
-instance : nontrivial (polynomial R) := add_monoid_algebra.nontrivial
+instance : nontrivial (polynomial R) := monoid_algebra.nontrivial
 
 lemma X_ne_zero : (X : polynomial R) ≠ 0 :=
 mt (congr_arg (λ p, coeff p 1)) (by simp)

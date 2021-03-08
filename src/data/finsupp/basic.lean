@@ -23,9 +23,9 @@ on `α` except on a finite set.
 
 Functions with finite support are used (at least) in the following parts of the library:
 
-* `monoid_algebra R M` and `add_monoid_algebra R M` are defined as `M →₀ R`;
+* `monoid_algebra R M` is defined as `M →₀ R`;
 
-* polynomials and multivariate polynomials are defined as `add_monoid_algebra`s, hence they use
+* polynomials and multivariate polynomials are defined as `monoid_algebra`s, hence they use
   `finsupp` under the hood;
 
 * the linear combination of a family of vectors `v i` with coefficients `f i` (as used, e.g., to
@@ -42,7 +42,7 @@ Most of the theory assumes that the range is a commutative additive monoid. This
 sum operator as a powerful way to construct `finsupp` elements.
 
 Many constructions based on `α →₀ M` use `semireducible` type tags to avoid reusing unwanted type
-instances. E.g., `monoid_algebra`, `add_monoid_algebra`, and types based on these two have
+instances. E.g., `monoid_algebra` and types based on it have
 non-pointwise multiplication.
 
 ## Notations

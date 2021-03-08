@@ -28,7 +28,8 @@ variables [comm_semiring R] {p q r : polynomial R}
 variables [semiring A] [algebra R A]
 
 /-- Note that this instance also provides `algebra R (polynomial R)`. -/
-instance algebra_of_algebra : algebra R (polynomial A) := add_monoid_algebra.algebra
+instance algebra_of_algebra : algebra R (polynomial A) :=
+monoid_algebra.algebra
 
 lemma algebra_map_apply (r : R) :
   algebra_map R (polynomial A) r = C (algebra_map R A r) :=
@@ -210,7 +211,7 @@ begin
     exact dvd_terms j (finset.ne_of_mem_erase hj) },
   { convert dvd_zero p,
     convert _root_.zero_mul _,
-    exact not_mem_support_iff_coeff_zero.mp hi }
+    exact not_mem_support_iff.mp hi }
 end
 
 lemma dvd_term_of_is_root_of_dvd_terms {r p : S} {f : polynomial S} (i : ℕ)

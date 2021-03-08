@@ -16,7 +16,8 @@ We also define `root_multiplicity`.
 -/
 
 noncomputable theory
-local attribute [instance, priority 100] classical.prop_decidable
+open_locale classical
+open multiplicative
 
 open finset
 
@@ -27,38 +28,25 @@ variables {R : Type u} {S : Type v} {T : Type w} {A : Type z} {a b : R} {n : ℕ
 section semiring
 variables [semiring R] {p q : polynomial R}
 
-section
-/--
-The coercion turning a `polynomial` into the function which reports the coefficient of a given
-monomial `X^n`
--/
--- TODO we would like to completely remove this, but this requires fixing some proofs
-def coeff_coe_to_fun : has_coe_to_fun (polynomial R) :=
-finsupp.has_coe_to_fun
-
-local attribute [instance] coeff_coe_to_fun
-
-lemma apply_eq_coeff : p n = coeff p n := rfl
-end
-
 /-- `div_X p` return a polynomial `q` such that `q * X + C (p.coeff 0) = p`.
   It can be used in a semiring where the usual division algorithm is not possible -/
 def div_X (p : polynomial R) : polynomial R :=
-{ to_fun := λ n, p.coeff (n + 1),
-  support := ⟨(p.support.filter (> 0)).1.map (λ n, n - 1),
+{ to_fun := λ n, p.coeff (n.to_add + 1),
+  support := ⟨(p.support.filter (> 0)).1.map (λ n, of_add $ n - 1),
     multiset.nodup_map_on begin
         simp only [finset.mem_def.symm, finset.mem_erase, finset.mem_filter],
         assume x hx y hy hxy,
-        rwa [← @add_right_cancel_iff _ _ 1, nat.sub_add_cancel hx.2,
+        rwa [of_add.apply_eq_iff_eq,
+          ← @add_right_cancel_iff _ _ 1, nat.sub_add_cancel hx.2,
           nat.sub_add_cancel hy.2] at hxy
       end
       (p.support.filter (> 0)).2⟩,
   mem_support_to_fun := λ n,
-    suffices (∃ (a : ℕ), (¬coeff p a = 0 ∧ a > 0) ∧ a - 1 = n) ↔
-      ¬coeff p (n + 1) = 0,
-    by simpa [finset.mem_def.symm],
+    suffices (∃ (a : ℕ), (¬coeff p a = 0 ∧ a > 0) ∧ a - 1 = n.to_add) ↔
+      ¬coeff p (n.to_add + 1) = 0,
+    by simpa [finset.mem_def.symm, multiplicative.ext_iff],
     ⟨λ ⟨a, ha⟩, by rw [← ha.2, nat.sub_add_cancel ha.1.2]; exact ha.1.1,
-      λ h, ⟨n + 1, ⟨h, nat.succ_pos _⟩, nat.succ_sub_one _⟩⟩ }
+      λ h, ⟨n.to_add + 1, ⟨h, nat.succ_pos _⟩, nat.succ_sub_one _⟩⟩ }
 
 lemma div_X_mul_X_add (p : polynomial R) : div_X p * X + C (p.coeff 0) = p :=
 ext $ λ n,

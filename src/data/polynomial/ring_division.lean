@@ -17,7 +17,7 @@ This file starts looking like the ring theory of $ R[X] $
 -/
 
 noncomputable theory
-local attribute [instance, priority 100] classical.prop_decidable
+open_locale classical
 
 open finset
 
@@ -431,6 +431,7 @@ calc coeff (p.comp q) (nat_degree p * nat_degree q)
 ... = coeff (C (leading_coeff p) * q ^ nat_degree p) (nat_degree p * nat_degree q) :
   finset.sum_eq_single _
   begin
+    rw forall_multiplicative_iff,
     assume b hbs hbp,
     have hq0 : q ≠ 0, from λ hq0, hqd0 (by rw [hq0, nat_degree_zero]),
     have : coeff p b ≠ 0,  by rwa finsupp.mem_support_iff at hbs,
@@ -438,7 +439,7 @@ calc coeff (p.comp q) (nat_degree p * nat_degree q)
     erw [degree_mul, degree_C this, degree_pow, zero_add, degree_eq_nat_degree hq0,
       ← with_bot.coe_nsmul, nsmul_eq_mul, with_bot.coe_lt_coe, nat.cast_id,
       mul_lt_mul_right (pos_iff_ne_zero.mpr hqd0)],
-    exact lt_of_le_of_ne (le_nat_degree_of_ne_zero this) hbp,
+    simpa using lt_of_le_of_ne (le_nat_degree_of_ne_zero this) (by simpa using hbp),
   end
   begin
     intro h, contrapose! hp0,
