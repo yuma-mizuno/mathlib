@@ -185,6 +185,22 @@ finsupp.add_hom_ext (λ x, by simpa [monomial] using h (to_add x))
   f = g :=
 finsupp.lhom_ext' (λ x, by simpa [monomial] using h (to_add x))
 
+/-- The coefficients of a polynomial as a finsupp. -/
+def coeffs : polynomial R ≃ₗ[R] (ℕ →₀ R) :=
+finsupp.dom_lcongr to_add
+
+@[simp] lemma coeffs_apply (p : polynomial R) (n : ℕ) : coeffs p n = p.coeff n :=
+by simp [coeffs, coeff]
+
+@[simp] lemma coeff_coeffs_symm (f : ℕ →₀ R) (n : ℕ) : (coeffs.symm f).coeff n = f n :=
+by simp [coeffs, coeff]
+
+@[simp] lemma coeffs_symm_eq_zero (f : ℕ →₀ R) : coeffs.symm f = 0 ↔ f = 0 :=
+by simp [coeffs, finsupp.ext_iff, forall_multiplicative_iff]
+
+@[simp] lemma coeffs_symm_support (f : ℕ →₀ R) : (coeffs.symm f).support = f.support :=
+by { ext, simp [coeffs, support] }
+
 -- this has the same content as the subsingleton
 lemma eq_zero_of_eq_zero (h : (0 : R) = (1 : R)) (p : polynomial R) : p = 0 :=
 by rw [←one_smul R p, ←h, zero_smul]

@@ -552,6 +552,14 @@ protected def dom_lcongr {α₁ α₂ : Type*} (e : α₁ ≃ α₂) :
   (α₁ →₀ M) ≃ₗ[R] (α₂ →₀ M) :=
 (finsupp.dom_congr e : (α₁ →₀ M) ≃+ (α₂ →₀ M)).to_linear_equiv (lmap_domain M R e).map_smul
 
+@[simp] lemma dom_lcongr_apply_apply {α₁ α₂ : Type*} (e : α₁ ≃ α₂) (x : α₁ →₀ M) (i : α₂) :
+  (finsupp.dom_lcongr e : _ ≃ₗ[R] _) x i = x (e.symm i) :=
+by simp [finsupp.dom_lcongr]
+
+@[simp] lemma dom_lcongr_symm_apply_apply {α₁ α₂ : Type*} (e : α₁ ≃ α₂) (x : α₂ →₀ M) (i : α₁) :
+  (finsupp.dom_lcongr e : _ ≃ₗ[R] _).symm x i = x (e i) :=
+by simp [finsupp.dom_lcongr]
+
 @[simp] theorem dom_lcongr_single {α₁ : Type*} {α₂ : Type*} (e : α₁ ≃ α₂) (i : α₁) (m : M) :
   (finsupp.dom_lcongr e : _ ≃ₗ[R] _) (finsupp.single i m) = finsupp.single (e i) m :=
 by simp [finsupp.dom_lcongr, finsupp.dom_congr, map_domain_single]
