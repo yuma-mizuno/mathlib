@@ -164,12 +164,12 @@ begin
   apply le_antisymm,
   { apply finset.sup_le,
     intros d hd,
-    rw finsupp.mem_support_iff at hd,
+    rw mem_support_iff at hd,
     rw [finsupp.sum, hφ hd], },
   { obtain ⟨d, hd⟩ : ∃ d, coeff d φ ≠ 0 := exists_coeff_ne_zero h,
-    simp only [← hφ hd, finsupp.sum],
-    replace hd := finsupp.mem_support_iff.mpr hd,
-    exact finset.le_sup hd, }
+    simp only [← hφ hd, finset.map_sup, support],
+    refine trans _ (finset.le_sup (finsupp.mem_support_iff.2 hd)),
+    simp [finsupp.sum] }
 end
 
 end is_homogeneous
@@ -177,14 +177,14 @@ end is_homogeneous
 section
 noncomputable theory
 open_locale classical
-open finset
+open finset multiplicative
 
 /-- `homogeneous_component n φ` is the part of `φ` that is homogeneous of degree `n`.
 See `sum_homogeneous_component` for the statement that `φ` is equal to the sum
 of all its homogeneous components. -/
 def homogeneous_component [comm_semiring R] (n : ℕ) :
   mv_polynomial σ R →ₗ[R] mv_polynomial σ R :=
-(submodule.subtype _).comp $ finsupp.restrict_dom _ _ {d | ∑ i in d.support, d i = n}
+(submodule.subtype _).comp $ finsupp.restrict_dom _ _ {d | ∑ i in d.to_add.support, to_add d i = n}
 
 section homogeneous_component
 open finset
@@ -192,12 +192,12 @@ variables [comm_semiring R] (n : ℕ) (φ : mv_polynomial σ R)
 
 lemma coeff_homogeneous_component (d : σ →₀ ℕ) :
   coeff d (homogeneous_component n φ) = if ∑ i in d.support, d i = n then coeff d φ else 0 :=
-by convert finsupp.filter_apply (λ d : σ →₀ ℕ, ∑ i in d.support, d i = n) φ d
+by simp [coeff, homogeneous_component, finsupp.filter_apply]
 
 lemma homogeneous_component_apply :
   homogeneous_component n φ =
   ∑ d in φ.support.filter (λ d, ∑ i in d.support, d i = n), monomial d (coeff d φ) :=
-by convert finsupp.filter_eq_sum (λ d : σ →₀ ℕ, ∑ i in d.support, d i = n) φ
+by simp [coeff, homogeneous_component, finsupp.filter_eq_sum, support, filter_map, (∘), monomial]
 
 lemma homogeneous_component_is_homogeneous :
   (homogeneous_component n φ).is_homogeneous n :=

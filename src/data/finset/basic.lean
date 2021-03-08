@@ -1661,6 +1661,16 @@ eq_of_veq $ by rw [map_val, attach_val]; exact attach_map_val _
 lemma nonempty.map (h : s.nonempty) (f : α ↪ β) : (s.map f).nonempty :=
 let ⟨a, ha⟩ := h in ⟨f a, (mem_map' f).mpr ha⟩
 
+lemma filter_map (f : α ↪ β) (s : finset α) (p : β → Prop) [decidable_pred p] :
+  (s.map f).filter p = (s.filter (p ∘ f)).map f :=
+begin
+  ext,
+  simp only [mem_map, mem_filter, exists_prop],
+  split,
+  { rintro ⟨⟨a, h1, rfl⟩, h2⟩, exact ⟨a, ⟨h1, h2⟩, rfl⟩ },
+  { rintro ⟨a, ⟨⟨h1, h2⟩, h3, rfl⟩⟩, exact ⟨⟨_, h1, rfl⟩, h2⟩ }
+end
+
 end map
 
 lemma range_add_one' (n : ℕ) :

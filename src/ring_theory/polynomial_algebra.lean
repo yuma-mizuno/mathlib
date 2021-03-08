@@ -57,7 +57,7 @@ def to_fun_linear_right (a : A) : polynomial R →ₗ[R] polynomial A :=
 { to_fun := to_fun R A a,
   map_smul' := λ r p,
   begin
-    dsimp [to_fun],
+    dsimp [to_fun, polynomial.sum],
     rw finsupp.sum_smul_index,
     { dsimp [finsupp.sum],
       rw finset.smul_sum,
@@ -72,7 +72,7 @@ def to_fun_linear_right (a : A) : polynomial R →ₗ[R] polynomial A :=
   end,
   map_add' := λ p q,
   begin
-    simp only [to_fun],
+    simp only [to_fun, polynomial.sum],
     rw finsupp.sum_add_index,
     { simp only [monomial_zero_right, forall_const, ring_hom.map_zero, mul_zero], },
     { intros i r s, simp only [ring_hom.map_add, mul_add, monomial_add], },
@@ -88,13 +88,13 @@ def to_fun_bilinear : A →ₗ[R] polynomial R →ₗ[R] polynomial A :=
   map_smul' := by {
     intros, unfold to_fun_linear_right,
     congr, simp only [linear_map.coe_mk],
-    unfold to_fun finsupp.sum,
-    simp_rw [finset.smul_sum, smul_monomial,  ← algebra.smul_mul_assoc],
+    unfold to_fun polynomial.sum,
+    simp_rw [finsupp.smul_sum, smul_monomial,  ← algebra.smul_mul_assoc],
     refl },
   map_add' := by {
     intros, unfold to_fun_linear_right,
     congr, simp only [linear_map.coe_mk],
-    unfold to_fun finsupp.sum,
+    unfold to_fun polynomial.sum finsupp.sum,
     simp_rw [← finset.sum_add_distrib, ← monomial_add, ← add_mul],
     refl } }
 
@@ -131,15 +131,17 @@ begin
   simp only [lift.tmul],
   dsimp [to_fun_bilinear, to_fun_linear_right, to_fun],
   ext k,
-  -- TODO This is a bit annoying: the polynomial API is breaking down.
-  have apply_eq_coeff : ∀ {p : ℕ →₀ R} {n : ℕ}, p n = coeff p n := by { intros, refl },
-  simp_rw [coeff_sum, coeff_monomial, finsupp.sum, finset.sum_ite_eq', finsupp.mem_support_iff,
-    ne.def, coeff_mul, finset_sum_coeff, coeff_monomial,
-    finset.sum_ite_eq', finsupp.mem_support_iff, ne.def,
-    mul_ite, mul_zero, ite_mul, zero_mul, apply_eq_coeff],
+  simp_rw [coeff_sum, coeff_monomial,
+    sum_ite_eq', mem_support_iff,
+    ne.def, coeff_mul, coeff_sum, coeff_monomial,
+    sum_ite_eq', mem_support_iff, ne.def,
+    mul_ite, mul_zero, ite_mul, zero_mul],
   simp_rw [ite_mul_zero_left (¬coeff p₁ _ = 0) (a₁ * (algebra_map R A) (coeff p₁ _))],
   simp_rw [ite_mul_zero_right (¬coeff p₂ _ = 0) _ (_ * _)],
-  simp_rw [to_fun_linear_mul_tmul_mul_aux_1, to_fun_linear_mul_tmul_mul_aux_2],
+  simp_rw to_fun_linear_mul_tmul_mul_aux_1,
+  simp only [← coeff_mul],
+  simp_rw ← to_fun_linear_mul_tmul_mul_aux_2,
+  split_ifs; simp [h]
 end
 
 lemma to_fun_linear_algebra_map_tmul_one (r : R) :
@@ -195,7 +197,7 @@ begin
     simp_rw [eval₂_monomial, alg_hom.coe_to_ring_hom, algebra.tensor_product.tmul_pow, one_pow,
       algebra.tensor_product.include_left_apply, algebra.tensor_product.tmul_mul_tmul,
       mul_one, one_mul, ←algebra.commutes, ←algebra.smul_def'', smul_tmul],
-    rw [finsupp.sum, ←tmul_sum],
+    rw [polynomial.sum, finsupp.sum, ←tmul_sum],
     conv_rhs { rw [←sum_C_mul_X_eq p], },
     simp only [algebra.smul_def''],
     refl, },
@@ -213,7 +215,7 @@ begin
       algebra.tensor_product.tmul_pow, one_pow, algebra.tensor_product.tmul_mul_tmul,
       mul_one, one_mul, to_fun_alg_hom_apply_tmul, X_pow_eq_monomial],
     dsimp [monomial],
-    rw [finsupp.sum_single_index]; simp, }
+    rw [polynomial.sum, finsupp.sum_single_index]; simp, }
 end
 
 /--

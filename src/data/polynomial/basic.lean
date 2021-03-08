@@ -278,6 +278,14 @@ lemma smul_sum_index (h0 : ∀ i, f i 0 = 0) :
   (a • p).sum f = p.sum (λ n b, f n (a * b)) :=
 sum_smul_index (λ _, h0 _)
 
+@[simp] lemma sum_ite_eq {n : ℕ} :
+  p.sum (λ m a, ite (n = m) (f m a) 0) = ite (n ∈ p.support) (f n (p.coeff n)) 0 :=
+by simp [polynomial.sum_def, polynomial.support, coeff]
+
+@[simp] lemma sum_ite_eq' {n : ℕ} :
+  p.sum (λ m a, ite (m = n) (f m a) 0) = ite (n ∈ p.support) (f n (p.coeff n)) 0 :=
+by simp [polynomial.sum_def, polynomial.support, coeff]
+
 variable (p)
 lemma sum_of_support_subset (s : finset ℕ) (hs : p.support ⊆ s) (h : ∀ i ∈ s, f i 0 = 0) :
   p.sum f = ∑ x in s, f x (p.coeff x) :=
