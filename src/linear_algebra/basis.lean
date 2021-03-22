@@ -71,7 +71,9 @@ variables {a b : R} {x y : M}
 
 variables (R) (v)
 /-- A family of vectors is a basis if it is linearly independent and all vectors are in the span. -/
-def is_basis := linear_independent R v ∧ span R (range v) = ⊤
+def is_basis {ι : Type*} (R : Type*) [semiring R] {M : Type*} [add_comm_monoid M] [semimodule R M]
+  (v : ι → M) := linear_independent R v ∧ span R (range v) = ⊤
+
 variables {R} {v}
 
 section is_basis
@@ -362,7 +364,7 @@ begin
 end
 
 lemma is_basis_span (hs : linear_independent R v) :
-  @is_basis ι R (span R (range v)) (λ i : ι, ⟨v i, subset_span (mem_range_self _)⟩) _ _ _ :=
+  @is_basis ι R _ (span R (range v)) _ _ (λ i : ι, ⟨v i, subset_span (mem_range_self _)⟩) :=
 begin
 split,
 { apply linear_independent_span hs },
