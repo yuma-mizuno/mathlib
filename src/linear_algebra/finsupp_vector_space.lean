@@ -84,7 +84,7 @@ variables [comm_ring R] [add_comm_group M] [module R M] [add_comm_group N] [modu
 /-- If b : ι → M and c : κ → N are bases then so is λ i, b i.1 ⊗ₜ c i.2 : ι × κ → M ⊗ N. -/
 lemma is_basis.tensor_product {b : ι → M} (hb : is_basis R b) {c : κ → N} (hc : is_basis R c) :
   is_basis R (λ i : ι × κ, b i.1 ⊗ₜ[R] c i.2) :=
-by { convert linear_equiv.is_basis is_basis_single_one
+by { convert linear_equiv.is_basis (by exact is_basis_single_one)
   ((tensor_product.congr (module_equiv_finsupp hb) (module_equiv_finsupp hc)).trans $
     (finsupp_tensor_finsupp _ _ _ _ _).trans $
     lcongr (equiv.refl _) (tensor_product.lid R R)).symm,
