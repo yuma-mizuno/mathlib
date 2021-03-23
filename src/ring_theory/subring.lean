@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2020 Ashvni Narayanan. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors : Ashvni Narayanan
+Authors: Ashvni Narayanan
 -/
 
 import deprecated.subring
@@ -233,6 +233,8 @@ instance to_ring : ring s :=
 @[simp, norm_cast] lemma coe_mul (x y : s) : (↑(x * y) : R) = ↑x * ↑y := rfl
 @[simp, norm_cast] lemma coe_zero : ((0 : s) : R) = 0 := rfl
 @[simp, norm_cast] lemma coe_one : ((1 : s) : R) = 1 := rfl
+@[simp, norm_cast] lemma coe_pow (x : s) (n : ℕ) : (↑(x ^ n) : R) = x ^ n :=
+s.to_submonoid.coe_pow x n
 
 @[simp] lemma coe_eq_zero_iff {x : s} : (x : R) = 0 ↔ x = 0 :=
 ⟨λ h, subtype.ext (trans h s.coe_zero.symm),
@@ -242,12 +244,49 @@ instance to_ring : ring s :=
 instance to_comm_ring {R} [comm_ring R] (s : subring R) : comm_ring s :=
 { mul_comm := λ _ _, subtype.eq $ mul_comm _ _, ..subring.to_ring s}
 
+/-- A subring of a non-trivial ring is non-trivial. -/
+instance {R} [ring R] [nontrivial R] (s : subring R) : nontrivial s :=
+s.to_subsemiring.nontrivial
+
+/-- A subring of a ring with no zero divisors has no zero divisors. -/
+instance {R} [ring R] [no_zero_divisors R] (s : subring R) : no_zero_divisors s :=
+s.to_subsemiring.no_zero_divisors
+
+/-- A subring of an integral domain is an integral domain. -/
+instance {R} [integral_domain R] (s : subring R) : integral_domain s :=
+{ .. s.nontrivial, .. s.no_zero_divisors, .. s.to_comm_ring }
+
+/-- A subring of an `ordered_ring` is an `ordered_ring`. -/
+instance to_ordered_ring {R} [ordered_ring R] (s : subring R) : ordered_ring s :=
+subtype.coe_injective.ordered_ring coe rfl rfl (λ _ _, rfl) (λ _ _, rfl) (λ _, rfl) (λ _ _, rfl)
+
+/-- A subring of an `ordered_comm_ring` is an `ordered_comm_ring`. -/
+instance to_ordered_comm_ring {R} [ordered_comm_ring R] (s : subring R) : ordered_comm_ring s :=
+subtype.coe_injective.ordered_comm_ring coe rfl rfl
+  (λ _ _, rfl) (λ _ _, rfl) (λ _, rfl) (λ _ _, rfl)
+
+/-- A subring of a `linear_ordered_ring` is a `linear_ordered_ring`. -/
+instance to_linear_ordered_ring {R} [linear_ordered_ring R] (s : subring R) :
+  linear_ordered_ring s :=
+subtype.coe_injective.linear_ordered_ring coe rfl rfl
+  (λ _ _, rfl) (λ _ _, rfl) (λ _, rfl) (λ _ _, rfl)
+
+/-- A subring of a `linear_ordered_comm_ring` is a `linear_ordered_comm_ring`. -/
+instance to_linear_ordered_comm_ring {R} [linear_ordered_comm_ring R] (s : subring R) :
+  linear_ordered_comm_ring s :=
+subtype.coe_injective.linear_ordered_comm_ring coe rfl rfl
+  (λ _ _, rfl) (λ _ _, rfl) (λ _, rfl) (λ _ _, rfl)
+
 /-- The natural ring hom from a subring of ring `R` to `R`. -/
 def subtype (s : subring R) : s →+* R :=
 { to_fun := coe,
  .. s.to_submonoid.subtype, .. s.to_add_subgroup.subtype }
 
 @[simp] theorem coe_subtype : ⇑s.subtype = coe := rfl
+@[simp, norm_cast] lemma coe_nat_cast (n : ℕ) : ((n : s) : R) = n :=
+s.subtype.map_nat_cast n
+@[simp, norm_cast] lemma coe_int_cast (n : ℤ) : ((n : s) : R) = n :=
+s.subtype.map_int_cast n
 
 /-! # Partial order -/
 
@@ -363,24 +402,6 @@ end ring_hom
 
 namespace subring
 
-variables {cR : Type u} [comm_ring cR]
-
-/-- A subring of a commutative ring is a commutative ring. -/
-def subset_comm_ring (S : subring cR) : comm_ring S :=
-{mul_comm := λ _ _, subtype.eq $ mul_comm _ _, ..subring.to_ring S}
-
-/-- A subring of a non-trivial ring is non-trivial. -/
-instance {D : Type*} [ring D] [nontrivial D] (S : subring D) : nontrivial S :=
-S.to_subsemiring.nontrivial
-
-/-- A subring of a ring with no zero divisors has no zero divisors. -/
-instance {D : Type*} [ring D] [no_zero_divisors D] (S : subring D) : no_zero_divisors S :=
-S.to_subsemiring.no_zero_divisors
-
-/-- A subring of an integral domain is an integral domain. -/
-instance subring.domain {D : Type*} [integral_domain D] (S : subring D) : integral_domain S :=
-{ .. S.nontrivial, .. S.no_zero_divisors, .. S.subset_comm_ring }
-
 /-! # bot -/
 
 instance : has_bot (subring R) := ⟨(int.cast_ring_hom R).range⟩
@@ -407,14 +428,16 @@ instance : has_inf (subring R) :=
 @[simp] lemma mem_inf {p p' : subring R} {x : R} : x ∈ p ⊓ p' ↔ x ∈ p ∧ x ∈ p' := iff.rfl
 
 instance : has_Inf (subring R) :=
-⟨λ s, subring.mk' (⋂ t ∈ s, ↑t) (⨅ t ∈ s, subring.to_submonoid t ) (⨅ t ∈ s, subring.to_add_subgroup t) (by simp) (by simp)⟩
+⟨λ s, subring.mk' (⋂ t ∈ s, ↑t) (⨅ t ∈ s, subring.to_submonoid t )
+  (⨅ t ∈ s, subring.to_add_subgroup t) (by simp) (by simp)⟩
 
 @[simp, norm_cast] lemma coe_Inf (S : set (subring R)) :
   ((Inf S : subring R) : set R) = ⋂ s ∈ S, ↑s := rfl
 
 lemma mem_Inf {S : set (subring R)} {x : R} : x ∈ Inf S ↔ ∀ p ∈ S, x ∈ p := set.mem_bInter_iff
 
-@[simp] lemma Inf_to_submonoid (s : set (subring R)) : (Inf s).to_submonoid = ⨅ t ∈ s, subring.to_submonoid t := mk'_to_submonoid _ _
+@[simp] lemma Inf_to_submonoid (s : set (subring R)) :
+  (Inf s).to_submonoid = ⨅ t ∈ s, subring.to_submonoid t := mk'_to_submonoid _ _
 
 @[simp] lemma Inf_to_add_subgroup (s : set (subring R)) :
   (Inf s).to_add_subgroup = ⨅ t ∈ s, subring.to_add_subgroup t := mk'_to_add_subgroup _ _
@@ -431,6 +454,9 @@ instance : complete_lattice (subring R) :=
   le_inf := λ s t₁ t₂ h₁ h₂ x hx, ⟨h₁ hx, h₂ hx⟩,
   .. complete_lattice_of_Inf (subring R)
     (λ s, is_glb.of_image (λ s t, show (s : set R) ≤ t ↔ s ≤ t, from coe_subset_coe) is_glb_binfi)}
+
+lemma eq_top_iff' (A : subring R) : A = ⊤ ↔ ∀ x : R, x ∈ A :=
+eq_top_iff.trans ⟨λ h m, h $ mem_top m, λ h m _, h m⟩
 
 /-! # subring closure of a subset -/
 
@@ -458,8 +484,8 @@ lemma closure_eq_of_le {s : set R} {t : subring R} (h₁ : s ⊆ t) (h₂ : t �
 le_antisymm (closure_le.2 h₁) h₂
 
 /-- An induction principle for closure membership. If `p` holds for `0`, `1`, and all elements
-of `s`, and is preserved under addition, negation, and multiplication, then `p` holds for all elements
-of the closure of `s`. -/
+of `s`, and is preserved under addition, negation, and multiplication, then `p` holds for all
+elements of the closure of `s`. -/
 @[elab_as_eliminator]
 lemma closure_induction {s : set R} {p : R → Prop} {x} (h : x ∈ closure s)
   (Hs : ∀ x ∈ s, p x) (H0 : p 0) (H1 : p 1)
@@ -480,10 +506,12 @@ lemma mem_closure_iff {s : set R} {x} :
     ( λ p hp, add_subgroup.subset_closure ((submonoid.closure s).mul_mem hp hq) )
     ( begin rw zero_mul q, apply add_subgroup.zero_mem _, end )
     ( λ p₁ p₂ ihp₁ ihp₂, begin rw add_mul p₁ p₂ q, apply add_subgroup.add_mem _ ihp₁ ihp₂, end )
-    ( λ x hx, begin have f : -x * q = -(x*q) := by simp, rw f, apply add_subgroup.neg_mem _ hx, end ) )
+    ( λ x hx, begin have f : -x * q = -(x*q) :=
+      by simp, rw f, apply add_subgroup.neg_mem _ hx, end ) )
   ( begin rw mul_zero x, apply add_subgroup.zero_mem _, end )
   ( λ q₁ q₂ ihq₁ ihq₂, begin rw mul_add x q₁ q₂, apply add_subgroup.add_mem _ ihq₁ ihq₂ end )
-  ( λ z hz, begin have f : x * -z = -(x*z) := by simp, rw f, apply add_subgroup.neg_mem _ hz, end ) ),
+  ( λ z hz, begin have f : x * -z = -(x*z) := by simp,
+            rw f, apply add_subgroup.neg_mem _ hz, end ) ),
  λ h, add_subgroup.closure_induction h
  ( λ x hx, submonoid.closure_induction hx
   ( λ x hx, subset_closure hx )
@@ -767,7 +795,8 @@ begin
   { rw [list.map_cons, list.sum_cons],
     exact ha this (ih HL.2) },
   replace HL := HL.1, clear ih tl,
-  suffices : ∃ L : list R, (∀ x ∈ L, x ∈ s) ∧ (list.prod hd = list.prod L ∨ list.prod hd = -list.prod L),
+  suffices : ∃ L : list R, (∀ x ∈ L, x ∈ s) ∧
+    (list.prod hd = list.prod L ∨ list.prod hd = -list.prod L),
   { rcases this with ⟨L, HL', HP | HP⟩,
     { rw HP, clear HP HL hd, induction L with hd tl ih, { exact h1 },
       rw list.forall_mem_cons at HL',

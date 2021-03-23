@@ -154,7 +154,7 @@ by haveI := f.to_rel_embedding.is_well_order; exact
 
 @[simp] theorem antisymm_symm [is_well_order α r] [is_well_order β s]
   (f : r ≼i s) (g : s ≼i r) : (antisymm f g).symm = antisymm g f :=
-rel_iso.injective_coe_fn rfl
+rel_iso.coe_fn_injective rfl
 
 theorem eq_or_principal [is_well_order β s] (f : r ≼i s) :
   surjective f ∨ ∃ b, ∀ x, s x b ↔ ∃ y, f y = x :=
@@ -1129,10 +1129,9 @@ begin
   exact ordinal.min_le (λ i:ι α, ⟦⟨α, i.1, i.2⟩⟧) ⟨_, _⟩
 end
 
-@[nolint def_lemma doc_blame]
--- TODO: This should be a theorem but Lean fails to synthesize the placeholder
-def ord_eq_min (α : Type u) : ord (mk α) =
-  @ordinal.min _ _ (λ i:{r // is_well_order α r}, ⟦⟨α, i.1, i.2⟩⟧) := rfl
+lemma ord_eq_min (α : Type u) : ord (mk α) =
+  @ordinal.min {r // is_well_order α r} ⟨⟨well_ordering_rel, by apply_instance⟩⟩
+    (λ i, ⟦⟨α, i.1, i.2⟩⟧) := rfl
 
 theorem ord_eq (α) : ∃ (r : α → α → Prop) [wo : is_well_order α r],
   ord (mk α) = @type α r wo :=

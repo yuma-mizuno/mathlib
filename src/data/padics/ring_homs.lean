@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2020 Johan Commelin and Robert Y. Lewis. All rights reserved.
+Copyright (c) 2020 Johan Commelin, Robert Y. Lewis. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Johan Commelin and Robert Y. Lewis
+Authors: Johan Commelin, Robert Y. Lewis
 -/
 
 import data.padics.padic_integers
@@ -173,7 +173,7 @@ begin
   obtain ⟨r, hr⟩ := rat_dense (x : ℚ_[p]) zero_lt_one,
   have H : ∥(r : ℚ_[p])∥ ≤ 1,
   { rw norm_sub_rev at hr,
-    calc _ = ∥(r : ℚ_[p]) - x + x∥ : by ring
+    calc _ = ∥(r : ℚ_[p]) - x + x∥ : by ring_nf
        ... ≤ _ : padic_norm_e.nonarchimedean _ _
        ... ≤ _ :  max_le (le_of_lt hr) x.2 },
   obtain ⟨n, hzn, hnp, hn⟩ := exists_mem_range_of_norm_rat_le_one r H,
@@ -635,7 +635,8 @@ begin
   apply ideal.add_mem _ _ this,
   rw [ideal.mem_span_singleton],
   simpa only [ring_hom.eq_int_cast, ring_hom.map_pow, int.cast_sub] using
-    (int.cast_ring_hom ℤ_[p]).map_dvd (pow_dvd_nth_hom_sub f_compat r n (max n k) (le_max_left _ _)),
+    (int.cast_ring_hom ℤ_[p]).map_dvd
+      (pow_dvd_nth_hom_sub f_compat r n (max n k) (le_max_left _ _)),
 end
 
 /--

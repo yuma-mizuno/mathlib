@@ -60,7 +60,7 @@ instance : linear_ordered_comm_ring int :=
 instance : linear_ordered_add_comm_group int :=
 by apply_instance
 
-@[simp] lemma add_minus_one (i : ℤ) : i + -1 = i - 1 := rfl
+@[simp] lemma add_neg_one (i : ℤ) : i + -1 = i - 1 := rfl
 
 theorem abs_eq_nat_abs : ∀ a : ℤ, abs a = nat_abs a
 | (n : ℕ) := abs_of_nonneg $ coe_zero_le _
@@ -1070,6 +1070,9 @@ lemma units_inv_eq_self (u : units ℤ) : u⁻¹ = u :=
 -- `units.coe_mul` is a "wrong turn" for the simplifier, this undoes it and simplifies further
 @[simp] lemma units_coe_mul_self (u : units ℤ) : (u * u : ℤ) = 1 :=
 by rw [←units.coe_mul, units_mul_self, units.coe_one]
+
+@[simp] lemma neg_one_pow_ne_zero {n : ℕ} : (-1 : ℤ)^n ≠ 0 :=
+pow_ne_zero _ (abs_pos.mp trivial)
 
 /-! ### bitwise ops -/
 
