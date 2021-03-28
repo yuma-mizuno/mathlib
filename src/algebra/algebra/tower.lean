@@ -47,7 +47,7 @@ def lsmul : A →ₐ[R] module.End R M :=
 
 @[simp] lemma lmul_algebra_map (x : R) :
   lmul R A (algebra_map R A x) = algebra.lsmul R A x :=
-eq.symm $ linear_map.ext $ smul_def'' x
+by simpa only [algebra_map_def, alg_hom.map_smul, alg_hom.map_one]
 
 end algebra
 
@@ -83,7 +83,7 @@ of_algebra_map_eq $ ring_hom.ext_iff.1 h
 variables (R S A)
 
 instance subalgebra (S₀ : subalgebra R S) : is_scalar_tower S₀ S A :=
-of_algebra_map_eq $ λ x, rfl
+of_algebra_map_eq $ λ x, by { simp only [algebra_map_def], sorry, }
 
 variables [algebra R A] [algebra R B]
 variables [is_scalar_tower R S A] [is_scalar_tower R S B]
@@ -100,21 +100,18 @@ instance subalgebra' (S₀ : subalgebra R S) : is_scalar_tower R S₀ A :=
 @is_scalar_tower.of_algebra_map_eq R S₀ A _ _ _ _ _ _ $ λ _,
 (is_scalar_tower.algebra_map_apply R S A _ : _)
 
+-- TODO Kill this now redundant
 @[ext] lemma algebra.ext {S : Type u} {A : Type v} [comm_semiring S] [semiring A]
   (h1 h2 : algebra S A) (h : ∀ {r : S} {x : A}, (by haveI := h1; exact r • x) = r • x) : h1 = h2 :=
-begin
-  unfreezingI { cases h1 with f1 g1 h11 h12, cases h2 with f2 g2 h21 h22,
-  cases f1, cases f2, congr', { ext r x, exact h },
-  ext r, erw [← mul_one (g1 r), ← h12, ← mul_one (g2 r), ← h22, h], refl }
-end
+by { apply algebra.algebra_ext h1 h2, simp only [h, forall_const, eq_self_iff_true], }
 
 variables (R S A)
-theorem algebra_comap_eq : algebra.comap.algebra R S A = ‹_› :=
-algebra.ext _ _ $ λ x (z : A),
-calc  algebra_map R S x • z
-    = (x • 1 : S) • z : by rw algebra.algebra_map_eq_smul_one
-... = x • (1 : S) • z : by rw smul_assoc
-... = (by exact x • z : A) : by rw one_smul
+-- theorem algebra_comap_eq : algebra.comap.algebra R S A = ‹_› :=
+-- algebra.ext _ _ $ λ x (z : A),
+-- calc  algebra_map R S x • z
+--     = (x • 1 : S) • z : by rw algebra.algebra_map_eq_smul_one
+-- ... = x • (1 : S) • z : by rw smul_assoc
+-- ... = (by exact x • z : A) : by rw one_smul
 
 /-- In a tower, the canonical map from the middle element to the top element is an
 algebra homomorphism over the bottom element. -/
