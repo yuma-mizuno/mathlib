@@ -1104,6 +1104,12 @@ instance comap.algebra : algebra R (comap R S A) :=
 ring_hom.to_algebra' ((algebra_map S A).comp (algebra_map R S))
   (λ r x, algebra.commutes _ _)
 
+lemma comap_smul_eq_algebra_map (r : R) (x : comap R S A) : r • x = algebra_map R S r • x :=
+begin
+  change ((algebra_map S A).comp (algebra_map R S)) r * x = _,
+  simp [algebra_map_def],
+end
+
 /-- Embedding of `S` into `comap R S A`. -/
 def to_comap : S →ₐ[R] comap R S A :=
 { commutes' := λ r, (mul_one _).symm,
