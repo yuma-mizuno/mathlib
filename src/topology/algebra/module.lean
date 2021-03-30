@@ -764,7 +764,8 @@ variables
 variables [topological_add_group M₂] [has_continuous_smul R M₂]
 
 instance : algebra R (M₂ →L[R] M₂) :=
-algebra.of_semimodule smul_comp (λ _ _ _, comp_smul _ _ _)
+{ smul_mul_assoc' := smul_comp,
+  mul_smul_comm'  := λ r x y, comp_smul r x y, }
 
 end comm_ring
 
