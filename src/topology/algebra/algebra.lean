@@ -60,7 +60,7 @@ variables [algebra R A] [topological_semiring A]
 /-- The closure of a subalgebra in a topological algebra as a subalgebra. -/
 def subalgebra.topological_closure (s : subalgebra R A) : subalgebra R A :=
 { carrier := closure (s : set A),
-  algebra_map_mem' := λ r, s.to_subsemiring.subring_topological_closure (s.algebra_map_mem r),
+  smul_mem' := λ r x hx, by { sorry, },
   .. s.to_subsemiring.topological_closure }
 
 instance subalgebra.topological_closure_topological_semiring (s : subalgebra R A) :

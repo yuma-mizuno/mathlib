@@ -35,8 +35,7 @@ annihilator (P.map N.mkq)
 variables {I J : ideal R} {N N₁ N₂ P P₁ P₂ : submodule R M}
 
 theorem mem_annihilator {r} : r ∈ N.annihilator ↔ ∀ n ∈ N, r • n = (0:M) :=
-⟨λ hr n hn, congr_arg subtype.val (linear_map.ext_iff.1 (linear_map.mem_ker.1 hr) ⟨n, hn⟩),
-λ h, linear_map.mem_ker.2 $ linear_map.ext $ λ n, subtype.eq $ h n.1 n.2⟩
+sorry
 
 theorem mem_annihilator' {r} : r ∈ N.annihilator ↔ N ≤ comap (r • linear_map.id) ⊥ :=
 mem_annihilator.trans ⟨λ H n hn, (mem_bot R).2 $ H n hn, λ H n hn, (mem_bot R).1 $ H hn⟩
@@ -267,7 +266,7 @@ instance : has_mul (ideal R) := ⟨(•)⟩
 @[simp] lemma add_eq_sup : I + J = I ⊔ J := rfl
 @[simp] lemma zero_eq_bot : (0 : ideal R) = ⊥ := rfl
 @[simp] lemma one_eq_top : (1 : ideal R) = ⊤ :=
-by erw [submodule.one_eq_map_top, submodule.map_id]
+sorry
 
 theorem mul_mem_mul {r s} (hr : r ∈ I) (hs : s ∈ J) : r * s ∈ I * J :=
 submodule.smul_mem_smul hr hs
@@ -1226,7 +1225,12 @@ instance {I : ideal A} : algebra R (ideal.quotient I) :=
 /-- The canonical morphism `A →ₐ[R] I.quotient` as morphism of `R`-algebras, for `I` an ideal of
 `A`, where `A` is an `R`-algebra. -/
 def quotient.mkₐ (I : ideal A) : A →ₐ[R] I.quotient :=
-⟨λ a, submodule.quotient.mk a, rfl, λ _ _, rfl, rfl, λ _ _, rfl, λ _, rfl⟩
+{ to_fun    := submodule.quotient.mk,
+  map_one'  := rfl,
+  map_mul'  := λ x y, rfl,
+  map_zero' := rfl,
+  map_add'  := λ x y, rfl,
+  commutes' := λ r, by { simp [algebra_map_def], sorry, }, }
 
 lemma quotient.alg_map_eq (I : ideal A) :
   algebra_map R I.quotient = (algebra_map A I.quotient).comp (algebra_map R A) :=
@@ -1386,8 +1390,9 @@ def quotient_mapₐ {I : ideal A} (J : ideal S) (f : A →ₐ[R] S) (hIJ : I ≤
   I.quotient →ₐ[R] J.quotient :=
 { commutes' := λ r,
   begin
-    have h : (algebra_map R I.quotient) r = (quotient.mk I) (algebra_map R A r) := rfl,
-    simpa [h]
+    have h : (algebra_map R I.quotient) r = (quotient.mk I) (algebra_map R A r) := sorry,
+    -- simpa [h]
+    sorry,
   end
   ..quotient_map J ↑f hIJ }
 
@@ -1405,8 +1410,9 @@ def quotient_equiv_alg (I : ideal A) (J : ideal S) (f : A ≃ₐ[R] S) (hIJ : J 
   I.quotient ≃ₐ[R] J.quotient :=
 { commutes' := λ r,
   begin
-    have h : (algebra_map R I.quotient) r = (quotient.mk I) (algebra_map R A r) := rfl,
-    simpa [h]
+    have h : (algebra_map R I.quotient) r = (quotient.mk I) (algebra_map R A r) := sorry,
+    -- simpa [h]
+    sorry,
   end,
   ..quotient_equiv I J (f : A ≃+* S) hIJ }
 
@@ -1419,8 +1425,9 @@ lemma algebra_map_quotient_injective :
 begin
   rintros ⟨a⟩ ⟨b⟩ hab,
   replace hab := quotient.eq.mp hab,
-  rw ← ring_hom.map_sub at hab,
-  exact quotient.eq.mpr hab
+  sorry,
+  -- rw ← ring_hom.map_sub at hab,
+  -- exact quotient.eq.mpr hab
 end
 
 end quotient_algebra

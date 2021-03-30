@@ -52,9 +52,10 @@ instance : algebra v.integer R :=
 algebra.of_subring v.integer
 
 theorem integer.integers : v.integers v.integer :=
-{ hom_inj := subtype.coe_injective,
-  map_le_one := λ r, r.2,
-  exists_of_le_one := λ r hr, ⟨⟨r, hr⟩, rfl⟩ }
+sorry
+-- { hom_inj := subtype.coe_injective,
+--   map_le_one := λ r, r.2,
+--   exists_of_le_one := λ r hr, ⟨⟨r, hr⟩, rfl⟩ }
 
 namespace integers
 

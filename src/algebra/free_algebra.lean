@@ -165,14 +165,17 @@ instance : has_scalar R (free_algebra R X) :=
 { smul := λ r a, quot.lift_on a (λ x, quot.mk _ $ ↑r * x) $
   λ a b h, quot.sound (rel.mul_compat_right h) }
 
+instance : semimodule R (free_algebra R X) :=
+{ one_smul  := sorry,
+  mul_smul  := sorry,
+  smul_add  := sorry,
+  smul_zero := sorry,
+  add_smul  := sorry,
+  zero_smul := sorry, }
+
 instance : algebra R (free_algebra R X) :=
-{ to_fun := λ r, quot.mk _ r,
-  map_one' := rfl,
-  map_mul' := λ _ _, quot.sound rel.mul_scalar,
-  map_zero' := rfl,
-  map_add' := λ _ _, quot.sound rel.add_scalar,
-  commutes' := λ _, by { rintros ⟨⟩, exact quot.sound rel.central_scalar },
-  smul_def' := λ _ _, rfl }
+{ smul_mul_assoc' := sorry,
+  mul_smul_comm'  := sorry, }
 
 instance {S : Type*} [comm_ring S] : ring (free_algebra S X) := algebra.semiring_to_ring S
 
@@ -226,7 +229,7 @@ private def lift_aux (f : X → A) : (free_algebra R X →ₐ[R] A) :=
   map_mul' := by { rintros ⟨⟩ ⟨⟩, refl },
   map_zero' := by { change algebra_map _ _ _ = _, simp },
   map_add' := by { rintros ⟨⟩ ⟨⟩, refl },
-  commutes' := by tauto }
+  commutes' := λ r, by { simp [algebra_map_def], sorry, } }
 
 /--
 Given a function `f : X → A` where `A` is an `R`-algebra, `lift R f` is the unique lift
@@ -243,9 +246,7 @@ def lift : (X → A) ≃ (free_algebra R X →ₐ[R] A) :=
     case pre.of : {
       change ((F : free_algebra R X → A) ∘ (ι R)) _ = _,
       refl },
-    case pre.of_scalar : {
-      change algebra_map _ _ x = F (algebra_map _ _ x),
-      rw alg_hom.commutes F x, },
+    case pre.of_scalar : { sorry, },
     case pre.add : a b ha hb {
       change lift_aux R (F ∘ ι R) (quot.mk _ _ + quot.mk _ _) = F (quot.mk _ _ + quot.mk _ _),
       rw [alg_hom.map_add, alg_hom.map_add, ha, hb], },
@@ -370,7 +371,9 @@ begin
     carrier := C,
     mul_mem' := h_mul,
     add_mem' := h_add,
-    algebra_map_mem' := h_grade0, },
+    smul_mem' := sorry,
+    one_mem'  := sorry,
+    zero_mem' := sorry, },
   let of : X → s := subtype.coind (ι R) h_grade1,
   -- the mapping through the subalgebra is the identity
   have of_id : alg_hom.id R (free_algebra R X) = s.val.comp (lift R of),

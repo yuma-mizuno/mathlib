@@ -71,7 +71,8 @@ The canonical linear map `M →ₗ[R] tensor_algebra R M`.
 def ι : M →ₗ[R] (tensor_algebra R M) :=
 { to_fun := λ m, (ring_quot.mk_alg_hom R _ (free_algebra.ι R m)),
   map_add' := λ x y, by { rw [←alg_hom.map_add], exact ring_quot.mk_alg_hom_rel R rel.add, },
-  map_smul' := λ r x, by { rw [←alg_hom.map_smul], exact ring_quot.mk_alg_hom_rel R rel.smul, } }
+  map_smul' := λ r x, by { rw [←alg_hom.map_smul], apply ring_quot.mk_alg_hom_rel,
+    convert rel.smul, simp only [algebra_map_def, one_mul, algebra.smul_mul_assoc], } }
 
 lemma ring_quot_mk_alg_hom_free_algebra_ι_eq_ι (m : M) :
   ring_quot.mk_alg_hom R (rel R M) (free_algebra.ι R m) = ι R m := rfl
@@ -140,7 +141,11 @@ begin
     carrier := C,
     mul_mem' := h_mul,
     add_mem' := h_add,
-    algebra_map_mem' := h_grade0, },
+    one_mem'  := by
+      { specialize h_grade0 1, simp only [algebra_map_def, one_smul] at h_grade0, exact h_grade0, },
+    zero_mem' := by
+      { specialize h_grade0 0, simp only [algebra_map_def, zero_smul] at h_grade0, exact h_grade0 },
+    smul_mem' := λ c x hx, by { sorry, }, },
   let of : M →ₗ[R] s := (ι R).cod_restrict s.to_submodule h_grade1,
   -- the mapping through the subalgebra is the identity
   have of_id : alg_hom.id R (tensor_algebra R M) = s.val.comp (lift R of),

@@ -97,8 +97,7 @@ theorem algebra_map_apply (x : R) : algebra_map R A x = algebra_map S A (algebra
 by rw [algebra_map_eq R S A, ring_hom.comp_apply]
 
 instance subalgebra' (S₀ : subalgebra R S) : is_scalar_tower R S₀ A :=
-@is_scalar_tower.of_algebra_map_eq R S₀ A _ _ _ _ _ _ $ λ _,
-(is_scalar_tower.algebra_map_apply R S A _ : _)
+of_algebra_map_eq $ λ x, by { simp [algebra_map_def], sorry, }
 
 -- TODO Kill this now redundant
 @[ext] lemma algebra.ext {S : Type u} {A : Type v} [comm_semiring S] [semiring A]
@@ -134,25 +133,25 @@ instance right : is_scalar_tower S A A :=
 
 instance comap {R S A : Type*} [comm_semiring R] [comm_semiring S] [semiring A]
   [algebra R S] [algebra S A] : is_scalar_tower R S (algebra.comap R S A) :=
-of_algebra_map_eq $ λ x, rfl
+of_algebra_map_eq $ λ x, sorry
 
 -- conflicts with is_scalar_tower.subalgebra
 @[priority 999] instance subsemiring (U : subsemiring S) : is_scalar_tower U S A :=
-of_algebra_map_eq $ λ x, rfl
+of_algebra_map_eq $ λ x, sorry
 
 section
 local attribute [instance] algebra.of_is_subring subset.comm_ring
 -- conflicts with is_scalar_tower.subalgebra
 @[priority 999] instance subring {S A : Type*} [comm_ring S] [ring A] [algebra S A]
   (U : set S) [is_subring U] : is_scalar_tower U S A :=
-of_algebra_map_eq $ λ x, rfl
+of_algebra_map_eq $ λ x, sorry
 end
 
 @[nolint instance_priority]
 instance of_ring_hom {R A B : Type*} [comm_semiring R] [comm_semiring A] [comm_semiring B]
   [algebra R A] [algebra R B] (f : A →ₐ[R] B) :
   @is_scalar_tower R A B _ (f.to_ring_hom.to_algebra.to_has_scalar) _ :=
-by { letI := (f : A →+* B).to_algebra, exact of_algebra_map_eq (λ x, (f.commutes x).symm) }
+sorry
 
 end semiring
 
@@ -160,7 +159,7 @@ section division_ring
 variables [field R] [division_ring S] [algebra R S] [char_zero R] [char_zero S]
 
 instance rat : is_scalar_tower ℚ R S :=
-of_algebra_map_eq $ λ x, ((algebra_map R S).map_rat_cast x).symm
+of_algebra_map_eq $ sorry
 
 end division_ring
 
@@ -223,7 +222,7 @@ variables [algebra R S] [algebra S A] [algebra R A] [is_scalar_tower R S A]
 /-- If A/S/R is a tower of algebras then the `res`triction of a S-subalgebra of A is
 an R-subalgebra of A. -/
 def res (U : subalgebra S A) : subalgebra R A :=
-{ algebra_map_mem' := λ x, by { rw algebra_map_apply R S A, exact U.algebra_map_mem _ },
+{ smul_mem' := sorry,
   .. U }
 
 @[simp] lemma res_top : res R (⊤ : subalgebra S A) = ⊤ :=
@@ -238,7 +237,7 @@ ext $ λ x, by rw [← mem_res R, H, mem_res]
 def of_under {R A B : Type*} [comm_semiring R] [comm_semiring A] [semiring B]
   [algebra R A] [algebra R B] (S : subalgebra R A) (U : subalgebra S A)
   [algebra S B] [is_scalar_tower R S B] (f : U →ₐ[S] B) : S.under U →ₐ[R] B :=
-{ commutes' := λ r, (f.commutes (algebra_map R S r)).trans (algebra_map_apply R S B r).symm,
+{ commutes' := λ r, sorry,
   .. f }
 
 end semiring
@@ -259,8 +258,7 @@ show z ∈ subsemiring.closure (set.range (algebra_map (to_alg_hom R S A).range 
   z ∈ subsemiring.closure (set.range (algebra_map S A) ∪ t : set A),
 from suffices set.range (algebra_map (to_alg_hom R S A).range A) = set.range (algebra_map S A),
   by rw this,
-by { ext z, exact ⟨λ ⟨⟨x, y, _, h1⟩, h2⟩, ⟨y, h2 ▸ h1⟩, λ ⟨y, hy⟩,
-  ⟨⟨z, y, set.mem_univ _, hy⟩, rfl⟩⟩ }
+by { ext z, sorry, }
 
 end is_scalar_tower
 

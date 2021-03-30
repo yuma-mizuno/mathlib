@@ -52,23 +52,12 @@ instance (A : Mon_ (Module.{u} R)) : ring A.X :=
   ..(by apply_instance : add_comm_group A.X) }
 
 instance (A : Mon_ (Module.{u} R)) : algebra R A.X :=
-{ map_zero' := A.one.map_zero,
-  map_one' := rfl,
-  map_mul' := λ x y,
-  begin
-    have h := linear_map.congr_fun A.one_mul.symm (x ⊗ₜ (A.one y)),
-    rwa [monoidal_category.left_unitor_hom_apply, ←A.one.map_smul] at h,
-  end,
-  commutes' := λ r a,
-  begin dsimp,
-    have h₁ := linear_map.congr_fun A.one_mul (r ⊗ₜ a),
-    have h₂ := linear_map.congr_fun A.mul_one (a ⊗ₜ r),
-    exact h₁.trans h₂.symm,
-  end,
-  smul_def' := λ r a, by { convert (linear_map.congr_fun A.one_mul (r ⊗ₜ a)).symm, simp, },
-  ..A.one }
+{ smul_mul_assoc' := λ t a b, by { sorry, },
+  mul_smul_comm'  := λ t a b, by { sorry, },
+  ..A.X.is_module, }
 
-@[simp] lemma algebra_map (A : Mon_ (Module.{u} R)) (r : R) : algebra_map R A.X r = A.one r := rfl
+@[simp] lemma algebra_map (A : Mon_ (Module.{u} R)) (r : R) : algebra_map R A.X r = A.one r :=
+sorry
 
 /--
 Converting a monoid object in `Module R` to a bundled algebra.
@@ -80,7 +69,7 @@ def functor : Mon_ (Module.{u} R) ⥤ Algebra R :=
   { to_fun := f.hom,
     map_one' := linear_map.congr_fun f.one_hom (1 : R),
     map_mul' := λ x y, linear_map.congr_fun f.mul_hom (x ⊗ₜ y),
-    commutes' := λ r, linear_map.congr_fun f.one_hom r,
+    commutes' := sorry,
     ..(f.hom.to_add_monoid_hom) }, }.
 
 /--
@@ -95,16 +84,15 @@ def inverse_obj (A : Algebra.{u} R) : Mon_ (Module.{u} R) :=
   begin
     ext x,
     dsimp,
-    rw [algebra.lmul'_apply, monoidal_category.left_unitor_hom_apply, algebra.smul_def],
-    refl,
+    rw [algebra.lmul'_apply, monoidal_category.left_unitor_hom_apply, algebra_map_def, one_smul,
+      one_smul, one_mul],
   end,
   mul_one' :=
   begin
     ext x,
     dsimp,
     rw [algebra.lmul'_apply, monoidal_category.right_unitor_hom_apply,
-      ←algebra.commutes, algebra.smul_def],
-    refl,
+      ←algebra.commutes, algebra_map_def, one_smul, one_smul, one_mul],
   end,
   mul_assoc' :=
   begin
@@ -145,14 +133,14 @@ def Mon_Module_equivalence_Algebra : Mon_ (Module.{u} R) ≌ Algebra R :=
       map_add' := λ x y, rfl,
       map_one' := (algebra_map R A).map_one,
       map_mul' := λ x y, algebra.lmul'_apply,
-      commutes' := λ r, rfl, },
+      commutes' := sorry, },
     inv :=
     { to_fun := id,
       map_zero' := rfl,
       map_add' := λ x y, rfl,
       map_one' := (algebra_map R A).map_one.symm,
       map_mul' := λ x y, algebra.lmul'_apply.symm,
-      commutes' := λ r, rfl } }) (by tidy), }.
+      commutes' := sorry } }) (by tidy), }.
 
 /--
 The equivalence `Mon_ (Module R) ≌ Algebra R`

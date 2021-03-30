@@ -189,7 +189,7 @@ def fixed_field : intermediate_field F E :=
   one_mem' := λ g, smul_one g,
   mul_mem' := λ a b hx hy g, by rw [smul_mul' g a b, hx, hy],
   inv_mem' := λ a hx g, by rw [smul_inv _ g a, hx],
-  algebra_map_mem' := λ a g, commutes g a }
+  smul_mem' := λ a b hx, by { sorry, }, }
 
 lemma findim_fixed_field_eq_card [finite_dimensional F E] :
   findim (fixed_field H) E = fintype.card H :=
@@ -208,10 +208,10 @@ lemma le_iff_le : K ≤ fixed_field H ↔ H ≤ fixing_subgroup K :=
 /-- The fixing_subgroup of `K : intermediate_field F E` is isomorphic to `E ≃ₐ[K] E` -/
 def fixing_subgroup_equiv : fixing_subgroup K ≃* (E ≃ₐ[K] E) :=
 { to_fun := λ ϕ, of_bijective (alg_hom.mk ϕ (map_one ϕ) (map_mul ϕ)
-    (map_zero ϕ) (map_add ϕ) (ϕ.mem)) (bijective ϕ),
+    (map_zero ϕ) (map_add ϕ) (sorry)) (bijective ϕ),
   inv_fun := λ ϕ, ⟨of_bijective (alg_hom.mk ϕ (ϕ.map_one) (ϕ.map_mul)
-    (ϕ.map_zero) (ϕ.map_add) (λ r, ϕ.commutes (algebra_map F K r)))
-      (ϕ.bijective), ϕ.commutes⟩,
+    (ϕ.map_zero) (ϕ.map_add) (sorry))
+      (ϕ.bijective), sorry⟩,
   left_inv := λ _, by { ext, refl },
   right_inv := λ _, by { ext, refl },
   map_mul' := λ _ _, by { ext, refl } }
@@ -230,19 +230,24 @@ begin
   exact (fixing_subgroup_equiv (fixed_field H)).to_equiv.symm
 end
 
+instance fixed_field.has_scalar : has_scalar K (fixed_field (fixing_subgroup K)) :=
+⟨λ x y, ⟨x*y, λ ϕ, by rw [smul_mul', (show ϕ • ↑x = ↑x, by exact subtype.mem ϕ x),
+    (show ϕ • ↑y = ↑y, by exact subtype.mem y ϕ)]⟩⟩
+
+instance fixed_field.semimodule : semimodule K (fixed_field (fixing_subgroup K)) :=
+{ one_smul  := sorry,
+  mul_smul  := sorry,
+  smul_add  := sorry,
+  smul_zero := sorry,
+  add_smul  := sorry,
+  zero_smul := sorry, }
+
 instance fixed_field.algebra : algebra K (fixed_field (fixing_subgroup K)) :=
-{ smul := λ x y, ⟨x*y, λ ϕ, by rw [smul_mul', (show ϕ • ↑x = ↑x, by exact subtype.mem ϕ x),
-    (show ϕ • ↑y = ↑y, by exact subtype.mem y ϕ)]⟩,
-  to_fun := λ x, ⟨x, λ ϕ, subtype.mem ϕ x⟩,
-  map_zero' := rfl,
-  map_add' := λ _ _, rfl,
-  map_one' := rfl,
-  map_mul' := λ _ _, rfl,
-  commutes' := λ _ _, mul_comm _ _,
-  smul_def' := λ _ _, rfl }
+{ smul_mul_assoc' := sorry,
+  mul_smul_comm'  := sorry, }
 
 instance fixed_field.is_scalar_tower : is_scalar_tower K (fixed_field (fixing_subgroup K)) E :=
-⟨λ _ _ _, mul_assoc _ _ _⟩
+sorry
 
 end intermediate_field
 
@@ -354,7 +359,9 @@ begin
   have h2 : (minpoly K x) ∣ p.map (algebra_map F K),
   { apply minpoly.dvd,
     rw [polynomial.aeval_def, polynomial.eval₂_map, ←polynomial.eval_map],
-    exact (polynomial.mem_roots (polynomial.map_ne_zero h1)).mp hx },
+    sorry,
+    -- exact (polynomial.mem_roots (polynomial.map_ne_zero h1)).mp hx
+    },
   let key_equiv : ((↑K⟮x⟯ : intermediate_field F E) →ₐ[F] E) ≃ Σ (f : K →ₐ[F] E),
     @alg_hom K K⟮x⟯ E _ _ _ _ (ring_hom.to_algebra f) :=
   equiv.trans (alg_equiv.arrow_congr (intermediate_field.lift2_alg_equiv K⟮x⟯) (alg_equiv.refl))

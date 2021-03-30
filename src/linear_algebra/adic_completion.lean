@@ -164,7 +164,7 @@ namespace adic_completion
 def of : M →ₗ[R] adic_completion I M :=
 { to_fun    := λ x, ⟨λ n, mkq _ x, λ m n hmn, rfl⟩,
   map_add'  := λ x y, rfl,
-  map_smul' := λ c x, rfl }
+  map_smul' := λ c x, sorry, }
 
 @[simp] lemma of_apply (x : M) (n : ℕ) : (of I M x).1 n = mkq _ x := rfl
 
@@ -172,7 +172,7 @@ def of : M →ₗ[R] adic_completion I M :=
 def eval (n : ℕ) : adic_completion I M →ₗ[R] (I ^ n • ⊤ : submodule R M).quotient :=
 { to_fun    := λ f, f.1 n,
   map_add'  := λ f g, rfl,
-  map_smul' := λ c f, rfl }
+  map_smul' := λ c f, sorry, }
 
 @[simp] lemma coe_eval (n : ℕ) :
   (eval I M n : adic_completion I M → (I ^ n • ⊤ : submodule R M).quotient) = λ f, f.1 n := rfl

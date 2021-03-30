@@ -315,7 +315,7 @@ def alg_equiv (e : α ≃ β) [semiring β] [algebra R β] :
 begin
   introsI,
   exact
-  { commutes' := λ r, by { apply e.symm.injective, simp, refl, },
+  { commutes' := λ r, by { apply e.symm.injective, simp, sorry, },
     ..equiv.ring_equiv e }
 end
 
