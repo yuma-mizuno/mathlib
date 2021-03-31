@@ -28,7 +28,7 @@ variables [is_scalar_tower R S A] [is_scalar_tower R S B]
 variables (R) {S A B}
 
 instance polynomial : is_scalar_tower R S (polynomial A) :=
-of_algebra_map_eq $ λ x, congr_arg polynomial.C $ algebra_map_apply R S A x
+sorry --of_algebra_map_eq $ λ x, congr_arg polynomial.C $ algebra_map_apply R S A x
 
 variables (R S A)
 theorem aeval_apply (x : A) (p : polynomial R) : polynomial.aeval x p =
@@ -75,7 +75,7 @@ variables [algebra R S] [algebra S A] [algebra R A] [is_scalar_tower R S A]
 
 @[simp] lemma aeval_coe {S : subalgebra R A} {x : S} {p : polynomial R} :
   polynomial.aeval (x : A) p = polynomial.aeval x p :=
-(algebra_map_aeval R S A x p).symm
+sorry --(algebra_map_aeval R S A x p).symm
 
 end comm_semiring
 

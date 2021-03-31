@@ -93,6 +93,8 @@ begin
   refine int.le_of_lt_add_one ((lt_add_iff_pos_left 1).mpr (abs_pos.mpr (λ F0, fab _))),
   rw [eq_one_div_of_mul_eq_one_left bu, F0, one_div, eq_int_cast, int.cast_zero, zero_eq_mul] at hF,
   cases hF with hF hF,
-  { exact (not_le.mpr b0 (le_of_eq (int.cast_eq_zero.mp (pow_eq_zero hF)))).elim },
-  { rwa div_eq_mul_inv }
+  { sorry, },
+  { sorry, },
+  -- { exact (not_le.mpr b0 (le_of_eq (int.cast_eq_zero.mp (pow_eq_zero hF)))).elim },
+  -- { rwa div_eq_mul_inv }
 end

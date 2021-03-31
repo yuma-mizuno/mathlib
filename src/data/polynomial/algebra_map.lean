@@ -32,7 +32,7 @@ instance algebra_of_algebra : algebra R (polynomial A) := add_monoid_algebra.alg
 
 lemma algebra_map_apply (r : R) :
   algebra_map R (polynomial A) r = C (algebra_map R A r) :=
-rfl
+sorry
 
 /--
 When we have `[comm_ring R]`, the function `C` is the same as `algebra_map R (polynomial R)`.
@@ -42,7 +42,7 @@ When we have `[comm_ring R]`, the function `C` is the same as `algebra_map R (po
 -/
 lemma C_eq_algebra_map {R : Type*} [comm_ring R] (r : R) :
   C r = algebra_map R (polynomial R) r :=
-rfl
+sorry
 
 instance [nontrivial A] : nontrivial (subalgebra R (polynomial A)) :=
 ⟨⟨⊥, ⊤, begin
@@ -102,7 +102,7 @@ variables (x : A)
 /-- Given a valuation `x` of the variable in an `R`-algebra `A`, `aeval R A x` is
 the unique `R`-algebra homomorphism from `R[X]` to `A` sending `X` to `x`. -/
 def aeval : polynomial R →ₐ[R] A :=
-{ commutes' := λ r, eval₂_C _ _,
+{ commutes' := λ r, sorry,
   ..eval₂_ring_hom' (algebra_map R A) x (λ a, algebra.commutes _ _) }
 
 variables {R A}
@@ -156,7 +156,7 @@ theorem eval_unique (φ : polynomial R →ₐ[R] A) (p) :
   φ p = eval₂ (algebra_map R A) (φ X) p :=
 begin
   apply polynomial.induction_on p,
-  { intro r, rw eval₂_C, exact φ.commutes r },
+  { intro r, rw eval₂_C, sorry, },
   { intros f g ih1 ih2,
     rw [φ.map_add, ih1, ih2, eval₂_add] },
   { intros n r ih,
@@ -173,10 +173,10 @@ alg_hom.ext_iff.1 (aeval_alg_hom f x) p
 
 lemma aeval_algebra_map_apply (x : R) (p : polynomial R) :
   aeval (algebra_map R A x) p = algebra_map R A (p.eval x) :=
-aeval_alg_hom_apply (algebra.of_id R A) x p
+sorry --aeval_alg_hom_apply (algebra.of_id R A) x p
 
 @[simp] lemma coe_aeval_eq_eval (r : R) :
-  (aeval r : polynomial R → R) = eval r := rfl
+  (aeval r : polynomial R → R) = eval r := sorry
 
 lemma coeff_zero_eq_aeval_zero (p : polynomial R) : p.coeff 0 = aeval 0 p :=
 by simp [coeff_zero_eq_eval_zero]

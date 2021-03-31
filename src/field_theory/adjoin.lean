@@ -38,7 +38,7 @@ variables (F : Type*) [field F] {E : Type*} [field E] [algebra F E] (S : set E)
 
 /-- `adjoin F S` extends a field `F` by adjoining a set `S ⊆ E`. -/
 def adjoin : intermediate_field F E :=
-{ algebra_map_mem' := λ x, subfield.subset_closure (or.inl (set.mem_range_self x)),
+{ smul_mem' := sorry,
   ..subfield.closure (set.range (algebra_map F E) ∪ S) }
 
 end adjoin_def
@@ -605,7 +605,7 @@ def lifts.upper_bound_intermediate_field {c : set (lifts F E K)} (hc : zorn.chai
   { rintros _ _ ⟨x, hx, ha⟩ ⟨y, hy, hb⟩,
     obtain ⟨z, hz, hxz, hyz⟩ := lifts.exists_max_two hc hx hy,
     exact ⟨z, hz, z.1.mul_mem (hxz.1 ha) (hyz.1 hb)⟩ },
-  algebra_map_mem' := λ s, ⟨⊥, set.mem_insert ⊥ c, algebra_map_mem ⊥ s⟩ }
+  smul_mem' := sorry, }
 
 /-- The lift on the upper bound on a chain of lifts -/
 noncomputable def lifts.upper_bound_alg_hom {c : set (lifts F E K)} (hc : zorn.chain (≤) c) :

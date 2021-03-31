@@ -54,7 +54,7 @@ def rename (f : σ → τ) : mv_polynomial σ R →ₐ[R] mv_polynomial τ R :=
 aeval (X ∘ f)
 
 @[simp] lemma rename_C (f : σ → τ) (r : R) : rename f (C r) = C r :=
-eval₂_C _ _ _
+sorry
 
 @[simp] lemma rename_X (f : σ → τ) (i : σ) : rename f (X i : mv_polynomial σ R) = X (f i) :=
 eval₂_X _ _ _
@@ -67,23 +67,23 @@ mv_polynomial.induction_on p
   (λ p n hp, by simp only [hp, rename_X, map_X, ring_hom.map_mul, alg_hom.map_mul])
 
 @[simp] lemma rename_rename (f : σ → τ) (g : τ → α) (p : mv_polynomial σ R) :
-  rename g (rename f p) = rename (g ∘ f) p :=
-show rename g (eval₂ C (X ∘ f) p) = _,
-begin
-  simp only [rename, aeval_eq_eval₂_hom],
-  simp [eval₂_comp_left _ C (X ∘ f) p, (∘), eval₂_C, eval_X],
-  apply eval₂_hom_congr _ rfl rfl,
-  ext1, simp only [comp_app, ring_hom.coe_comp, eval₂_hom_C],
-end
+  rename g (rename f p) = rename (g ∘ f) p := sorry
+-- show rename g (eval₂ C (X ∘ f) p) = _,
+-- begin
+--   simp only [rename, aeval_eq_eval₂_hom],
+--   simp [eval₂_comp_left _ C (X ∘ f) p, (∘), eval₂_C, eval_X],
+--   apply eval₂_hom_congr _ rfl rfl,
+--   ext1, simp only [comp_app, ring_hom.coe_comp, eval₂_hom_C],
+-- end
 
 @[simp] lemma rename_id (p : mv_polynomial σ R) : rename id p = p :=
-eval₂_eta p
+sorry --eval₂_eta p
 
 lemma rename_monomial (f : σ → τ) (d : σ →₀ ℕ) (r : R) :
   rename f (monomial d r) = monomial (d.map_domain f) r :=
 begin
   rw [rename, aeval_monomial, monomial_eq, finsupp.prod_map_domain_index],
-  { refl },
+  { sorry, },
   { exact assume n, pow_zero _ },
   { exact assume n i₁ i₂, pow_add _ _ _ }
 end
@@ -95,10 +95,11 @@ begin
   congr' with s a : 2,
   rw [← monomial, monomial_eq, finsupp.prod_sum_index],
   congr' with n i : 2,
-  rw [finsupp.prod_single_index],
-  exact pow_zero _,
-  exact assume a, pow_zero _,
-  exact assume a b c, pow_add _ _ _
+  all_goals { sorry, },
+  -- rw [finsupp.prod_single_index],
+  -- exact pow_zero _,
+  -- exact assume a, pow_zero _,
+  -- exact assume a b c, pow_add _ _ _
 end
 
 lemma rename_injective (f : σ → τ) (hf : function.injective f) :

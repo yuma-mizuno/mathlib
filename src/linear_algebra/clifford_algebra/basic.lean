@@ -174,7 +174,9 @@ begin
     carrier := C,
     mul_mem' := h_mul,
     add_mem' := h_add,
-    algebra_map_mem' := h_grade0, },
+    one_mem'  := sorry,
+    zero_mem' := sorry,
+    smul_mem' := sorry, },
   let of : { f : M →ₗ[R] s // ∀ m, f m * f m = algebra_map _ _ (Q m) } :=
   ⟨(ι Q).cod_restrict s.to_submodule h_grade1,
     λ m, subtype.eq $ ι_square_scalar Q m ⟩,

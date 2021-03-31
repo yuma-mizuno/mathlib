@@ -39,7 +39,7 @@ The flat sections of a functor into `Algebra R` form a submodule of all sections
 -/
 def sections_subalgebra (F : J ⥤ Algebra R) :
   subalgebra R (Π j, F.obj j) :=
-{ algebra_map_mem' := λ r j j' f, (F.map f).commutes r,
+{ smul_mem' := sorry,
   ..SemiRing.sections_subsemiring (F ⋙ forget₂ (Algebra R) Ring ⋙ forget₂ Ring SemiRing) }
 
 

@@ -133,7 +133,7 @@ def C : R →+* mv_polynomial σ R :=
   map_mul' := λ a a', by simp [monomial, single_mul_single] }
 
 variables (R σ)
-theorem algebra_map_eq : algebra_map R (mv_polynomial σ R) = C := rfl
+theorem algebra_map_eq : algebra_map R (mv_polynomial σ R) = C := sorry
 variables {R σ}
 
 /-- `X n` is the degree `1` monomial $X_n$. -/
@@ -313,7 +313,7 @@ by { ext, exact hf _ }
 
 @[simp] lemma alg_hom_C (f : mv_polynomial σ R →ₐ[R] mv_polynomial σ R) (r : R) :
   f (C r) = C r :=
-f.commutes r
+sorry
 
 
 section support
@@ -560,7 +560,7 @@ by { ext, apply constant_coeff_C }
 
 @[simp] lemma constant_coeff_comp_algebra_map :
   constant_coeff.comp (algebra_map R (mv_polynomial σ R)) = ring_hom.id R :=
-constant_coeff_comp_C _ _
+sorry --constant_coeff_comp_C _ _
 
 end constant_coeff
 
@@ -931,7 +931,7 @@ variables [algebra R S₁] [comm_semiring S₂]
 /-- A map `σ → S₁` where `S₁` is an algebra over `R` generates an `R`-algebra homomorphism
 from multivariate polynomials over `σ` to `S₁`. -/
 def aeval : mv_polynomial σ R →ₐ[R] S₁ :=
-{ commutes' := λ r, eval₂_C _ _ _
+{ commutes' := sorry
   .. eval₂_hom (algebra_map R S₁) f }
 
 theorem aeval_def (p : mv_polynomial σ R) : aeval f p = eval₂ (algebra_map R S₁) f p := rfl

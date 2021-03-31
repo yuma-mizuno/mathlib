@@ -75,9 +75,9 @@ set_like.ext h
 
 @[simp] lemma coe_to_subfield : (S.to_subfield : set L) = S := rfl
 
-@[simp] lemma mem_mk (s : set L) (hK : ∀ x, algebra_map K L x ∈ s)
-  (ho hm hz ha hn hi) (x : L) :
-  x ∈ intermediate_field.mk s ho hm hz ha hK hn hi ↔ x ∈ s := iff.rfl
+-- @[simp] lemma mem_mk (s : set L) (hK : ∀ x, algebra_map K L x ∈ s)
+--   (ho hm hz ha hn hi) (x : L) :
+--   x ∈ intermediate_field.mk s ho hm hz ha hK hn hi ↔ x ∈ s := iff.rfl
 
 @[simp] lemma mem_to_subalgebra (s : intermediate_field K L) (x : L) :
   x ∈ s.to_subalgebra ↔ x ∈ s := iff.rfl
@@ -87,7 +87,7 @@ set_like.ext h
 
 /-- An intermediate field contains the image of the smaller field. -/
 theorem algebra_map_mem (x : K) : algebra_map K L x ∈ S :=
-S.algebra_map_mem' x
+sorry --S.algebra_map_mem' x
 
 /-- An intermediate field contains the ring's 1. -/
 theorem one_mem : (1 : L) ∈ S := S.one_mem'
@@ -186,7 +186,7 @@ by { ext, refl }
 def subfield.to_intermediate_field (S : subfield L)
   (algebra_map_mem : ∀ x, algebra_map K L x ∈ S) :
   intermediate_field K L :=
-{ algebra_map_mem' := algebra_map_mem,
+{ smul_mem' := sorry,
   .. S }
 
 namespace intermediate_field
@@ -267,7 +267,7 @@ def lift2 {F : intermediate_field K L} (E : intermediate_field F L) : intermedia
   one_mem' := one_mem E,
   mul_mem' := λ x y, mul_mem E,
   inv_mem' := λ x, inv_mem E,
-  algebra_map_mem' := λ x, algebra_map_mem E (algebra_map K F x) }
+  smul_mem' := sorry, }
 
 instance has_lift1 {F : intermediate_field K L} :
   has_lift_t (intermediate_field K F) (intermediate_field K L) := ⟨lift1⟩
@@ -279,18 +279,19 @@ instance has_lift2 {F : intermediate_field K L} :
   x ∈ (↑E : intermediate_field K L) ↔ x ∈ E := iff.rfl
 
 instance lift2_alg {F : intermediate_field K L} {E : intermediate_field F L} : algebra K E :=
-{ to_fun := (algebra_map F E).comp (algebra_map K F),
-  map_zero' := ((algebra_map F E).comp (algebra_map K F)).map_zero,
-  map_one' := ((algebra_map F E).comp (algebra_map K F)).map_one,
-  map_add' := ((algebra_map F E).comp (algebra_map K F)).map_add,
-  map_mul' := ((algebra_map F E).comp (algebra_map K F)).map_mul,
-  smul := λ a b, (((algebra_map F E).comp (algebra_map K F)) a) * b,
-  smul_def' := λ _ _, rfl,
-  commutes' := λ a b, mul_comm (((algebra_map F E).comp (algebra_map K F)) a) b }
+{ smul      := λ a b, (((algebra_map F E).comp (algebra_map K F)) a) * b,
+  one_smul  := sorry,
+  mul_smul  := sorry,
+  smul_add  := sorry,
+  smul_zero := sorry,
+  add_smul  := sorry,
+  zero_smul := sorry,
+  smul_mul_assoc' := sorry,
+  mul_smul_comm'  := sorry, }
 
 instance lift2_tower {F : intermediate_field K L} {E : intermediate_field F L} :
   is_scalar_tower K F E :=
-⟨λ a b c, by { simp only [algebra.smul_def, ring_hom.map_mul, mul_assoc], refl }⟩
+⟨λ a b c, by { simp only [algebra.smul_def, ring_hom.map_mul, mul_assoc], sorry, }⟩
 
 /-- `lift2` is isomorphic to the original `intermediate_field`. -/
 def lift2_alg_equiv {F : intermediate_field K L} (E : intermediate_field F L) :
@@ -301,7 +302,7 @@ def lift2_alg_equiv {F : intermediate_field K L} (E : intermediate_field F L) :
   right_inv := λ x, rfl,
   map_add' := λ x y, rfl,
   map_mul' := λ x y, rfl,
-  commutes' := λ x, rfl }
+  commutes' := λ x, sorry }
 
 end tower
 
@@ -310,7 +311,7 @@ section finite_dimensional
 variables (F E : intermediate_field K L)
 
 instance finite_dimensional_left [finite_dimensional K L] : finite_dimensional K F :=
-finite_dimensional.finite_dimensional_submodule F.to_subalgebra.to_submodule
+sorry --finite_dimensional.finite_dimensional_submodule F.to_subalgebra.to_submodule
 
 instance finite_dimensional_right [finite_dimensional K L] : finite_dimensional F L :=
 right K F L
@@ -328,7 +329,8 @@ by { rw [set_like.ext_iff, set_like.ext'_iff, set.ext_iff], refl }
 
 lemma eq_of_le_of_findim_le [finite_dimensional K L] (h_le : F ≤ E)
   (h_findim : findim K E ≤ findim K F) : F = E :=
-to_subalgebra_injective $ subalgebra.to_submodule_injective $ eq_of_le_of_findim_le h_le h_findim
+sorry
+--to_subalgebra_injective $ subalgebra.to_submodule_injective $ eq_of_le_of_findim_le h_le h_findim
 
 lemma eq_of_le_of_findim_eq [finite_dimensional K L] (h_le : F ≤ E)
   (h_findim : findim K F = findim K E) : F = E :=

@@ -34,23 +34,25 @@ open finsupp polynomial
 lemma scale_roots_aeval_eq_zero_of_aeval_mk'_eq_zero {p : polynomial A} {r : A} {s : M}
   (hr : @aeval A f.codomain _ _ _ (f.mk' r s) p = 0) :
   @aeval A f.codomain _ _ _ (f.to_map r) (scale_roots p s) = 0 :=
-begin
-  convert scale_roots_eval₂_eq_zero f.to_map hr,
-  rw aeval_def,
-  congr,
-  apply (f.mk'_spec' r s).symm
-end
+sorry
+-- begin
+--   convert scale_roots_eval₂_eq_zero f.to_map hr,
+--   rw aeval_def,
+--   congr,
+--   apply (f.mk'_spec' r s).symm
+-- end
 
 lemma num_is_root_scale_roots_of_aeval_eq_zero
   [unique_factorization_monoid A] (g : fraction_map A K)
   {p : polynomial A} {x : g.codomain} (hr : aeval x p = 0) :
   is_root (scale_roots p (g.denom x)) (g.num x) :=
-begin
-  apply is_root_of_eval₂_map_eq_zero g.injective,
-  refine scale_roots_aeval_eq_zero_of_aeval_mk'_eq_zero _,
-  rw g.mk'_num_denom,
-  exact hr
-end
+sorry
+-- begin
+--   apply is_root_of_eval₂_map_eq_zero g.injective,
+--   refine scale_roots_aeval_eq_zero_of_aeval_mk'_eq_zero _,
+--   rw g.mk'_num_denom,
+--   exact hr
+-- end
 
 end scale_roots
 
@@ -126,7 +128,7 @@ lemma integer_of_integral {x : f.codomain} :
 λ ⟨p, hp, hx⟩, is_integer_of_is_root_of_monic hp hx
 
 lemma integrally_closed : integral_closure A f.codomain = ⊥ :=
-eq_bot_iff.mpr (λ x hx, algebra.mem_bot.mpr (integer_of_integral hx))
+sorry --eq_bot_iff.mpr (λ x hx, algebra.mem_bot.mpr (integer_of_integral hx))
 
 end unique_factorization_monoid
 

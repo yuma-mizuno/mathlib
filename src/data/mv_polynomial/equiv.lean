@@ -98,7 +98,7 @@ def punit_alg_equiv : mv_polynomial punit R ≃ₐ[R] polynomial R :=
         eval₂_mul, eval₂_C, eval₂_pow, eval₂_X]),
   map_mul'  := λ _ _, eval₂_mul _ _,
   map_add'  := λ _ _, eval₂_add _ _,
-  commutes' := λ _, eval₂_C _ _ _}
+  commutes' := sorry, }
 
 section map
 variables {R} (σ)
@@ -137,8 +137,8 @@ def map_alg_equiv (e : A₁ ≃ₐ[R] A₂) :
   mv_polynomial σ A₁ ≃ₐ[R] mv_polynomial σ A₂ :=
 { commutes' := λ r, begin
     dsimp,
-    have h₁ : algebra_map R (mv_polynomial σ A₁) r = C (algebra_map R A₁ r) := rfl,
-    have h₂ : algebra_map R (mv_polynomial σ A₂) r = C (algebra_map R A₂ r) := rfl,
+    have h₁ : algebra_map R (mv_polynomial σ A₁) r = C (algebra_map R A₁ r) := sorry,
+    have h₂ : algebra_map R (mv_polynomial σ A₂) r = C (algebra_map R A₂ r) := sorry,
     rw [h₁, h₂, map, eval₂_hom_C, ring_hom.comp_apply,
       ring_equiv.coe_to_ring_hom, alg_equiv.coe_ring_equiv, alg_equiv.commutes],
   end,
@@ -252,10 +252,11 @@ def sum_alg_equiv : mv_polynomial (S₁ ⊕ S₂) R ≃ₐ[R]
   mv_polynomial S₁ (mv_polynomial S₂ R) :=
 { commutes' := begin
     intro r,
-    change algebra_map R (mv_polynomial S₁ (mv_polynomial S₂ R)) r with C (C r),
-    change algebra_map R (mv_polynomial (S₁ ⊕ S₂) R) r with C r,
-    simp only [sum_ring_equiv, sum_to_iter_C, mv_polynomial_equiv_mv_polynomial_apply,
-      ring_equiv.to_fun_eq_coe],
+    sorry,
+    -- change algebra_map R (mv_polynomial S₁ (mv_polynomial S₂ R)) r with C (C r),
+    -- change algebra_map R (mv_polynomial (S₁ ⊕ S₂) R) r with C r,
+    -- simp only [sum_ring_equiv, sum_to_iter_C, mv_polynomial_equiv_mv_polynomial_apply,
+    --   ring_equiv.to_fun_eq_coe],
   end,
   ..sum_ring_equiv R S₁ S₂ }
 

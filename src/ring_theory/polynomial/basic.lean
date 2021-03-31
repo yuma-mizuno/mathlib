@@ -107,7 +107,7 @@ def degree_lt_equiv (F : Type*) [field F] (n : ℕ) : degree_lt F n ≃ₗ[F] (f
     (degree_lt F n).sum_mem (λ i _, mem_degree_lt.mpr (lt_of_le_of_lt
       (degree_monomial_le i (f i)) (with_bot.coe_lt_coe.mpr i.is_lt)))⟩,
   map_add' := λ p q, by { ext, rw [submodule.coe_add, coeff_add], refl },
-  map_smul' := λ x p, by { ext, rw [submodule.coe_smul, coeff_smul], refl },
+  map_smul' := sorry, --λ x p, by { ext, rw [submodule.coe_smul, coeff_smul], refl },
   left_inv :=
   begin
     rintro ⟨p, hp⟩, ext1,
@@ -865,7 +865,7 @@ def quotient_equiv_quotient_mv_polynomial (I : ideal R) :
     { simp_intros p i hp,
       simp only [hp] }
   end,
-  commutes' := λ r, eval₂_hom_C _ _ (ideal.quotient.mk I r) }
+  commutes' := sorry } --λ r, eval₂_hom_C _ _ (ideal.quotient.mk I r) }
 
 end mv_polynomial
 

@@ -61,7 +61,7 @@ begin
     exact aeval_unique g },
   { simp only [comap, aeval_eq_eval₂_hom, map_eval₂_hom, alg_hom.comp_apply],
     refine eval₂_hom_congr _ rfl rfl,
-    ext r, apply aeval_C },
+    ext r, sorry, },
 end
 
 lemma comap_comp (f : mv_polynomial σ R →ₐ[R] mv_polynomial τ R)

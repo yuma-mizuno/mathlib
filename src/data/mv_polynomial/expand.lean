@@ -27,7 +27,7 @@ variables {σ τ R S : Type*} [comm_semiring R] [comm_semiring S]
 
 See also `polynomial.expand`. -/
 noncomputable def expand (p : ℕ) : mv_polynomial σ R →ₐ[R] mv_polynomial σ R :=
-{ commutes' := λ r, eval₂_hom_C _ _ _,
+{ commutes' := sorry,
   .. (eval₂_hom C (λ i, (X i) ^ p) : mv_polynomial σ R →+* mv_polynomial σ R) }
 
 @[simp] lemma expand_C (p : ℕ) (r : R) : expand p (C r : mv_polynomial σ R) = C r :=
@@ -38,7 +38,7 @@ eval₂_hom_X' _ _ _
 
 @[simp] lemma expand_monomial (p : ℕ) (d : σ →₀ ℕ) (r : R) :
   expand p (monomial d r) = C r * ∏ i in d.support, (X i ^ p) ^ d i :=
-bind₁_monomial _ _ _
+sorry -- bind₁_monomial _ _ _
 
 lemma expand_one_apply (f : mv_polynomial σ R) : expand 1 f = f :=
 by simp only [expand, bind₁_X_left, alg_hom.id_apply, ring_hom.to_fun_eq_coe,

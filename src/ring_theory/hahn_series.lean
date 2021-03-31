@@ -563,16 +563,13 @@ section algebra
 variables [comm_semiring R] {A : Type*} [semiring A] [algebra R A]
 
 instance : algebra R (hahn_series Γ A) :=
-{ to_ring_hom := C.comp (algebra_map R A),
-  smul_def' := λ r x, by { ext, simp },
-  commutes' := λ r x, by { ext, simp only [smul_coeff, single_zero_mul_eq_smul, ring_hom.coe_comp,
-    ring_hom.to_fun_eq_coe, C_apply, function.comp_app, algebra_map_smul, mul_single_zero_coeff],
-    rw [← algebra.commutes, algebra.smul_def], }, }
+{ smul_mul_assoc' := sorry,
+  mul_smul_comm'  := sorry, }
 
-theorem C_eq_algebra_map : C = (algebra_map R (hahn_series Γ R)) := rfl
+theorem C_eq_algebra_map : C = (algebra_map R (hahn_series Γ R)) := sorry
 
 theorem algebra_map_apply {r : R} :
-  algebra_map R (hahn_series Γ A) r = C (algebra_map R A r) := rfl
+  algebra_map R (hahn_series Γ A) r = C (algebra_map R A r) := sorry
 
 instance [nontrivial Γ] [nontrivial R] : nontrivial (subalgebra R (hahn_series Γ R)) :=
 ⟨⟨⊥, ⊤, begin
