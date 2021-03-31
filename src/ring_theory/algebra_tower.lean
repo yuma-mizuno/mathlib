@@ -50,8 +50,8 @@ invertible.copy (invertible.map (algebra_map S A : S →* A) (algebra_map R S r)
 /-- A natural number that is invertible when coerced to `R` is also invertible
 when coerced to any `R`-algebra. -/
 def invertible_algebra_coe_nat (n : ℕ) [inv : invertible (n : R)] :
-  invertible (n : A) :=
-by { haveI : invertible (algebra_map ℕ R n) := inv, exact invertible.algebra_tower ℕ R A n }
+  invertible (n : A) := sorry
+-- by { haveI : invertible (algebra_map ℕ R n) := inv, exact invertible.algebra_tower ℕ R A n }
 
 end semiring
 
@@ -90,9 +90,11 @@ begin
   ext x,
   split,
   { rintros ⟨y, hy⟩,
-    exact ⟨⟨algebra_map D E y, ⟨y, ⟨algebra.mem_top, rfl⟩⟩⟩, hy⟩ },
+    sorry, },
+    -- exact ⟨⟨algebra_map D E y, ⟨y, ⟨algebra.mem_top, rfl⟩⟩⟩, hy⟩ },
   { rintros ⟨⟨y, ⟨z, ⟨h0, h1⟩⟩⟩, h2⟩,
-    exact ⟨z, eq.trans h1 h2⟩ },
+  sorry, },
+    -- exact ⟨z, eq.trans h1 h2⟩ },
 end
 
 lemma adjoin_res_eq_adjoin_res (C D E F : Type*) [comm_semiring C] [comm_semiring D]
@@ -188,41 +190,41 @@ open finset submodule
 open_locale classical
 
 lemma exists_subalgebra_of_fg (hAC : (⊤ : subalgebra A C).fg) (hBC : (⊤ : submodule B C).fg) :
-  ∃ B₀ : subalgebra A B, B₀.fg ∧ (⊤ : submodule B₀ C).fg :=
-begin
-  cases hAC with x hx,
-  cases hBC with y hy, have := hy,
-  simp_rw [eq_top_iff', mem_span_finset] at this, choose f hf,
-  let s : finset B := (finset.product (x ∪ (y * y)) y).image (function.uncurry f),
-  have hsx : ∀ (xi ∈ x) (yj ∈ y), f xi yj ∈ s := λ xi hxi yj hyj,
-    show function.uncurry f (xi, yj) ∈ s,
-    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_left _ hxi, hyj⟩,
-  have hsy : ∀ (yi yj yk ∈ y), f (yi * yj) yk ∈ s := λ yi yj yk hyi hyj hyk,
-    show function.uncurry f (yi * yj, yk) ∈ s,
-    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
-  have hxy : ∀ xi ∈ x, xi ∈ span (algebra.adjoin A (↑s : set B))
-               (↑(insert 1 y : finset C) : set C) :=
-    λ xi hxi, hf xi ▸ sum_mem _ (λ yj hyj, smul_mem
-      (span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C))
-      ⟨f xi yj, algebra.subset_adjoin $ hsx xi hxi yj hyj⟩
-      (subset_span $ mem_insert_of_mem hyj)),
-  have hyy : span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) *
-      span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) ≤
-    span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C),
-  { rw [span_mul_span, span_le, coe_insert], rintros _ ⟨yi, yj, rfl | hyi, rfl | hyj, rfl⟩,
-    { rw mul_one, exact subset_span (set.mem_insert _ _) },
-    { rw one_mul, exact subset_span (set.mem_insert_of_mem _ hyj) },
-    { rw mul_one, exact subset_span (set.mem_insert_of_mem _ hyi) },
-    { rw ← hf (yi * yj), exact set_like.mem_coe.2 (sum_mem _ $ λ yk hyk, smul_mem
-        (span (algebra.adjoin A (↑s : set B)) (insert 1 ↑y : set C))
-        ⟨f (yi * yj) yk, algebra.subset_adjoin $ hsy yi yj yk hyi hyj hyk⟩
-        (subset_span $ set.mem_insert_of_mem _ hyk : yk ∈ _)) } },
-  refine ⟨algebra.adjoin A (↑s : set B), subalgebra.fg_adjoin_finset _, insert 1 y, _⟩,
-  refine restrict_scalars_injective A _ _ _,
-  rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
-  refine λ r hr, monoid.in_closure.rec_on hr hxy (subset_span $ mem_insert_self _ _)
-      (λ p q _ _ hp hq, hyy $ submodule.mul_mem_mul hp hq)
-end
+  ∃ B₀ : subalgebra A B, B₀.fg ∧ (⊤ : submodule B₀ C).fg := sorry
+-- begin
+--   cases hAC with x hx,
+--   cases hBC with y hy, have := hy,
+--   simp_rw [eq_top_iff', mem_span_finset] at this, choose f hf,
+--   let s : finset B := (finset.product (x ∪ (y * y)) y).image (function.uncurry f),
+--   have hsx : ∀ (xi ∈ x) (yj ∈ y), f xi yj ∈ s := λ xi hxi yj hyj,
+--     show function.uncurry f (xi, yj) ∈ s,
+--     from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_left _ hxi, hyj⟩,
+--   have hsy : ∀ (yi yj yk ∈ y), f (yi * yj) yk ∈ s := λ yi yj yk hyi hyj hyk,
+--     show function.uncurry f (yi * yj, yk) ∈ s,
+--     from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
+--   have hxy : ∀ xi ∈ x, xi ∈ span (algebra.adjoin A (↑s : set B))
+--                (↑(insert 1 y : finset C) : set C) :=
+--     λ xi hxi, hf xi ▸ sum_mem _ (λ yj hyj, smul_mem
+--       (span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C))
+--       ⟨f xi yj, algebra.subset_adjoin $ hsx xi hxi yj hyj⟩
+--       (subset_span $ mem_insert_of_mem hyj)),
+--   have hyy : span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) *
+--       span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) ≤
+--     span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C),
+--   { rw [span_mul_span, span_le, coe_insert], rintros _ ⟨yi, yj, rfl | hyi, rfl | hyj, rfl⟩,
+--     { rw mul_one, exact subset_span (set.mem_insert _ _) },
+--     { rw one_mul, exact subset_span (set.mem_insert_of_mem _ hyj) },
+--     { rw mul_one, exact subset_span (set.mem_insert_of_mem _ hyi) },
+--     { rw ← hf (yi * yj), exact set_like.mem_coe.2 (sum_mem _ $ λ yk hyk, smul_mem
+--         (span (algebra.adjoin A (↑s : set B)) (insert 1 ↑y : set C))
+--         ⟨f (yi * yj) yk, algebra.subset_adjoin $ hsy yi yj yk hyi hyj hyk⟩
+--         (subset_span $ set.mem_insert_of_mem _ hyk : yk ∈ _)) } },
+--   refine ⟨algebra.adjoin A (↑s : set B), subalgebra.fg_adjoin_finset _, insert 1 y, _⟩,
+--   refine restrict_scalars_injective A _ _ _,
+--   rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
+--   refine λ r hr, monoid.in_closure.rec_on hr hxy (subset_span $ mem_insert_self _ _)
+--       (λ p q _ _ hp hq, hyy $ submodule.mul_mem_mul hp hq)
+-- end
 
 /-- Artin--Tate lemma: if A ⊆ B ⊆ C is a chain of subrings of commutative rings, and
 A is noetherian, and C is algebra-finite over A, and C is module-finite over B,
@@ -254,7 +256,7 @@ def alg_hom.restrict_domain : B →ₐ[A] D := f.comp (is_scalar_tower.to_alg_ho
 
 /-- Extend the scalars of an `alg_hom`. -/
 def alg_hom.extend_scalars : @alg_hom B C D _ _ _ _ (f.restrict_domain B).to_ring_hom.to_algebra :=
-{ commutes' := λ _, rfl .. f }
+{ commutes' := sorry, .. f }
 
 variables {B}
 
@@ -268,7 +270,7 @@ def alg_hom_equiv_sigma :
   right_inv :=
   begin
     rintros ⟨⟨f, _, _, _, _, _⟩, g, _, _, _, _, hg⟩,
-    have : f = λ x, g (algebra_map B C x) := by { ext, exact (hg x).symm },
+    have : f = λ x, g (algebra_map B C x) := by { ext, sorry, }, --exact (hg x).symm },
     subst this,
     refl,
   end }

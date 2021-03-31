@@ -98,13 +98,14 @@ open subsemiring
 
 variables (R s t)
 theorem adjoin_union : adjoin R (s ∪ t) = (adjoin R s).under (adjoin (adjoin R s) t) :=
-le_antisymm
-  (closure_mono $ set.union_subset
-    (set.range_subset_iff.2 $ λ r, or.inl ⟨algebra_map R (adjoin R s) r, rfl⟩)
-    (set.union_subset_union_left _ $ λ x hxs, ⟨⟨_, subset_adjoin hxs⟩, rfl⟩))
-  (closure_le.2 $ set.union_subset
-    (set.range_subset_iff.2 $ λ x, adjoin_mono (set.subset_union_left _ _) x.2)
-    (set.subset.trans (set.subset_union_right _ _) subset_adjoin))
+sorry
+-- le_antisymm
+--   (closure_mono $ set.union_subset
+--     (set.range_subset_iff.2 $ λ r, or.inl ⟨algebra_map R (adjoin R s) r, rfl⟩)
+--     (set.union_subset_union_left _ $ λ x hxs, ⟨⟨_, subset_adjoin hxs⟩, rfl⟩))
+--   (closure_le.2 $ set.union_subset
+--     (set.range_subset_iff.2 $ λ x, adjoin_mono (set.subset_union_left _ _) x.2)
+--     (set.subset.trans (set.subset_union_right _ _) subset_adjoin))
 
 theorem adjoin_eq_range :
   adjoin R s = (mv_polynomial.aeval (coe : s → A)).range :=
@@ -197,16 +198,17 @@ begin
     have := @finsupp.total_apply A A (adjoin R s),
     rw [this, finsupp.sum],
     refine sum_mem _ _,
-    intros z hz, change (l z).1 * _ ∈ _,
-    have : (l z).1 ∈ (adjoin R s).to_submodule := (l z).2,
-    rw [← hp', ← set.image_id p, finsupp.mem_span_iff_total R] at this,
-    rcases this with ⟨l2, hlp, hl⟩,
-    have := @finsupp.total_apply A A R,
-    rw this at hl,
-    rw [←hl, finsupp.sum_mul],
-    refine sum_mem _ _,
-    intros t ht, change _ * _ ∈ _, rw smul_mul_assoc, refine smul_mem _ _ _,
-    exact subset_span ⟨t, z, hlp ht, hlq hz, rfl⟩ }
+    sorry, },
+    -- intros z hz, simp, change (l z).1 * _ ∈ _,
+    -- have : (l z).1 ∈ (adjoin R s).to_submodule := (l z).2,
+    -- rw [← hp', ← set.image_id p, finsupp.mem_span_iff_total R] at this,
+    -- rcases this with ⟨l2, hlp, hl⟩,
+    -- have := @finsupp.total_apply A A R,
+    -- rw this at hl,
+    -- rw [←hl, finsupp.sum_mul],
+    -- refine sum_mem _ _,
+    -- intros t ht, change _ * _ ∈ _, rw smul_mul_assoc, refine smul_mem _ _ _,
+    -- exact subset_span ⟨t, z, hlp ht, hlq hz, rfl⟩ }
 end
 
 end comm_ring
