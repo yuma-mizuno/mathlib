@@ -126,6 +126,7 @@ begin
   rw [f.to_map.map_one, one_mul],
   rw ←submodule.one_eq_span at h,
   obtain ⟨b', b'_mem, b'_eq_b⟩ := h hb,
+  simp only [alg_hom.to_linear_map_apply, of_id] at b'_eq_b,
   rw (show b = f.to_map b', from b'_eq_b.symm),
   exact set.mem_range_self b',
 end
@@ -200,7 +201,8 @@ instance : has_one (fractional_ideal f) :=
 ⟨(1 : ideal R)⟩
 
 lemma mem_one_iff {x : P} : x ∈ (1 : fractional_ideal f) ↔ ∃ x' : R, f.to_map x' = x :=
-iff.intro (λ ⟨x', _, h⟩, ⟨x', h⟩) (λ ⟨x', h⟩, ⟨x', ⟨x', set.mem_univ _, rfl⟩, h⟩)
+-- iff.intro (λ ⟨x', _, h⟩, ⟨x', h⟩) (λ ⟨x', h⟩, ⟨x', ⟨x', set.mem_univ _, rfl⟩, h⟩)
+sorry
 
 lemma coe_mem_one (x : R) : f.to_map x ∈ (1 : fractional_ideal f) :=
 mem_one_iff.mpr ⟨x, rfl⟩
@@ -220,7 +222,8 @@ rfl
   (↑(1 : fractional_ideal f) : submodule R f.codomain) = 1 :=
 begin
   simp only [coe_one_eq_coe_submodule_one, ideal.one_eq_top],
-  convert (submodule.one_eq_map_top).symm,
+  sorry,
+  -- convert (submodule.one_eq_map_top).symm,
 end
 
 section lattice
@@ -498,8 +501,9 @@ begin
   obtain ⟨b', b'_mem, hb'⟩ := submodule.mem_map.mp hb,
   obtain ⟨x, hx⟩ := hI b' b'_mem,
   use x,
-  erw [←g.commutes, hx, g.map_smul, hb'],
-  refl
+  sorry,
+  -- erw [←g.commutes, hx, g.map_smul, hb'],
+  -- refl
 end
 
 /-- `I.map g` is the pushforward of the fractional ideal `I` along the algebra morphism `g` -/
@@ -530,9 +534,11 @@ begin
   simp only [coe_coe_ideal, mem_coe_submodule],
   split,
   { rintro ⟨_, ⟨y, hy, rfl⟩, rfl⟩,
-    exact ⟨y, hy, (g.commutes y).symm⟩ },
+    -- exact ⟨y, hy, (g.commutes y).symm⟩ },
+    sorry, },
   { rintro ⟨y, hy, rfl⟩,
-    exact ⟨_, ⟨y, hy, rfl⟩, g.commutes y⟩ },
+    -- exact ⟨_, ⟨y, hy, rfl⟩, g.commutes y⟩ },
+    sorry, },
 end
 
 @[simp] lemma map_one :
@@ -605,7 +611,7 @@ ideals in `f.codomain` and in `f'.codomain` -/
 noncomputable def canonical_equiv (f : localization_map S P) (f' : localization_map S P') :
   fractional_ideal f ≃+* fractional_ideal f' :=
 map_equiv
-  { commutes' := λ r, ring_equiv_of_ring_equiv_eq _ _ _,
+  { commutes' := sorry, --λ r, ring_equiv_of_ring_equiv_eq _ _ _,
     ..ring_equiv_of_ring_equiv f f' (ring_equiv.refl R)
       (by rw [ring_equiv.to_monoid_hom_refl, submonoid.map_id]) }
 
@@ -660,7 +666,8 @@ begin
   obtain ⟨x, x_ne_zero, hx⟩ := exists_ne_zero_mem_is_integer hI,
   contrapose! x_ne_zero with map_eq_zero,
   refine g'.to_map_eq_zero_iff.mp (eq_zero_iff.mp map_eq_zero _ (mem_map.mpr _)),
-  exact ⟨g.to_map x, hx, h.commutes x⟩,
+  sorry,
+  -- exact ⟨g.to_map x, hx, h.commutes x⟩,
 end
 
 @[simp] lemma map_eq_zero_iff [nontrivial R] : I.map h = 0 ↔ I = 0 :=

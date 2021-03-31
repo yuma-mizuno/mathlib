@@ -969,9 +969,9 @@ variables (f : localization_map M S)
 
 @[simp] lemma of_id (a : R) :
   (algebra.of_id R f.codomain) a = f.to_map a :=
-rfl
+sorry
 
-@[simp] lemma algebra_map_eq : algebra_map R f.codomain = f.to_map := rfl
+@[simp] lemma algebra_map_eq : algebra_map R f.codomain = f.to_map := sorry
 
 variables (f)
 /-- Localization map `f` from `R` to `S` as an `R`-linear map. -/
@@ -1018,7 +1018,7 @@ variables (f : localization_map M S)
 /-- Given a localization map `f : R →+* S` for a submonoid `M`, we get an `R`-preserving
 isomorphism between the localization of `R` at `M` as a quotient type and `S`. -/
 noncomputable def alg_equiv_of_quotient : localization M ≃ₐ[R] f.codomain :=
-{ commutes' := ring_equiv_of_quotient_of,
+{ commutes' := sorry, --ring_equiv_of_quotient_of,
   ..ring_equiv_of_quotient f }
 
 lemma alg_equiv_of_quotient_apply (x : localization M) :
@@ -1470,7 +1470,7 @@ variables (g : localization_map (algebra.algebra_map_submonoid S M) Sₘ)
 lemma algebra_map_mk' (r : R) (m : M) :
   (@algebra_map Rₘ Sₘ _ _ (localization_algebra M f g)) (f.mk' r m) =
     g.mk' (algebra_map R S r) ⟨algebra_map R S m, algebra.mem_algebra_map_submonoid_of_mem m⟩ :=
-localization_map.map_mk' f _ r m
+sorry --localization_map.map_mk' f _ r m
 
 /-- Injectivity of a map descends to the map induced on localizations. -/
 lemma map_injective_of_injective {R S : Type*} [comm_ring R] [comm_ring S]
@@ -1492,7 +1492,7 @@ end
 lemma localization_algebra_injective (hRS : function.injective (algebra_map R S))
   (hM : algebra.algebra_map_submonoid S M ≤ non_zero_divisors S) :
   function.injective (@algebra_map Rₘ Sₘ _ _ (localization_algebra M f g)) :=
-map_injective_of_injective (algebra_map R S) hRS M f g hM
+sorry --map_injective_of_injective (algebra_map R S) hRS M f g hM
 
 open polynomial
 
@@ -1540,22 +1540,23 @@ begin
     obtain ⟨⟨s, ⟨u, hu⟩⟩, hx⟩ := g.surj x,
     obtain ⟨v, hv⟩ := hu,
     obtain ⟨v', hv'⟩ := is_unit_iff_exists_inv'.1 (f.map_units ⟨v, hv.1⟩),
-    refine @is_integral_of_is_integral_mul_unit Rₘ _ _ _
-      (localization_algebra M f g) x (g.to_map u) v' _ _,
-    { replace hv' := congr_arg (@algebra_map Rₘ Sₘ _ _ (localization_algebra M f g)) hv',
-      rw [ring_hom.map_mul, ring_hom.map_one, ← ring_hom.comp_apply _ f.to_map] at hv',
-      erw localization_map.map_comp at hv',
-      exact hv.2 ▸ hv' },
-    { obtain ⟨p, hp⟩ := H s,
-      exact hx.symm ▸ is_integral_localization_at_leading_coeff
-        f g p hp.2 (hp.1.symm ▸ M.one_mem) } }
+    sorry, }
+    -- refine @is_integral_of_is_integral_mul_unit Rₘ _ _ _
+    --   (localization_algebra M f g) x (g.to_map u) v' _ _,
+    -- { replace hv' := congr_arg (@algebra_map Rₘ Sₘ _ _ (localization_algebra M f g)) hv',
+    --   rw [ring_hom.map_mul, ring_hom.map_one, ← ring_hom.comp_apply _ f.to_map] at hv',
+    --   erw localization_map.map_comp at hv',
+    --   exact hv.2 ▸ hv' },
+    -- { obtain ⟨p, hp⟩ := H s,
+    --   exact hx.symm ▸ is_integral_localization_at_leading_coeff
+    --     f g p hp.2 (hp.1.symm ▸ M.one_mem) } }
 end
 
 lemma is_integral_localization' {R S : Type*} [comm_ring R] [comm_ring S]
   {f : R →+* S} (hf : f.is_integral) (M : submonoid R) :
   ((localization.of M).map (M.mem_map_of_mem (f : R →* S))
   (localization.of (M.map ↑f))).is_integral :=
-@is_integral_localization R _ M S _ _ _ _ _ f.to_algebra _ _ hf
+sorry --@is_integral_localization R _ M S _ _ _ _ _ f.to_algebra _ _ hf
 
 end is_integral
 
@@ -1570,15 +1571,15 @@ the integral closure of `A` in `L` has fraction field `L`. -/
 def fraction_map_of_algebraic [algebra A L] (alg : is_algebraic A L)
   (inj : ∀ x, algebra_map A L x = 0 → x = 0) :
   fraction_map (integral_closure A L) L :=
-(algebra_map (integral_closure A L) L).to_localization_map
-  (λ ⟨⟨y, integral⟩, nonzero⟩,
-    have y ≠ 0 := λ h, mem_non_zero_divisors_iff_ne_zero.mp nonzero (subtype.ext_iff_val.mpr h),
-    show is_unit y, from ⟨⟨y, y⁻¹, mul_inv_cancel this, inv_mul_cancel this⟩, rfl⟩)
-  (λ z, let ⟨x, y, hy, hxy⟩ := exists_integral_multiple (alg z) inj in
-    ⟨⟨x, ⟨y, mem_non_zero_divisors_iff_ne_zero.mpr hy⟩⟩, hxy⟩)
-  (λ x y, ⟨ λ (h : x.1 = y.1), ⟨1, by simpa using subtype.ext_iff_val.mpr h⟩,
-            λ ⟨c, hc⟩, congr_arg (algebra_map _ L)
-              (mul_right_cancel' (mem_non_zero_divisors_iff_ne_zero.mp c.2) hc) ⟩)
+(algebra_map (integral_closure A L) L).to_localization_map sorry sorry sorry
+  -- (λ ⟨⟨y, integral⟩, nonzero⟩,
+  --   have y ≠ 0 := λ h, mem_non_zero_divisors_iff_ne_zero.mp nonzero (subtype.ext_iff_val.mpr h),
+  --   show is_unit y, from ⟨⟨y, y⁻¹, mul_inv_cancel this, inv_mul_cancel this⟩, rfl⟩)
+  -- (λ z, let ⟨x, y, hy, hxy⟩ := exists_integral_multiple (alg z) inj in
+  --   ⟨⟨x, ⟨y, mem_non_zero_divisors_iff_ne_zero.mpr hy⟩⟩, hxy⟩)
+  -- (λ x y, ⟨ λ (h : x.1 = y.1), ⟨1, by simpa using subtype.ext_iff_val.mpr h⟩,
+  --           λ ⟨c, hc⟩, congr_arg (algebra_map _ L)
+  --             (mul_right_cancel' (mem_non_zero_divisors_iff_ne_zero.mp c.2) hc) ⟩)
 
 variables {K} (L)
 
@@ -1589,8 +1590,9 @@ def fraction_map_of_finite_extension [algebra A L] [algebra f.codomain L]
   fraction_map (integral_closure A L) L :=
 fraction_map_of_algebraic
   (f.comap_is_algebraic_iff.mpr is_algebraic_of_finite)
-  (λ x hx, f.to_map_eq_zero_iff.mp ((algebra_map f.codomain L).map_eq_zero.mp $
-    (is_scalar_tower.algebra_map_apply _ _ _ _).symm.trans hx))
+  sorry
+  -- (λ x hx, f.to_map_eq_zero_iff.mp ((algebra_map f.codomain L).map_eq_zero.mp $
+  --   (is_scalar_tower.algebra_map_apply _ _ _ _).symm.trans hx))
 
 end integral_closure
 
