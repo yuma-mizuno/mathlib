@@ -1495,13 +1495,14 @@ lemma restrict_scalars_smul_def (c : R) (x : restrict_scalars R A M) :
 instance : is_scalar_tower R A (restrict_scalars R A M) :=
 ⟨λ r A M, by { rw [algebra.smul_def, mul_smul], refl }⟩
 
-instance submodule.restricted_module (V : submodule A M) :
-  semimodule R V :=
-restrict_scalars.semimodule R A V
+-- Surely this is BAD because there are fewer carrier types in the result than in the data?
+-- instance submodule.restricted_module (V : submodule A M) :
+--   semimodule R V :=
+-- restrict_scalars.semimodule R A V
 
-instance submodule.restricted_module_is_scalar_tower (V : submodule A M) :
-  is_scalar_tower R A V :=
-restrict_scalars.is_scalar_tower R A V
+-- instance submodule.restricted_module_is_scalar_tower (V : submodule A M) :
+--   is_scalar_tower R A V :=
+-- restrict_scalars.is_scalar_tower R A V
 
 end type_synonym
 

@@ -266,7 +266,7 @@ we define it as a `linear_equiv` to avoid type equalities. -/
 def to_submodule_equiv (S : subalgebra R A) : S.to_submodule ≃ₗ[R] S :=
 { to_fun    := id,
   map_add'  := λ x y, rfl,
-  map_smul' := λ t x, by { ext, change algebra_map R R t • ↑x = _, simp [algebra_map_def], },
+  map_smul' := λ t x, by { ext, simp [algebra_map_def], },
   inv_fun   := id,
   left_inv  := λ x, rfl,
   right_inv := λ x, rfl, }
