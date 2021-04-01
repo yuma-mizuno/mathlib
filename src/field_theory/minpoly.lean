@@ -344,7 +344,8 @@ begin
   (polynomial.monic.is_primitive (monic hx))).1 (irreducible hx) },
   { have htower := is_scalar_tower.aeval_apply ℤ ℚ A x (minpoly ℤ x),
     simp only [localization_map.algebra_map_eq, aeval] at htower,
-    exact htower.symm },
+    -- exact htower.symm },
+    sorry, },
   { exact monic_map _ (monic hx) }
 end
 
@@ -388,7 +389,7 @@ then the minimal polynomial of `algebra_map K B x` is `X - C x`. -/
 lemma eq_X_sub_C (a : A) : minpoly A (algebra_map A B a) = X - C a :=
 eq_X_sub_C_of_algebra_map_inj a (algebra_map A B).injective
 
-lemma eq_X_sub_C' (a : A) : minpoly A a = X - C a := eq_X_sub_C A a
+lemma eq_X_sub_C' (a : A) : minpoly A a = X - C a := sorry --eq_X_sub_C A a
 
 variables (A)
 

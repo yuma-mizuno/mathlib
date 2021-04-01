@@ -138,7 +138,7 @@ end
 
 lemma is_jacobson_of_is_integral' (f : R →+* S) (hf : f.is_integral)
   (hR : is_jacobson R) : is_jacobson S :=
-@is_jacobson_of_is_integral _ _ _ _ f.to_algebra hf hR
+sorry --@is_jacobson_of_is_integral _ _ _ _ f.to_algebra hf hR
 
 end is_jacobson
 
@@ -611,7 +611,7 @@ begin
   rw ring_hom.comp_assoc at this,
   convert this,
   refine ring_hom.ext (λ x, _),
-  exact ((rename_equiv R e.symm).commutes' x).symm,
+  sorry, --exact ((rename_equiv R e.symm).commutes' x).symm,
 end
 
 end mv_polynomial
