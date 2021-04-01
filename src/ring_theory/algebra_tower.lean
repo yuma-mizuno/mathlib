@@ -201,7 +201,7 @@ lemma exists_subalgebra_of_fg (hAC : (⊤ : subalgebra A C).fg) (hBC : (⊤ : su
 --     from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_left _ hxi, hyj⟩,
 --   have hsy : ∀ (yi yj yk ∈ y), f (yi * yj) yk ∈ s := λ yi yj yk hyi hyj hyk,
 --     show function.uncurry f (yi * yj, yk) ∈ s,
---     from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
+--    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
 --   have hxy : ∀ xi ∈ x, xi ∈ span (algebra.adjoin A (↑s : set B))
 --                (↑(insert 1 y : finset C) : set C) :=
 --     λ xi hxi, hf xi ▸ sum_mem _ (λ yj hyj, smul_mem
@@ -221,7 +221,7 @@ lemma exists_subalgebra_of_fg (hAC : (⊤ : subalgebra A C).fg) (hBC : (⊤ : su
 --         (subset_span $ set.mem_insert_of_mem _ hyk : yk ∈ _)) } },
 --   refine ⟨algebra.adjoin A (↑s : set B), subalgebra.fg_adjoin_finset _, insert 1 y, _⟩,
 --   refine restrict_scalars_injective A _ _ _,
---   rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
+--  rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
 --   refine λ r hr, monoid.in_closure.rec_on hr hxy (subset_span $ mem_insert_self _ _)
 --       (λ p q _ _ hp hq, hyy $ submodule.mul_mem_mul hp hq)
 -- end

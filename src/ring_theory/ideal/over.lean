@@ -262,13 +262,13 @@ begin
     localization_map.integral_domain_localization (le_non_zero_divisors_of_domain hP0),
   obtain ⟨Qₚ : ideal Sₚ, Qₚ_maximal⟩ := exists_maximal Sₚ,
   sorry,
-  -- haveI Qₚ_max : is_maximal (comap _ Qₚ) := @is_maximal_comap_of_is_integral_of_is_maximal Rₚ _ Sₚ _
-  --   (localization_algebra P.prime_compl f g)
-  --   (is_integral_localization f g H) _ Qₚ_maximal,
-  -- refine ⟨comap g.to_map Qₚ, ⟨comap_is_prime g.to_map Qₚ, _⟩⟩,
-  -- convert localization.at_prime.comap_maximal_ideal,
-  -- rw [comap_comap, ← local_ring.eq_maximal_ideal Qₚ_max, ← f.map_comp _],
-  -- refl
+--haveI Qₚ_max : is_maximal (comap _ Qₚ) := @is_maximal_comap_of_is_integral_of_is_maximal Rₚ _ Sₚ _
+--   (localization_algebra P.prime_compl f g)
+--   (is_integral_localization f g H) _ Qₚ_maximal,
+-- refine ⟨comap g.to_map Qₚ, ⟨comap_is_prime g.to_map Qₚ, _⟩⟩,
+-- convert localization.at_prime.comap_maximal_ideal,
+-- rw [comap_comap, ← local_ring.eq_maximal_ideal Qₚ_max, ← f.map_comp _],
+-- refl
 end
 
 /-- More general going-up theorem than `exists_ideal_over_prime_of_is_integral'`.

@@ -235,13 +235,13 @@ begin
     exact smul_mem (span S₀ (insert 1 ↑y : set A)) _ (subset_span $ or.inl rfl) },
   haveI : is_noetherian_ring ↥S₀ := is_noetherian_ring_closure _ (finset.finite_to_set _),
   sorry,
-  -- refine is_integral_of_submodule_noetherian (algebra.adjoin S₀ ↑y)
-  --   (is_noetherian_of_fg_of_noetherian _ ⟨insert 1 y, by rw [finset.coe_insert, this]⟩) _ _,
-  -- rw [← hlx2, finsupp.total_apply, finsupp.sum], refine subalgebra.sum_mem _ (λ r hr, _),
-  -- have : lx r ∈ S₀ := ring.subset_closure (finset.mem_union_left _ (finset.mem_image_of_mem _ hr)),
-  -- change (⟨_, this⟩ : S₀) • r ∈ _,
-  -- rw finsupp.mem_supported at hlx1,
-  -- exact subalgebra.smul_mem _ (algebra.subset_adjoin $ hlx1 hr) _
+-- refine is_integral_of_submodule_noetherian (algebra.adjoin S₀ ↑y)
+--   (is_noetherian_of_fg_of_noetherian _ ⟨insert 1 y, by rw [finset.coe_insert, this]⟩) _ _,
+-- rw [← hlx2, finsupp.total_apply, finsupp.sum], refine subalgebra.sum_mem _ (λ r hr, _),
+-- have : lx r ∈ S₀ := ring.subset_closure (finset.mem_union_left _ (finset.mem_image_of_mem _ hr)),
+-- change (⟨_, this⟩ : S₀) • r ∈ _,
+-- rw finsupp.mem_supported at hlx1,
+-- exact subalgebra.smul_mem _ (algebra.subset_adjoin $ hlx1 hr) _
 end
 
 lemma ring_hom.is_integral_of_mem_closure {x y z : S}
@@ -251,7 +251,7 @@ lemma ring_hom.is_integral_of_mem_closure {x y z : S}
 sorry
 -- begin
 --   letI : algebra R S := f.to_algebra,
---   have := fg_mul _ _ (fg_adjoin_singleton_of_integral x hx) (fg_adjoin_singleton_of_integral y hy),
+-- have := fg_mul _ _ (fg_adjoin_singleton_of_integral x hx) (fg_adjoin_singleton_of_integral y hy),
 --   rw [← algebra.adjoin_union_coe_submodule, set.singleton_union] at this,
 --   exact is_integral_of_mem_of_fg (algebra.adjoin R {x, y}) this z
 --     (algebra.mem_adjoin_iff.2  $ ring.closure_mono (set.subset_union_right _ _) hz),
@@ -456,7 +456,7 @@ lemma ring_hom.is_integral_tower_bot_of_is_integral (hg : function.injective g)
   (hfg : (g.comp f).is_integral) : f.is_integral :=
 sorry
 -- λ x,
---   @is_integral_tower_bot_of_is_integral R S T _ _ _ g.to_algebra (g.comp f).to_algebra f.to_algebra
+-- @is_integral_tower_bot_of_is_integral R S T _ _ _ g.to_algebra (g.comp f).to_algebra f.to_algebra
 --   (@is_scalar_tower.of_algebra_map_eq R S T _ _ _ f.to_algebra g.to_algebra (g.comp f).to_algebra
 --   (ring_hom.comp_apply g f))  hg x (hfg (g x))
 
