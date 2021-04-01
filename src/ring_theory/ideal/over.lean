@@ -210,7 +210,7 @@ lemma is_maximal_of_is_integral_of_is_maximal_comap
 lemma is_maximal_of_is_integral_of_is_maximal_comap' {R S : Type*} [comm_ring R] [integral_domain S]
   (f : R →+* S) (hf : f.is_integral) (I : ideal S) [hI' : I.is_prime]
   (hI : is_maximal (I.comap f)) : is_maximal I :=
-@is_maximal_of_is_integral_of_is_maximal_comap R _ S _ f.to_algebra hf I hI' hI
+sorry --@is_maximal_of_is_integral_of_is_maximal_comap R _ S _ f.to_algebra hf I hI' hI
 
 lemma is_maximal_comap_of_is_integral_of_is_maximal (hRS : algebra.is_integral R S)
   (I : ideal S) [hI : I.is_maximal] : is_maximal (I.comap (algebra_map R S)) :=
@@ -223,7 +223,7 @@ end
 
 lemma is_maximal_comap_of_is_integral_of_is_maximal' {R S : Type*} [comm_ring R] [integral_domain S]
   (f : R →+* S) (hf : f.is_integral) (I : ideal S) (hI : I.is_maximal) : is_maximal (I.comap f) :=
-@is_maximal_comap_of_is_integral_of_is_maximal R _ S _ f.to_algebra hf I hI
+sorry --@is_maximal_comap_of_is_integral_of_is_maximal R _ S _ f.to_algebra hf I hI
 
 lemma integral_closure.comap_ne_bot [nontrivial R] {I : ideal (integral_closure R S)}
   (I_ne_bot : I ≠ ⊥) : I.comap (algebra_map R (integral_closure R S)) ≠ ⊥ :=
@@ -261,13 +261,14 @@ begin
   letI : integral_domain (localization (algebra.algebra_map_submonoid S P.prime_compl)) :=
     localization_map.integral_domain_localization (le_non_zero_divisors_of_domain hP0),
   obtain ⟨Qₚ : ideal Sₚ, Qₚ_maximal⟩ := exists_maximal Sₚ,
-  haveI Qₚ_max : is_maximal (comap _ Qₚ) := @is_maximal_comap_of_is_integral_of_is_maximal Rₚ _ Sₚ _
-    (localization_algebra P.prime_compl f g)
-    (is_integral_localization f g H) _ Qₚ_maximal,
-  refine ⟨comap g.to_map Qₚ, ⟨comap_is_prime g.to_map Qₚ, _⟩⟩,
-  convert localization.at_prime.comap_maximal_ideal,
-  rw [comap_comap, ← local_ring.eq_maximal_ideal Qₚ_max, ← f.map_comp _],
-  refl
+  sorry,
+  -- haveI Qₚ_max : is_maximal (comap _ Qₚ) := @is_maximal_comap_of_is_integral_of_is_maximal Rₚ _ Sₚ _
+  --   (localization_algebra P.prime_compl f g)
+  --   (is_integral_localization f g H) _ Qₚ_maximal,
+  -- refine ⟨comap g.to_map Qₚ, ⟨comap_is_prime g.to_map Qₚ, _⟩⟩,
+  -- convert localization.at_prime.comap_maximal_ideal,
+  -- rw [comap_comap, ← local_ring.eq_maximal_ideal Qₚ_max, ← f.map_comp _],
+  -- refl
 end
 
 /-- More general going-up theorem than `exists_ideal_over_prime_of_is_integral'`.
@@ -290,7 +291,8 @@ begin
   refine ⟨Q'.comap _, le_trans (le_of_eq mk_ker.symm) (ker_le_comap _), ⟨comap_is_prime _ Q', _⟩⟩,
   rw comap_comap,
   refine trans _ (trans (congr_arg (comap (quotient.mk (comap (algebra_map R S) I))) hQ') _),
-  { simpa [comap_comap] },
+  -- { simpa [comap_comap] },
+  { sorry, },
   { refine trans (comap_map_of_surjective _ quotient.mk_surjective _) (sup_eq_left.2 _),
     simpa [← ring_hom.ker_eq_comap_bot] using hIP},
 end
