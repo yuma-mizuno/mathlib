@@ -535,7 +535,7 @@ lemma mul_coeff_min_add_min [semiring R] {x y : hahn_series Γ R} (hx : x ≠ 0)
     y.is_wf_support.min (support_nonempty_iff.2 hy)) =
     (x.coeff (x.is_wf_support.min (support_nonempty_iff.2 hx))) *
     y.coeff (y.is_wf_support.min (support_nonempty_iff.2 hy)) :=
-by rw [mul_coeff, finset.add_antidiagonal_min_add_min, finset.sum_singleton]
+by rw [mul_coeff, add_antidiagonal_min_add_min, sum_singleton]
 
 private lemma mul_assoc' [semiring R] (x y z : hahn_series Γ R) :
   x * y * z = x * (y * z) :=
@@ -676,15 +676,15 @@ def emb_domain_ring_hom (f : Γ →+ Γ') (hf : strict_mono f) :
     { rw order_embedding.coe_of_strict_mono at hg,
       obtain ⟨g, rfl⟩ := hg,
       simp only [mul_coeff, emb_domain_coeff_of_strict_mono, emb_domain_linear_map_apply],
-      transitivity ∑ ij in (finset.add_antidiagonal x.is_wf_support y.is_wf_support g).map
+      transitivity ∑ ij in (add_antidiagonal x.is_wf_support y.is_wf_support g).map
         (function.embedding.prod_map ⟨f, hf.injective⟩ ⟨f, hf.injective⟩),
         (emb_domain (order_embedding.of_strict_mono f hf) x).coeff (ij.1) *
         (emb_domain (order_embedding.of_strict_mono f hf) y).coeff (ij.2),
       { simp },
-      apply finset.sum_subset,
+      apply sum_subset,
       { rintro ⟨i, j⟩ hij,
-        simp only [exists_prop, finset.mem_map, prod.mk.inj_iff, prod_map,
-          function.embedding.coe_fn_mk, finset.mem_add_antidiagonal, ne.def,
+        simp only [exists_prop, mem_map, prod.mk.inj_iff, prod_map,
+          function.embedding.coe_fn_mk, mem_add_antidiagonal, ne.def,
           function.embedding.coe_prod_map, mem_support, prod.exists] at hij,
         obtain ⟨i, j, ⟨rfl, hx, hy⟩, rfl, rfl⟩ := hij,
         simp [hx, hy], },
@@ -695,23 +695,23 @@ def emb_domain_ring_hom (f : Γ →+ Γ') (hf : strict_mono f) :
           by_cases hj : j ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
           { rw order_embedding.coe_of_strict_mono at hj,
             obtain ⟨j, rfl⟩ := hj,
-            simp only [finset.mem_add_antidiagonal, ne.def, emb_domain_coeff_of_strict_mono,
+            simp only [mem_add_antidiagonal, ne.def, emb_domain_coeff_of_strict_mono,
               mem_support, ← f.map_add] at h1,
             by_cases hx : x.coeff i = 0,
             { simp [hx] },
             by_cases hy : y.coeff j = 0,
             { simp [hy] },
             contrapose! h2,
-            simp only [exists_prop, finset.mem_map, prod.mk.inj_iff, prod_map,
-              function.embedding.coe_fn_mk, finset.mem_add_antidiagonal, ne.def,
+            simp only [exists_prop, mem_map, prod.mk.inj_iff, prod_map,
+              function.embedding.coe_fn_mk, mem_add_antidiagonal, ne.def,
               function.embedding.coe_prod_map, mem_support, prod.exists],
             exact ⟨i, j, ⟨hf.injective h1.1, hx, hy⟩, rfl, rfl⟩ },
           { simp [emb_domain_notin_range hj], } },
         { simp [emb_domain_notin_range hi], } } },
     { rw [emb_domain_linear_map_apply, emb_domain_notin_range hg, eq_comm],
-      apply finset.sum_eq_zero,
+      apply sum_eq_zero,
       rintro ⟨i, j⟩ hij,
-      simp only [finset.mem_add_antidiagonal, ne.def, mem_support,
+      simp only [mem_add_antidiagonal, ne.def, mem_support,
         emb_domain_linear_map_apply] at hij,
       obtain ⟨rfl, hij⟩ := hij,
       exfalso,
