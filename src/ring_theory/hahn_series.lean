@@ -125,6 +125,77 @@ lemma coeff_min_ne_zero {x : hahn_series Γ R} (hx : x ≠ 0) :
   x.coeff (x.is_wf_support.min (support_nonempty_iff.2 hx)) ≠ 0 :=
 x.is_wf_support.min_mem (support_nonempty_iff.2 hx)
 
+section domain
+variables {Γ' : Type*} [linear_order Γ']
+
+def emb_domain (f : Γ ↪o Γ') : hahn_series Γ R → hahn_series Γ' R :=
+λ x, { coeff := λ (b : Γ'),
+  if h : b ∈ f '' x.support then x.coeff (classical.some h) else 0,
+  is_wf_support' := set.is_wf.mono (x.is_wf_support.image_of_monotone f.monotone) (λ b hb, begin
+    contrapose! hb,
+    rw [function.mem_support, dif_neg hb, not_not],
+  end) }
+
+@[simp]
+lemma emb_domain_coeff {f : Γ ↪o Γ'} {x : hahn_series Γ R} {a : Γ} :
+  (emb_domain f x).coeff (f a) = x.coeff a :=
+begin
+  rw emb_domain,
+  dsimp only,
+  by_cases ha : a ∈ x.support,
+  { rw dif_pos (set.mem_image_of_mem f ha),
+    exact congr rfl (f.injective (classical.some_spec (set.mem_image_of_mem f ha)).2) },
+  { rw [dif_neg, not_not.1 (λ c, ha ((mem_support _ _).2 c))],
+    contrapose! ha,
+    obtain ⟨b, hb1, hb2⟩ := (set.mem_image _ _ _).1 ha,
+    rwa f.injective hb2 at hb1 }
+end
+
+@[simp]
+lemma emb_domain_coeff_of_strict_mono {f : Γ → Γ'}
+  (hf : strict_mono f) {x : hahn_series Γ R} {a : Γ} :
+  (emb_domain (order_embedding.of_strict_mono f hf) x).coeff (f a) = x.coeff a :=
+begin
+  apply eq.trans (congr rfl _) emb_domain_coeff,
+  simp,
+end
+
+lemma emb_domain_notin_image_support {f : Γ ↪o Γ'} {x : hahn_series Γ R} {b : Γ'}
+  (hb : b ∉ f '' x.support) : (emb_domain f x).coeff b = 0 :=
+dif_neg hb
+
+lemma emb_domain_notin_range {f : Γ ↪o Γ'} {x : hahn_series Γ R} {b : Γ'}
+  (hb : b ∉ set.range f) : (emb_domain f x).coeff b = 0 :=
+emb_domain_notin_image_support (λ con, hb (set.image_subset_range _ _ con))
+
+@[simp]
+lemma emb_domain_zero {f : Γ ↪o Γ'} : emb_domain f (0 : hahn_series Γ R) = 0 :=
+by { ext, simp [emb_domain_notin_image_support] }
+
+@[simp]
+lemma emb_domain_single {f : Γ ↪o Γ'} {g : Γ} {r : R} :
+  emb_domain f (single g r) = single (f g) r :=
+begin
+  ext g',
+  by_cases h : g' = f g,
+  { simp [h] },
+  rw [emb_domain_notin_image_support, single_coeff_of_ne h],
+  by_cases hr : r = 0,
+  { simp [hr] },
+  rwa [support_single_of_ne hr, set.image_singleton, set.mem_singleton_iff],
+end
+
+lemma emb_domain_injective {f : Γ ↪o Γ'} :
+  function.injective (emb_domain f : hahn_series Γ R → hahn_series Γ' R) :=
+λ x y xy, begin
+  ext g,
+  rw [ext_iff, function.funext_iff] at xy,
+  have xyg := xy (f g),
+  rwa [emb_domain_coeff, emb_domain_coeff] at xyg,
+end
+
+end domain
+
 end zero
 
 section addition
@@ -245,6 +316,30 @@ def single.linear_map (a : Γ) : R →ₗ[R] (hahn_series Γ R) :=
 
 @[simp]
 lemma single.linear_map_apply {a : Γ} {r : R} : single.linear_map a r = single a r := rfl
+
+section domain
+variables {Γ' : Type*} [linear_order Γ']
+
+def emb_domain_linear_map (f : Γ ↪o Γ') : hahn_series Γ R →ₗ[R] hahn_series Γ' R :=
+⟨emb_domain f, λ x y, begin
+  ext g,
+  by_cases hg : g ∈ set.range f,
+  { obtain ⟨a, rfl⟩ := hg,
+    simp },
+  { simp [emb_domain_notin_range, hg] }
+end, λ x y, begin
+  ext g,
+  by_cases hg : g ∈ set.range f,
+  { obtain ⟨a, rfl⟩ := hg,
+    simp },
+  { simp [emb_domain_notin_range, hg] }
+end⟩
+
+@[simp]
+lemma emb_domain_linear_map_apply {f : Γ ↪o Γ'} {x : hahn_series Γ R} :
+  emb_domain_linear_map f x = emb_domain f x := rfl
+
+end domain
 
 end semimodule
 
@@ -557,6 +652,82 @@ lemma C_one : C (1 : R) = (1 : hahn_series Γ R) := C.map_one
 lemma C_mul_eq_smul {r : R} {x : hahn_series Γ R} : C r * x = r • x :=
 single_zero_mul_eq_smul
 
+section domain
+variables {Γ' : Type*} [linear_ordered_cancel_add_comm_monoid Γ']
+
+def emb_domain_ring_hom (f : Γ →+ Γ') (hf : strict_mono f) :
+  hahn_series Γ R →+* hahn_series Γ' R :=
+⟨emb_domain_linear_map (order_embedding.of_strict_mono f hf), emb_domain_single.trans begin
+    rw [order_embedding.coe_of_strict_mono, add_monoid_hom.map_zero, ← C_apply, C_one],
+  end,
+  λ x y, begin
+    ext g,
+    by_cases hg : g ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
+    { rw order_embedding.coe_of_strict_mono at hg,
+      obtain ⟨g, rfl⟩ := hg,
+      simp only [mul_coeff, emb_domain_coeff_of_strict_mono, emb_domain_linear_map_apply],
+      transitivity ∑ ij in (finset.add_antidiagonal x.is_wf_support y.is_wf_support g).map
+        (function.embedding.prod_map ⟨f, hf.injective⟩ ⟨f, hf.injective⟩),
+        (emb_domain (order_embedding.of_strict_mono f hf) x).coeff (ij.1) *
+        (emb_domain (order_embedding.of_strict_mono f hf) y).coeff (ij.2),
+      { simp },
+      apply finset.sum_subset,
+      { rintro ⟨i, j⟩ hij,
+        simp only [exists_prop, finset.mem_map, prod.mk.inj_iff, prod_map,
+          function.embedding.coe_fn_mk, finset.mem_add_antidiagonal, ne.def,
+          function.embedding.coe_prod_map, mem_support, prod.exists] at hij,
+        obtain ⟨i, j, ⟨rfl, hx, hy⟩, rfl, rfl⟩ := hij,
+        simp [hx, hy], },
+      { rintro ⟨i, j⟩ h1 h2,
+        by_cases hi : i ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
+        { rw order_embedding.coe_of_strict_mono at hi,
+          obtain ⟨i, rfl⟩ := hi,
+          by_cases hj : j ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
+          { rw order_embedding.coe_of_strict_mono at hj,
+            obtain ⟨j, rfl⟩ := hj,
+            simp only [finset.mem_add_antidiagonal, ne.def, emb_domain_coeff_of_strict_mono,
+              mem_support, ← f.map_add] at h1,
+            by_cases hx : x.coeff i = 0,
+            { simp [hx] },
+            by_cases hy : y.coeff j = 0,
+            { simp [hy] },
+            contrapose! h2,
+            simp only [exists_prop, finset.mem_map, prod.mk.inj_iff, prod_map,
+              function.embedding.coe_fn_mk, finset.mem_add_antidiagonal, ne.def,
+              function.embedding.coe_prod_map, mem_support, prod.exists],
+            exact ⟨i, j, ⟨hf.injective h1.1, hx, hy⟩, rfl, rfl⟩ },
+          { simp [emb_domain_notin_range hj], } },
+        { simp [emb_domain_notin_range hi], } } },
+    { rw [emb_domain_linear_map_apply, emb_domain_notin_range hg, eq_comm],
+      apply finset.sum_eq_zero,
+      rintro ⟨i, j⟩ hij,
+      simp only [finset.mem_add_antidiagonal, ne.def, mem_support,
+        emb_domain_linear_map_apply] at hij,
+      obtain ⟨rfl, hij⟩ := hij,
+      exfalso,
+      by_cases hi : i ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
+      { by_cases hj : j ∈ set.range (order_embedding.of_strict_mono ⇑f hf),
+        { rw order_embedding.coe_of_strict_mono at *,
+          obtain ⟨i, rfl⟩ := hi,
+          obtain ⟨j, rfl⟩ := hj,
+          exact hg ⟨i + j, f.map_add i j⟩ },
+        { exact hij.2 (emb_domain_notin_range hj) } },
+      { exact hij.1 (emb_domain_notin_range hi) } }
+  end,
+  linear_map.map_zero _, linear_map.map_add _⟩
+
+@[simp]
+lemma emb_domain_ring_hom_C {f : Γ →+ Γ'} {hf : strict_mono f} {r : R} :
+  emb_domain_ring_hom f hf (C r) = C r :=
+emb_domain_single.trans (by simp)
+
+@[simp]
+lemma emb_domain_ring_hom_apply {f : Γ →+ Γ'} {hf : strict_mono f} {x : hahn_series Γ R} :
+  (emb_domain_ring_hom f hf) x = emb_domain_linear_map (order_embedding.of_strict_mono f hf) x :=
+rfl
+
+end domain
+
 end semiring
 
 section algebra
@@ -586,6 +757,16 @@ instance [nontrivial Γ] [nontrivial R] : nontrivial (subalgebra R (hahn_series 
   rw [single_coeff_same, algebra_map_apply, C_apply, single_coeff_of_ne ha],
   exact zero_ne_one
 end⟩⟩
+
+section domain
+variables {Γ' : Type*} [linear_ordered_cancel_add_comm_monoid Γ']
+
+def emb_domain_alg_hom (f : Γ →+ Γ') (hf : strict_mono f) :
+  hahn_series Γ A →ₐ[R] hahn_series Γ' A :=
+{ commutes' := λ r, emb_domain_ring_hom_C,
+  .. emb_domain_ring_hom f hf }
+
+end domain
 
 end algebra
 
@@ -626,6 +807,11 @@ lemma coeff_to_power_series_symm {f : power_series R} {n : ℕ} :
   (hahn_series.to_power_series.symm f).coeff n = power_series.coeff R n f :=
 rfl
 
+variable [linear_ordered_comm_semiring Γ]
+def of_power_series : (power_series R) →+* hahn_series Γ R :=
+(hahn_series.emb_domain_ring_hom (nat.cast_add_monoid_hom Γ) nat.strict_mono_cast).comp
+  (ring_equiv.to_ring_hom to_power_series.symm)
+
 end semiring
 
 section algebra
@@ -652,6 +838,11 @@ lemma to_power_series_alg_apply {f : hahn_series ℕ A} :
 @[simp]
 lemma to_power_series_alg_symm_apply {f : power_series A} :
   (hahn_series.to_power_series_alg R).symm f = hahn_series.to_power_series.symm f := rfl
+
+variable [linear_ordered_comm_semiring Γ]
+def of_power_series_alg : (power_series A) →ₐ[R] hahn_series Γ A :=
+(hahn_series.emb_domain_alg_hom (nat.cast_add_monoid_hom Γ) nat.strict_mono_cast).comp
+  (alg_equiv.to_alg_hom (to_power_series_alg R).symm)
 
 end algebra
 

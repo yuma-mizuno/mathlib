@@ -315,6 +315,11 @@ theorem is_wf.is_partially_well_ordered [linear_order α] {s : set α}
   apply mem_range_self,
 end
 
+theorem is_wf.image_of_monotone [linear_order α] {β : Type*} [linear_order β] {s : set α}
+  (hs : s.is_wf) {f : α → β} (hf : monotone f) :
+  is_wf (f '' s) :=
+(hs.is_partially_well_ordered.image_of_monotone hf).is_wf
+
 section
 
 variables [linear_ordered_cancel_comm_monoid α] {s : set α} {t : set α}
