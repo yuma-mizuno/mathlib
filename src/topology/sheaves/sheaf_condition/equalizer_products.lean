@@ -194,7 +194,7 @@ nat_iso.of_components
     { ext,
       dsimp [left_res, is_open_map.functor],
       simp only [limit.lift_π, cones.postcompose_obj_π, iso.op_hom, discrete.nat_iso_hom_app,
-        functor.map_iso_refl, functor.map_iso_hom, limit.map_π_assoc, limit.lift_map, fan.mk_π_app,
+        functor.map_iso_refl, functor.map_iso_hom, lim_map_π_assoc, limit.lift_map, fan.mk_π_app,
         nat_trans.comp_app, category.assoc],
       dsimp,
       rw [category.id_comp, ←F.map_comp],
@@ -202,7 +202,7 @@ nat_iso.of_components
     { ext,
       dsimp [right_res, is_open_map.functor],
       simp only [limit.lift_π, cones.postcompose_obj_π, iso.op_hom, discrete.nat_iso_hom_app,
-        functor.map_iso_refl, functor.map_iso_hom, limit.map_π_assoc, limit.lift_map, fan.mk_π_app,
+        functor.map_iso_refl, functor.map_iso_hom, lim_map_π_assoc, limit.lift_map, fan.mk_π_app,
         nat_trans.comp_app, category.assoc],
       dsimp,
       rw [category.id_comp, ←F.map_comp],
@@ -227,15 +227,18 @@ begin
   { dsimp [is_open_map.functor],
     exact
     F.map_iso (iso.op
-    { hom := hom_of_le (by simp only [supr_s, supr_mk, le_def, subtype.coe_mk, set.le_eq_subset, set.image_Union]),
-      inv := hom_of_le (by simp only [supr_s, supr_mk, le_def, subtype.coe_mk, set.le_eq_subset, set.image_Union]), }), },
+    { hom := hom_of_le
+      (by simp only [supr_s, supr_mk, le_def, subtype.coe_mk, set.le_eq_subset, set.image_Union]),
+      inv := hom_of_le
+      (by simp only [supr_s, supr_mk, le_def, subtype.coe_mk, set.le_eq_subset, set.image_Union]),
+    }), },
   { ext,
     dunfold fork.ι, -- Ugh, it is unpleasant that we need this.
     simp only [res, diagram.iso_of_open_embedding, discrete.nat_iso_inv_app, functor.map_iso_inv,
       limit.lift_π, cones.postcompose_obj_π, functor.comp_map,
       fork_π_app_walking_parallel_pair_zero, pi_opens.iso_of_open_embedding,
       nat_iso.of_components.inv_app, functor.map_iso_refl, functor.op_map, limit.lift_map,
-      fan.mk_π_app, nat_trans.comp_app, has_hom.hom.unop_op, category.assoc],
+      fan.mk_π_app, nat_trans.comp_app, has_hom.hom.unop_op, category.assoc, lim_map_eq_lim_map],
     dsimp,
     rw [category.comp_id, ←F.map_comp],
     refl, },

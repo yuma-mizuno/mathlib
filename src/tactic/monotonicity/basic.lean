@@ -1,9 +1,10 @@
 /-
 Copyright (c) 2019 Simon Hudon. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Simon Hudon
+Authors: Simon Hudon
 -/
-import algebra.order_functions
+import algebra.ordered_ring
+import order.bounded_lattice
 
 namespace tactic.interactive
 open tactic list
@@ -99,7 +100,9 @@ meta def monotonicity.check (lm_n : name) : tactic mono_key :=
 do lm ← mk_const lm_n,
    lm_t ← infer_type lm >>= instantiate_mvars,
    when_tracing `mono.relation trace!"[mono] Looking for relation in {lm_t}",
-   s ← simp_lemmas.mk.add_simp ``monotone,
+   let s := simp_lemmas.mk,
+   s ← s.add_simp ``monotone,
+   s ← s.add_simp ``strict_mono,
    lm_t ← s.dsimplify [] lm_t { fail_if_unchanged := ff },
    when_tracing `mono.relation trace!"[mono] Looking for relation in {lm_t} (after unfolding)",
    (xs,h) ← open_pis lm_t,

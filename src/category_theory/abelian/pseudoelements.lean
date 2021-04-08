@@ -90,7 +90,7 @@ a.hom ≫ f
 
 @[simp] lemma app_hom {P Q : C} (f : P ⟶ Q) (a : over P) : (app f a).hom = a.hom ≫ f := rfl
 
-/-- Two arrows `f : X ⟶ P` and `g : Y ⟶ P are called pseudo-equal if there is some object
+/-- Two arrows `f : X ⟶ P` and `g : Y ⟶ P` are called pseudo-equal if there is some object
     `R` and epimorphisms `p : R ⟶ X` and `q : R ⟶ Y` such that `p ≫ f = q ≫ g`. -/
 def pseudo_equal (P : C) (f g : over P) : Prop :=
 ∃ (R : C) (p : R ⟶ f.1) (q : R ⟶ g.1) [epi p] [epi q], p ≫ f.hom = q ≫ g.hom
@@ -168,7 +168,8 @@ rfl
     with each morphism. Sadly, this is not a definitional equality, but at least it is
     true. -/
 theorem comp_apply {P Q R : C} (f : P ⟶ Q) (g : Q ⟶ R) (a : P) : (f ≫ g) a = g (f a) :=
-quotient.induction_on a $ λ x, quotient.sound $ by { unfold app, rw [←category.assoc, over.coe_hom] }
+quotient.induction_on a $ λ x, quotient.sound $
+by { unfold app, rw [←category.assoc, over.coe_hom] }
 
 /-- Composition of functions on pseudoelements is composition of morphisms. -/
 theorem comp_comp {P Q R : C} (f : P ⟶ Q) (g : Q ⟶ R) : g ∘ f = f ≫ g :=
@@ -301,8 +302,7 @@ theorem pseudo_exact_of_exact {P Q R : C} {f : P ⟶ Q} {g : Q ⟶ R} [exact f g
         ... = (pullback.snd ≫ c) ≫ kernel.ι (cokernel.π f)
                 : by rw [←category.assoc, pullback.condition]
         ... = pullback.snd ≫ b.hom
-                : by { rw category.assoc, congr,
-                       simpa [image_ι_eq_image_ι, kernel_cokernel_eq_image_ι] using hc }
+                : by { rw category.assoc, congr' }
     end⟩
 
 end
