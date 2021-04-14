@@ -12,6 +12,9 @@ import algebra.direct_sum
 #check direct_sum.add_submonoid_is_internal
 
 #exit
+
+Adam:
+
 def foo {A : Type*} [add_comm_group A] {ι : Type*}
   (f : ι → add_subgroup A) : (⨁ i, f i) →+ A :=
 dfinsupp.sum_add_hom (λ i : ι, (f i).subtype)
@@ -25,6 +28,9 @@ structure graded_ring (M : Type*) [add_monoid M] (A : Type*) [ring A]
 (grading_one : (1 : A) ∈ graded_part 0)
 (grading_mul {r s m n} :
   r ∈ graded_part m → s ∈ graded_part n → (r * s) ∈ graded_part (m+n))
+
+End of Adam
+
 
   /-
   def independent' {ι : Sort*} {α : Type*} [complete_lattice α] (s : ι → α): Prop :=
