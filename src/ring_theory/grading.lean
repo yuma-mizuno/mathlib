@@ -44,25 +44,26 @@ lemma direct_sum.to_add_monoid_apply {ι : Type*} [decidable_eq ι]
   direct_sum.to_add_monoid f b = dfinsupp.sum b (λ i, f i) :=
 dfinsupp.sum_add_hom_apply _ _
 
+/-!
+
+## test : grading a polynomial ring
+
+I try three ways to do it.
+
+-/
+
+
+section polynomials
+
 open polynomial
 
-#check direct_sum.add_submonoid_is_internal
+/-!
 
-section equivalence
--- perhaps an easier way of working with direct_sum.add_submonoid_is_internal
-variables (ι : Type*) [decidable_eq ι] (R : Type) [add_comm_monoid R] (f : ι → add_submonoid R)
+### First method
 
--- this should be two lemmas: the first shouls say that the map defined in
--- `direct_sum.add_submonoid_is_internal` is injective iff independent,
--- and the second says it's surjective iff Sup is top. Then this theorem
--- follows immediately.
-theorem direct_sum.add_submonoid_is_internal_iff_independent_and_span :
-  direct_sum.add_submonoid_is_internal f ↔
-    -- first is injective, second surjective
-    complete_lattice.independent f ∧ (Sup (set.range f) = ⊤) :=
-sorry
+Here's the first way: an injective and surjective version
 
-end equivalence
+-/
 
 noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynomial R) := {
   graded_piece := λ n, add_monoid_hom.mrange (monomial n).to_add_monoid_hom,
@@ -72,9 +73,7 @@ noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynom
     refine ⟨a * b, set.mem_univ _, (monomial_mul_monomial m n a b).symm⟩,
   end,
   direct_sum := begin
-    -- is it easier to rw `direct_sum.add_submonoid_is_internal_iff_independent_and_span`
-    -- immediately? This injectivity proof below doesn't look like much fun, but then again
-    -- I don't know whether the independence proof looks like much fun either.
+    -- This injectivity proof below doesn't look like much fun
     split,
     { intros a b h,
       ext,
@@ -90,5 +89,99 @@ noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynom
   end,
    }
 
+/-!
+
+### Second method
+
+An independent and span version. Here we need to prove two lemmas first,
+which may or may not be tricky, and we still don't know if the method is any easier.
+
+-/
+
+section equivalence
+
+variables {ι : Type*} [decidable_eq ι] (R : Type) [add_comm_monoid R] (f : ι → add_submonoid R)
+
+theorem direct_sum.to_add_monoid_injective {M : Type*} [add_comm_monoid M]
+  (A : ι → add_submonoid M) :
+  function.injective ⇑(direct_sum.to_add_monoid (λ i, (A i).subtype) : (⨁ i, A i) →+ M) ↔
+  complete_lattice.independent A :=
+begin
+  sorry
+end
+
+theorem direct_sum.to_add_monoid_surjective {M : Type*} [add_comm_monoid M]
+  (A : ι → add_submonoid M) :
+  function.surjective ⇑(direct_sum.to_add_monoid (λ i, (A i).subtype) : (⨁ i, A i) →+ M) ↔
+  (Sup (set.range A) = ⊤) :=
+begin
+  sorry
+end
+
+theorem direct_sum.add_submonoid_is_internal_iff_independent_and_span :
+  direct_sum.add_submonoid_is_internal f ↔
+  complete_lattice.independent f ∧ (Sup (set.range f) = ⊤) :=
+and_congr (direct_sum.to_add_monoid_injective f) (direct_sum.to_add_monoid_surjective f)
+
+end equivalence
+
+-- second approach
+noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynomial R) := {
+  graded_piece := λ n, add_monoid_hom.mrange (monomial n).to_add_monoid_hom,
+  grading_one := ⟨1, set.mem_univ _, rfl⟩,
+  grading_mul := begin
+    rintros m n - - ⟨a, -, rfl⟩ ⟨b, -, rfl⟩,
+    refine ⟨a * b, set.mem_univ _, (monomial_mul_monomial m n a b).symm⟩,
+  end,
+  direct_sum := begin
+    rw direct_sum.add_submonoid_is_internal_iff_independent_and_span,
+    split,
+    { rintros n f hf,
+      rw add_submonoid.mem_inf at hf,
+      cases hf with hfn hfm,
+      ext m,
+      rw coeff_zero,
+      by_cases hmn : m = n,
+      { subst hmn,
+        dsimp only at hfm,
+        --rw mem_supr: missing.
+        sorry },
+      sorry,
+    },
+    { sorry }
+  end,
+   }
+
+/-!
+
+### Third method: prove bijectivity by writing down an inverse function
+
+-/
+
+noncomputable abbreviation monomial.submonoid (R : Type) [semiring R] (i : ℕ) : add_submonoid (polynomial R) :=
+(monomial i : R →ₗ polynomial R).to_add_monoid_hom.mrange
+
+noncomputable def polynomial_equiv (R : Type) [semiring R] :
+  (⨁ i, monomial.submonoid R i) ≃+ polynomial R  :=
+{ inv_fun := sorry, -- WARNING: sorried data! This is the inverse function.
+  left_inv := sorry, -- This may or may not be tricky
+  right_inv := sorry, -- this may or may not be tricky.
+  ..(direct_sum.to_add_monoid
+    (λ i, (monomial.submonoid R i).subtype) : (⨁ i, monomial.submonoid R i) →+ _) }
+
+noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynomial R) := {
+  graded_piece := λ n, add_monoid_hom.mrange (monomial n).to_add_monoid_hom,
+  grading_one := ⟨1, set.mem_univ _, rfl⟩,
+  grading_mul := begin
+    rintros m n - - ⟨a, -, rfl⟩ ⟨b, -, rfl⟩,
+    refine ⟨a * b, set.mem_univ _, (monomial_mul_monomial m n a b).symm⟩,
+  end,
+  direct_sum := begin
+    exact equiv.bijective (polynomial_equiv R).to_equiv,
+  end }
+
+end polynomials
+
+-- second test case (I've not begun to think about it): grading add_monoid_algebras.
 example (R : Type*) [semiring R] (M : Type*) [add_monoid M] [decidable_eq M] :
   add_monoid_grading M (add_monoid_algebra R M) := sorry
