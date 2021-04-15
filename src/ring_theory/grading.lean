@@ -46,6 +46,18 @@ dfinsupp.sum_add_hom_apply _ _
 
 open polynomial
 
+#check direct_sum.add_submonoid_is_internal
+
+section equivalence
+-- perhaps an easier way of working with direct_sum.add_submonoid_is_internal
+variables (ι : Type*) [decidable_eq ι] (R : Type) [add_comm_monoid R] (f : ι → add_submonoid R)
+
+theorem direct_sum.add_submonoid_is_internal_iff_independent_and_span :
+  direct_sum.add_submonoid_is_internal f ↔
+    -- first is injective, second surjective
+    complete_lattice.independent f ∧ (Sup (set.range f) = ⊤) :=
+sorry
+
 noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynomial R) := {
   graded_piece := λ n, add_monoid_hom.mrange (monomial n).to_add_monoid_hom,
   grading_one := ⟨1, set.mem_univ _, rfl⟩,
