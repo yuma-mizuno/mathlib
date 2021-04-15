@@ -5,7 +5,7 @@ Authors: Kevin Buzzard
 -/
 import algebra.direct_sum
 import algebra.monoid_algebra -- to check we can grade a monoid algebra
-import data.polynomial.basic -- to check we can grade a polynomial ring
+import data.polynomial -- to check we can grade a polynomial ring
 /-!
 
 # Grading of a ring by a monoid
@@ -160,6 +160,28 @@ noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynom
 
 noncomputable abbreviation monomial.submonoid (R : Type) [semiring R] (i : ℕ) : add_submonoid (polynomial R) :=
 (monomial i : R →ₗ polynomial R).to_add_monoid_hom.mrange
+
+noncomputable abbreviation monomial.to_submonoid (R : Type) [semiring R] (i : ℕ) : R →+ monomial.submonoid R i :=
+(monomial i : R →ₗ polynomial R).to_add_monoid_hom.mrange_restrict
+
+-- noncomputable def polynomial_equiv (R : Type) [semiring R] :
+--   (⨁ i, monomial.submonoid R i) ≃+ polynomial R :=
+-- add_monoid_hom.to_add_equiv
+--   (direct_sum.to_add_monoid $ λ i,
+--     (monomial.submonoid R i).subtype)
+--   (finsupp.lift_add_hom $ λ n,
+--     (direct_sum.of (λ i, monomial.submonoid R i) n).comp (monomial.to_submonoid R n))
+--   (begin
+--     ext i ⟨x, r, _, rfl⟩ : 2,
+--     dsimp,
+--     simp [monomial],
+--     refl, -- fails on this branch
+--   end)
+--   (begin
+--     ext i r : 2,
+--     dsimp,
+--     simp [monomial],
+--   end)
 
 noncomputable def polynomial_equiv (R : Type) [semiring R] :
   (⨁ i, monomial.submonoid R i) ≃+ polynomial R  :=
