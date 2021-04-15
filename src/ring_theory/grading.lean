@@ -52,11 +52,17 @@ section equivalence
 -- perhaps an easier way of working with direct_sum.add_submonoid_is_internal
 variables (ι : Type*) [decidable_eq ι] (R : Type) [add_comm_monoid R] (f : ι → add_submonoid R)
 
+-- this should be two lemmas: the first shouls say that the map defined in
+-- `direct_sum.add_submonoid_is_internal` is injective iff independent,
+-- and the second says it's surjective iff Sup is top. Then this theorem
+-- follows immediately.
 theorem direct_sum.add_submonoid_is_internal_iff_independent_and_span :
   direct_sum.add_submonoid_is_internal f ↔
     -- first is injective, second surjective
     complete_lattice.independent f ∧ (Sup (set.range f) = ⊤) :=
 sorry
+
+end equivalence
 
 noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynomial R) := {
   graded_piece := λ n, add_monoid_hom.mrange (monomial n).to_add_monoid_hom,
@@ -66,6 +72,9 @@ noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynom
     refine ⟨a * b, set.mem_univ _, (monomial_mul_monomial m n a b).symm⟩,
   end,
   direct_sum := begin
+    -- is it easier to rw `direct_sum.add_submonoid_is_internal_iff_independent_and_span`
+    -- immediately? This injectivity proof below doesn't look like much fun, but then again
+    -- I don't know whether the independence proof looks like much fun either.
     split,
     { intros a b h,
       ext,
@@ -76,6 +85,10 @@ noncomputable example (R : Type*) [semiring R] : add_monoid_grading ℕ (polynom
       { sorry },
       sorry,
     },
+    -- I didn't think about surjectivity at all but it looks easier
     { sorry }
   end,
    }
+
+example (R : Type*) [semiring R] (M : Type*) [add_monoid M] [decidable_eq M] :
+  add_monoid_grading M (add_monoid_algebra R M) := sorry
