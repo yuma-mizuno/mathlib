@@ -33,7 +33,7 @@ open function
 universes u u' v
 variables {S : Type u'} {R : Type u} {M : Type v}
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- A sub_mul_action is a set which is closed under scalar multiplication.  -/
 structure sub_mul_action (R : Type u) (M : Type v) [has_scalar R M] : Type v :=

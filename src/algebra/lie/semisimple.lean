@@ -39,7 +39,7 @@ namespace lie_algebra
 variables (R : Type u) (L : Type v)
 variables [comm_ring R] [lie_ring L] [lie_algebra R L]
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 /-- A Lie algebra is simple if it is irreducible as a Lie module over itself via the adjoint
 action, and it is non-Abelian. -/
 class is_simple extends lie_module.is_irreducible R L L : Prop :=

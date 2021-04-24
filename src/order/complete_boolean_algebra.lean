@@ -7,7 +7,7 @@ Theory of complete Boolean algebras.
 -/
 import order.complete_lattice
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 universes u v w
 variables {α : Type u} {β : Type v} {ι : Sort w}

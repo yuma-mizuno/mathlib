@@ -60,7 +60,7 @@ divisibility, gcd, lcm, normalize
 
 variables {α : Type*}
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 
 

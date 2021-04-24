@@ -25,7 +25,7 @@ extends clause of a `structure` or `class` declared with `old_structure_cmd` set
 
 As an example:
 ```
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 structure base_one := (one : ℕ)
 

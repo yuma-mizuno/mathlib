@@ -22,7 +22,7 @@ The file does not contain any lemmas except for
 For basic lemmas about these classes see `algebra.group.basic`.
 -/
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 universe u
 

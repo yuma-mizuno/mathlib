@@ -170,7 +170,7 @@ instance : lie_module R L (M →ₗ[R] N) :=
 
 end basic_properties
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 /-- A morphism of Lie algebras is a linear map respecting the bracket operations. -/
 structure lie_hom (R : Type u) (L : Type v) (L' : Type w)
   [comm_ring R] [lie_ring L] [lie_algebra R L] [lie_ring L'] [lie_algebra R L']
@@ -360,7 +360,7 @@ variables [module R M] [module R N] [module R P]
 variables [lie_ring_module L M] [lie_ring_module L N] [lie_ring_module L P]
 variables [lie_module R L M] [lie_module R L N] [lie_module R L P]
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- A morphism of Lie algebra modules is a linear map which commutes with the action of the Lie
 algebra. -/

@@ -61,7 +61,7 @@ Euclidean domain, transfinite Euclidean domain, Bézout's lemma
 universe u
 
 section old_structure_cmd
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- A `euclidean_domain` is an `integral_domain` with a division and a remainder, satisfying
   `b * (a / b) + a % b = a`. The definition of a euclidean domain usually includes a valuation

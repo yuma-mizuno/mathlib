@@ -7,7 +7,7 @@ import algebra.ordered_group
 import algebra.invertible
 import data.set.intervals.basic
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 universe u
 variable {α : Type u}

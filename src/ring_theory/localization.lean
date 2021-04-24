@@ -83,7 +83,7 @@ variables {R : Type*} [comm_ring R] (M : submonoid R) (S : Type*) [comm_ring S]
 
 open function
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- The type of ring homomorphisms satisfying the characteristic predicate: if `f : R →+* S`
 satisfies this predicate, then `S` is isomorphic to the localization of `R` at `M`.

@@ -86,7 +86,7 @@ open_locale big_operators
 variables {G : Type*} [group G]
 variables {A : Type*} [add_group A]
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- A subgroup of a group `G` is a subset containing 1, closed under multiplication
 and closed under multiplicative inverse. -/

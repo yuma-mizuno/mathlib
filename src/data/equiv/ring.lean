@@ -37,7 +37,7 @@ equiv, mul_equiv, add_equiv, ring_equiv, mul_aut, add_aut, ring_aut
 
 variables {R : Type*} {S : Type*} {S' : Type*}
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- An equivalence between two (semi)rings that preserves the algebraic structure. -/
 structure ring_equiv (R S : Type*) [has_mul R] [has_add R] [has_mul S] [has_add S]

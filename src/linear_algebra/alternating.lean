@@ -53,7 +53,7 @@ variables {N' : Type*} [add_comm_group N'] [semimodule R N']
 
 variables {ι : Type*} [decidable_eq ι]
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 section
 variables (R M N ι)

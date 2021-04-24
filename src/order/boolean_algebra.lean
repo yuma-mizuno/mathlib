@@ -60,7 +60,7 @@ that for all `a, b : α` where `a ≤ b`, the equations `x ⊔ a = b` and `x ⊓
 
 generalized Boolean algebras, Boolean algebras, lattices, sdiff, compl
 -/
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 universes u v
 variables {α : Type u} {w x y z : α}

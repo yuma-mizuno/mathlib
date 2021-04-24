@@ -17,7 +17,7 @@ universe variables u v
 
 open category_theory
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- A typeclass for nonempty finite linear orders. -/
 class nonempty_fin_lin_ord (α : Type*) extends fintype α, linear_order α, order_bot α, order_top α.

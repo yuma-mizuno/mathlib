@@ -43,7 +43,7 @@ variables (S' : Type*) [ring S'] [mul_semiring_action M S']
 variables (T : Type*) [semiring T] [mul_semiring_action M T]
 variables (G : Type*) [group G] (H : subgroup G)
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 /-- Equivariant functions. -/
 @[nolint has_inhabited_instance]

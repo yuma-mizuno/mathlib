@@ -12,7 +12,7 @@ import data.option.basic
 import tactic.pi_instances
 import logic.nontrivial
 
-set_option old_structure_cmd true
+-- set_option old_structure_cmd true
 
 universes u v
 
