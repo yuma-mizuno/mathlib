@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aaron Anderson
 -/
 import order.well_founded_set
-import algebra.big_operators
+import algebra.big_operators.finprod
 import ring_theory.valuation.basic
 import algebra.module.pi
 import ring_theory.power_series.basic
@@ -292,73 +292,46 @@ support_single_of_ne one_ne_zero
 
 instance [semiring R] : has_mul (hahn_series Γ R) :=
 { mul := λ x y, { coeff := λ a,
-    ∑ ij in (add_antidiagonal x.is_wf_support y.is_wf_support a),
-    x.coeff ij.fst * y.coeff ij.snd,
+    ∑ᶠ ij ∈ (set.add_antidiagonal' a), x.coeff (prod.fst ij) * y.coeff (prod.snd ij),
     is_wf_support' := begin
-      have h : {a : Γ | ∑ (ij : Γ × Γ) in add_antidiagonal x.is_wf_support
-        y.is_wf_support a, x.coeff ij.fst * y.coeff ij.snd ≠ 0} ⊆
-        {a : Γ | (add_antidiagonal x.is_wf_support y.is_wf_support a).nonempty},
-      { intros a ha,
-        contrapose! ha,
-        simp [not_nonempty_iff_eq_empty.1 ha] },
-      exact is_wf_support_add_antidiagonal.mono h,
+      refine (x.is_wf_support.add y.is_wf_support).mono (λ a ha, _),
+      obtain ⟨⟨i,j⟩, hij1, hij2⟩ := exists_ne_zero_of_finsum_mem_ne_zero ha,
+      obtain ⟨hi, hj⟩ := ne_zero_and_ne_zero_of_mul hij2,
+      exact ⟨i, j, hi, hj, hij1⟩,
     end, }, }
 
 @[simp]
 lemma mul_coeff [semiring R] {x y : hahn_series Γ R} {a : Γ} :
-  (x * y).coeff a = ∑ ij in (add_antidiagonal x.is_wf_support y.is_wf_support a),
-    x.coeff ij.fst * y.coeff ij.snd := rfl
+  (x * y).coeff a = ∑ᶠ ij ∈ (set.add_antidiagonal' a),
+    x.coeff (prod.fst ij) * y.coeff ij.snd := rfl
 
-lemma mul_coeff_right' [semiring R] {x y : hahn_series Γ R} {a : Γ} {s : set Γ} (hs : s.is_wf)
-  (hys : y.support ⊆ s) :
-  (x * y).coeff a = ∑ ij in (add_antidiagonal x.is_wf_support hs a),
-    x.coeff ij.fst * y.coeff ij.snd :=
+lemma mul_coeff_eq_sum [semiring R] {x y : hahn_series Γ R} {a : Γ} (s : finset (Γ × Γ))
+  (hs1 : ∀ i j : Γ, (i,j) ∈ s → i + j = a)
+  (hs2 : ∀ i j : Γ, i + j = a → x.coeff i ≠ 0 → y.coeff j ≠ 0 → (i,j) ∈ s) :
+  (x * y).coeff a = ∑ ij in s, x.coeff (prod.fst ij) * y.coeff ij.snd :=
 begin
-  rw mul_coeff,
-  apply sum_subset_zero_on_sdiff (add_antidiagonal_mono_right hys) _ (λ _ _, rfl),
-  intros b hb,
-  simp only [not_and, not_not, mem_sdiff, mem_add_antidiagonal,
-      ne.def, set.mem_set_of_eq, mem_support] at hb,
-  rw [(hb.2 hb.1.1 hb.1.2.1), mul_zero]
+  rw [mul_coeff, finsum_mem_eq_sum_of_subset],
+  { rintros ⟨i, j⟩ ⟨hij, hihj⟩,
+    obtain ⟨hi, hj⟩ := ne_zero_and_ne_zero_of_mul hihj,
+    exact hs2 i j hij hi hj },
+  { rintros ⟨i, j⟩ hij,
+    exact hs1 i j (finset.mem_coe.2 hij) }
 end
 
-lemma mul_coeff_left' [semiring R] {x y : hahn_series Γ R} {a : Γ} {s : set Γ} (hs : s.is_wf)
-  (hxs : x.support ⊆ s) :
-  (x * y).coeff a = ∑ ij in (add_antidiagonal hs y.is_wf_support a),
-    x.coeff ij.fst * y.coeff ij.snd :=
-begin
-  rw mul_coeff,
-  apply sum_subset_zero_on_sdiff (add_antidiagonal_mono_left hxs) _ (λ _ _, rfl),
-  intros b hb,
-  simp only [not_and, not_not, mem_sdiff, mem_add_antidiagonal,
-      ne.def, set.mem_set_of_eq, mem_support] at hb,
-  rw [not_not.1 (λ con, hb.1.2.2 (hb.2 hb.1.1 con)), zero_mul],
-end
+lemma foo [semiring R] (x y : hahn_series Γ R) (a : Γ) :
+  ((set.add_antidiagonal' a) ∩
+    (function.support (λ (i : Γ × Γ), x.coeff i.fst * y.coeff i.snd))).finite := sorry
 
 instance [semiring R] : distrib (hahn_series Γ R) :=
 { left_distrib := λ x y z, begin
     ext a,
-    have hwf := (y.is_wf_support.union z.is_wf_support),
-    rw [mul_coeff_right' hwf, add_coeff, mul_coeff_right' hwf (set.subset_union_right _ _),
-      mul_coeff_right' hwf (set.subset_union_left _ _)],
-    { simp only [add_coeff, mul_add, sum_add_distrib] },
-    { intro b,
-      simp only [add_coeff, ne.def, set.mem_union_eq, set.mem_set_of_eq, mem_support],
-      contrapose!,
-      intro h,
-      rw [h.1, h.2, add_zero], }
+    simp only [mul_add, mul_coeff, pi.add_apply, add_coeff'],
+    exact finsum_mem_add_distrib' (foo x y a) (foo x z a),
   end,
   right_distrib := λ x y z, begin
     ext a,
-    have hwf := (x.is_wf_support.union y.is_wf_support),
-    rw [mul_coeff_left' hwf, add_coeff, mul_coeff_left' hwf (set.subset_union_right _ _),
-      mul_coeff_left' hwf (set.subset_union_left _ _)],
-    { simp only [add_coeff, add_mul, sum_add_distrib] },
-    { intro b,
-      simp only [add_coeff, ne.def, set.mem_union_eq, set.mem_set_of_eq, mem_support],
-      contrapose!,
-      intro h,
-      rw [h.1, h.2, add_zero], },
+    simp only [add_mul, mul_coeff, pi.add_apply, add_coeff'],
+    exact finsum_mem_add_distrib' (foo x z a) (foo y z a),
   end,
   .. hahn_series.has_mul,
   .. hahn_series.has_add }
@@ -366,60 +339,33 @@ instance [semiring R] : distrib (hahn_series Γ R) :=
 lemma single_mul_coeff_add [semiring R] {r : R} {x : hahn_series Γ R} {a : Γ} {b : Γ} :
   ((single b r) * x).coeff (a + b) = r * x.coeff a :=
 begin
-  by_cases hr : r = 0,
-  { simp [hr] },
-  simp only [hr, smul_coeff, mul_coeff, support_single_of_ne, ne.def, not_false_iff, smul_eq_mul],
-  by_cases hx : x.coeff a = 0,
-  { simp only [hx, mul_zero],
-    rw [sum_congr _ (λ _ _, rfl), sum_empty],
-    ext ⟨a1, a2⟩,
-    simp only [not_mem_empty, not_and, set.mem_singleton_iff, not_not,
-      mem_add_antidiagonal, set.mem_set_of_eq, iff_false],
-    rintro h1 rfl h2,
-    rw add_comm at h1,
-    rw ← add_right_cancel h1 at hx,
-    exact h2 hx, },
-  transitivity ∑ (ij : Γ × Γ) in {(b, a)}, (single b r).coeff ij.fst * x.coeff ij.snd,
-  { apply sum_congr _ (λ _ _, rfl),
-    ext ⟨a1, a2⟩,
-    simp only [set.mem_singleton_iff, prod.mk.inj_iff, mem_add_antidiagonal,
-      mem_singleton, set.mem_set_of_eq],
-    split,
-    { rintro ⟨h1, rfl, h2⟩,
-      rw add_comm at h1,
-      refine ⟨rfl, add_right_cancel h1⟩ },
-    { rintro ⟨rfl, rfl⟩,
-      refine ⟨add_comm _ _, _⟩,
-      simp [hx] } },
-  { simp }
+  rw [add_comm, mul_coeff_eq_sum {(b, a)}, sum_singleton, single_coeff_same],
+  { intros i j hij,
+    obtain ⟨rfl, rfl⟩ := finset.mem_singleton.1 hij,
+    refl },
+  { intros i j hij hi hj,
+    rw finset.mem_singleton,
+    have ib : i = b,
+    { contrapose! hi,
+      exact single_coeff_of_ne hi },
+    subst ib,
+    exact congr rfl (add_left_cancel hij) },
 end
 
 lemma mul_single_coeff_add [semiring R] {r : R} {x : hahn_series Γ R} {a : Γ} {b : Γ} :
   (x * (single b r)).coeff (a + b) = x.coeff a * r :=
 begin
-  by_cases hr : r = 0,
-  { simp [hr] },
-  simp only [hr, smul_coeff, mul_coeff, support_single_of_ne, ne.def, not_false_iff, smul_eq_mul],
-  by_cases hx : x.coeff a = 0,
-  { simp only [hx, zero_mul],
-    rw [sum_congr _ (λ _ _, rfl), sum_empty],
-    ext ⟨a1, a2⟩,
-    simp only [not_mem_empty, not_and, set.mem_singleton_iff, not_not,
-      mem_add_antidiagonal, set.mem_set_of_eq, iff_false],
-    rintro h1 h2 rfl,
-    rw ← add_right_cancel h1 at hx,
-    exact h2 hx, },
-  transitivity ∑ (ij : Γ × Γ) in {(a,b)}, x.coeff ij.fst * (single b r).coeff ij.snd,
-  { apply sum_congr _ (λ _ _, rfl),
-    ext ⟨a1, a2⟩,
-    simp only [set.mem_singleton_iff, prod.mk.inj_iff, mem_add_antidiagonal,
-      mem_singleton, set.mem_set_of_eq],
-    split,
-    { rintro ⟨h1, h2, rfl⟩,
-      refine ⟨add_right_cancel h1, rfl⟩ },
-    { rintro ⟨rfl, rfl⟩,
-      simp [hx] } },
-  { simp }
+  rw [mul_coeff_eq_sum {(a, b)}, sum_singleton, single_coeff_same],
+  { intros i j hij,
+    obtain ⟨rfl, rfl⟩ := finset.mem_singleton.1 hij,
+    refl },
+  { intros i j hij hi hj,
+    rw finset.mem_singleton,
+    have jb : j = b,
+    { contrapose! hj,
+      exact single_coeff_of_ne hj },
+    subst jb,
+    exact congr (congr rfl (add_right_cancel hij)) rfl },
 end
 
 @[simp]
@@ -439,12 +385,10 @@ by { ext, exact single_zero_mul_coeff }
 theorem support_mul_subset_add_support [semiring R] {x y : hahn_series Γ R} :
   support (x * y) ⊆ support x + support y :=
 begin
-  apply set.subset.trans (λ x hx, _) support_add_antidiagonal_subset_add,
-  { exact x.is_wf_support },
-  { exact y.is_wf_support },
-  contrapose! hx,
-  simp only [not_nonempty_iff_eq_empty, ne.def, set.mem_set_of_eq] at hx,
-  simp [hx],
+  intros a ha,
+  obtain ⟨⟨i,j⟩, hij1, hij2⟩ := exists_ne_zero_of_finsum_mem_ne_zero ha,
+  obtain ⟨hi, hj⟩ := ne_zero_and_ne_zero_of_mul hij2,
+  exact ⟨i, j, hi, hj, hij1⟩,
 end
 
 @[simp]
@@ -453,36 +397,185 @@ lemma mul_coeff_min_add_min [semiring R] {x y : hahn_series Γ R} (hx : x ≠ 0)
     y.is_wf_support.min (support_nonempty_iff.2 hy)) =
     (x.coeff (x.is_wf_support.min (support_nonempty_iff.2 hx))) *
     y.coeff (y.is_wf_support.min (support_nonempty_iff.2 hy)) :=
-by rw [mul_coeff, finset.add_antidiagonal_min_add_min, finset.sum_singleton]
+begin
+  rw [mul_coeff_eq_sum {((x.is_wf_support.min _, y.is_wf_support.min _))}, finset.sum_singleton],
+  { intros i j hij,
+    obtain ⟨rfl, rfl⟩ := finset.mem_singleton.1 hij,
+    refl },
+  { intros i j hij hi hj,
+    cases eq_or_lt_of_le ((x.is_wf_support.min_le _ hi)) with heq hlt,
+    { rw [mem_singleton, prod.mk.inj_iff],
+      rw heq at hij,
+      exact ⟨heq.symm, add_left_cancel hij⟩ },
+    { contrapose hij,
+      exact ne_of_gt (add_lt_add_of_lt_of_le hlt (y.is_wf_support.min_le _ hj)) } },
+end
+
+/-- Product over a sigma type equals the product of fiberwise products. For rewriting
+in the reverse direction, use `finset.prod_sigma'`.  -/
+@[to_additive "Sum over a sigma type equals the sum of fiberwise sums. For rewriting
+in the reverse direction, use `finset.sum_sigma'`"]
+lemma finprod_mem_sigma {α β : Type*} [comm_monoid β] {σ : α → Type*}
+  (s : set α) (t : Πa, set (σ a)) (f : sigma σ → β)
+  (hs : (s ∩ { a | ∃ b ∈ t a, f ⟨a, b⟩ ≠ 1 }).finite)
+  (ht : ∀ a, a ∈ s → (t a ∩ function.mul_support (λ b, f ⟨a, b⟩)).finite) :
+  ∏ᶠ x ∈ { x : Σ a : α, σ a | x.1 ∈ s ∧ x.2 ∈ t x.1 }, f x = ∏ᶠ a ∈ s, ∏ᶠ s ∈ (t a), f ⟨a, s⟩ :=
+begin
+  rw [finprod_mem_eq_prod_of_subset, finset.prod_sigma hs.to_finset (λ a,
+      if has : a ∈ s then (ht a has).to_finset else ∅),
+    finprod_mem_eq_prod_of_subset, finset.prod_congr rfl (λ a ha, _)],
+  { rw finprod_mem_eq_prod _ (ht a (hs.mem_to_finset.1 ha).1),
+    rw finset.prod_congr (dif_pos _),
+    intros b hb,
+    refl },
+  { rw [set.finite.coe_to_finset],
+    rintro x ⟨h1, h2⟩,
+    refine set.mem_inter h1 _,
+    simp only [exists_prop, ne.def, set.mem_set_of_eq],
+    contrapose! h2,
+    simp only [not_not, function.mem_mul_support, finprod_mem_congr rfl h2, finprod_one] },
+  { rw [set.finite.coe_to_finset],
+    apply set.inter_subset_left },
+  { rintro ⟨a, b⟩ ⟨⟨h1, h2⟩, h3⟩,
+    rw [finset.mem_coe, finset.mem_sigma, set.finite.mem_to_finset, dif_pos h1,
+      set.finite.mem_to_finset],
+    exact ⟨⟨h1, ⟨b, h2, h3⟩⟩, h2, h3⟩ },
+  { rintro ⟨a, b⟩ h,
+    rw [finset.mem_coe, finset.mem_sigma, set.finite.mem_to_finset, set.mem_inter_iff] at h,
+    obtain ⟨⟨ha, h1⟩, hb⟩ := h,
+    rw [dif_pos ha, set.finite.mem_to_finset, set.mem_inter_iff] at hb,
+    exact ⟨ha, hb.1⟩ }
+end
+
+@[to_additive]
+lemma finprod_mem_sigma' {α β : Type*} [comm_monoid β] {σ : α → Type*}
+  (s : set α) (t : Πa, set (σ a)) (f : Πa, σ a → β)
+  (hs : (s ∩ { a | ∃ b ∈ t a, f a b ≠ 1 }).finite)
+  (ht : ∀ a, a ∈ s → (t a ∩ function.mul_support (λ b, f a b)).finite) :
+  ∏ᶠ a ∈ s, ∏ᶠ x ∈ (t a), f a x = ∏ᶠ x ∈ { x : Σ a : α, σ a | x.1 ∈ s ∧ x.2 ∈ t x.1 }, f x.1 x.2 :=
+eq.symm $ finprod_mem_sigma s t (λ x, f x.1 x.2) hs ht
+
+/-- Product over a sigma type equals the product of fiberwise products. For rewriting
+in the reverse direction, use `finset.prod_sigma'`.  -/
+@[to_additive finsum_mem_prod "Sum over a sigma type equals the sum of fiberwise sums. For rewriting
+in the reverse direction, use `finset.sum_sigma'`"]
+lemma finprod_mem_prod {α β M : Type*} [comm_monoid M]
+  (s : set α) (t : set β) (f : α × β → M)
+  (h : (s.prod t ∩ function.mul_support f).finite) :
+  ∏ᶠ x ∈ s.prod t, f x = ∏ᶠ a ∈ s, ∏ᶠ b ∈ t, f ⟨a, b⟩ :=
+begin
+  have hi : (s.prod t).inj_on prod.to_sigma,
+  { rintro ⟨a, b⟩ _ ⟨c, d⟩ _ h,
+    simp only [prod.to_sigma, heq_iff_eq] at h,
+    rw [h.1, h.2] },
+  refine (finprod_mem_congr rfl _).trans ((finprod_mem_image hi).symm.trans _),
+  { exact λ ab, f ⟨ab.1, ab.2⟩ },
+  { rintros ⟨a, b⟩ _,
+    simp },
+  refine (finprod_mem_congr _ (λ _ _, rfl)).trans ((finprod_mem_sigma s (λ _, t) _ _ _).trans _),
+  { ext,
+    simp only [set.mem_image, prod.to_sigma, set.mem_prod, set.mem_set_of_eq, prod.exists],
+    refine ⟨_, λ h, ⟨x.fst, x.snd, h, by simp⟩⟩,
+    rintro ⟨a, b, h, rfl⟩,
+    exact h },
+  { apply (h.image prod.fst).subset,
+    rintros a ⟨hs, b, ht, h1⟩,
+    exact ⟨⟨a, b⟩, ⟨⟨hs, ht⟩, h1⟩, rfl⟩ },
+  { intros a ha,
+    apply (h.image prod.snd).subset,
+    rintros b ⟨hb, h'⟩,
+    exact ⟨⟨a, b⟩, ⟨⟨ha, hb⟩, h'⟩, rfl⟩ },
+  { exact (finprod_mem_congr rfl (λ a ha, (finprod_mem_congr rfl (λ b hb, rfl)))) }
+end
+
+@[to_additive finsum_mem_prod']
+lemma finprod_mem_prod' {α β M : Type*} [comm_monoid M]
+  (s : set α) (t : set β) (f : α → β → M)
+  (h : (s.prod t ∩ function.mul_support (function.uncurry f)).finite) :
+  ∏ᶠ a ∈ s, ∏ᶠ b ∈ t, f a b = ∏ᶠ x ∈ s.prod t, f (prod.fst x) x.2 :=
+eq.symm $ finprod_mem_prod s t (λ x, f x.1 x.2) h
+
+lemma mul_finsum {α β : Type*} [semiring β] {f : α → β} {b : β} (h : (function.support f).finite) :
+  b * (∑ᶠ x, f x) = ∑ᶠ x, b * f x :=
+begin
+  rw [finsum_eq_sum _ h, finset.mul_sum, finsum_eq_sum_of_support_subset],
+  rw [set.finite.coe_to_finset],
+  exact λ x, right_ne_zero_of_mul
+end
+
+lemma finsum_mul {α β : Type*} [semiring β] {f : α → β} {b : β} (h : (function.support f).finite) :
+  (∑ᶠ x, f x) * b = ∑ᶠ x, f x * b :=
+begin
+  rw [finsum_eq_sum _ h, finset.sum_mul, finsum_eq_sum_of_support_subset],
+  rw [set.finite.coe_to_finset],
+  exact λ x, left_ne_zero_of_mul
+end
+
+lemma mul_finsum_mem {α β : Type*} [semiring β] {f : α → β} {b : β} {s : set α}
+  (h : (s ∩ (function.support f)).finite) :
+  b * (∑ᶠ x ∈ s, f x) = ∑ᶠ x ∈ s, b * f x :=
+begin
+  rw [finsum_mem_def, mul_finsum, finsum_mem_def, finsum_congr],
+  { intro a,
+    rw [set.indicator_apply, set.indicator_apply],
+    split_ifs,
+    { refl },
+    { rw mul_zero } },
+  { convert h,
+    ext,
+    simp }
+end
+
+lemma finsum_mem_mul {α β : Type*} [semiring β] {f : α → β} {b : β} {s : set α}
+  (h : (s ∩ (function.support f)).finite) :
+  (∑ᶠ x ∈ s, f x) * b = ∑ᶠ x ∈ s, f x * b :=
+begin
+  rw [finsum_mem_def, finsum_mul, finsum_mem_def, finsum_congr],
+  { intro a,
+    rw [set.indicator_apply, set.indicator_apply],
+    split_ifs,
+    { refl },
+    { rw zero_mul } },
+  { convert h,
+    ext,
+    simp }
+end
 
 private lemma mul_assoc' [semiring R] (x y z : hahn_series Γ R) :
   x * y * z = x * (y * z) :=
 begin
   ext b,
-  rw [mul_coeff_left' (x.is_wf_support.add y.is_wf_support) support_mul_subset_add_support,
-      mul_coeff_right' (y.is_wf_support.add z.is_wf_support) support_mul_subset_add_support],
-  simp only [mul_coeff, add_coeff, sum_mul, mul_sum, sum_sigma'],
-  refine sum_bij_ne_zero (λ a has ha0, ⟨⟨a.2.1, a.2.2 + a.1.2⟩, ⟨a.2.2, a.1.2⟩⟩) _ _ _ _,
-  { rintros ⟨⟨i,j⟩, ⟨k,l⟩⟩ H1 H2,
-    simp only [true_and, set.image2_add, eq_self_iff_true, mem_add_antidiagonal, ne.def,
-      set.image_prod, mem_sigma, set.mem_set_of_eq] at H1 H2 ⊢,
-    obtain ⟨⟨rfl, ⟨H3, nz⟩⟩, ⟨rfl, nx, ny⟩⟩ := H1,
-    refine ⟨⟨(add_assoc _ _ _).symm, nx, set.add_mem_add ny nz⟩, ny, nz⟩ },
-  { rintros ⟨⟨i1,j1⟩, ⟨k1,l1⟩⟩ ⟨⟨i2,j2⟩, ⟨k2,l2⟩⟩ H1 H2 H3 H4 H5,
-    simp only [set.image2_add, prod.mk.inj_iff, mem_add_antidiagonal, ne.def,
-      set.image_prod, mem_sigma, set.mem_set_of_eq, heq_iff_eq] at H1 H3 H5,
-    obtain ⟨⟨rfl, H⟩, rfl, rfl⟩ := H5,
-    simp only [and_true, prod.mk.inj_iff, eq_self_iff_true, heq_iff_eq],
-    exact add_right_cancel (H1.1.1.trans H3.1.1.symm) },
-  { rintros ⟨⟨i,j⟩, ⟨k,l⟩⟩ H1 H2,
-    simp only [exists_prop, set.image2_add, prod.mk.inj_iff, mem_add_antidiagonal,
-      sigma.exists, ne.def, set.image_prod, mem_sigma, set.mem_set_of_eq, heq_iff_eq,
-      prod.exists] at H1 H2 ⊢,
-    obtain ⟨⟨rfl, nx, H⟩, rfl, ny, nz⟩ := H1,
-    exact ⟨i + k, l, i, k, ⟨⟨add_assoc _ _ _, set.add_mem_add nx ny, nz⟩, rfl, nx, ny⟩,
-      λ con, H2 ((mul_assoc _ _ _).symm.trans con), ⟨rfl, rfl⟩, rfl, rfl⟩ },
-  { rintros ⟨⟨i,j⟩, ⟨k,l⟩⟩ H1 H2,
-    simp [mul_assoc], }
+  simp only [mul_coeff, mul_assoc],
+  refine eq.trans (finsum_mem_congr rfl (λ ij hij, finsum_mem_mul _))
+    (eq.trans _ (eq.symm (finsum_mem_congr rfl (λ ij hij, (mul_finsum_mem _))))),
+  { sorry,
+
+  },
+  swap, sorry,
+  refine ((finsum_mem_sigma' _ _ _ _ _).trans _).trans (finsum_mem_sigma' _ _ _ _ _).symm,
+  sorry, sorry,
+  swap, sorry, swap, sorry,
+  refine finsum_mem_eq_of_bij_on (λ q : Σ (a : Γ × Γ), Γ × Γ, (⟨⟨q.2.1, q.2.2 + q.1.2⟩,
+    q.2.2, q.1.2⟩ : Σ (a : Γ × Γ), Γ × Γ)) ⟨_, _, _⟩ _,
+  { simp only [set.mem_add_antidiagonal'],
+    rintro ⟨⟨i, j⟩, k, l⟩ ⟨rfl, h2⟩,
+    dsimp only at h2,
+    obtain rfl := h2,
+    exact ⟨(add_assoc _ _ _).symm, rfl⟩ },
+  { rintros ⟨⟨i, j⟩, k, l⟩ ⟨h11, h12⟩ ⟨⟨i', j'⟩, k', l'⟩ h2 h3,
+    simp only [heq_iff_eq, set.mem_add_antidiagonal', set.mem_set_of_eq] at *,
+    subst h12,
+    obtain ⟨rfl, rfl⟩ := h2,
+    simp only [prod.ext_iff] at h3,
+    obtain ⟨⟨rfl, h31⟩, rfl, rfl⟩ := h3,
+    exact ⟨rfl, rfl⟩ },
+  { rintro ⟨⟨i, j⟩, k, l⟩ ⟨h1, h2⟩,
+    simp only [set.mem_image, set.mem_add_antidiagonal', prod.mk.inj_iff, sigma.exists,
+      set.mem_set_of_eq, heq_iff_eq, prod.exists],
+    simp only [set.mem_add_antidiagonal'] at h1 h2,
+    rw [← h2, ← add_assoc] at h1,
+    exact ⟨_, _, _, _, ⟨h1, rfl⟩, ⟨rfl, h2⟩, rfl, rfl⟩ },
+  { rintros ⟨⟨i, j⟩, k, l⟩ ⟨h1, h2⟩, refl }
 end
 
 instance [semiring R] : semiring (hahn_series Γ R) :=
@@ -502,20 +595,15 @@ instance [comm_semiring R] : comm_semiring (hahn_series Γ R) :=
 { mul_comm := λ x y, begin
     ext,
     simp_rw [mul_coeff, mul_comm],
-    refine sum_bij (λ a ha, ⟨a.2, a.1⟩) _ (λ a ha, by simp) _ _,
-    { intros a ha,
-      simp only [mem_add_antidiagonal, ne.def, set.mem_set_of_eq] at ha ⊢,
-      obtain ⟨h1, h2, h3⟩ := ha,
-      refine ⟨_, h3, h2⟩,
-      rw [add_comm, h1], },
-    { rintros ⟨a1, a2⟩ ⟨b1, b2⟩ ha hb hab,
+    refine finsum_mem_eq_of_bij_on (λ ⟨i, j⟩, ⟨j, i⟩) ⟨_, _, _⟩ (λ ⟨_,_⟩ _, rfl),
+    { rintro ⟨i,j⟩ hi,
+      exact eq.trans (add_comm _ _) hi },
+    { rintros ⟨a1, a2⟩ ha ⟨b1, b2⟩ hb hab,
       rw prod.ext_iff at *,
-      refine ⟨hab.2, hab.1⟩, },
-    { intros a ha,
-      refine ⟨a.swap, _, by simp⟩,
-      simp only [prod.fst_swap, mem_add_antidiagonal, prod.snd_swap,
-        ne.def, set.mem_set_of_eq] at ha ⊢,
-      exact ⟨(add_comm _ _).trans ha.1, ha.2.2, ha.2.1⟩ }
+      refine ⟨hab.2, hab.1⟩ },
+    { rintro ⟨i,j⟩ hi,
+      simp only [set.mem_image, set.mem_add_antidiagonal', prod.exists],
+      refine ⟨_, _, eq.trans (add_comm _ _) hi, rfl⟩, },
   end,
   .. hahn_series.semiring }
 
@@ -542,6 +630,27 @@ instance [integral_domain R] : integral_domain (hahn_series Γ R) :=
   .. hahn_series.nontrivial,
   .. hahn_series.comm_ring }
 
+@[to_additive] lemma finprod_mem_comm' {α β M : Type*} [comm_monoid M] {s : set α} {t : set β}
+  (f : α → β → M)
+  (h : ((s.prod t) ∩ function.mul_support (function.uncurry f)).finite) :
+  ∏ᶠ i ∈ s, ∏ᶠ j ∈ t, f i j = ∏ᶠ j ∈ t, ∏ᶠ i ∈ s, f i j :=
+begin
+  rw [finprod_mem_prod' _ _ _ h, finprod_mem_prod', finprod_mem_eq_of_bij_on prod.swap ⟨_, _, _⟩],
+  { rintros ⟨a, b⟩ _,
+    refl },
+  { rintros ⟨a, b⟩ ⟨ha, hb⟩,
+    exact ⟨hb, ha⟩ },
+  { rintros ⟨a1, b1⟩ _ ⟨a2, b2⟩ _ h,
+    rw [prod.swap_prod_mk, prod.swap_prod_mk] at h,
+    obtain ⟨rfl, rfl⟩ := h,
+    refl },
+  { rintros ⟨b, a⟩ ⟨hb, ha⟩,
+    exact ⟨⟨a, b⟩, ⟨ha, hb⟩, rfl⟩ },
+  { apply (h.image prod.swap).subset,
+    rintros ⟨b, a⟩ ⟨⟨hb, ha⟩, h⟩,
+    exact ⟨⟨a, b⟩, ⟨⟨ha, hb⟩, h⟩, rfl⟩ }
+end
+
 section semiring
 variables [semiring R]
 
@@ -553,11 +662,12 @@ begin
   by_cases h : x = a + b,
   { rw [h, mul_single_coeff_add],
     simp },
-  { rw [single_coeff_of_ne h, mul_coeff, sum_eq_zero],
+  { rw [single_coeff_of_ne h, mul_coeff, finsum_mem_congr rfl, finsum_mem_zero],
     rintros ⟨y1, y2⟩ hy,
-    obtain ⟨rfl, hy1, hy2⟩ := mem_add_antidiagonal.1 hy,
-    rw [eq_of_mem_support_single hy1, eq_of_mem_support_single hy2] at h,
-    exact (h rfl).elim }
+    obtain rfl := set.mem_add_antidiagonal'.1 hy,
+    contrapose! h,
+    obtain ⟨hy1, hy2⟩ := ne_zero_and_ne_zero_of_mul h,
+    rw [eq_of_mem_support_single hy1, eq_of_mem_support_single hy2] }
 end
 
 /-- `C a` is the constant Hahn Series `a`. `C` is provided as a ring homomorphism. -/
@@ -624,16 +734,12 @@ variables [semiring R]
   map_mul' := λ f g, begin
     ext n,
     simp only [power_series.coeff_mul, power_series.coeff_mk, mul_coeff, is_wf_support],
-    classical,
-    refine sum_filter_ne_zero.symm.trans
-      ((sum_congr _ (λ _ _, rfl)).trans sum_filter_ne_zero),
-    ext m,
-    simp only [nat.mem_antidiagonal, and.congr_left_iff, mem_add_antidiagonal, ne.def,
-      and_iff_left_iff_imp, mem_filter, mem_support],
-    intros h1 h2,
-    contrapose h1,
-    rw ← decidable.or_iff_not_and_not at h1,
-    cases h1; simp [h1]
+    apply finsum_mem_eq_sum_of_subset,
+    { rintro _ ⟨h1, h2⟩,
+      rw [mem_coe, nat.mem_antidiagonal],
+      exact h1 },
+    { intros _ h,
+      rwa [mem_coe, nat.mem_antidiagonal] at h },
   end }
 
 lemma coeff_to_power_series {f : hahn_series ℕ R} {n : ℕ} :
@@ -737,8 +843,7 @@ variables (Γ) (R) [linear_order Γ] [add_comm_monoid R]
 structure summable_family (α : Type*) :=
 (to_fun : α → hahn_series Γ R)
 (is_wf_Union_support' : set.is_wf (⋃ (a : α), (to_fun a).support))
-(co_support : Γ → finset α)
-(mem_co_support' : ∀ (a : α) (g : Γ), a ∈ co_support g ↔ (to_fun a).coeff g ≠ 0)
+(finite_co_support' : ∀ (g : Γ), {a | (to_fun a).coeff g ≠ 0}.finite)
 
 end
 
@@ -753,19 +858,15 @@ instance : has_coe_to_fun (summable_family Γ R α) :=
 lemma is_wf_Union_support (s : summable_family Γ R α) : set.is_wf (⋃ (a : α), (s a).support) :=
 s.is_wf_Union_support'
 
-@[simp]
-lemma mem_co_support {s : summable_family Γ R α} {a : α} {g : Γ} :
-  a ∈ s.co_support g ↔ (s a).coeff g ≠ 0 := mem_co_support' _ _ _
+lemma finite_co_support (s : summable_family Γ R α) (g : Γ) :
+  (function.support (λ a, (s a).coeff g)).finite :=
+s.finite_co_support' g
 
 lemma coe_injective : @function.injective (summable_family Γ R α) (α → hahn_series Γ R) coe_fn
-| ⟨f1, hU1, c1, hc1⟩ ⟨f2, hU2, c2, hc2⟩ h :=
+| ⟨f1, hU1, hf1⟩ ⟨f2, hU2, hf2⟩ h :=
 begin
   change f1 = f2 at h,
   subst h,
-  simp only,
-  refine ⟨rfl, _⟩,
-  ext g a,
-  rw [hc1, hc2]
 end
 
 @[ext]
@@ -778,18 +879,16 @@ instance : has_add (summable_family Γ R α) :=
       rw ← set.Union_union_distrib,
       exact set.Union_subset_Union (λ a, support_add_subset)
     end),
-    co_support := λ g, ((x.co_support g) ∪ (y.co_support g)).filter
-      (λ a, (x a).coeff g + (y a).coeff g ≠ 0),
-    mem_co_support' := λ a g, begin
-      simp only [mem_union, mem_filter, mem_co_support, and_iff_right_iff_imp,
-        pi.add_apply, ne.def, add_coeff'],
-      contrapose!,
-      rintro ⟨hx, hy⟩,
-      simp [hx, hy],
+    finite_co_support' := λ g, ((x.finite_co_support g).union (y.finite_co_support g)).subset begin
+      intros a ha,
+      change (x a).coeff g + (y a).coeff g ≠ 0 at ha,
+      rw [set.mem_union, function.mem_support, function.mem_support],
+      contrapose! ha,
+      rw [ha.1, ha.2, add_zero]
     end }⟩
 
 instance : has_zero (summable_family Γ R α) :=
-⟨⟨0, by simp, λ _, ∅, by simp⟩⟩
+⟨⟨0, by simp, λ _, by simp⟩⟩
 
 instance : inhabited (summable_family Γ R α) := ⟨0⟩
 
@@ -814,35 +913,25 @@ instance : add_comm_monoid (summable_family Γ R α) :=
 /-- The infinite sum of a `summable_family` of Hahn series. -/
 def hsum (s : summable_family Γ R α) :
   hahn_series Γ R :=
-{ coeff := λ g, ∑ i in s.co_support g, (s i).coeff g,
+{ coeff := λ g, ∑ᶠ i, (s i).coeff g,
   is_wf_support' := s.is_wf_Union_support.mono (λ g, begin
     contrapose,
     rw [set.mem_Union, not_exists, function.mem_support, not_not],
     simp_rw [mem_support, not_not],
-    exact λ h, sum_eq_zero (λ a ha, h _),
+    intro h,
+    rw [finsum_congr h, finsum_zero],
   end) }
 
 @[simp]
 lemma hsum_coeff {s : summable_family Γ R α} {g : Γ} :
-  s.hsum.coeff g = ∑ i in s.co_support g, (s i).coeff g := rfl
+  s.hsum.coeff g = ∑ᶠ i, (s i).coeff g := rfl
 
 lemma support_hsum_subset {s : summable_family Γ R α} :
   s.hsum.support ⊆ ⋃ (a : α), (s a).support :=
 λ g hg, begin
-  rw [mem_support, hsum_coeff] at hg,
-  obtain ⟨a, h1, h2⟩ := exists_ne_zero_of_sum_ne_zero hg,
-  rw [set.mem_Union],
-  exact ⟨a, h2⟩,
-end
-
-lemma co_support_add_subset {s t : summable_family Γ R α} {g : Γ} :
-  (s + t).co_support g ⊆ s.co_support g ∪ t.co_support g :=
-λ a ha, begin
-  rw mem_co_support at ha,
-  rw [mem_union, mem_co_support, mem_co_support],
-  contrapose! ha,
-  obtain ⟨hs, ht⟩ := ha,
-  simp [hs, ht],
+  simp_rw [set.mem_Union, mem_support],
+  contrapose! hg,
+  rw [mem_support, hsum_coeff, not_not, finsum_congr hg, finsum_zero]
 end
 
 @[simp]
@@ -850,10 +939,7 @@ lemma hsum_add {s t : summable_family Γ R α} : (s + t).hsum = s.hsum + t.hsum 
 begin
   ext g,
   simp only [add_apply, pi.add_apply, hsum_coeff, ne.def, add_coeff'],
-  rw [sum_subset co_support_add_subset, finset.sum_add_distrib,
-    ← sum_subset (subset_union_left _ _), ← sum_subset (subset_union_right _ _)];
-  { intros x h1 h2,
-    rwa [mem_co_support, not_not] at h2, }
+  rw [finsum_add_distrib (s.finite_co_support g) (t.finite_co_support g)],
 end
 
 end add_comm_monoid
@@ -864,8 +950,8 @@ variables [linear_order Γ] [add_comm_group R] {α : Type*} {s t : summable_fami
 instance : add_comm_group (summable_family Γ R α) :=
 { neg := λ s, { to_fun := λ a, - s a,
     is_wf_Union_support' := by { simp_rw [support_neg], exact s.is_wf_Union_support' },
-    co_support := s.co_support,
-    mem_co_support' := by simp },
+    finite_co_support' := λ g, by { simp only [neg_coeff', pi.neg_apply, ne.def, neg_eq_zero],
+      exact s.finite_co_support g } },
   add_left_neg := λ a, by { ext, apply add_left_neg },
   .. summable_family.add_comm_monoid }
 
@@ -893,22 +979,26 @@ instance : has_scalar (hahn_series Γ R) (summable_family Γ R α) :=
       simp only [set.mem_Union, exists_imp_distrib],
       exact λ a ha, (set.add_subset_add (set.subset.refl _) (set.subset_Union _ a)) ha,
     end,
-    co_support := λ g, ((add_antidiagonal x.is_wf_support s.is_wf_Union_support g).bUnion
-      (λ ij, s.co_support ij.snd)).filter (λ a, (x * (s a)).coeff g ≠ 0),
-    mem_co_support' := λ a g, begin
-      rw [mem_filter],
-      apply and_iff_right_of_imp,
-      simp only [mem_bUnion, exists_prop, set.mem_Union, mem_add_antidiagonal, mem_co_support,
-        mul_coeff, ne.def, mem_support, is_wf_support, prod.exists],
-      contrapose!,
-      intro h,
-      rw sum_eq_zero,
-      rintros ⟨i, j⟩ hij,
-      rw [mem_add_antidiagonal, mem_support] at hij,
-      by_cases he : ∃ (b : α), (s b).coeff j ≠ 0,
-      { rw [h i j ⟨hij.1, hij.2.1, he⟩, mul_zero] },
-      simp_rw [not_exists, ne.def, not_not] at he,
-      rw [he a, mul_zero],
+    finite_co_support' := λ g, begin
+      have h : (set.add_antidiagonal' g ∩ (x.support.prod (⋃ (a : α), (s a).support))).finite,
+      {
+          sorry,
+      },
+      refine (set.finite.bUnion h _).subset _,
+      { exact λ ij hij, { a | (s a).coeff ij.snd ≠ 0 } },
+      { intros,
+        apply s.finite_co_support },
+      { intros a ha,
+        simp_rw [set.mem_Union],
+        contrapose! ha,
+        simp only [set.mem_add_antidiagonal', mul_coeff, not_not, ne.def, set.mem_set_of_eq],
+        rw [finsum_mem_congr rfl, finsum_mem_zero],
+        rintro ⟨i,j⟩ hij,
+        by_cases hi : x.coeff i = 0,
+        { rw [hi, zero_mul] },
+        by_cases hj : (s a).coeff j = 0,
+        { rw [hj, mul_zero] },
+        rw [not_not.1 (ha ⟨i,j⟩ ⟨hij, hi, set.mem_Union.2 ⟨a, hj⟩⟩), mul_zero] }
     end } }
 
 @[simp]
@@ -929,47 +1019,10 @@ lemma hsum_smul {x : hahn_series Γ R} {s : summable_family Γ R α} :
   (x • s).hsum = x * s.hsum :=
 begin
   ext g,
-  rw [mul_coeff, sum_subset (add_antidiagonal_mono_right support_hsum_subset)],
-  { rw hsum_coeff,
-    have h : (x • s).co_support g ⊆
-      (add_antidiagonal x.is_wf_support s.is_wf_Union_support g).bUnion (λ ij, s.co_support ij.snd),
-    { intros a ha,
-      rw [mem_co_support, smul_apply, mul_coeff] at ha,
-      obtain ⟨ij, h1, h2⟩ := exists_ne_zero_of_sum_ne_zero ha,
-      rw mem_bUnion,
-      exact ⟨ij, add_antidiagonal_mono_right (set.subset_Union _ a) h1,
-        mem_co_support.2 (right_ne_zero_of_mul h2)⟩ },
-    refine eq.trans (sum_subset h _) _,
-    { apply is_wf_Union_support },
-    { intros a h1 h2,
-      contrapose! h2,
-      rw [mem_co_support],
-      exact h2 },
-    have h' : ∀ a, ((x • s) a).coeff g =
-      ∑ (ij : Γ × Γ) in add_antidiagonal x.is_wf_support s.is_wf_Union_support g,
-      x.coeff ij.fst * (s a).coeff ij.snd,
-    { intro a,
-      rw [smul_apply, mul_coeff],
-      apply sum_subset (add_antidiagonal_mono_right
-        (set.subset_Union (support ∘ s) a)),
-      intros ij h1 h2,
-      rw [mem_add_antidiagonal] at *,
-      have h : ¬ ij.snd ∈ (s a).support := λ c, h2 ⟨h1.1, h1.2.1, c⟩,
-      rw [mem_support, not_not] at h,
-      rw [h, mul_zero] },
-    rw [sum_congr rfl (λ a ha, h' a), sum_comm],
-    refine sum_congr rfl (λ ij hij, _),
-    rw [hsum_coeff, ← mul_sum],
-    apply congr rfl (sum_subset (subset_bUnion_of_mem _ hij) _).symm,
-    intros a h1 h2,
-    contrapose! h2,
-    rw [mem_co_support],
-    exact h2 },
-  { intros ij h1 h2,
-    rw mem_add_antidiagonal at *,
-    have h : ¬ ij.snd ∈ s.hsum.support := λ con, h2 ⟨h1.1, h1.2.1, con⟩,
-    rw [mem_support, not_not] at h,
-    simp [h] },
+  simp only [mul_finsum, set.mem_add_antidiagonal', smul_apply, mul_coeff, hsum_coeff],
+  rw [← finsum_mem_univ, finsum_mem_comm', finsum_mem_congr rfl (λ ab hab, _)],
+  rw [finsum_mem_univ, mul_finsum (s.finite_co_support ab.snd)],
+  sorry,
 end
 
 /-- The summation of a `summable_family` as a `linear_map`. -/
@@ -997,31 +1050,28 @@ def of_finsupp (f : α →₀ (hahn_series Γ R)) :
       have h : (λ i, (f i).support) a ≤ _ := le_sup haf,
       exact h ha,
     end,
-  co_support := λ g, f.support.filter (λ a, (f a).coeff g ≠ 0),
-  mem_co_support' := λ a g, begin
-    simp only [mem_filter, and_iff_right_iff_imp, finsupp.mem_support_iff, ne.def],
-    contrapose!,
-    intro h,
-    simp [h]
-  end }
+  finite_co_support' := λ g, f.support.finite_to_set.subset (λ a ha, begin
+    rw [mem_coe, finsupp.mem_support_iff],
+    contrapose! ha,
+    simp [ha]
+  end) }
 
 @[simp]
 lemma coe_of_finsupp {f : α →₀ (hahn_series Γ R)} : ⇑(summable_family.of_finsupp f) = f := rfl
-
-@[simp]
-lemma co_support_of_finsupp {f : α →₀ (hahn_series Γ R)} {g : Γ} :
-  (summable_family.of_finsupp f).co_support g = f.support.filter (λ a, (f a).coeff g ≠ 0) := rfl
 
 @[simp]
 lemma hsum_of_finsupp {f : α →₀ (hahn_series Γ R)} :
   (of_finsupp f).hsum = f.sum (λ a, id) :=
 begin
   ext g,
-  simp only [filter_congr_decidable, hsum_coeff, coe_of_finsupp, ne.def, co_support_of_finsupp],
-  rw [sum_filter_ne_zero],
+  simp only [hsum_coeff, coe_of_finsupp],
   simp_rw [← coeff.add_monoid_hom_apply],
-  rw ← add_monoid_hom.map_sum,
-  refl
+  rw [finsupp.sum, add_monoid_hom.map_sum],
+  simp_rw [function.id_def],
+  refine finsum_eq_sum_of_support_subset _ (λ a ha, _),
+  rw [mem_coe, finsupp.mem_support_iff],
+  contrapose! ha,
+  rw [function.mem_support, not_not, ha, coeff.add_monoid_hom_apply, zero_coeff],
 end
 
 end of_finsupp
