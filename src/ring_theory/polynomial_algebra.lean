@@ -253,7 +253,7 @@ begin
   refl,
 end
 
-open matrix
+open dmatrix matrix
 open_locale big_operators
 
 variables {R}

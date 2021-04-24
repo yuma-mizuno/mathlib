@@ -1319,9 +1319,105 @@ begin
     ext, exact hm x }
 end
 
+/-- The restriction of a nondegenerate bilinear form `B` onto a submodule `W` is
+nondegenerate if `disjoint W (B.orthogonal W)`. -/
+lemma nondegenerate_restrict_of_disjoint_orthogonal
+  (B : bilin_form R₁ M₁) (hB : sym_bilin_form.is_sym B)
+  {W : submodule R₁ M₁} (hW : disjoint W (B.orthogonal W)) :
+  (B.restrict W).nondegenerate :=
+begin
+  rintro ⟨x, hx⟩ hB₁,
+  rw [submodule.mk_eq_zero, ← submodule.mem_bot R₁],
+  refine hW ⟨hx, λ y hy, _⟩,
+  specialize hB₁ ⟨y, hy⟩,
+  rwa [restrict_apply, submodule.coe_mk, submodule.coe_mk, hB] at hB₁
+end
+
 section
 
+lemma to_lin_restrict_ker_eq_inf_orthogonal
+  (B : bilin_form K V) (W : subspace K V) (hB : sym_bilin_form.is_sym B) :
+  (B.to_lin.dom_restrict W).ker.map W.subtype = (W ⊓ B.orthogonal ⊤ : subspace K V) :=
+begin
+  ext x, split; intro hx,
+  { rcases hx with ⟨⟨x, hx⟩, hker, rfl⟩,
+    erw linear_map.mem_ker at hker,
+    split,
+    { simp [hx] },
+    { intros y _,
+      rw [is_ortho, hB],
+      change (B.to_lin.dom_restrict W) ⟨x, hx⟩ y = 0,
+      rw hker, refl } },
+  { simp_rw [submodule.mem_map, linear_map.mem_ker],
+    refine ⟨⟨x, hx.1⟩, _, rfl⟩,
+    ext y, change B x y = 0,
+    rw hB,
+    exact hx.2 _ submodule.mem_top }
+end
+
+lemma to_lin_restrict_range_dual_annihilator_comap_eq_orthogonal
+  (B : bilin_form K V) (W : subspace K V) :
+  (B.to_lin.dom_restrict W).range.dual_annihilator_comap = B.orthogonal W :=
+begin
+  ext x, split; rw [mem_orthogonal_iff]; intro hx,
+  { intros y hy,
+    rw submodule.mem_dual_annihilator_comap_iff at hx,
+    refine hx (B.to_lin.dom_restrict W ⟨y, hy⟩) ⟨⟨y, hy⟩, rfl⟩ },
+  { rw submodule.mem_dual_annihilator_comap_iff,
+    rintro _ ⟨⟨w, hw⟩, rfl⟩,
+    exact hx w hw }
+end
+
 variable [finite_dimensional K V]
+
+open finite_dimensional
+
+lemma findim_add_findim_orthogonal
+  {B : bilin_form K V} {W : subspace K V} (hB₁ : sym_bilin_form.is_sym B) :
+  findim K W + findim K (B.orthogonal W) =
+  findim K V + findim K (W ⊓ B.orthogonal ⊤ : subspace K V) :=
+begin
+  rw [← to_lin_restrict_ker_eq_inf_orthogonal _ _ hB₁,
+      ← to_lin_restrict_range_dual_annihilator_comap_eq_orthogonal _ _,
+      findim_map_subtype_eq],
+  conv_rhs { rw [← @subspace.findim_add_findim_dual_annihilator_comap_eq K V _ _ _ _
+                  (B.to_lin.dom_restrict W).range,
+                 add_comm, ← add_assoc, add_comm (findim K ↥((B.to_lin.dom_restrict W).ker)),
+                 linear_map.findim_range_add_findim_ker] },
+end
+
+/-- A subspace is complement to its orthogonal complement with respect to some
+bilinear form if that bilinear form restricted on to the subspace is nondegenerate. -/
+lemma restrict_nondegenerate_of_is_compl_orthogonal
+  {B : bilin_form K V} {W : subspace K V}
+  (hB₁ : sym_bilin_form.is_sym B) (hB₂ : (B.restrict W).nondegenerate) :
+  is_compl W (B.orthogonal W) :=
+begin
+  have : W ⊓ B.orthogonal W = ⊥,
+  { rw eq_bot_iff,
+    intros x hx,
+    obtain ⟨hx₁, hx₂⟩ := submodule.mem_inf.1 hx,
+    refine subtype.mk_eq_mk.1 (hB₂ ⟨x, hx₁⟩ _),
+    rintro ⟨n, hn⟩,
+    rw [restrict_apply, submodule.coe_mk, submodule.coe_mk, hB₁],
+    exact hx₂ n hn },
+  refine ⟨this ▸ le_refl _, _⟩,
+  { rw top_le_iff,
+    refine eq_top_of_findim_eq _,
+    refine le_antisymm (submodule.findim_le _) _,
+    conv_rhs { rw ← add_zero (findim K _) },
+    rw [← findim_bot K V, ← this, submodule.dim_sup_add_dim_inf_eq,
+        findim_add_findim_orthogonal hB₁],
+    exact nat.le.intro rfl }
+end
+
+/-- A subspace is complement to its orthogonal complement with respect to some bilinear form
+if and only if that bilinear form restricted on to the subspace is nondegenerate. -/
+theorem restrict_nondegenerate_iff_is_compl_orthogonal
+  {B : bilin_form K V} {W : subspace K V} (hB₁ : sym_bilin_form.is_sym B) :
+  (B.restrict W).nondegenerate ↔ is_compl W (B.orthogonal W) :=
+⟨λ hB₂, restrict_nondegenerate_of_is_compl_orthogonal hB₁ hB₂,
+ λ h, B.nondegenerate_restrict_of_disjoint_orthogonal hB₁ h.1⟩
 
 /-- Given a nondegenerate bilinear form `B` on a finite-dimensional vector space, `B.to_dual` is
 the linear equivalence between a vector space and its dual with the underlying linear map
@@ -1335,6 +1431,11 @@ lemma to_dual_def {B : bilin_form K V} (hB : B.nondegenerate) {m n : V} :
   B.to_dual hB m n = B m n := rfl
 
 end
+
+/-! We note that we cannot use `bilin_form.restrict_nondegenerate_iff_is_compl_orthogonal` for the
+lemma below since the below lemma does not require `V` to be finite dimensional. However,
+`bilin_form.restrict_nondegenerate_iff_is_compl_orthogonal` does not require `B` to be nondegenerate
+on the whole space. -/
 
 /-- The restriction of a symmetric, non-degenerate bilinear form on the orthogonal complement of
 the span of a singleton is also non-degenerate. -/
@@ -1350,5 +1451,66 @@ begin
   rw restrict at hm,
   erw [add_right, show B m.1 y = 0, by rw hB₂; exact m.2 y hy, hm, add_zero]
 end
+
+section linear_adjoints
+
+lemma comp_left_injective (B : bilin_form R₁ M₁) (hB : B.nondegenerate) :
+  function.injective B.comp_left :=
+λ φ ψ h, begin
+  ext w,
+  refine eq_of_sub_eq_zero (hB _ _),
+  intro v,
+  rw [sub_left, ← comp_left_apply, ← comp_left_apply, ← h, sub_self]
+end
+
+lemma is_adjoint_pair_unique_of_nondegenerate (B : bilin_form R₁ M₁) (hB : B.nondegenerate)
+  (φ ψ₁ ψ₂ : M₁ →ₗ[R₁] M₁) (hψ₁ : is_adjoint_pair B B ψ₁ φ) (hψ₂ : is_adjoint_pair B B ψ₂ φ) :
+  ψ₁ = ψ₂ :=
+B.comp_left_injective hB $ ext $ λ v w, by rw [comp_left_apply, comp_left_apply, hψ₁, hψ₂]
+
+variable [finite_dimensional K V]
+
+/-- Given bilinear forms `B₁, B₂` where `B₂` is nondegenerate, `symm_comp_of_nondegenerate`
+is the linear map `B₂.to_lin⁻¹ ∘ B₁.to_lin`. -/
+noncomputable def symm_comp_of_nondegenerate
+  (B₁ B₂ : bilin_form K V) (hB₂ : B₂.nondegenerate) : V →ₗ[K] V :=
+(B₂.to_dual hB₂).symm.to_linear_map.comp B₁.to_lin
+
+lemma comp_symm_comp_of_nondegenerate_apply (B₁ : bilin_form K V)
+  {B₂ : bilin_form K V} (hB₂ : B₂.nondegenerate) (v : V) :
+  to_lin B₂ (B₁.symm_comp_of_nondegenerate B₂ hB₂ v) = to_lin B₁ v :=
+by erw [symm_comp_of_nondegenerate, linear_equiv.apply_symm_apply (B₂.to_dual hB₂) _]
+
+@[simp]
+lemma symm_comp_of_nondegenerate_left_apply (B₁ : bilin_form K V)
+  {B₂ : bilin_form K V} (hB₂ : B₂.nondegenerate) (v w : V) :
+  B₂ (symm_comp_of_nondegenerate B₁ B₂ hB₂ w) v = B₁ w v :=
+begin
+  conv_lhs { rw [← bilin_form.to_lin_apply, comp_symm_comp_of_nondegenerate_apply] },
+  refl,
+end
+
+/-- Given the nondegenerate bilinear form `B` and the linear map `φ`,
+`left_adjoint_of_nondegenerate` provides the left adjoint of `φ` with respect to `B`.
+The lemma proving this property is `bilin_form.is_adjoint_pair_left_adjoint_of_nondegenerate`. -/
+noncomputable def left_adjoint_of_nondegenerate
+  (B : bilin_form K V) (hB : B.nondegenerate) (φ : V →ₗ[K] V) : V →ₗ[K] V :=
+symm_comp_of_nondegenerate (B.comp_right φ) B hB
+
+lemma is_adjoint_pair_left_adjoint_of_nondegenerate
+  (B : bilin_form K V) (hB : B.nondegenerate) (φ : V →ₗ[K] V) :
+  is_adjoint_pair B B (B.left_adjoint_of_nondegenerate hB φ) φ :=
+λ x y, (B.comp_right φ).symm_comp_of_nondegenerate_left_apply hB y x
+
+/-- Given the nondegenerate bilinear form `B`, the linear map `φ` has a unique left adjoint given by
+`bilin_form.left_adjoint_of_nondegenerate`. -/
+theorem is_adjoint_pair_iff_eq_of_nondegenerate
+  (B : bilin_form K V) (hB : B.nondegenerate) (ψ φ : V →ₗ[K] V) :
+  is_adjoint_pair B B ψ φ ↔ ψ = B.left_adjoint_of_nondegenerate hB φ :=
+⟨λ h, B.is_adjoint_pair_unique_of_nondegenerate hB φ ψ _ h
+   (is_adjoint_pair_left_adjoint_of_nondegenerate _ _ _),
+ λ h, h.symm ▸ is_adjoint_pair_left_adjoint_of_nondegenerate _ _ _⟩
+
+end linear_adjoints
 
 end bilin_form

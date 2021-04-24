@@ -39,6 +39,14 @@ lemma mem_carrier {s : subalgebra R A} {x : A} : x ∈ s.carrier ↔ x ∈ s := 
 
 @[ext] theorem ext {S T : subalgebra R A} (h : ∀ x : A, x ∈ S ↔ x ∈ T) : S = T := set_like.ext h
 
+/-- Copy of a submodule with a new `carrier` equal to the old one. Useful to fix definitional
+equalities. -/
+protected def copy (S : subalgebra R A) (s : set A) (hs : s = ↑S) : subalgebra R A :=
+{ carrier := s,
+  add_mem' := hs.symm ▸ S.add_mem',
+  mul_mem' := hs.symm ▸ S.mul_mem',
+  algebra_map_mem' := hs.symm ▸ S.algebra_map_mem' }
+
 variables (S : subalgebra R A)
 
 theorem algebra_map_mem (r : R) : algebra_map R A r ∈ S :=
@@ -46,7 +54,7 @@ theorem algebra_map_mem (r : R) : algebra_map R A r ∈ S :=
 by { rw algebra_map_def, exact S.smul_mem' r S.one_mem', }
 
 theorem srange_le : (algebra_map R A).srange ≤ S.to_subsemiring :=
-λ x ⟨r, _, hr⟩, hr ▸ S.algebra_map_mem r
+λ x ⟨r, hr⟩, hr ▸ S.algebra_map_mem r
 
 theorem range_subset : set.range (algebra_map R A) ⊆ S :=
 λ x ⟨r, hr⟩, hr ▸ S.algebra_map_mem r
@@ -80,7 +88,7 @@ theorem sub_mem {R : Type u} {A : Type v} [comm_ring R] [ring A]
   [algebra R A] (S : subalgebra R A) {x y : A} (hx : x ∈ S) (hy : y ∈ S) : x - y ∈ S :=
 by simpa only [sub_eq_add_neg] using S.add_mem hx (S.neg_mem hy)
 
-theorem nsmul_mem {x : A} (hx : x ∈ S) (n : ℕ) : n •ℕ x ∈ S :=
+theorem nsmul_mem {x : A} (hx : x ∈ S) (n : ℕ) : n • x ∈ S :=
 S.to_subsemiring.nsmul_mem hx n
 
 theorem gsmul_mem {R : Type u} {A : Type v} [comm_ring R] [ring A]
@@ -351,11 +359,8 @@ variables (φ : A →ₐ[R] B)
 
 /-- Range of an `alg_hom` as a subalgebra. -/
 protected def range (φ : A →ₐ[R] B) : subalgebra R B :=
-{ one_mem' := by { by { use (1 : A), exact ⟨by simp, φ.map_one⟩, }, },
-  mul_mem' := λ x y hx hy, by
-  { obtain ⟨u, hu, rfl⟩ := hx, obtain ⟨v, hv, rfl⟩ := hy, change φ u * φ v ∈ φ.to_linear_map.range,
-    use u * v, exact ⟨by simp, φ.map_mul u v⟩, },
-  ..φ.to_linear_map.range }
+{ algebra_map_mem' := λ r, ⟨algebra_map R A r, φ.commutes r⟩,
+  .. φ.to_ring_hom.srange }
 
 @[simp] lemma mem_range (φ : A →ₐ[R] B) {y : B} :
   y ∈ φ.range ↔ ∃ x, φ x = y := linear_map.mem_range
@@ -505,7 +510,7 @@ theorem eq_top_iff {S : subalgebra R A} :
 
 @[simp] theorem map_top (f : A →ₐ[R] B) : subalgebra.map (⊤ : subalgebra R A) f = f.range :=
 subalgebra.ext $ λ x,
-  ⟨λ ⟨y, _, hy⟩, ⟨y, set.mem_univ _, hy⟩, λ ⟨y, mem, hy⟩, ⟨y, algebra.mem_top, hy⟩⟩
+  ⟨λ ⟨y, _, hy⟩, ⟨y, hy⟩, λ ⟨y, hy⟩, ⟨y, algebra.mem_top, hy⟩⟩
 
 @[simp] theorem map_bot (f : A →ₐ[R] B) : subalgebra.map (⊥ : subalgebra R A) f = ⊥ :=
 eq_bot_iff.2 $ λ x ⟨y, hy, hfy⟩, let ⟨r, hr⟩ := mem_bot.1 hy in subalgebra.range_le _

@@ -190,41 +190,41 @@ open finset submodule
 open_locale classical
 
 lemma exists_subalgebra_of_fg (hAC : (⊤ : subalgebra A C).fg) (hBC : (⊤ : submodule B C).fg) :
-  ∃ B₀ : subalgebra A B, B₀.fg ∧ (⊤ : submodule B₀ C).fg := sorry
--- begin
---   cases hAC with x hx,
---   cases hBC with y hy, have := hy,
---   simp_rw [eq_top_iff', mem_span_finset] at this, choose f hf,
---   let s : finset B := (finset.product (x ∪ (y * y)) y).image (function.uncurry f),
---   have hsx : ∀ (xi ∈ x) (yj ∈ y), f xi yj ∈ s := λ xi hxi yj hyj,
---     show function.uncurry f (xi, yj) ∈ s,
---     from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_left _ hxi, hyj⟩,
---   have hsy : ∀ (yi yj yk ∈ y), f (yi * yj) yk ∈ s := λ yi yj yk hyi hyj hyk,
---     show function.uncurry f (yi * yj, yk) ∈ s,
---    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
---   have hxy : ∀ xi ∈ x, xi ∈ span (algebra.adjoin A (↑s : set B))
---                (↑(insert 1 y : finset C) : set C) :=
---     λ xi hxi, hf xi ▸ sum_mem _ (λ yj hyj, smul_mem
---       (span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C))
---       ⟨f xi yj, algebra.subset_adjoin $ hsx xi hxi yj hyj⟩
---       (subset_span $ mem_insert_of_mem hyj)),
---   have hyy : span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) *
---       span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) ≤
---     span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C),
---   { rw [span_mul_span, span_le, coe_insert], rintros _ ⟨yi, yj, rfl | hyi, rfl | hyj, rfl⟩,
---     { rw mul_one, exact subset_span (set.mem_insert _ _) },
---     { rw one_mul, exact subset_span (set.mem_insert_of_mem _ hyj) },
---     { rw mul_one, exact subset_span (set.mem_insert_of_mem _ hyi) },
---     { rw ← hf (yi * yj), exact set_like.mem_coe.2 (sum_mem _ $ λ yk hyk, smul_mem
---         (span (algebra.adjoin A (↑s : set B)) (insert 1 ↑y : set C))
---         ⟨f (yi * yj) yk, algebra.subset_adjoin $ hsy yi yj yk hyi hyj hyk⟩
---         (subset_span $ set.mem_insert_of_mem _ hyk : yk ∈ _)) } },
---   refine ⟨algebra.adjoin A (↑s : set B), subalgebra.fg_adjoin_finset _, insert 1 y, _⟩,
---   refine restrict_scalars_injective A _ _ _,
---  rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
---   refine λ r hr, monoid.in_closure.rec_on hr hxy (subset_span $ mem_insert_self _ _)
---       (λ p q _ _ hp hq, hyy $ submodule.mul_mem_mul hp hq)
--- end
+  ∃ B₀ : subalgebra A B, B₀.fg ∧ (⊤ : submodule B₀ C).fg :=
+begin
+  cases hAC with x hx,
+  cases hBC with y hy, have := hy,
+  simp_rw [eq_top_iff', mem_span_finset] at this, choose f hf,
+  let s : finset B := (finset.product (x ∪ (y * y)) y).image (function.uncurry f),
+  have hsx : ∀ (xi ∈ x) (yj ∈ y), f xi yj ∈ s := λ xi hxi yj hyj,
+    show function.uncurry f (xi, yj) ∈ s,
+    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_left _ hxi, hyj⟩,
+  have hsy : ∀ (yi yj yk ∈ y), f (yi * yj) yk ∈ s := λ yi yj yk hyi hyj hyk,
+    show function.uncurry f (yi * yj, yk) ∈ s,
+    from mem_image_of_mem _ $ mem_product.2 ⟨mem_union_right _ $ finset.mul_mem_mul hyi hyj, hyk⟩,
+  have hxy : ∀ xi ∈ x, xi ∈ span (algebra.adjoin A (↑s : set B))
+               (↑(insert 1 y : finset C) : set C) :=
+    λ xi hxi, hf xi ▸ sum_mem _ (λ yj hyj, smul_mem
+      (span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C))
+      ⟨f xi yj, algebra.subset_adjoin $ hsx xi hxi yj hyj⟩
+      (subset_span $ mem_insert_of_mem hyj)),
+  have hyy : span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) *
+      span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C) ≤
+    span (algebra.adjoin A (↑s : set B)) (↑(insert 1 y : finset C) : set C),
+  { rw [span_mul_span, span_le, coe_insert], rintros _ ⟨yi, yj, rfl | hyi, rfl | hyj, rfl⟩,
+    { rw mul_one, exact subset_span (set.mem_insert _ _) },
+    { rw one_mul, exact subset_span (set.mem_insert_of_mem _ hyj) },
+    { rw mul_one, exact subset_span (set.mem_insert_of_mem _ hyi) },
+    { rw ← hf (yi * yj), exact set_like.mem_coe.2 (sum_mem _ $ λ yk hyk, smul_mem
+        (span (algebra.adjoin A (↑s : set B)) (insert 1 ↑y : set C))
+        ⟨f (yi * yj) yk, algebra.subset_adjoin $ hsy yi yj yk hyi hyj hyk⟩
+        (subset_span $ set.mem_insert_of_mem _ hyk : yk ∈ _)) } },
+  refine ⟨algebra.adjoin A (↑s : set B), subalgebra.fg_adjoin_finset _, insert 1 y, _⟩,
+  refine restrict_scalars_injective A _ _ _,
+  rw [restrict_scalars_top, eq_top_iff, ← algebra.coe_top, ← hx, algebra.adjoin_eq_span, span_le],
+  refine λ r hr, submonoid.closure_induction hr (λ c hc, hxy c hc)
+    (subset_span $ mem_insert_self _ _) (λ p q hp hq, hyy $ submodule.mul_mem_mul hp hq)
+end
 
 /-- Artin--Tate lemma: if A ⊆ B ⊆ C is a chain of subrings of commutative rings, and
 A is noetherian, and C is algebra-finite over A, and C is module-finite over B,

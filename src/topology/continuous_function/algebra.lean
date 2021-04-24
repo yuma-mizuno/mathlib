@@ -111,8 +111,15 @@ instance continuous_map_monoid {α : Type*} {β : Type*} [topological_space α] 
   ..continuous_map_semigroup,
   ..continuous_map.has_one }
 
+/-- Coercion to a function as an `monoid_hom`. Similar to `monoid_hom.coe_fn`. -/
+@[to_additive "Coercion to a function as an `add_monoid_hom`. Similar to `add_monoid_hom.coe_fn`.",
+  simps]
+def coe_fn_monoid_hom {α : Type*} {β : Type*} [topological_space α] [topological_space β]
+  [monoid β] [has_continuous_mul β] : C(α, β) →* (α → β) :=
+{ to_fun := coe_fn, map_one' := continuous_map.one_coe, map_mul' := continuous_map.mul_coe }
+
 @[simp, norm_cast]
-lemma pow_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
+lemma continuous_map.pow_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
   [monoid β] [has_continuous_mul β] (f : C(α, β)) (n : ℕ) :
   ((f^n : C(α, β)) : α → β) = (f : α → β)^n :=
 begin
@@ -141,6 +148,20 @@ instance continuous_map_comm_monoid {α : Type*} {β : Type*} [topological_space
   ..continuous_map_semigroup,
   ..continuous_map.has_one }
 
+open_locale big_operators
+@[simp, to_additive] lemma continuous_map.coe_prod {α : Type*} {β : Type*} [comm_monoid β]
+  [topological_space α] [topological_space β] [has_continuous_mul β]
+  {ι : Type*} (s : finset ι) (f : ι → C(α, β)) :
+  ⇑(∏ i in s, f i) = (∏ i in s, (f i : α → β)) :=
+(@coe_fn_monoid_hom α β _ _ _ _).map_prod f s
+
+@[to_additive]
+lemma continuous_map.prod_apply {α : Type*} {β : Type*} [comm_monoid β]
+  [topological_space α] [topological_space β] [has_continuous_mul β]
+  {ι : Type*} (s : finset ι) (f : ι → C(α, β)) (a : α) :
+  (∏ i in s, f i) a = (∏ i in s, f i a) :=
+by simp
+
 @[to_additive]
 instance continuous_map_group {α : Type*} {β : Type*} [topological_space α] [topological_space β]
   [group β] [topological_group β] : group C(α, β) :=
@@ -149,13 +170,13 @@ instance continuous_map_group {α : Type*} {β : Type*} [topological_space α] [
   ..continuous_map_monoid }
 
 @[simp, norm_cast, to_additive]
-lemma inv_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
+lemma continuous_map.inv_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
   [group β] [topological_group β] (f : C(α, β)) :
   ((f⁻¹ : C(α, β)) : α → β) = (f⁻¹ : α → β) :=
 rfl
 
 @[simp, norm_cast, to_additive]
-lemma div_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
+lemma continuous_map.div_coe {α : Type*} {β : Type*} [topological_space α] [topological_space β]
   [group β] [topological_group β] (f g : C(α, β)) :
   ((f / g : C(α, β)) : α → β) = (f : α → β) / (g : α → β) :=
 by { simp only [div_eq_mul_inv], refl, }
@@ -247,24 +268,19 @@ topological semiring `R` inherit the structure of a semimodule.
 
 section subtype
 
-instance continuous_has_scalar {α : Type*} [topological_space α]
-  {R : Type*} [semiring R] [topological_space R]
-  {M : Type*} [topological_space M] [add_comm_group M]
-  [semimodule R M] [has_continuous_smul R M] :
-  has_scalar R { f : α → M | continuous f } :=
+variables {α : Type*} [topological_space α]
+variables {R : Type*} [semiring R] [topological_space R]
+variables {M : Type*} [topological_space M] [add_comm_group M]
+variables [semimodule R M] [has_continuous_smul R M]
+
+instance continuous_has_scalar : has_scalar R { f : α → M | continuous f } :=
 ⟨λ r f, ⟨r • f, f.property.const_smul r⟩⟩
 
-@[simp] lemma continuous_smul_coe {α : Type*} [topological_space α]
-  {R : Type*} [semiring R] [topological_space R]
-  {M : Type*} [topological_space M] [add_comm_group M]
-  [semimodule R M] [has_continuous_smul R M]
-  (f : { f : α → M | continuous f }) (r : R) :
-  ↑(r • f) = r • (f : α → M) := rfl
+@[simp, norm_cast]
+lemma continuous_functions.smul_coe (f : { f : α → M | continuous f }) (r : R) :
+  ⇑(r • f) = r • f := rfl
 
-instance continuous_semimodule {α : Type*} [topological_space α]
-{R : Type*} [semiring R] [topological_space R]
-{M : Type*} [topological_space M] [add_comm_group M] [topological_add_group M]
-[semimodule R M] [has_continuous_smul R M] :
+instance continuous_semimodule [topological_add_group M] :
   semimodule R { f : α → M | continuous f } :=
   semimodule.of_core $
 { smul     := (•),
@@ -285,9 +301,13 @@ instance continuous_map_has_scalar
   has_scalar R C(α, M) :=
 ⟨λ r f, ⟨r • f, f.continuous.const_smul r⟩⟩
 
-@[simp] lemma continuous_map.smul_apply [semimodule R M] [has_continuous_smul R M]
+@[simp, norm_cast]
+lemma continuous_map.smul_coe [semimodule R M] [has_continuous_smul R M]
+  (c : R) (f : C(α, M)) : ⇑(c • f) = c • f := rfl
+
+lemma continuous_map.smul_apply [semimodule R M] [has_continuous_smul R M]
   (c : R) (f : C(α, M)) (a : α) : (c • f) a = c • (f a) :=
-rfl
+by simp
 
 @[simp] lemma continuous_map.smul_comp {α : Type*} {β : Type*}
   [topological_space α] [topological_space β]
@@ -380,7 +400,7 @@ A version of `separates_points` for subalgebras of the continuous functions,
 used for stating the Stone-Weierstrass theorem.
 -/
 abbreviation subalgebra.separates_points (s : subalgebra R C(α, A)) : Prop :=
-separates_points ((λ f : C(α, A), (f : α → A)) '' (s : set C(α, A)))
+set.separates_points ((λ f : C(α, A), (f : α → A)) '' (s : set C(α, A)))
 
 lemma subalgebra.separates_points_monotone :
   monotone (λ s : subalgebra R C(α, A), s.separates_points) :=
@@ -395,7 +415,25 @@ end
   algebra_map R C(α, A) k a = k • 1 :=
 by { rw algebra.algebra_map_eq_smul_one, refl, }
 
-variables {𝕜 : Type*} [field 𝕜] [topological_space 𝕜] [topological_ring 𝕜]
+variables {𝕜 : Type*} [topological_space 𝕜]
+
+/--
+A set of continuous maps "separates points strongly"
+if for each pair of distinct points there is a function with specified values on them.
+
+We give a slightly unusual formulation, where the specified values are given by some
+function `v`, and we ask `f x = v x ∧ f y = v y`. This avoids needing a hypothesis `x ≠ y`.
+
+In fact, this definition would work perfectly well for a set of non-continuous functions,
+but as the only current use case is in the Stone-Weierstrass theorem,
+writing it this way avoids having to deal with casts inside the set.
+(This may need to change if we do Stone-Weierstrass on non-compact spaces,
+where the functions would be continuous functions vanishing at infinity.)
+-/
+def set.separates_points_strongly (s : set C(α, 𝕜)) : Prop :=
+∀ (v : α → 𝕜) (x y : α), ∃ f : s, (f x : 𝕜) = v x ∧ f y = v y
+
+variables [field 𝕜] [topological_ring 𝕜]
 
 /--
 Working in continuous functions into a topological field,
@@ -405,17 +443,22 @@ By the hypothesis, we can find a function `f` so `f x ≠ f y`.
 By an affine transformation in the field we can arrange so that `f x = a` and `f x = b`.
 -/
 lemma subalgebra.separates_points.strongly {s : subalgebra 𝕜 C(α, 𝕜)} (h : s.separates_points) :
-  separates_points_strongly ((λ f : C(α, 𝕜), (f : α → 𝕜)) '' (s : set C(α, 𝕜))) :=
-λ x y n,
+  (s : set C(α, 𝕜)).separates_points_strongly :=
+λ v x y,
 begin
+  by_cases n : x = y,
+  { subst n,
+    use ((v x) • 1 : C(α, 𝕜)),
+    { apply s.smul_mem,
+      apply s.one_mem, },
+    { simp, }, },
   obtain ⟨f, ⟨f, ⟨m, rfl⟩⟩, w⟩ := h n,
   replace w : f x - f y ≠ 0 := sub_ne_zero_of_ne w,
-  intros a b,
+  let a := v x,
+  let b := v y,
   let f' := ((b - a) * (f x - f y)⁻¹) • (continuous_map.C (f x) - f) + continuous_map.C a,
-  refine ⟨f', _, _, _⟩,
-  { simp only [set.mem_image, coe_coe],
-    refine ⟨f', _, rfl⟩,
-    simp only [f', set_like.mem_coe, subalgebra.mem_to_submodule],
+  refine ⟨⟨f', _⟩, _, _⟩,
+  { simp only [f', set_like.mem_coe, subalgebra.mem_to_submodule],
     -- TODO should there be a tactic for this?
     -- We could add an attribute `@[subobject_mem]`, and a tactic
     -- ``def subobject_mem := `[solve_by_elim with subobject_mem { max_depth := 10 }]``
@@ -427,6 +470,27 @@ begin
 end
 
 end continuous_map
+
+-- TODO[gh-6025]: make this an instance once safe to do so
+lemma continuous_map.subsingleton_subalgebra {α : Type*} [topological_space α]
+  {R : Type*} [comm_semiring R] [topological_space R] [topological_semiring R]
+  [subsingleton α] : subsingleton (subalgebra R C(α, R)) :=
+begin
+  fsplit,
+  intros s₁ s₂,
+  by_cases n : nonempty α,
+  { obtain ⟨x⟩ := n,
+    ext f,
+    have h : f = algebra_map R C(α, R) (f x),
+    { ext x', simp only [mul_one, algebra.id.smul_eq_mul, algebra_map_apply], congr, },
+    rw h,
+    simp only [subalgebra.algebra_map_mem], },
+  { ext f,
+    have h : f = 0,
+    { ext x', exact false.elim (n ⟨x'⟩), },
+    subst h,
+    simp only [subalgebra.zero_mem], },
+end
 
 end algebra_structure
 
