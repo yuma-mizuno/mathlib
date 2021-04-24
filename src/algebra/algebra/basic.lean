@@ -1154,12 +1154,13 @@ variables {R : Type*} [semiring R]
 
 /-- Semiring ⥤ ℕ-Alg -/
 instance algebra_nat : algebra ℕ R :=
-{ commutes' := nat.cast_commute,
-  smul_def' := λ _ _, nsmul_eq_mul _ _,
-  to_ring_hom := nat.cast_ring_hom R }
+sorry
+-- { commutes' := nat.cast_commute,
+--   smul_def' := λ _ _, nsmul_eq_mul _ _,
+--   to_ring_hom := nat.cast_ring_hom R }
 
 instance nat_algebra_subsingleton : subsingleton (algebra ℕ R) :=
-⟨λ P Q, by { ext, simp, }⟩
+⟨λ P Q, by { ext, sorry, }⟩
 
 end nat
 
