@@ -335,8 +335,9 @@ to `0 : ℕ`).
 -/
 
 /-- An `add_monoid` is an `add_semigroup` with an element `0` such that `0 + a = a + 0 = a`. -/
-@[ancestor add_semigroup add_zero_class]
-class add_monoid (M : Type u) extends add_semigroup M, add_zero_class M :=
+@[ancestor add_zero_class]
+class add_monoid (M : Type u) extends add_zero_class M :=
+(add_assoc (a b c : M) : a + b + c = a + (b + c))
 (nsmul : ℕ → M → M := nsmul_rec)
 (nsmul_zero' : ∀ x, nsmul 0 x = 0 . try_refl_tac)
 (nsmul_succ' : ∀ (n : ℕ) x, nsmul n.succ x = x + nsmul n x . try_refl_tac)
@@ -344,8 +345,9 @@ class add_monoid (M : Type u) extends add_semigroup M, add_zero_class M :=
 export add_monoid (nsmul)
 
 /-- A `monoid` is a `semigroup` with an element `1` such that `1 * a = a * 1 = a`. -/
-@[ancestor semigroup mul_one_class, to_additive]
-class monoid (M : Type u) extends semigroup M, mul_one_class M :=
+@[ancestor mul_one_class, to_additive]
+class monoid (M : Type u) extends mul_one_class M := --extends semigroup M
+(mul_assoc (a b c : M) : a * b * c = a * (b * c))
 (npow : ℕ → M → M := npow_rec)
 (npow_zero' : ∀ x, npow 0 x = 1 . try_refl_tac)
 (npow_succ' : ∀ (n : ℕ) x, npow n.succ x = x * npow n x . try_refl_tac)
@@ -354,6 +356,8 @@ export monoid (npow)
 
 section monoid
 variables {M : Type u} [monoid M]
+
+@[to_additive] instance to_semigroup : semigroup M := { mul_assoc := monoid.mul_assoc }
 
 @[to_additive]
 lemma left_inv_eq_right_inv {a b c : M} (hba : b * a = 1) (hac : a * c = 1) : b = c :=
@@ -381,24 +385,39 @@ begin
 end
 
 /-- An additive commutative monoid is an additive monoid with commutative `(+)`. -/
-@[protect_proj, ancestor add_monoid add_comm_semigroup]
-class add_comm_monoid (M : Type u) extends add_monoid M, add_comm_semigroup M
+@[protect_proj, ancestor add_monoid ]
+class add_comm_monoid (M : Type u) extends add_monoid M :=
+--, add_comm_semigroup M
+(add_comm (a b : M) : a + b = b + a)
 
 /-- A commutative monoid is a monoid with commutative `(*)`. -/
-@[protect_proj, ancestor monoid comm_semigroup, to_additive]
-class comm_monoid (M : Type u) extends monoid M, comm_semigroup M
+@[protect_proj, ancestor monoid, to_additive]
+class comm_monoid (M : Type u) extends monoid M :=--, comm_semigroup M
+(mul_comm (a b : M) : a * b = b * a)
+
+@[to_additive]
+instance comm_monoid.to_comm_semigroup {M : Type*} [comm_monoid M] : comm_semigroup M :=
+{ mul_comm := comm_monoid.mul_comm }
 
 section left_cancel_monoid
 
 /-- An additive monoid in which addition is left-cancellative.
 Main examples are `ℕ` and groups. This is the right typeclass for many sum lemmas, as having a zero
 is useful to define the sum over the empty set, so `add_left_cancel_semigroup` is not enough. -/
-@[protect_proj, ancestor add_left_cancel_semigroup add_monoid]
-class add_left_cancel_monoid (M : Type u) extends add_left_cancel_semigroup M, add_monoid M
+@[protect_proj, ancestor add_monoid]
+class add_left_cancel_monoid (M : Type u) extends add_monoid M :=
+(add_left_cancel (a b c : M) : a + b = a + c → b = c)
+
+-- add_left_cancel_semigroup M,
 
 /-- A monoid in which multiplication is left-cancellative. -/
-@[protect_proj, ancestor left_cancel_semigroup monoid, to_additive add_left_cancel_monoid]
-class left_cancel_monoid (M : Type u) extends left_cancel_semigroup M, monoid M
+@[protect_proj, ancestor monoid, to_additive add_left_cancel_monoid]
+class left_cancel_monoid (M : Type u) extends monoid M :=
+(mul_left_cancel (a b c : M) : a * b = a * c → b = c)
+
+@[to_additive]
+instance left_cancel_monoid.to_left_cancel_semigroup {M : Type*} [left_cancel_monoid M] :
+  left_cancel_semigroup M := { mul_left_cancel := left_cancel_monoid.mul_left_cancel }
 
 end left_cancel_monoid
 
@@ -407,12 +426,18 @@ section right_cancel_monoid
 /-- An additive monoid in which addition is right-cancellative.
 Main examples are `ℕ` and groups. This is the right typeclass for many sum lemmas, as having a zero
 is useful to define the sum over the empty set, so `add_right_cancel_semigroup` is not enough. -/
-@[protect_proj, ancestor add_right_cancel_semigroup add_monoid]
-class add_right_cancel_monoid (M : Type u) extends add_right_cancel_semigroup M, add_monoid M
+@[protect_proj, ancestor add_monoid]
+class add_right_cancel_monoid (M : Type u) extends add_monoid M :=
+(add_right_cancel (a b c : M) : a + b = c + b → a = c)
 
 /-- A monoid in which multiplication is right-cancellative. -/
-@[protect_proj, ancestor right_cancel_semigroup monoid, to_additive add_right_cancel_monoid]
-class right_cancel_monoid (M : Type u) extends right_cancel_semigroup M, monoid M
+@[protect_proj, ancestor monoid, to_additive add_right_cancel_monoid]
+class right_cancel_monoid (M : Type u) extends monoid M :=
+(mul_right_cancel (a b c : M) : a * b = c * b → a = c)
+
+@[to_additive]
+instance right_cancel_monoid.to_right_cancel_semigroup {M : Type*} [right_cancel_monoid M] :
+  right_cancel_semigroup M := { mul_right_cancel := right_cancel_monoid.mul_right_cancel }
 
 end right_cancel_monoid
 
@@ -421,21 +446,33 @@ section cancel_monoid
 /-- An additive monoid in which addition is cancellative on both sides.
 Main examples are `ℕ` and groups. This is the right typeclass for many sum lemmas, as having a zero
 is useful to define the sum over the empty set, so `add_right_cancel_semigroup` is not enough. -/
-@[protect_proj, ancestor add_left_cancel_monoid add_right_cancel_monoid]
-class add_cancel_monoid (M : Type u)
-  extends add_left_cancel_monoid M, add_right_cancel_monoid M
+@[protect_proj, ancestor add_left_cancel_monoid]
+class add_cancel_monoid (M : Type u) extends add_left_cancel_monoid M :=
+(add_right_cancel (a b c : M) : a + b = c + b → a = c)
 
 /-- A monoid in which multiplication is cancellative. -/
-@[protect_proj, ancestor left_cancel_monoid right_cancel_monoid, to_additive add_cancel_monoid]
-class cancel_monoid (M : Type u) extends left_cancel_monoid M, right_cancel_monoid M
+@[protect_proj, ancestor left_cancel_monoid, to_additive add_cancel_monoid]
+class cancel_monoid (M : Type u) extends left_cancel_monoid M :=
+(mul_right_cancel (a b c : M) : a * b = c * b → a = c)
+
+@[to_additive]
+instance cancel_monoid.to_right_cancel_monoid {M : Type*} [cancel_monoid M] :
+  right_cancel_monoid M := { mul_right_cancel := cancel_monoid.mul_right_cancel }
 
 /-- Commutative version of add_cancel_monoid. -/
-@[protect_proj, ancestor add_left_cancel_monoid add_comm_monoid]
-class add_cancel_comm_monoid (M : Type u) extends add_left_cancel_monoid M, add_comm_monoid M
+@[protect_proj, ancestor add_left_cancel_monoid]
+class add_cancel_comm_monoid (M : Type u) extends add_left_cancel_monoid M :=
+(add_comm (a b : M) : a + b = b + a)
 
 /-- Commutative version of cancel_monoid. -/
-@[protect_proj, ancestor left_cancel_monoid comm_monoid, to_additive add_cancel_comm_monoid]
-class cancel_comm_monoid (M : Type u) extends left_cancel_monoid M, comm_monoid M
+@[protect_proj, ancestor left_cancel_monoid, to_additive add_cancel_comm_monoid]
+class cancel_comm_monoid (M : Type u) extends left_cancel_monoid M :=
+(mul_comm (a b : M) : a * b = b * a)
+
+@[to_additive]
+instance cancel_comm_monoid.to_comm_monoid {M : Type*} [cancel_comm_monoid M] :
+  comm_monoid M :=
+{ mul_comm := cancel_comm_monoid.mul_comm }
 
 @[priority 100, to_additive] -- see Note [lower instance priority]
 instance cancel_comm_monoid.to_cancel_monoid (M : Type u) [cancel_comm_monoid M] :
@@ -565,11 +602,19 @@ instance group.to_cancel_monoid : cancel_monoid G :=
 end group
 
 /-- A commutative group is a group with commutative `(*)`. -/
-@[protect_proj, ancestor group comm_monoid]
-class comm_group (G : Type u) extends group G, comm_monoid G
+@[protect_proj, ancestor group]
+class comm_group (G : Type u) extends group G :=
+(mul_comm (a b : G) : a * b = b * a)
+
 /-- An additive commutative group is an additive group with commutative `(+)`. -/
-@[protect_proj, ancestor add_group add_comm_monoid]
-class add_comm_group (G : Type u) extends add_group G, add_comm_monoid G
+@[protect_proj, ancestor add_group]
+class add_comm_group (G : Type u) extends add_group G :=
+(add_comm (a b : G) : a + b = b + a)
+
+@[to_additive] def add_comm_group.to_add_comm_monoid (G : Type u) [add_comm_group G] :
+  add_comm_monoid G :=
+{ add_comm := add_comm_group.add_comm }
+
 attribute [to_additive] comm_group
 attribute [instance, priority 300] add_comm_group.to_add_comm_monoid
 
