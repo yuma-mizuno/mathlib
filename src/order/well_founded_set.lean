@@ -452,6 +452,17 @@ namespace set
 def mul_antidiagonal [monoid α] (s t : set α) (a : α) : set (α × α) :=
 { x | x.1 * x.2 = a ∧ x.1 ∈ s ∧ x.2 ∈ t }
 
+/-- `set.mul_antidiagonal s t a` is the set of all pairs of an element in `s` and an element in `t`
+  that multiply to `a`. -/
+@[to_additive "`set.add_antidiagonal s t a` is the set of all pairs of an element in `s`
+  and an element in `t` that add to `a`."]
+def mul_antidiagonal' [monoid α] (a : α) : set (α × α) :=
+{ x | x.1 * x.2 = a }
+
+@[simp, to_additive]
+lemma mem_mul_antidiagonal' [monoid α] {a : α} {bc : α × α} :
+  bc ∈ mul_antidiagonal' a ↔ bc.1 * bc.2 = a := iff.refl _
+
 namespace mul_antidiagonal
 
 @[simp, to_additive]
