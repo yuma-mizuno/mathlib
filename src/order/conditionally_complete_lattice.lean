@@ -26,7 +26,7 @@ statement in conditionally complete lattices with an additional assumption that 
 bounded below.
 -/
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 open set
 

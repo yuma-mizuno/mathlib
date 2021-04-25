@@ -43,7 +43,7 @@ between rings from monoid homs given only a proof that addition is preserved.
 universes u v w x
 variables {α : Type u} {β : Type v} {γ : Type w} {R : Type x}
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 open function
 
 /-!

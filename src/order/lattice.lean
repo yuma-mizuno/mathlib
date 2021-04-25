@@ -48,7 +48,7 @@ of `sup` over `inf`, on the left or on the right.
 semilattice, lattice
 
 -/
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 universes u v w
 

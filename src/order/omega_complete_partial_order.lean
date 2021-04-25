@@ -572,7 +572,7 @@ omega_complete_partial_order.lift preorder_hom.to_fun_hom preorder_hom.ωSup
 end preorder_hom
 
 section old_struct
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 variables (α β)
 
 /-- A monotone function on `ω`-continuous partial orders is said to be continuous

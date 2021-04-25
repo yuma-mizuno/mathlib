@@ -63,7 +63,7 @@ about the `localization_map.mk'` induced by any localization map.
 localization, monoid localization, quotient monoid, congruence relation, characteristic predicate,
 commutative monoid
 -/
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 namespace add_submonoid
 variables {M : Type*} [add_comm_monoid M] (S : add_submonoid M) (N : Type*) [add_comm_monoid N]
 

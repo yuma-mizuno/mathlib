@@ -58,7 +58,7 @@ open function ideal
 
 variables {R : Type*} -- This will be a ring, assumed commutative in some sections
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 section
 variables (R) (Γ₀ : Type*) [linear_ordered_comm_monoid_with_zero Γ₀] [ring R]

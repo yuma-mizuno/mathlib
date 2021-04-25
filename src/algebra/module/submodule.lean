@@ -27,7 +27,7 @@ open_locale big_operators
 universes u' u v w
 variables {S : Type u'} {R : Type u} {M : Type v} {ι : Type w}
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A submodule of a module is one which is closed under vector operations.
   This is a sufficient condition for the subset of vectors in the submodule

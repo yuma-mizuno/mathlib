@@ -51,7 +51,7 @@ quotient monoid, isomorphism theorems
 
 variables (M : Type*) {N : Type*} {P : Type*}
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 open function setoid
 

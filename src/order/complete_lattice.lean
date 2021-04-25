@@ -29,7 +29,7 @@ also use `bsupr`/`binfi` for "bounded" supremum or infimum, i.e. one of `⨆ i �
 * `⨅ i, f i` : `infi f`, the infimum of the range of `f`.
 -/
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 open set
 
 variables {α β β₂ : Type*} {ι ι₂ : Sort*}

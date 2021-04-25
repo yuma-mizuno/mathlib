@@ -44,7 +44,7 @@ field, division ring, skew field, skew-field, skewfield
 
 open set
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 universe u
 variables {K : Type u}

@@ -42,7 +42,7 @@ structure is_linear_map (R : Type u) {M : Type v} {M₂ : Type w}
 
 section
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A map `f` between semimodules over a semiring is linear if it satisfies the two properties
 `f (x + y) = f x + f y` and `f (c • x) = c • f x`. Elements of `linear_map R M M₂` (available under
@@ -335,7 +335,7 @@ def add_monoid_hom.to_rat_linear_map [add_comm_group M] [vector_space ℚ M]
 
 /-! ### Linear equivalences -/
 section
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A linear equivalence is an invertible linear map. -/
 @[nolint has_inhabited_instance]

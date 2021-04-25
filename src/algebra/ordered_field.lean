@@ -20,7 +20,7 @@ A linear ordered field is a field equipped with a linear order such that
 * `linear_ordered_field`: the class of linear ordered fields.
 -/
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 variable {α : Type*}
 

@@ -16,7 +16,7 @@ universes u v w
 
 open_locale tensor_product big_operators
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A subalgebra is a sub(semi)ring that includes the range of `algebra_map`. -/
 structure subalgebra (R : Type u) (A : Type v)

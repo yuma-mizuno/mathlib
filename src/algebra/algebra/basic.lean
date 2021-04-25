@@ -400,7 +400,7 @@ instance matrix_algebra (n : Type u) (R : Type v)
 @[simp] lemma matrix.algebra_map_eq_smul (n : Type u) {R : Type v} [decidable_eq n] [fintype n]
   [comm_semiring R] (r : R) : (algebra_map R (matrix n n R)) r = r • 1 := rfl
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 /-- Defining the homomorphism in the category R-Alg. -/
 @[nolint has_inhabited_instance]
 structure alg_hom (R : Type u) (A : Type v) (B : Type w)
@@ -622,7 +622,7 @@ end alg_hom
   m • (1 : A) = ↑m :=
 by rw [algebra.smul_def, mul_one, ring_hom.eq_rat_cast]
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 /-- An equivalence of algebras is an equivalence of rings commuting with the actions of scalars. -/
 structure alg_equiv (R : Type u) (A : Type v) (B : Type w)
   [comm_semiring R] [semiring A] [semiring B] [algebra R A] [algebra R B]

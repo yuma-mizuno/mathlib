@@ -23,7 +23,7 @@ universes u v w
 variables {R : Type u} {S : Type v} {T : Type w} [semiring R] [semiring S] [semiring T]
   (M : submonoid R)
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A subsemiring of a semiring `R` is a subset `s` that is both a multiplicative and an additive
 submonoid. -/

@@ -34,7 +34,7 @@ and require `0⁻¹ = 0`.
 
 -/
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 open_locale classical
 open function
 

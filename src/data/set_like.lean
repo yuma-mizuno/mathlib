@@ -41,7 +41,7 @@ This file will then provide a `coe_sort`, a `coe` to set, a `partial_order`, and
 extensionality and simp lemmas.
 
 -/
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- A class to indicate that there is a canonical injection between `A` and `set B`. -/
 @[protect_proj]

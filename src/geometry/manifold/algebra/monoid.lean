@@ -18,7 +18,7 @@ semigroups.
 
 section
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /--
 1. All smooth algebraic structures on `G` are `Prop`-valued classes that extend

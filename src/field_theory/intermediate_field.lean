@@ -43,7 +43,7 @@ open_locale big_operators
 variables (K L : Type*) [field K] [field L] [algebra K L]
 
 section
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- `S : intermediate_field K L` is a subset of `L` such that there is a field
 tower `L / S / K`. -/

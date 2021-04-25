@@ -45,7 +45,7 @@ def mul_hom.inverse [has_mul M] [has_mul N] (f : mul_hom M N) (g : N → M)
                ... = g (f (g x * g y)) : by rw f.map_mul
                ... = g x * g y : h₁ _, }
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 
 /-- add_equiv α β is the type of an equiv α ≃ β which preserves addition. -/
 @[ancestor equiv add_hom]

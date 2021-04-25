@@ -19,7 +19,7 @@ variables {𝕜 : Type*} [nondiscrete_normed_field 𝕜]
 {H : Type*} [topological_space H]
 {E : Type*} [normed_group E] [normed_space 𝕜 E]
 
--- set_option old_structure_cmd true
+set_option old_structure_cmd true
 set_option default_priority 100 -- see Note [default priority]
 
 /-- A smooth semiring is a semiring where addition and multiplication are smooth. -/
