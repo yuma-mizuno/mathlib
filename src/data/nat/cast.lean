@@ -133,12 +133,10 @@ def cast_ring_hom (α : Type*) [non_assoc_semiring α] : ℕ →+* α :=
 
 @[simp] lemma coe_cast_ring_hom [non_assoc_semiring α] : (cast_ring_hom α : ℕ → α) = coe := rfl
 
--- TODO: non_assoc_semiring
-lemma cast_commute [semiring α] (n : ℕ) (x : α) : commute ↑n x :=
+lemma cast_commute [non_assoc_semiring α] (n : ℕ) (x : α) : commute ↑n x :=
 nat.rec_on n (commute.zero_left x) $ λ n ihn, ihn.add_left $ commute.one_left x
 
--- TODO: non_assoc_semiring
-lemma cast_comm [semiring α] (n : ℕ) (x : α) : (n : α) * x = x * n :=
+lemma cast_comm [non_assoc_semiring α] (n : ℕ) (x : α) : (n : α) * x = x * n :=
 (cast_commute n x).eq
 
 lemma commute_cast [semiring α] (x : α) (n : ℕ) : commute x n :=
