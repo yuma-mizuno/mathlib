@@ -44,6 +44,10 @@ instance [linear_ordered_add_comm_monoid_with_top α] :
   ..multiplicative.ordered_comm_monoid,
   ..multiplicative.linear_order }
 
+instance [linear_ordered_add_comm_group_with_top α] :
+  linear_ordered_comm_group_with_zero (multiplicative (order_dual α)) :=
+{ ..multiplicative.linear_ordered_add_comm_monoid_with_top }
+
 section linear_ordered_comm_monoid
 
 variables [linear_ordered_comm_monoid_with_zero α]
@@ -195,6 +199,9 @@ lemma inv_lt_inv'' (ha : a ≠ 0) (hb : b ≠ 0) : a⁻¹ < b⁻¹ ↔ b < a :=
 
 lemma inv_le_inv'' (ha : a ≠ 0) (hb : b ≠ 0) : a⁻¹ ≤ b⁻¹ ↔ b ≤ a :=
 @inv_le_inv_iff _ _ (units.mk0 a ha) (units.mk0 b hb)
+
+instance : linear_ordered_add_comm_group_with_top (additive (order_dual α)) :=
+{ ..additive.linear_ordered_add_comm_monoid_with_top }
 
 namespace monoid_hom
 

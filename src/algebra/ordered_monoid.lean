@@ -47,6 +47,14 @@ class ordered_add_comm_monoid (α : Type*) extends add_comm_monoid α, partial_o
 (add_le_add_left       : ∀ a b : α, a ≤ b → ∀ c : α, c + a ≤ c + b)
 (lt_of_add_lt_add_left : ∀ a b c : α, a + b < a + c → b < c)
 
+/-- An ordered (additive) commutative group is a commutative group
+  with a partial order such that
+  * `a ≤ b → c + a ≤ c + b` (addition is monotone)
+  * `a + b < a + c → b < c`.
+-/
+@[protect_proj, ancestor ordered_add_comm_monoid comm_group]
+class ordered_add_comm_group (α : Type*) extends ordered_add_comm_monoid α, add_comm_group α
+
 attribute [to_additive] ordered_comm_monoid
 
 /-- An `ordered_comm_monoid` with one-sided 'division' in the sense that
@@ -81,6 +89,11 @@ class linear_ordered_add_comm_monoid (α : Type*)
   letI : linear_order α := by refine { le := le, lt := lt, lt_iff_le_not_le := _, .. }; assumption,
   exact le_of_not_lt h })
 
+/-- A linearly ordered additive commutative group. -/
+@[protect_proj, ancestor linear_ordered_add_comm_monoid ordered_add_comm_group]
+class linear_ordered_add_comm_group (α : Type*)
+  extends linear_ordered_add_comm_monoid α, ordered_add_comm_group α
+
 /-- A linearly ordered commutative monoid. -/
 @[protect_proj, ancestor linear_order ordered_comm_monoid, to_additive]
 class linear_ordered_comm_monoid (α : Type*)
@@ -106,6 +119,14 @@ class linear_ordered_comm_monoid_with_zero (α : Type*)
 class linear_ordered_add_comm_monoid_with_top (α : Type*)
   extends linear_ordered_add_comm_monoid α, order_top α :=
 (top_add' : ∀ x : α, ⊤ + x = ⊤)
+
+/-- A linearly ordered commutative monoid with an additively absorbing `⊤` element.
+  Instances should include number systems with an infinite element adjoined.` -/
+@[protect_proj, ancestor linear_ordered_add_comm_monoid_with_top sub_neg_monoid nontrivial]
+class linear_ordered_add_comm_group_with_top (α : Type*)
+  extends linear_ordered_add_comm_monoid_with_top α, sub_neg_monoid α, nontrivial α :=
+(neg_top : - (⊤ : α) = ⊤)
+(add_neg_cancel : ∀ a:α, a ≠ ⊤ → a + (- a) = 0)
 
 section linear_ordered_add_comm_monoid_with_top
 variables [linear_ordered_add_comm_monoid_with_top α] {a b : α}
@@ -623,7 +644,19 @@ instance [linear_ordered_add_comm_monoid α] :
 { top_add' := λ x, with_top.top_add,
   ..with_top.order_top,
   ..with_top.linear_order,
-  ..with_top.ordered_add_comm_monoid,
+  ..with_top.ordered_add_comm_monoid }
+
+instance [linear_ordered_add_comm_group α] :
+  linear_ordered_add_comm_group_with_top (with_top α) :=
+{ neg := option.map (λ a, - a),
+  neg_top := @option.map_none' _ _ (λ a : α, - a),
+  add_neg_cancel := begin
+    rintro (a | a) ha,
+    { exact (ha rfl).elim },
+    refine eq.trans with_top.coe_add.symm _,
+    simp,
+  end,
+  ..with_top.linear_ordered_add_comm_monoid_with_top,
   ..option.nontrivial }
 
 /-- Coercion from `α` to `with_top α` as an `add_monoid_hom`. -/
