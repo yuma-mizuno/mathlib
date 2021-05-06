@@ -164,6 +164,23 @@ begin
   simpa
 end
 
+lemma form_perm_ne_self_imp_mem (x : α) (l : list α) (h : form_perm l x ≠ x) :
+  x ∈ l :=
+begin
+  contrapose! h,
+  exact form_perm_not_mem_apply x l h
+end
+
+lemma form_perm_mem_apply_imp_mem (x : α) (l : list α) (h : x ∈ l) :
+  form_perm l x ∈ l :=
+begin
+  by_cases hl : form_perm l x = x,
+  { simpa [hl] using h },
+  { have hl' : x ∈ {x | form_perm l x ≠ x} := hl,
+    rw [←set_support_apply_mem, set.mem_set_of_eq] at hl',
+    exact form_perm_ne_self_imp_mem _ _ hl' }
+end
+
 lemma form_perm_apply_lt (xs : list α) (h : nodup xs) (n : ℕ) (hn : n + 1 < xs.length) :
   form_perm xs (xs.nth_le n ((nat.lt_succ_self n).trans hn)) = xs.nth_le (n + 1) hn :=
 begin
@@ -215,7 +232,7 @@ by { rw hx, exact form_perm_apply_lt _ h _ _ }
 
 lemma form_perm_apply_nth_le (xs : list α) (h : nodup xs) (n : ℕ) (hn : n < xs.length) :
   form_perm xs (xs.nth_le n hn) = xs.nth_le ((n + 1) % xs.length)
-    (by { cases xs, { simpa using hn }, { refine nat.mod_lt _ _, simp }}) :=
+    (nat.mod_lt _ (n.zero_le.trans_lt hn)) :=
 begin
   cases xs with x xs,
   { simp },
@@ -365,7 +382,7 @@ end
 
 lemma form_perm_pow_apply_nth_le (l : list α) (h : nodup l) (n k : ℕ) (hk : k < l.length) :
   (form_perm l ^ n) (l.nth_le k hk) = l.nth_le ((k + n) % l.length)
-    (by { cases l, { simpa using hk }, { refine nat.mod_lt _ _, simp }}) :=
+    (nat.mod_lt _ (k.zero_le.trans_lt hk)) :=
 begin
   induction n with n hn,
   { simp [nat.mod_eq_of_lt hk] },
@@ -411,6 +428,234 @@ begin
       have h1 : 1 = 1 % (x' :: y' :: l').length := by simp,
       rw [hl, nat.mod_eq_of_lt hk', h1, ←nat.add_mod, nat.succ_add] } }
 end
+
+theorem nodup.nth_le_inj_iff {l : list α} (h : nodup l)
+  {i j : ℕ} (hi : i < l.length) (hj : j < l.length) :
+  l.nth_le i hi = l.nth_le j hj ↔ i = j :=
+⟨nodup_iff_nth_le_inj.mp h _ _ _ _, by simp {contextual := tt}⟩
+
+lemma form_perm_apply_mem_eq_self_iff (hl : nodup l) (x : α) (hx : x ∈ l) :
+  form_perm l x = x ↔ length l ≤ 1 :=
+begin
+  obtain ⟨k, hk, rfl⟩ := nth_le_of_mem hx,
+  rw [form_perm_apply_nth_le _ hl, hl.nth_le_inj_iff],
+  cases hn : l.length,
+  { exact absurd k.zero_le (hk.trans_le hn.le).not_le },
+  { rw hn at hk,
+    cases (nat.le_of_lt_succ hk).eq_or_lt with hk' hk',
+    { simp [←hk', nat.succ_le_succ_iff, eq_comm] },
+    { simpa [nat.mod_eq_of_lt (nat.succ_lt_succ hk'), nat.succ_lt_succ_iff]
+      using k.zero_le.trans_lt hk' } }
+end
+
+lemma form_perm_apply_mem_ne_self_iff (hl : nodup l) (x : α) (hx : x ∈ l) :
+  form_perm l x ≠ x ↔ 2 ≤ l.length :=
+begin
+  rw [ne.def, form_perm_apply_mem_eq_self_iff _ hl x hx, not_le],
+  exact ⟨nat.succ_le_of_lt, nat.lt_of_succ_le⟩
+end
+
+lemma form_perm_concat_concat_concat (x y z : α) (xs : list α) (h : (xs ++ [x, y, z]).nodup) :
+  form_perm (xs ++ [x, y, z]) = form_perm (xs ++ [x, z]) * swap y x :=
+begin
+  rw ←inv_inj,
+  rw ←form_perm_reverse _ h,
+  rw mul_inv_rev,
+  rw ←form_perm_reverse,
+  { simp [form_perm_cons_cons_cons] },
+  { refine nodup_of_sublist _ h,
+    rw append_sublist_append_left,
+    refine sublist.cons2 [z] [y, z] x _,
+    exact sublist_cons y [z] }
+end
+
+lemma sublist.mem_of_mem {α : Type*} {l l' : list α} (h : l <+ l') (x : α) (hx : x ∈ l) :
+  x ∈ l' :=
+begin
+  induction h with sl tl hd h IH sl tl hd h IH,
+  { simpa using hx },
+  { exact mem_cons_of_mem _ (IH hx) },
+  { rcases hx with rfl|hx,
+    { exact mem_cons_self _ _ },
+    { exact mem_cons_of_mem _ (IH hx) } }
+end
+
+lemma mem_of_mem_tail {α : Type*} {l : list α} (x : α) (h : x ∈ l.tail) : x ∈ l :=
+(tail_sublist _).mem_of_mem x h
+
+lemma take_while_prefix {α : Type*} (l : list α) (p : α → Prop) [decidable_pred p] :
+  l.take_while p <+: l :=
+begin
+  nth_rewrite_rhs 0 [←take_while_append_drop p l],
+  exact (take_while p l).prefix_append (drop_while p l)
+end
+
+lemma mem_of_mem_take_while {α : Type*} (l : list α) (p : α → Prop) [decidable_pred p] (x : α)
+  (h : x ∈ l.take_while p) : x ∈ l :=
+(sublist_of_prefix (take_while_prefix _ _)).mem_of_mem _ h
+
+lemma mem_of_take_while_imp {α : Type*} (l : list α) (p : α → Prop) [decidable_pred p] (x : α)
+  (h : x ∈ l.take_while p) : p x :=
+begin
+  induction l with hd tl hl,
+  { simpa [take_while] using h },
+  { simp only [take_while] at h,
+    split_ifs at h with hp hp,
+    { rcases h with rfl|h,
+      { exact hp },
+      { exact hl h } },
+    { simpa using h } }
+end
+
+lemma take_while_eq_self_iff {α : Type*} {l : list α} {p : α → Prop} [decidable_pred p] :
+  l.take_while p = l ↔ ∀ (x ∈ l), p x :=
+begin
+  induction l with hd tl hl,
+  { simp [take_while] },
+  { simp only [take_while, mem_cons_iff, forall_eq_or_imp],
+    split_ifs with h h;
+    simp [hl, h] }
+end
+
+lemma is_prefix.take_while {α : Type*} {l l' : list α} (h : l <+: l')
+  (p : α → Prop) [decidable_pred p] : l.take_while p <+: l'.take_while p :=
+begin
+  induction l with hd tl hl generalizing l',
+  { simpa [take_while] using nil_prefix _ },
+  { cases l' with hd' tl',
+    { simpa using h },
+    { rw [cons_prefix_iff] at h,
+      rcases h with ⟨rfl, h⟩,
+      by_cases hp : p hd,
+      { simpa [take_while, hp, cons_prefix_iff] using hl h },
+      { simp [take_while, hp] } } }
+end
+
+lemma is_prefix.antisymm {α : Type*} {l l' : list α} (h : l <+: l') (h' : l' <+: l) : l = l' :=
+begin
+  induction l with hd tl hl generalizing l',
+  { simpa [eq_comm] using h' },
+  { cases l' with hd' tl',
+    { simpa using h },
+    { rw [cons_prefix_iff] at h h',
+      simpa [h.left] using hl h.right h'.right } }
+end
+
+def nodup_prefix : list α → list α
+| []         := []
+| (hd :: tl) := hd :: (take_while (≠ hd) (nodup_prefix tl))
+
+@[simp] lemma nodup_prefix_nil : nodup_prefix (@nil α) = [] := rfl
+
+@[simp] lemma nodup_prefix_cons (hd : α) (tl : list α) : nodup_prefix (hd :: tl) =
+  hd :: (take_while (≠ hd) (nodup_prefix tl)) := rfl
+
+@[simp] lemma nodup_prefix_eq_nil_iff {l : list α} :
+  nodup_prefix l = [] ↔ l = [] :=
+by { cases l; simp }
+
+lemma prefix_nodup_prefix (l : list α) : nodup_prefix l <+: l :=
+begin
+  induction l with hd tl hl,
+  { simp },
+  { simpa [cons_prefix_iff] using (take_while_prefix _ _).trans hl }
+end
+
+lemma nodup_nodup_prefix (l : list α) : nodup (nodup_prefix l) :=
+begin
+  induction l with hd tl hl,
+  { simp },
+  { simp,
+    split,
+    { intro H,
+      simpa using mem_of_take_while_imp _ _ _ H },
+    { refine nodup_of_sublist _ hl,
+      exact sublist_of_prefix (take_while_prefix _ _) } }
+end
+
+lemma nodup_prefix_maximal (l l' : list α) (h : l' <+: l) (hl : nodup l') :
+  l' <+: nodup_prefix l :=
+begin
+  induction l with hd tl IH generalizing l',
+  { simp only [eq_nil_iff_prefix_nil] at h,
+    simp [h] },
+  { cases l' with hd' tl',
+    { simpa using nil.prefix_append _ },
+    { rw nodup_prefix_cons,
+      rw cons_prefix_iff at h ⊢,
+      refine h.imp id (λ h', _),
+      convert (IH _ h' (nodup_of_nodup_cons hl)).take_while (≠ hd),
+      rw [eq_comm, take_while_eq_self_iff],
+      rintro x hx rfl,
+      simpa [h.left, hx] using hl } }
+end
+
+lemma nodup_prefix_eq_self_iff_nodup : nodup_prefix l = l ↔ nodup l :=
+begin
+  refine ⟨λ h, h ▸ nodup_nodup_prefix l, λ h, _⟩,
+  have : l <+: nodup_prefix l := nodup_prefix_maximal _ _ (prefix_refl _) h,
+  exact (this.antisymm (prefix_nodup_prefix _)).symm
+end
+
+lemma form_perm_gpow_apply_mem_imp_mem (l : list α) (x : α) (hx : x ∈ l) (n : ℤ) :
+  ((form_perm l) ^ n) x ∈ l :=
+begin
+  by_cases h : (l.form_perm ^ n) x = x,
+  { simpa [h] using hx },
+  { have : x ∈ {x | (l.form_perm ^ n) x ≠ x} := h,
+    rw ←set_support_apply_mem at this,
+    replace this := set_support_gpow_subset _ _ this,
+    simpa using support_form_perm_le' _ this }
+end
+
+lemma form_perm_pow_length_eq_one_of_nodup (hl : nodup l) :
+  (form_perm l) ^ (length l) = 1 :=
+begin
+  ext x,
+  by_cases hx : x ∈ l,
+  { obtain ⟨k, hk, rfl⟩ := nth_le_of_mem hx,
+    simp [form_perm_pow_apply_nth_le _ hl, nat.mod_eq_of_lt hk] },
+  { have : x ∉ {x | (l.form_perm ^ l.length) x ≠ x},
+    { intros H,
+      refine hx _,
+      replace H := set_support_gpow_subset l.form_perm l.length H,
+      simpa using support_form_perm_le' _ H },
+    simpa }
+end
+
+lemma sizeof_drop_lt {α : Type*} [has_sizeof α] (l : list α) (hl : 0 < l.length) (n : ℕ) (hn : 0 < n) :
+  sizeof (drop n l) < sizeof l :=
+begin
+  induction n with n IH generalizing l,
+  { simpa using hn },
+  { cases l with hd tl,
+    { simpa using hl },
+    { dsimp only [drop],
+      cases n.zero_le.eq_or_lt with hn' hn',
+      { simp only [←hn', drop],
+        unfold_wf,
+        exact (zero_lt_one).trans_le (nat.le_add_right _ _) },
+      cases tl.length.zero_le.eq_or_lt with ht ht,
+      { simp only [eq_nil_of_length_eq_zero ht.symm, drop_eq_nil_of_le, length, zero_le],
+        unfold_wf,
+        exact (zero_lt_one).trans_le (nat.le_add_right _ _) },
+      refine lt_trans (IH hn' _ ht) _,
+      unfold_wf,
+      exact (zero_lt_one).trans_le (nat.le_add_right _ _) } }
+end
+
+/--
+Split a list into its consecutive nodup sublists.
+-/
+def partition_nodup : list α → list (list α)
+| []          := []
+| l@(x :: xs) :=
+    have (drop l.nodup_prefix.length l).sizeof < l.sizeof,
+      begin
+        refine sizeof_drop_lt _ _ _ _;
+        simp [nodup_prefix_cons],
+      end,
+    nodup_prefix l :: partition_nodup (drop (nodup_prefix l).length l)
 
 end form_perm
 
