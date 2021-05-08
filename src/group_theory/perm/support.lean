@@ -11,9 +11,12 @@ import group_theory.perm.basic
 # Support of a permutation
 
 ## Main definitions
+
 In the following, `f g : equiv.perm α`.
-* `equiv.perm.disjoint`: two permutations `f` and `g` are `disjoint` iff their `support`
-  are disjoint.
+
+* `equiv.perm.disjoint`: two permutations `f` and `g` are `disjoint` if every element is fixed
+  either by `f`, or by `g`.
+  Equivalently, `f` and `g` are `disjoint` iff their `support` are disjoint.
 * `equiv.perm.is_swap`: `f = swap x y` for `x ≠ y`.
 * `equiv.perm.support`: the elements `x : α` that are not fixed by `f`.
 
@@ -34,6 +37,9 @@ variables {f g h : perm α}
 
 @[symm] lemma disjoint.symm : disjoint f g → disjoint g f :=
 by simp only [disjoint, or.comm, imp_self]
+
+lemma disjoint.symmetric : symmetric (@disjoint α) :=
+λ _ _, disjoint.symm
 
 lemma disjoint_comm : disjoint f g ↔ disjoint g f :=
 ⟨disjoint.symm, disjoint.symm⟩
@@ -302,6 +308,15 @@ begin
   simp only [perm.coe_mul, function.comp_app, ne.def, set.mem_union_eq, set.mem_set_of_eq],
   by_cases hq : q x = x;
   simp [hq]
+
+lemma pow_eq_on_of_mem_support (h : ∀ (x ∈ f.support ∩ g.support), f x = g x)
+  (k : ℕ) : ∀ (x ∈ f.support ∩ g.support), (f ^ k) x = (g ^ k) x :=
+begin
+  induction k with k hk,
+  { simp },
+  { intros x hx,
+    rw [pow_succ', mul_apply, pow_succ', mul_apply, h _ hx, hk],
+    rwa [mem_inter, apply_mem_support, ←h _ hx, apply_mem_support, ←mem_inter] }
 end
 
 lemma disjoint_iff_disjoint_support :
@@ -419,6 +434,42 @@ begin
   { split; intro; simp only [*, if_true, eq_self_iff_true, not_true, ne.def] at * },
   { split_ifs at hy; cc }
 end
+
+section extend_domain
+variables {β : Type*} [decidable_eq β] [fintype β] {p : β → Prop} [decidable_pred p]
+
+@[simp]
+lemma support_extend_domain (f : α ≃ subtype p) {g : perm α} :
+  support (g.extend_domain f) = g.support.map f.as_embedding :=
+begin
+  ext b,
+  simp only [exists_prop, function.embedding.coe_fn_mk, to_embedding_apply, mem_map, ne.def,
+    function.embedding.trans_apply, mem_support],
+  by_cases pb : p b,
+  { rw [extend_domain_apply_subtype _ _ pb],
+    split,
+    { rintro h,
+      refine ⟨f.symm ⟨b, pb⟩, _, by simp⟩,
+      contrapose! h,
+      simp [h] },
+    { rintro ⟨a, ha, hb⟩,
+      contrapose! ha,
+      obtain rfl : a = f.symm ⟨b, pb⟩,
+      { rw eq_symm_apply,
+        exact subtype.coe_injective hb },
+      rw eq_symm_apply,
+      exact subtype.coe_injective ha } },
+  { rw [extend_domain_apply_not_subtype _ _ pb],
+    simp only [not_exists, false_iff, not_and, eq_self_iff_true, not_true],
+    rintros a ha rfl,
+    exact pb (subtype.prop _) }
+end
+
+lemma card_support_extend_domain (f : α ≃ subtype p) {g : perm α} :
+  (g.extend_domain f).support.card = g.support.card :=
+by simp
+
+end extend_domain
 
 section card
 
