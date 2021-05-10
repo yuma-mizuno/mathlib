@@ -6,6 +6,7 @@ Authors: Chris Hughes
 import data.nat.parity
 import data.equiv.fintype
 import group_theory.perm.sign
+import data.finset.noncomm_prod
 /-!
 # Cyclic permutations
 
@@ -577,32 +578,24 @@ begin
   exact list.forall_of_pairwise (λ _ _, disjoint.symm) l.prop.right.right _ hp _ hq h
 end
 
-/-- A form of `cycle_factors_mem_commute` with an extra `p ≠ q` hypothesis, such that
-it is of the right form to pass to `noncomm_prod`. -/
-lemma cycle_factors_finset_mem_commute' (p : perm α) (hp : p ∈ cycle_factors_finset f)
-  (q : perm α) (hq : q ∈ cycle_factors_finset f) (h : p ≠ q) :
-  _root_.commute p q :=
-(cycle_factors_finset_pairwise_disjoint _ _ hp _ hq h).commute
-
 lemma cycle_factors_finset_mem_commute (p : perm α) (hp : p ∈ cycle_factors_finset f)
   (q : perm α) (hq : q ∈ cycle_factors_finset f) :
   _root_.commute p q :=
 begin
   by_cases h : p = q,
   { exact h ▸ commute.refl _ },
-  { exact cycle_factors_finset_mem_commute' _ _ hp _ hq h }
+  { exact (cycle_factors_finset_pairwise_disjoint _ _ hp _ hq h).commute }
 end
 
 /-- The product of cycle factors is equal to the original `f : perm α`. -/
 lemma cycle_factors_finset_noncomm_prod :
-  f.cycle_factors_finset.noncomm_prod (cycle_factors_finset_mem_commute' f) = f :=
+  f.cycle_factors_finset.noncomm_prod (cycle_factors_finset_mem_commute f) = f :=
 begin
   obtain ⟨l, hl⟩ := trunc.exists_rep f.trunc_cycle_factors,
   have ht : cycle_factors_finset f = (l : list (perm α)).to_finset,
   { rw [cycle_factors_finset, ←hl, trunc.lift_mk, subtype.val_eq_coe] },
-  rw ←l.prop.left,
-  refine noncomm_prod_congr_list_prod _ _ _ _ _,
-  { rw [l.prop.left, ht] },
+  simp_rw [ht, ←l.prop.left],
+  refine noncomm_prod_to_finset _ _ _,
   { refine nodup_of_pairwise_disjoint _ l.prop.right.right,
     intro hm,
     simpa using (l.prop.right.left _ hm).ne_one }
@@ -614,6 +607,64 @@ begin
   obtain ⟨l, hl⟩ := trunc.exists_rep f.trunc_cycle_factors,
   rw [cycle_factors_finset, ←hl, trunc.lift_mk, list.mem_to_finset],
   simpa [←l.prop.left, mem_support] using mem_list_cycles_iff l.prop.right.left l.prop.right.right
+end
+
+lemma cycle_factors_finset_eq_empty_iff :
+  cycle_factors_finset f = ∅ ↔ f = 1 :=
+begin
+  split,
+  { intros h,
+    rw [←cycle_factors_finset_noncomm_prod f],
+    simp [h] },
+  { rintro rfl,
+    ext g,
+    simp only [mem_cycle_factors_finset_iff, perm.coe_one, not_and, id.def, not_imp_self,
+               perm.mem_support, iff_false, not_forall, not_mem_empty],
+    exact λ ⟨x, hx, hx'⟩, ⟨x, hx⟩ }
+end
+
+@[simp] lemma cycle_factors_finset_eq_singleton_self_iff :
+  f.cycle_factors_finset = {f} ↔ f.is_cycle :=
+begin
+  split,
+  { intro h,
+    have : f ∈ f.cycle_factors_finset,
+    { simp [h] },
+    exact (mem_cycle_factors_finset_iff.mp this).left },
+  { intros h,
+    have hf : f ∈ f.cycle_factors_finset,
+    { simp [mem_cycle_factors_finset_iff, h] },
+    ext g,
+    simp only [mem_singleton],
+    split,
+    { intros hg,
+      rw mem_cycle_factors_finset_iff at hf hg,
+      refine hg.left.support_congr hf.left _ hg.right,
+      intros x hx,
+      rwa [mem_support, ←hg.right _ hx, ←mem_support] },
+    { rintro rfl,
+      exact hf } }
+end
+
+/-- Two permutations `f g : perm α` have the same cycle factors iff they are the same. -/
+lemma cycle_factors_finset_injective : function.injective (@cycle_factors_finset α _ _) :=
+begin
+  intros f g h,
+  rw ←cycle_factors_finset_noncomm_prod f,
+  simpa [h] using cycle_factors_finset_noncomm_prod g
+end
+
+lemma cycle_factors_finset_eq_singleton_iff {g : perm α} :
+  f.cycle_factors_finset = {g} ↔ f.is_cycle ∧ f = g :=
+begin
+  split,
+  { intro h,
+    have : g ∈ f.cycle_factors_finset,
+    { simp [h] },
+    rw ←cycle_factors_finset_noncomm_prod f,
+    simpa [h] using (mem_cycle_factors_finset_iff.mp this).left },
+  { rintro ⟨hf, rfl⟩,
+    simpa using hf }
 end
 
 end cycle_factors_finset
