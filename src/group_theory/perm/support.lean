@@ -308,6 +308,7 @@ begin
   simp only [perm.coe_mul, function.comp_app, ne.def, set.mem_union_eq, set.mem_set_of_eq],
   by_cases hq : q x = x;
   simp [hq]
+end
 
 lemma pow_eq_on_of_mem_support (h : ∀ (x ∈ f.support ∩ g.support), f x = g x)
   (k : ℕ) : ∀ (x ∈ f.support ∩ g.support), (f ^ k) x = (g ^ k) x :=
