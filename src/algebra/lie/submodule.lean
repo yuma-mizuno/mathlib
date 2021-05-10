@@ -66,6 +66,10 @@ instance has_mem : has_mem M (lie_submodule R L M) := ⟨λ x N, x ∈ (N : set 
 @[simp] lemma mem_carrier {x : M} : x ∈ N.carrier ↔ x ∈ (N : set M) :=
 iff.rfl
 
+@[simp] lemma mem_mk_iff (S : set M) (h₁ h₂ h₃ h₄) {x : M} :
+  x ∈ (⟨S, h₁, h₂, h₃, h₄⟩ : lie_submodule R L M) ↔ x ∈ S :=
+iff.rfl
+
 @[simp] lemma mem_coe_submodule {x : M} : x ∈ (N : submodule R M) ↔ x ∈ N := iff.rfl
 
 lemma mem_coe {x : M} : x ∈ (N : set M) ↔ x ∈ N := iff.rfl
@@ -321,6 +325,18 @@ begin
   apply f.well_founded, rw ← is_noetherian_iff_well_founded, apply_instance,
 end
 
+lemma subsingleton_iff : subsingleton M ↔ subsingleton (lie_submodule R L M) :=
+(submodule.subsingleton_iff R).trans $ by
+  rw [← subsingleton_iff_bot_eq_top, ← subsingleton_iff_bot_eq_top, ← coe_to_submodule_eq_iff,
+    top_coe_submodule, bot_coe_submodule]
+
+lemma nontrivial_iff : nontrivial M ↔ nontrivial (lie_submodule R L M) :=
+not_iff_not.mp (
+  (not_nontrivial_iff_subsingleton.trans $ subsingleton_iff R L M).trans
+  not_nontrivial_iff_subsingleton.symm)
+
+instance [nontrivial M] : nontrivial (lie_submodule R L M) := (nontrivial_iff R L M).mp ‹_›
+
 variables {R L M}
 
 section inclusion_maps
@@ -404,9 +420,11 @@ variables [add_comm_group M'] [module R M'] [lie_ring_module L M'] [lie_module R
 
 namespace lie_submodule
 
+variables (f : M →ₗ⁅R,L⁆ M') (N N₂ : lie_submodule R L M) (N' : lie_submodule R L M')
+
 /-- A morphism of Lie modules `f : M → M'` pushes forward Lie submodules of `M` to Lie submodules
 of `M'`. -/
-def map (f : M →ₗ⁅R,L⁆ M') (N : lie_submodule R L M) : lie_submodule R L M' :=
+def map : lie_submodule R L M' :=
 { lie_mem := λ x m' h, by
   { rcases h with ⟨m, hm, hfm⟩, use ⁅x, m⁆, split,
     { apply N.lie_mem hm, },
@@ -415,25 +433,33 @@ def map (f : M →ₗ⁅R,L⁆ M') (N : lie_submodule R L M) : lie_submodule R L
 
 /-- A morphism of Lie modules `f : M → M'` pulls back Lie submodules of `M'` to Lie submodules of
 `M`. -/
-def comap (f : M →ₗ⁅R,L⁆ M') (N : lie_submodule R L M') : lie_submodule R L M :=
-{ lie_mem := λ x m h, by { suffices : ⁅x, f m⁆ ∈ N, { simp [this], }, apply N.lie_mem h, },
-  ..(N : submodule R M').comap (f : M →ₗ[R] M') }
+def comap : lie_submodule R L M :=
+{ lie_mem := λ x m h, by { suffices : ⁅x, f m⁆ ∈ N', { simp [this], }, apply N'.lie_mem h, },
+  ..(N' : submodule R M').comap (f : M →ₗ[R] M') }
 
-lemma map_le_iff_le_comap {f : M →ₗ⁅R,L⁆ M'} {N : lie_submodule R L M} {N' : lie_submodule R L M'} :
-  map f N ≤ N' ↔ N ≤ comap f N' := set.image_subset_iff
+variables {f N N₂ N'}
 
-lemma gc_map_comap (f : M →ₗ⁅R,L⁆ M') : galois_connection (map f) (comap f) :=
+lemma map_le_iff_le_comap : map f N ≤ N' ↔ N ≤ comap f N' :=
+set.image_subset_iff
+
+variables (f)
+
+lemma gc_map_comap : galois_connection (map f) (comap f) :=
 λ N N', map_le_iff_le_comap
 
-@[simp] lemma mem_map (f : M →ₗ⁅R,L⁆ M') (N : lie_submodule R L M) (m' : M') :
-  m' ∈ N.map f ↔ ∃ m, m ∈ N ∧ f m = m' :=
+variables {f}
+
+@[simp] lemma map_sup : (N ⊔ N₂).map f = N.map f ⊔ N₂.map f :=
+(gc_map_comap f).l_sup
+
+lemma mem_map (m' : M') : m' ∈ N.map f ↔ ∃ m, m ∈ N ∧ f m = m' :=
 submodule.mem_map
 
 end lie_submodule
 
 namespace lie_ideal
 
-variables (f : L →ₗ⁅R⁆ L') (I : lie_ideal R L) (J : lie_ideal R L')
+variables (f : L →ₗ⁅R⁆ L') (I I₂ : lie_ideal R L) (J : lie_ideal R L')
 
 @[simp] lemma top_coe_lie_subalgebra : ((⊤ : lie_ideal R L) : lie_subalgebra R L) = ⊤ := rfl
 
@@ -461,7 +487,7 @@ rfl
 
 lemma map_le : map f I ≤ J ↔ f '' I ⊆ J := lie_submodule.lie_span_le
 
-variables {f I J}
+variables {f I I₂ J}
 
 lemma mem_map {x : L} (hx : x ∈ I) : f x ∈ map f I :=
 by { apply lie_submodule.subset_lie_span, use x, exact ⟨hx, rfl⟩, }
@@ -471,8 +497,15 @@ by { apply lie_submodule.subset_lie_span, use x, exact ⟨hx, rfl⟩, }
 lemma map_le_iff_le_comap : map f I ≤ J ↔ I ≤ comap f J :=
 by { rw map_le, exact set.image_subset_iff, }
 
+variables (f)
+
 lemma gc_map_comap : galois_connection (map f) (comap f) :=
 λ I I', map_le_iff_le_comap
+
+variables {f}
+
+@[simp] lemma map_sup : (I ⊔ I₂).map f = I.map f ⊔ I₂.map f :=
+(gc_map_comap f).l_sup
 
 lemma map_comap_le : map f (comap f J) ≤ J :=
 by { rw map_le_iff_le_comap, apply le_refl _, }
@@ -753,7 +786,7 @@ def range : lie_submodule R L N :=
 iff.rfl
 
 lemma map_top : lie_submodule.map f ⊤ = f.range :=
-by { ext, simp, }
+by { ext, simp [lie_submodule.mem_map], }
 
 end lie_module_hom
 
