@@ -469,6 +469,13 @@ begin
     exact sublist_cons y [z] }
 end
 
+lemma form_perm_apply_not_mem (l : list α) (x : α) (h : x ∉ l) :
+  form_perm l x = x :=
+begin
+  contrapose! h,
+  exact form_perm_ne_self_imp_mem _ _ h
+end
+
 lemma sublist.mem_of_mem {α : Type*} {l l' : list α} (h : l <+ l') (x : α) (hx : x ∈ l) :
   x ∈ l' :=
 begin
