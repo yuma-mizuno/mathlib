@@ -82,9 +82,9 @@ end
 lemma attach_embed_apply_mem_support (p : perm α) (t : set α)
   [fintype {x | p x ≠ x}] [decidable_eq t] (h : {x | p x ≠ x} ⊆ t) (x : t)
   (hx : (x : α) ∈ {x | p x ≠ x}) :
-  p.attach.via_embedding (embed_subset h) x = ⟨p x, h (set_support_apply_mem.mpr hx)⟩ :=
+  p.attach.via_fintype_embedding (embed_subset h) x = ⟨p x, h (set_support_apply_mem.mpr hx)⟩ :=
 begin
-  rw via_embedding_apply_mem_range,
+  rw via_fintype_embedding_apply_mem_range,
   swap,
   { simpa [range_embed_subset] using hx },
   simp
@@ -93,10 +93,10 @@ end
 lemma attach_embed_apply_not_mem_support (p : perm α) (t : set α)
   [fintype {x | p x ≠ x}] [decidable_eq t] (h : {x | p x ≠ x} ⊆ t) (x : t)
   (hx : (x : α) ∉ {x | p x ≠ x}) :
-  p.attach.via_embedding (embed_subset h) x =
+  p.attach.via_fintype_embedding (embed_subset h) x =
     ⟨p x, by { convert x.prop, simpa using hx }⟩ :=
 begin
-  rw via_embedding_apply_not_mem_range,
+  rw via_fintype_embedding_apply_not_mem_range,
   swap,
   { simpa [range_embed_subset] using hx },
   simpa [eq_comm, subtype.ext_iff] using hx
@@ -104,7 +104,7 @@ end
 
 @[simp] lemma attach_embed_apply (p : perm α) (t : set α)
   [fintype {x | p x ≠ x}] [decidable_eq t] (h : {x | p x ≠ x} ⊆ t) (x : t) :
-  p.attach.via_embedding (embed_subset h) x = ⟨p x,
+  p.attach.via_fintype_embedding (embed_subset h) x = ⟨p x,
     or.cases_on (em ((x : α) ∈ {x | p x ≠ x}))
     (λ hx, h (set_support_apply_mem.mpr hx))
       (λ hx, by { convert x.prop, simpa using hx })⟩ :=
@@ -114,14 +114,14 @@ begin
   { exact attach_embed_apply_not_mem_support _ _ _ _ hx }
 end
 
-lemma attach_mul_via_embedding [decidable_eq α]
+lemma attach_mul_via_fintype_embedding [decidable_eq α]
   (p q : perm α)
   [fintype {x | p x ≠ x}]
   [fintype {x | q x ≠ x}]
   [fintype {x | (p * q) x ≠ x}] :
-  (p * q).attach.via_embedding (embed_subset (set_support_mul_subset _ _)) =
-  (p.attach.via_embedding (embed_subset (subset_union_left _ _))) *
-      q.attach.via_embedding (embed_subset (subset_union_right _ _)) :=
+  (p * q).attach.via_fintype_embedding (embed_subset (set_support_mul_subset _ _)) =
+  (p.attach.via_fintype_embedding (embed_subset (subset_union_left _ _))) *
+      q.attach.via_fintype_embedding (embed_subset (subset_union_right _ _)) :=
 by { ext, simp }
 
 protected def finite (α : Type*) : subgroup (perm α) :=
@@ -178,14 +178,14 @@ monoid_hom.mk'
     letI : fintype {x | ((p : perm α) * (q : perm α)) x ≠ x},
     { refine finite.fintype _,
       exact set.finite.subset (p.prop.union q.prop) (set_support_mul_subset p q) },
-    convert (via_embedding_sign
+    convert (via_fintype_embedding_sign
       ((p : perm α) * (q : perm α)).attach
       (embed_subset (set_support_mul_subset p q))).symm,
-    have hp : sign (p : perm α).attach = sign (((p : perm α).attach).via_embedding
+    have hp : sign (p : perm α).attach = sign (((p : perm α).attach).via_fintype_embedding
       (embed_subset (subset_union_left _ {x | q x ≠ x}))) := by simp,
-    have hq : sign (q : perm α).attach = sign (((q : perm α).attach).via_embedding
+    have hq : sign (q : perm α).attach = sign (((q : perm α).attach).via_fintype_embedding
       (embed_subset (subset_union_right {x | p x ≠ x} _))) := by simp,
-    rw [hp, hq, ←sign_mul, attach_mul_via_embedding],
+    rw [hp, hq, ←sign_mul, attach_mul_via_fintype_embedding],
     refl
   end)
 
