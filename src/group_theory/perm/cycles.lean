@@ -286,6 +286,10 @@ begin
   { exact (hb (extend_domain_apply_not_subtype _ _ pb)).elim }
 end
 
+lemma nodup_of_pairwise_disjoint_cycles {l : list (perm α)} (h1 : ∀ (f ∈ l), is_cycle f)
+  (h2 : l.pairwise disjoint) : l.nodup :=
+nodup_of_pairwise_disjoint (λ h, (h1 1 h).ne_one rfl) h2
+
 end sign_cycle
 
 /-!
@@ -533,10 +537,8 @@ lemma list_cycles_perm_list_cycles {α : Type*} [fintype α] {l₁ l₂ : list (
   l₁ ~ l₂ :=
 begin
   classical,
-  have h₃l₁ : (1 : perm α) ∉ l₁ := λ h, (h₁l₁ 1 h).ne_one rfl,
-  have h₃l₂ : (1 : perm α) ∉ l₂ := λ h, (h₁l₂ 1 h).ne_one rfl,
-  refine (list.perm_ext (nodup_of_pairwise_disjoint h₃l₁ h₂l₁)
-    (nodup_of_pairwise_disjoint h₃l₂ h₂l₂)).mpr (λ σ, _),
+  refine (list.perm_ext (nodup_of_pairwise_disjoint_cycles h₁l₁ h₂l₁)
+    (nodup_of_pairwise_disjoint_cycles h₁l₂ h₂l₂)).mpr (λ σ, _),
   by_cases hσ : σ.is_cycle,
   { obtain ⟨a, ha⟩ := not_forall.mp (mt ext hσ.ne_one),
     rw [mem_list_cycles_iff h₁l₁ h₂l₁, mem_list_cycles_iff h₁l₂ h₂l₂, h₀] },
@@ -579,10 +581,7 @@ begin
   rw ht,
   split,
   { intro h,
-    have hn' : l'.nodup,
-    { refine nodup_of_pairwise_disjoint _ hd',
-      intro H,
-      exact is_cycle.ne_one (hc' _ H) rfl },
+    have hn' : l'.nodup := nodup_of_pairwise_disjoint_cycles hc' hd',
     have hperm : l ~ l' := list.perm_of_nodup_nodup_to_finset_eq hn hn' h.symm,
     refine ⟨_, _, _⟩,
     { exact λ _ h, hc' _ (hperm.subset h)},
