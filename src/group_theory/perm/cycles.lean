@@ -638,7 +638,9 @@ begin
   exact hp
 end
 
-lemma mem_cycle_factors_finset_iff {f p : perm α} :
+variables {f} {g : perm α}
+
+lemma mem_cycle_factors_finset_iff {p : perm α} :
   p ∈ cycle_factors_finset f ↔ p.is_cycle ∧ ∀ (a ∈ p.support), p a = f a :=
 begin
   obtain ⟨l, hl, hl'⟩ := f.cycle_factors_finset.exists_list_nodup_eq,
@@ -648,15 +650,31 @@ begin
     using mem_list_cycles_iff hl'.left hl'.right.left
 end
 
+lemma mem_cycle_factors_finset_support_le {p f : perm α} (h : p ∈ cycle_factors_finset f) :
+  p.support ≤ f.support :=
+begin
+  rw mem_cycle_factors_finset_iff at h,
+  intros x hx,
+  rwa [mem_support, ←h.right x hx, ←mem_support]
+end
+
 lemma cycle_factors_finset_eq_empty_iff :
   cycle_factors_finset f = ∅ ↔ f = 1 :=
 by simpa [cycle_factors_finset_eq_finset] using eq_comm
+
+@[simp] lemma cycle_factors_finset_one :
+  cycle_factors_finset (1 : perm α) = ∅ :=
+by simp [cycle_factors_finset_eq_empty_iff]
 
 @[simp] lemma cycle_factors_finset_eq_singleton_self_iff :
   f.cycle_factors_finset = {f} ↔ f.is_cycle :=
 by simp [cycle_factors_finset_eq_finset]
 
-lemma cycle_factors_finset_eq_singleton_iff {g : perm α} :
+lemma is_cycle.cycle_factors_finset_eq_singleton (hf : is_cycle f) :
+  f.cycle_factors_finset = {f} :=
+cycle_factors_finset_eq_singleton_self_iff.mpr hf
+
+lemma cycle_factors_finset_eq_singleton_iff :
   f.cycle_factors_finset = {g} ↔ f.is_cycle ∧ f = g :=
 begin
   suffices : f = g → (g.is_cycle ↔ f.is_cycle),
@@ -671,6 +689,50 @@ begin
   intros f g h,
   rw ←cycle_factors_finset_noncomm_prod f,
   simpa [h] using cycle_factors_finset_noncomm_prod g
+end
+
+lemma disjoint.disjoint_cycle_factors_finset (h : disjoint f g) :
+  _root_.disjoint (cycle_factors_finset f) (cycle_factors_finset g) :=
+begin
+  rw disjoint_iff_disjoint_support at h,
+  intros x hx,
+  simp only [mem_cycle_factors_finset_iff, inf_eq_inter, mem_inter, mem_support] at hx,
+  obtain ⟨⟨⟨a, ha, -⟩, hf⟩, -, hg⟩ := hx,
+  refine h (_ : a ∈ f.support ∩ g.support),
+  simp [ha, ←hf a ha, ←hg a ha]
+end
+
+lemma disjoint.cycle_factors_finset_mul_eq_union (h : disjoint f g) :
+  cycle_factors_finset (f * g) = cycle_factors_finset f ∪ cycle_factors_finset g :=
+begin
+  rw cycle_factors_finset_eq_finset,
+  split,
+  { simp only [mem_cycle_factors_finset_iff, mem_union],
+    rintro _ (⟨h, -⟩ | ⟨h, -⟩);
+    exact h },
+  { refine ⟨_, _⟩,
+    { simp_rw mem_union,
+      rintros x (hx | hx) y (hy | hy) hxy,
+      { exact cycle_factors_finset_pairwise_disjoint _ _ hx _ hy hxy },
+      { exact h.mono (mem_cycle_factors_finset_support_le hx)
+          (mem_cycle_factors_finset_support_le hy) },
+      { exact h.symm.mono (mem_cycle_factors_finset_support_le hx)
+          (mem_cycle_factors_finset_support_le hy) },
+      { exact cycle_factors_finset_pairwise_disjoint _ _ hx _ hy hxy } },
+    { rw noncomm_prod_union_of_disjoint h.disjoint_cycle_factors_finset,
+      rw [cycle_factors_finset_noncomm_prod, cycle_factors_finset_noncomm_prod] } }
+end
+
+lemma disjoint_mul_inv_of_mem_cycle_factors_finset (h : f ∈ cycle_factors_finset g) :
+  disjoint (g * f⁻¹) f :=
+begin
+  rw mem_cycle_factors_finset_iff at h,
+  intro x,
+  by_cases hx : f x = x,
+  { exact or.inr hx },
+  { refine or.inl _,
+    rw [mul_apply, ←h.right, apply_inv_self],
+    rwa [←support_inv, apply_mem_support, support_inv, mem_support] }
 end
 
 end cycle_factors_finset
@@ -696,6 +758,51 @@ begin
       (base_cycles σ (h1 σ (l.mem_cons_self σ)))
       (ih (λ τ hτ, h1 τ (list.mem_cons_of_mem σ hτ)) (list.pairwise_of_pairwise_cons h2)) },
 end
+
+lemma cycle_factors_finset_mul_inv_mem_eq_sdiff [fintype α] {f g : perm α}
+  (h : f ∈ cycle_factors_finset g) :
+  cycle_factors_finset (g * f⁻¹) = (cycle_factors_finset g) \ {f} :=
+begin
+  revert f,
+  apply cycle_induction_on _ g,
+  { simp },
+  { intros σ hσ f hf,
+    simp only [cycle_factors_finset_eq_singleton_self_iff.mpr hσ, mem_singleton] at hf ⊢,
+    simp [hf] },
+  { intros σ τ hd hc hσ hτ f,
+    simp_rw [hd.cycle_factors_finset_mul_eq_union, mem_union],
+    -- if only `wlog` could work here...
+    rintro (hf | hf),
+    { rw [hd.commute.eq, union_comm, union_sdiff_distrib, sdiff_singleton_eq_erase,
+          erase_eq_of_not_mem, mul_assoc, disjoint.cycle_factors_finset_mul_eq_union, hσ hf],
+      { rw mem_cycle_factors_finset_iff at hf,
+        intro x,
+        cases hd.symm x with hx hx,
+        { exact or.inl hx },
+        { refine or.inr _,
+          by_cases hfx : f x = x,
+          { rw ←hfx,
+            simpa [hx] using hfx.symm },
+          { rw mul_apply,
+            rw ←hf.right _ (mem_support.mpr hfx) at hx,
+            contradiction } } },
+      { exact λ H, hd.disjoint_cycle_factors_finset (mem_inter_of_mem hf H) } },
+    { rw [union_sdiff_distrib, sdiff_singleton_eq_erase,
+          erase_eq_of_not_mem, mul_assoc, disjoint.cycle_factors_finset_mul_eq_union, hτ hf],
+      { rw mem_cycle_factors_finset_iff at hf,
+        intro x,
+        cases hd x with hx hx,
+        { exact or.inl hx },
+        { refine or.inr _,
+          by_cases hfx : f x = x,
+          { rw ←hfx,
+            simpa [hx] using hfx.symm },
+          { rw mul_apply,
+            rw ←hf.right _ (mem_support.mpr hfx) at hx,
+            contradiction } } },
+      { exact λ H, hd.disjoint_cycle_factors_finset (mem_inter_of_mem H hf) } } }
+end
+
 
 section generation
 

@@ -171,4 +171,15 @@ by simp only [noncomm_prod, insert_val_of_not_mem ha, multiset.noncomm_prod_cons
     (λ x hx y hy, by rw [mem_singleton.mp hx, mem_singleton.mp hy]) = a :=
 by simp [noncomm_prod]
 
+@[to_additive] lemma noncomm_prod_union_of_disjoint [decidable_eq α] {s t : finset α}
+  (h : disjoint s t) (comm) (scomm) (tcomm) :
+  noncomm_prod (s ∪ t) comm = noncomm_prod s scomm * noncomm_prod t tcomm :=
+begin
+  obtain ⟨sl, sl', rfl⟩ := exists_list_nodup_eq s,
+  obtain ⟨tl, tl', rfl⟩ := exists_list_nodup_eq t,
+  rw list.disjoint_to_finset_iff_disjoint at h,
+  simp [sl', tl', noncomm_prod_to_finset, ←list.prod_append, ←list.to_finset_append,
+        list.nodup_append_of_nodup sl' tl' h]
+end
+
 end finset
