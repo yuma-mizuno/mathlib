@@ -737,26 +737,63 @@ end
 
 end cycle_factors_finset
 
-@[elab_as_eliminator] lemma cycle_induction_on [fintype β] (P : perm β → Prop) (σ : perm β)
+lemma multiset.disjoint_noncomm_prod_right {α : Type*} (f : perm α) (l : multiset (perm α)) (comm)
+  (h : ∀ g ∈ l, disjoint f g) : disjoint f (l.noncomm_prod comm) :=
+begin
+  induction l using quotient.induction_on,
+  simpa using disjoint_prod_right l h
+end
+
+#check multiset.rec_on
+
+@[elab_as_eliminator] lemma cycle_rec_on [fintype β] (P : perm β → Sort*) (σ : perm β)
   (base_one : P 1) (base_cycles : ∀ σ : perm β, σ.is_cycle → P σ)
   (induction_disjoint : ∀ σ τ : perm β, disjoint σ τ → is_cycle σ → P σ → P τ → P (σ * τ)) :
   P σ :=
 begin
   suffices :
-    ∀ l : list (perm β), (∀ τ : perm β, τ ∈ l → τ.is_cycle) → l.pairwise disjoint → P l.prod,
+    Π (s : multiset (perm β)) (hs : s.nodup) (hc : ∀ τ : perm β, τ ∈ s → τ.is_cycle)
+      (hd : ∀ (a ∈ s) (b ∈ s), a ≠ b → disjoint a b)
+      (comm : ∀ (a ∈ s) (b ∈ s), commute a b),
+      P (s.noncomm_prod comm),
   { classical,
-    let x := σ.trunc_cycle_factors.out,
-    exact (congr_arg P x.2.1).mp (this x.1 x.2.2.1 x.2.2.2) },
-  intro l,
-  induction l with σ l ih,
-  { exact λ _ _, base_one },
-  { intros h1 h2,
-    rw list.prod_cons,
-    exact induction_disjoint σ l.prod
-      (disjoint_prod_right _ (list.pairwise_cons.mp h2).1)
-      (h1 _ (list.mem_cons_self _ _))
-      (base_cycles σ (h1 σ (l.mem_cons_self σ)))
-      (ih (λ τ hτ, h1 τ (list.mem_cons_of_mem σ hτ)) (list.pairwise_of_pairwise_cons h2)) },
+    rw ←σ.cycle_factors_finset_noncomm_prod,
+    refine this _ _ _ _ _,
+    { exact (cycle_factors_finset σ).nodup },
+    { simp [←finset.mem_def, mem_cycle_factors_finset_iff] {contextual := tt} },
+    { exact cycle_factors_finset_pairwise_disjoint _ } },
+  rintro s hs hc hd comm,
+  induction s using multiset.rec_on with f s IH,
+  { simpa using base_one },
+  { rw [multiset.noncomm_prod_cons],
+    have hf : f.is_cycle,
+    { refine hc f _,
+      simp },
+    refine induction_disjoint _ _ _ hf (base_cycles _ hf)
+      (IH (multiset.nodup_of_nodup_cons hs) _ _ _),
+    { refine multiset.disjoint_noncomm_prod_right _ _ _ _,
+      intros g hg,
+      refine hd f (multiset.mem_cons_self _ _) g (multiset.mem_cons_of_mem hg) _,
+      rintro rfl,
+      exact (multiset.not_mem_of_nodup_cons hs) hg },
+    { intros f hf,
+      exact hc f (multiset.mem_cons_of_mem hf) },
+    { intros f hf g hg,
+      exact hd f (multiset.mem_cons_of_mem hf) g (multiset.mem_cons_of_mem hg) } },
+  { simp only [eq_mpr_eq_cast],
+    ext,
+    { sorry },
+    intros hn hn' hniff,
+    ext,
+    { sorry },
+    intros hc hc' hciff,
+    ext,
+    { sorry },
+    intros hd hd' hdiff,
+    ext,
+    { sorry },
+    intros hcomm hcomm' hcommiff,
+    sorry },
 end
 
 lemma cycle_factors_finset_mul_inv_mem_eq_sdiff [fintype α] {f g : perm α}
