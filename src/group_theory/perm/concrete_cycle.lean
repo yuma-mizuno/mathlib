@@ -175,3 +175,41 @@ begin
 end
 
 end cycle
+
+variables {α : Type*}
+
+def list.iterate (f : α → α) : α → ℕ → list α
+| x 0       := []
+| x (n + 1) := x :: list.iterate (f x) n
+
+-- def perm.to_list' (p : equiv.perm α) (x : α) (k : ℕ) : list α :=
+-- list.iterate p x k
+
+lemma equiv.perm.is_cycle.exists_pow_pos {p : equiv.perm α} (hp : is_cycle p) (x : α) :
+  ∃ (n : ℕ) (hn : 0 < n), (p ^ n) x = x :=
+begin
+  by_cases hx : p x = x,
+  { use 1,
+    simp [hx] },
+  by_cases hx' : p (p x) = x,
+  { use 2,
+    simp [pow_succ, hx'] },
+  { obtain ⟨n, hn⟩ := hp.exist_pow_eq hx hx', },
+  -- use order_of p,
+  -- simp [pow_order_of_eq_one],
+  -- refine order_of_pos' _,
+  -- obtain ⟨n, hn⟩ := hp.exists_gpow_eq hx hx,
+  -- {
+  --   -- obtain ⟨y, hy, hy'⟩ := id hp,
+  --   use (order_of p - 1),
+  --   rw nat.sub_add_cancel,
+  --   rw pow_order_of_eq_one,
+  --   -- simp [pow_succ'],
+  --   -- rw pow_order_of_eq_one,
+  --   -- use n,
+  --   -- simp [pow_succ, ←hn],
+  -- },
+end
+
+-- def perm.to_list (p : equiv.perm α) (hp : is_cycle p) (x : α) : list α :=
+-- list.iterate p x (nat.find (_ : ∃ (n : ℕ), (p ^ n) x = x))
