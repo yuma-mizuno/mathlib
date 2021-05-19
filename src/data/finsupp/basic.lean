@@ -1765,6 +1765,11 @@ let ⟨f, hf, hfa⟩ := mem_support_multiset_sum a ha in
 let ⟨c, hc, eq⟩ := multiset.mem_map.1 hf in
 ⟨c, hc, eq.symm ▸ hfa⟩
 
+@[simp] lemma coe_finset_sum {α β γ} [add_comm_monoid β] (s : finset α) (g : α → (γ →₀ β)) :
+  ⇑(∑ a in s, g a) = ∑ a in s, g a :=
+by { ext i, rw [finset.sum_apply, ← finsupp.apply_add_hom_apply i, add_monoid_hom.map_sum], refl }
+
+
 @[simp] lemma mem_to_multiset (f : α →₀ ℕ) (i : α) :
   i ∈ f.to_multiset ↔ i ∈ f.support :=
 by rw [← multiset.count_ne_zero, finsupp.count_to_multiset, finsupp.mem_support_iff]
