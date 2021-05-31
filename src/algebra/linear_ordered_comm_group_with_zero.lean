@@ -52,6 +52,74 @@ instance [linear_ordered_add_comm_group_with_top α] :
   ..multiplicative.linear_ordered_comm_monoid_with_zero,
   ..multiplicative.nontrivial }
 
+section monoid
+
+variables [monoid α] [preorder α]
+
+lemma left.pow_le_one_of_le [covariant_class α α (*) (≤)] {n : ℕ} {x : α} (H : x ≤ 1) :
+  x^n ≤ 1 :=
+begin
+  induction n with n hn,
+  { rw pow_zero},
+  { rw pow_succ,
+    exact mul_le_one' H hn }
+end
+
+lemma right.pow_le_one_of_le [covariant_class α α (function.swap (*)) (≤)]
+  {n : ℕ} {x : α} (H : x ≤ 1) :
+  x^n ≤ 1 :=
+begin
+  induction n with n hn,
+  { rw pow_zero},
+  { rw pow_succ,
+    exact mul_le_of_le_one_of_le H hn }
+end
+
+lemma pow_le_pow_of_le [covariant_class α α (*) (≤)] [covariant_class α α (function.swap (*)) (≤)]
+  {n : ℕ} {x y : α} (H : x ≤ y) :
+  x^n ≤ y^n :=
+begin
+  induction n with n hn,
+  { rw [pow_zero, pow_zero] },
+  { calc  x ^ n.succ = x * x ^ n  : pow_succ x n
+                 ... ≤ y * x ^ n  : mul_le_mul_right' H (x ^ n)
+                 ... ≤ y * y ^ n  : mul_le_mul_left' hn y
+                 ... = y ^ n.succ : (pow_succ y n).symm }
+end
+
+@[elab_as_eliminator]
+lemma induction_from_zero_lt {p : ℕ → Prop} {n : ℕ} (n0 : 0 < n)
+  (p1 : p 1) (pind : ∀ {n}, 0 < n → p n → p n.succ) :
+  p n :=
+begin
+  cases n,
+  { exact (lt_irrefl _ n0).elim },
+  { induction n with n ih,
+    { exact p1 },
+    { exact pind n.succ_pos (ih n.succ_pos) } }
+end
+
+lemma left.pow_lt_one_of_lt [covariant_class α α (*) (<)] {n : ℕ} {x : α} (n0 : 0 < n) (H : x < 1) :
+  x^n < 1 :=
+begin
+  refine induction_from_zero_lt n0 (by simp [H]) (λ n n0 hn, lt_trans _ H),
+  convert mul_lt_mul_left' hn x,
+  { exact pow_succ x n },
+  { exact (mul_one _).symm }
+end
+
+lemma right.pow_lt_one_of_lt [covariant_class α α (function.swap (*)) (<)] {n : ℕ} {x : α}
+  (n0 : 0 < n) (H : x < 1) :
+  x^n < 1 :=
+begin
+  refine induction_from_zero_lt n0 (by simp [H]) (λ n n0 hn, lt_trans _ H),
+  convert mul_lt_mul_right' hn x,
+  { exact pow_succ' x n },
+  { exact (one_mul _).symm }
+end
+
+end monoid
+
 section linear_ordered_comm_monoid
 
 variables [linear_ordered_comm_monoid_with_zero α]
@@ -171,7 +239,8 @@ lemma div_le_div' (a b c d : α) (hb : b ≠ 0) (hd : d ≠ 0) :
 begin
   by_cases ha : a = 0, { simp [ha] },
   by_cases hc : c = 0, { simp [inv_ne_zero hb, hc, hd], },
-  exact @div_le_div_iff' _ _ (units.mk0 a ha) (units.mk0 b hb) (units.mk0 c hc) (units.mk0 d hd)
+  exact @mul_inv_le_mul_inv_iff' _ _ _ _
+    (units.mk0 a ha) (units.mk0 b hb) (units.mk0 c hc) (units.mk0 d hd)
 end
 
 @[simp] lemma units.zero_lt (u : units α) : (0 : α) < u :=
@@ -182,8 +251,8 @@ have hb : b ≠ 0 := ne_zero_of_lt hab,
 have hd : d ≠ 0 := ne_zero_of_lt hcd,
 if ha : a = 0 then by { rw [ha, zero_mul, zero_lt_iff], exact mul_ne_zero hb hd } else
 if hc : c = 0 then by { rw [hc, mul_zero, zero_lt_iff], exact mul_ne_zero hb hd } else
-@mul_lt_mul''' _
-  (units.mk0 a ha) (units.mk0 b hb) (units.mk0 c hc) (units.mk0 d hd) _ _ _ _ _ _ hab hcd
+@mul_lt_mul_of_le_of_lt _
+  (units.mk0 a ha) (units.mk0 b hb) (units.mk0 c hc) (units.mk0 d hd) _ _ _ _ hab.le hcd
 
 lemma mul_inv_lt_of_lt_mul' (h : x < y * z) : x * z⁻¹ < y :=
 have hz : z ≠ 0 := (mul_ne_zero_iff.1 $ ne_zero_of_lt h).2,
@@ -200,10 +269,10 @@ lemma pow_lt_pow' {x : α} {m n : ℕ} (hx : 1 < x) (hmn : m < n) : x ^ m < x ^ 
 by { induction hmn with n hmn ih, exacts [pow_lt_pow_succ hx, lt_trans ih (pow_lt_pow_succ hx)] }
 
 lemma inv_lt_inv'' (ha : a ≠ 0) (hb : b ≠ 0) : a⁻¹ < b⁻¹ ↔ b < a :=
-@inv_lt_inv_iff _ _ (units.mk0 a ha) (units.mk0 b hb)
+@inv_lt_inv_iff _ _ _ _ _ (units.mk0 a ha) (units.mk0 b hb)
 
 lemma inv_le_inv'' (ha : a ≠ 0) (hb : b ≠ 0) : a⁻¹ ≤ b⁻¹ ↔ b ≤ a :=
-@inv_le_inv_iff _ _ (units.mk0 a ha) (units.mk0 b hb)
+@inv_le_inv_iff _ _ _ _ _ (units.mk0 a ha) (units.mk0 b hb)
 
 instance : linear_ordered_add_comm_group_with_top (additive (order_dual α)) :=
 { neg_top := inv_zero,

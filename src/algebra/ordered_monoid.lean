@@ -51,6 +51,13 @@ attribute [to_additive] ordered_comm_monoid
 
 section ordered_instances
 
+@[to_additive covariant_class_add_comm_semigroup.to_covariant_class_right]
+instance covariant_class_comm_semigroup.to_covariant_class_right (M : Type*) [comm_semigroup M]
+  [has_le M] [covariant_class M M (*) (≤)] :
+  covariant_class M M (function.swap (*)) (≤) :=
+{ covc := λ a b c bc, by { show b * a ≤ c * a,
+    simp [mul_comm _ a, mul_le_mul_left' bc a] } }
+
 @[to_additive]
 instance ordered_comm_monoid.to_covariant_class_left (M : Type*) [ordered_comm_monoid M] :
   covariant_class M M (*) (≤) :=
@@ -58,9 +65,10 @@ instance ordered_comm_monoid.to_covariant_class_left (M : Type*) [ordered_comm_m
 
 @[to_additive]
 instance ordered_comm_monoid.to_covariant_class_right (M : Type*) [ordered_comm_monoid M] :
-  covariant_class M M (function.swap (*)) (≤) :=
-{ covc := λ a b c bc,
-    by { convert ordered_comm_monoid.mul_le_mul_left _ _ bc a; simp_rw mul_comm } }
+  covariant_class M M (function.swap (*) : M → M → M) (≤) :=
+{ covc := λ a b c bc, by { show (b * a ≤ c * a),
+        rw [mul_comm _ a, mul_comm _ a],
+        exact ordered_comm_monoid.mul_le_mul_left _ _ bc a } }
 
 @[to_additive]
 instance ordered_comm_monoid.to_contravariant_class_left (M : Type*) [ordered_comm_monoid M] :
@@ -150,7 +158,7 @@ def function.injective.ordered_comm_monoid [ordered_comm_monoid α] {β : Type*}
 { mul_le_mul_left := λ a b ab c,
     show f (c * a) ≤ f (c * b), by simp [mul, @mul_le_mul_left' α _ _ _ _ _ ab _],
   lt_of_mul_lt_mul_left :=
-    λ a b c bc, @lt_of_mul_lt_mul_left' α (f a) _ _ _ _ _ (by rwa [← mul, ← mul]),
+    λ a b c bc, @lt_of_mul_lt_mul_left' α _ _ _ (f a) _ _ (by rwa [← mul, ← mul]),
   ..partial_order.lift f hf,
   ..hf.comm_monoid f one mul }
 
@@ -166,7 +174,7 @@ def function.injective.linear_ordered_comm_monoid [linear_ordered_comm_monoid α
   .. linear_order.lift f hf }
 
 lemma bit0_pos [ordered_add_comm_monoid α] {a : α} (h : 0 < a) : 0 < bit0 a :=
-add_pos h h
+add_pos' h h
 
 namespace units
 
@@ -530,7 +538,8 @@ le_iff_exists_mul.mpr ⟨b, rfl⟩
 lemma self_le_mul_left (a b : α) : a ≤ b * a :=
 by { rw [mul_comm], exact self_le_mul_right a b }
 
-@[simp, to_additive zero_le] lemma one_le (a : α) : 1 ≤ a := le_iff_exists_mul.mpr ⟨a, by simp⟩
+@[simp, to_additive zero_le] lemma one_le (a : α) : 1 ≤ a :=
+le_iff_exists_mul.mpr ⟨a, (one_mul _).symm⟩
 
 @[simp, to_additive] lemma bot_eq_one : (⊥ : α) = 1 :=
 le_antisymm bot_le (one_le ⊥)
@@ -702,32 +711,6 @@ def function.injective.ordered_cancel_comm_monoid {β : Type*}
   ..hf.left_cancel_semigroup f mul,
   ..hf.ordered_comm_monoid f one mul }
 
-section mono
-
-variables {β : Type*} [preorder β] {f g : β → α}
-
-@[to_additive monotone.add_strict_mono]
-lemma monotone.mul_strict_mono' (hf : monotone f) (hg : strict_mono g) :
-  strict_mono (λ x, f x * g x) :=
-λ x y h, mul_lt_mul_of_le_of_lt (hf $ le_of_lt h) (hg h)
-
-@[to_additive strict_mono.add_monotone]
-lemma strict_mono.mul_monotone' (hf : strict_mono f) (hg : monotone g) :
-  strict_mono (λ x, f x * g x) :=
-λ x y h, mul_lt_mul_of_lt_of_le (hf h) (hg $ le_of_lt h)
-
-@[to_additive strict_mono.add_const]
-lemma strict_mono.mul_const' (hf : strict_mono f) (c : α) :
-  strict_mono (λ x, f x * c) :=
-hf.mul_monotone' monotone_const
-
-@[to_additive strict_mono.const_add]
-lemma strict_mono.const_mul' (hf : strict_mono f) (c : α) :
-  strict_mono (λ x, c * f x) :=
-monotone_const.mul_strict_mono' hf
-
-end mono
-
 end ordered_cancel_comm_monoid
 
 section ordered_cancel_add_comm_monoid
@@ -796,9 +779,8 @@ in which multiplication is cancellative and monotone. -/
 class linear_ordered_cancel_comm_monoid (α : Type u)
   extends ordered_cancel_comm_monoid α, linear_ordered_comm_monoid α
 
-section linear_ordered_cancel_comm_monoid
-
-variables [linear_ordered_cancel_comm_monoid α]
+section covariant_class_mul_le
+variables [cancel_comm_monoid α] [linear_order α] [covariant_class α α (*) (≤)]
 
 @[to_additive] lemma min_mul_mul_left (a b c : α) : min (a * b) (a * c) = a * min b c :=
 (monotone_id.const_mul' a).map_min.symm
@@ -827,6 +809,11 @@ min_le_iff.2 $ or.inr $ le_mul_of_one_le_left' ha
 lemma max_le_mul_of_one_le {a b : α} (ha : 1 ≤ a) (hb : 1 ≤ b) : max a b ≤ a * b :=
 max_le_iff.2 ⟨le_mul_of_one_le_right' hb, le_mul_of_one_le_left' ha⟩
 
+end covariant_class_mul_le
+
+section linear_ordered_cancel_comm_monoid
+variables [linear_ordered_cancel_comm_monoid α]
+
 /-- Pullback a `linear_ordered_cancel_comm_monoid` under an injective map. -/
 @[to_additive function.injective.linear_ordered_cancel_add_comm_monoid
 "Pullback a `linear_ordered_cancel_add_comm_monoid` under an injective map."]
@@ -848,9 +835,14 @@ instance [h : has_mul α] : has_mul (order_dual α) := h
 @[to_additive]
 instance [ordered_comm_monoid α] : ordered_comm_monoid (order_dual α) :=
 { mul_le_mul_left := λ a b h c, @mul_le_mul_left' α _ _ _ _ _ h _,
-  lt_of_mul_lt_mul_left := λ a b c h, @lt_of_mul_lt_mul_left' α a c b _ _ _ h,
+  lt_of_mul_lt_mul_left := λ a b c h, @lt_of_mul_lt_mul_left' α _ _ _ a c b h,
   ..order_dual.partial_order α,
   ..show comm_monoid α, by apply_instance }
+
+@[to_additive ordered_cancel_add_comm_monoid.to_contravariant_class]
+instance ordered_cancel_comm_monoid.to_contravariant_class [ordered_cancel_comm_monoid α] :
+  contravariant_class (order_dual α) (order_dual α) has_mul.mul has_le.le :=
+{ covtc := λ a b c bc, (ordered_cancel_comm_monoid.le_of_mul_le_mul_left a c b (dual_le.mp bc)) }
 
 @[to_additive]
 instance [ordered_cancel_comm_monoid α] : ordered_cancel_comm_monoid (order_dual α) :=
@@ -931,3 +923,6 @@ instance [div_inv_monoid α] : div_inv_monoid (order_dual α) :=
 { ..show div_inv_monoid α, by apply_instance }
 
 end type_tags
+--for linarith?
+theorem add_pos [ordered_add_comm_monoid α] {a b : α} : 0 < a → 0 < b → 0 < a + b :=
+add_pos'
