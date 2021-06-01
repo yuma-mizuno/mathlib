@@ -522,30 +522,26 @@ class canonically_ordered_add_monoid (α : Type*) extends ordered_add_comm_monoi
 class canonically_ordered_monoid (α : Type*) extends ordered_comm_monoid α, order_bot α :=
 (le_iff_exists_mul : ∀ a b : α, a ≤ b ↔ ∃ c, b = a * c)
 
-section canonically_ordered_monoid
+/--  A typeclass for Types with `1` and `≤`, where `1` is smaller than all elements. -/
+class one_min (α : Type*) [has_one α] [has_le α] : Prop :=
+( one_le : ∀ a : α, 1 ≤ a )
 
-variables [canonically_ordered_monoid α] {a b c d : α}
+/--  A typeclass for Types with `0` and `≤`, where `0` is smaller than all elements. -/
+class zero_min (α : Type*) [has_zero α] [has_le α] : Prop :=
+( one_le : ∀ a : α, 0 ≤ a )
 
-@[to_additive]
-lemma le_iff_exists_mul : a ≤ b ↔ ∃c, b = a * c :=
-canonically_ordered_monoid.le_iff_exists_mul a b
+attribute [to_additive] one_min
 
-@[to_additive]
-lemma self_le_mul_right (a b : α) : a ≤ a * b :=
-le_iff_exists_mul.mpr ⟨b, rfl⟩
+@[priority 100, to_additive] -- see Note [lower instance priority]
+instance canonically_ordered_monoid.to_one_min (α : Type*) [canonically_ordered_monoid α] :
+  one_min α :=
+{ one_le    := λ a,
+  (canonically_ordered_monoid.le_iff_exists_mul (1 : α) a).mpr ⟨_, (one_mul _).symm⟩ }
 
-@[to_additive]
-lemma self_le_mul_left (a b : α) : a ≤ b * a :=
-by { rw [mul_comm], exact self_le_mul_right a b }
+namespace one_min
 
-@[simp, to_additive zero_le] lemma one_le (a : α) : 1 ≤ a :=
-le_iff_exists_mul.mpr ⟨a, (one_mul _).symm⟩
-
-@[simp, to_additive] lemma bot_eq_one : (⊥ : α) = 1 :=
-le_antisymm bot_le (one_le ⊥)
-
-@[simp, to_additive] lemma mul_eq_one_iff : a * b = 1 ↔ a = 1 ∧ b = 1 :=
-mul_eq_one_iff' (one_le _) (one_le _)
+section has_one
+variables [has_one α] [partial_order α] [one_min α] {a : α}
 
 @[simp, to_additive] lemma le_one_iff_eq_one : a ≤ 1 ↔ a = 1 :=
 iff.intro
@@ -555,27 +551,123 @@ iff.intro
 @[to_additive] lemma one_lt_iff_ne_one : 1 < a ↔ a ≠ 1 :=
 iff.intro ne_of_gt $ assume hne, lt_of_le_of_ne (one_le _) hne.symm
 
-@[to_additive] lemma exists_pos_mul_of_lt (h : a < b) : ∃ c > 1, a * c = b :=
-begin
-  obtain ⟨c, hc⟩ := le_iff_exists_mul.1 h.le,
-  refine ⟨c, one_lt_iff_ne_one.2 _, hc.symm⟩,
-  rintro rfl,
-  simpa [hc, lt_irrefl] using h
-end
+/--  Any Type with a `one_min` class automatically has `1` as the bottom element. -/
+@[to_additive
+"Any Type with a `zero_min` class automatically has `0` as the bottom element."]
+ -- see Note [lower instance priority]
+def order_bot (α) [has_one α] [partial_order α] [one_min α] : order_bot α :=
+{ bot    := 1,
+  bot_le := one_min.one_le,
+  ..‹partial_order α› }
+
+
+@[simp, to_additive]
+lemma bot_eq_one : ((one_min.order_bot α).bot : α) = 1 :=
+le_antisymm (by { convert @bot_le α (order_bot α), simpa }) (one_le _)
+
+end has_one
+
+section mul_one_class
+variable [mul_one_class α]
+
+section preorder
+variables [preorder α] [one_min α]
+
+@[to_additive]
+lemma one_lt_of_gt {n m : α} (h : n < m) : 1 < m :=
+(one_le _).trans_lt h
+
+section left
+variables [covariant_class α α (*) (≤)] {a b c : α}
+
+@[to_additive] lemma le_mul_right (h : a ≤ b) : a ≤ b * c :=
+calc  a ≤ b     : h
+    ... = b * 1 : (mul_one _).symm
+    ... ≤ b * c : mul_le_mul_left' (one_le _) _
+
+/-
+@[to_additive] lemma le_mul_of_le : a ≤ a * b :=
+le_mul_right rfl.le
+-/
+
+@[to_additive] lemma le_self_mul : a ≤ a * b :=
+le_mul_right rfl.le
+
+end left
+
+section right
+variables [covariant_class α α (function.swap (*)) (≤)] {a b c : α}
 
 @[to_additive] lemma le_mul_left (h : a ≤ c) : a ≤ b * c :=
-calc a = 1 * a : by simp
-  ... ≤ b * c : mul_le_mul' (one_le _) h
+calc  a ≤ c     : h
+    ... = 1 * c : (one_mul _).symm
+    ... ≤ b * c : mul_le_mul_right' (one_le _) _
 
 @[to_additive] lemma le_mul_self : a ≤ b * a :=
 le_mul_left (le_refl a)
 
-@[to_additive] lemma le_mul_right (h : a ≤ b) : a ≤ b * c :=
-calc a = a * 1 : by simp
-  ... ≤ b * c : mul_le_mul' h (one_le _)
+end right
 
-@[to_additive] lemma le_self_mul : a ≤ a * c :=
-le_mul_right (le_refl a)
+end preorder
+
+@[simp, to_additive] lemma mul_eq_one_iff [partial_order α] [one_min α]
+  [covariant_class α α (*) (≤)] [covariant_class α α (function.swap (*)) (≤)] {a b : α} :
+  a * b = 1 ↔ a = 1 ∧ b = 1 :=
+mul_eq_one_iff' (one_le _) (one_le _)
+
+end mul_one_class
+
+end one_min
+
+alias one_min.le_self_mul ← self_le_mul_right
+attribute [to_additive] self_le_mul_right
+
+alias one_min.le_mul_self ← self_le_mul_left
+attribute [to_additive] self_le_mul_left
+
+@[to_additive zero_le]
+lemma one_le [has_one α] [has_le α] [one_min α] : ∀ (a : α), 1 ≤ a :=
+one_min.one_le
+
+alias one_min.bot_eq_one ← bot_eq_one
+attribute [to_additive] bot_eq_one
+
+alias one_min.mul_eq_one_iff ← mul_eq_one_iff
+attribute [to_additive] mul_eq_one_iff
+
+alias one_min.le_one_iff_eq_one ← le_one_iff_eq_one
+attribute [to_additive] le_one_iff_eq_one
+
+alias one_min.one_lt_iff_ne_one ← one_lt_iff_ne_one
+attribute [to_additive] one_lt_iff_ne_one
+
+alias one_min.le_mul_left ← le_mul_left
+attribute [to_additive] le_mul_left
+
+alias one_min.le_mul_right ← le_mul_right
+attribute [to_additive] le_mul_right
+
+alias one_min.le_self_mul ← le_self_mul
+attribute [to_additive] le_self_mul
+
+section canonically_ordered_monoid
+
+variables [canonically_ordered_monoid α] {a b c d : α}
+
+@[to_additive]
+lemma le_iff_exists_mul : a ≤ b ↔ ∃c, b = a * c :=
+canonically_ordered_monoid.le_iff_exists_mul a b
+
+@[to_additive] lemma exists_pos_mul_of_lt (h : a < b) : ∃ c > 1, a * c = b :=
+begin
+  obtain ⟨c, hc⟩ := le_iff_exists_mul.1 h.le,
+  refine ⟨c, one_min.one_lt_iff_ne_one.2 _, hc.symm⟩,
+  rintro rfl,
+  exact lt_irrefl a (h.trans_le (hc.trans (mul_one _)).le),
+end
+
+@[to_additive] lemma le_mul_self : a ≤ b * a :=
+one_min.le_mul_left rfl.le
 
 local attribute [semireducible] with_zero
 
@@ -780,7 +872,7 @@ class linear_ordered_cancel_comm_monoid (α : Type u)
   extends ordered_cancel_comm_monoid α, linear_ordered_comm_monoid α
 
 section covariant_class_mul_le
-variables [cancel_comm_monoid α] [linear_order α] [covariant_class α α (*) (≤)]
+variables [comm_monoid α] [linear_order α] [covariant_class α α (*) (≤)]
 
 @[to_additive] lemma min_mul_mul_left (a b c : α) : min (a * b) (a * c) = a * min b c :=
 (monotone_id.const_mul' a).map_min.symm
