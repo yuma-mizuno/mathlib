@@ -594,16 +594,16 @@ lemma le_div_iff_mul_le {a b r : ℝ≥0} (hr : r ≠ 0) : a ≤ b / r ↔ a * r
 by rw [div_eq_inv_mul, ← mul_le_iff_le_inv hr, mul_comm]
 
 lemma div_le_iff {a b r : ℝ≥0} (hr : r ≠ 0) : a / r ≤ b ↔ a ≤ b * r :=
-@div_le_iff ℝ _ a r b $ pos_iff_ne_zero.2 hr
+@div_le_iff ℝ _ a r b $ by apply pos_iff_ne_zero.2 hr
 
 lemma div_le_iff' {a b r : ℝ≥0} (hr : r ≠ 0) : a / r ≤ b ↔ a ≤ r * b :=
-@div_le_iff' ℝ _ a r b $ pos_iff_ne_zero.2 hr
+@div_le_iff' ℝ _ a r b $ by apply pos_iff_ne_zero.2 hr
 
 lemma le_div_iff {a b r : ℝ≥0} (hr : r ≠ 0) : a ≤ b / r ↔ a * r ≤ b :=
-@le_div_iff ℝ _ a b r $ pos_iff_ne_zero.2 hr
+@le_div_iff ℝ _ a b r $ by apply pos_iff_ne_zero.2 hr
 
 lemma le_div_iff' {a b r : ℝ≥0} (hr : r ≠ 0) : a ≤ b / r ↔ r * a ≤ b :=
-@le_div_iff' ℝ _ a b r $ pos_iff_ne_zero.2 hr
+@le_div_iff' ℝ _ a b r $ by apply pos_iff_ne_zero.2 hr
 
 lemma div_lt_iff {a b r : ℝ≥0} (hr : r ≠ 0) : a / r < b ↔ a < b * r :=
 lt_iff_lt_of_le_iff_le (le_div_iff hr)
