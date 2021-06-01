@@ -358,7 +358,7 @@ theorem add_eq_self {c : cardinal} (h : omega ≤ c) : c + c = c :=
 le_antisymm
   (by simpa only [nat.cast_bit0, nat.cast_one, mul_eq_self h, two_mul] using
      canonically_ordered_semiring.mul_le_mul_right' ((nat_lt_omega 2).le.trans h) c)
-  (self_le_add_left c c)
+  self_le_add_left
 
 /-- If `α` is an infinite type, then the cardinality of `α ⊕ β` is the maximum
 of the cardinalities of `α` and `β`. -/
@@ -366,7 +366,7 @@ theorem add_eq_max {a b : cardinal} (ha : omega ≤ a) : a + b = max a b :=
 le_antisymm
   (add_eq_self (le_trans ha (le_max_left a b)) ▸
     add_le_add (le_max_left _ _) (le_max_right _ _)) $
-max_le (self_le_add_right _ _) (self_le_add_left _ _)
+max_le self_le_add_right self_le_add_left
 
 theorem add_lt_of_lt {a b c : cardinal} (hc : omega ≤ c)
   (h1 : a < c) (h2 : b < c) : a + b < c :=
@@ -396,7 +396,7 @@ begin
   rw [max_le_iff], split,
   { intro h, cases (le_or_lt omega a) with ha ha,
     { left, use ha, rw [← not_lt], intro hb, apply ne_of_gt _ h,
-      exact lt_of_lt_of_le hb (self_le_add_left b a) },
+      exact lt_of_lt_of_le hb self_le_add_left },
     right, rw [← h, add_lt_omega_iff, lt_omega, lt_omega] at ha,
     rcases ha with ⟨⟨n, rfl⟩, ⟨m, rfl⟩⟩, norm_cast at h ⊢,
     rw [← add_right_inj, h, add_zero] },
@@ -419,7 +419,7 @@ begin
     rw [eq_of_add_eq_of_omega_le h this hb] },
   { have hc : c < omega,
     { rw [← not_le], intro hc,
-      apply lt_irrefl omega, apply lt_of_le_of_lt (le_trans hc (self_le_add_left _ a)),
+      apply lt_irrefl omega, apply (hc.trans self_le_add_left).trans_lt,
       rw [← h], apply add_lt_omega ha hb },
     rw [lt_omega] at *,
     rcases ha with ⟨n, rfl⟩, rcases hb with ⟨m, rfl⟩, rcases hc with ⟨k, rfl⟩,
@@ -511,8 +511,8 @@ begin
   transitivity mk {t : set (ulift.{u} nat ⊕ α) // mk t ≤ c},
   { refine ⟨embedding.subtype_map _ _⟩, apply embedding.image,
     use sum.inr, apply sum.inr.inj, intros s hs, exact le_trans mk_image_le hs },
-  refine le_trans
-    (mk_bounded_set_le_of_omega_le (ulift.{u} nat ⊕ α) c (self_le_add_right omega (mk α))) _,
+  refine (mk_bounded_set_le_of_omega_le (ulift.{u} nat ⊕ α) c
+    (@self_le_add_right _ _ _ _ _ omega (mk α))).trans _,
   rw [max_comm, ←add_eq_max]; refl
 end
 
@@ -629,14 +629,14 @@ by simp [bit1]
 by { rw ←not_iff_not, simp [bit0], }
 
 @[simp] lemma zero_lt_bit1 (a : cardinal) : 0 < bit1 a :=
-lt_of_lt_of_le zero_lt_one (self_le_add_left _ _)
+lt_of_lt_of_le zero_lt_one self_le_add_left
 
 @[simp] lemma one_le_bit0 (a : cardinal) : 1 ≤ bit0 a ↔ 0 < a :=
 ⟨λ h, (zero_lt_bit0 a).mp (lt_of_lt_of_le zero_lt_one h),
- λ h, le_trans (one_le_iff_pos.mpr h) (self_le_add_left a a)⟩
+ λ h, le_trans (one_le_iff_pos.mpr h) self_le_add_left⟩
 
 @[simp] lemma one_le_bit1 (a : cardinal) : 1 ≤ bit1 a :=
-self_le_add_left _ _
+self_le_add_left
 
 theorem bit0_eq_self {c : cardinal} (h : omega ≤ c) : bit0 c = c :=
 add_eq_self h
@@ -717,7 +717,7 @@ end
 begin
   split,
   { assume h,
-    apply bit0_le_bit1.1 (le_trans (self_le_add_right (bit0 a) 1) h) },
+    apply bit0_le_bit1.1 (le_trans self_le_add_right h) },
   { assume h,
     calc a + a + 1 ≤ a + b + 1 : add_le_add_right (add_le_add_left h a) 1
            ... ≤ b + b + 1 : add_le_add_right (add_le_add_right h b) 1 }
