@@ -225,7 +225,7 @@ instance multiset : denumerable (multiset α) := mk' ⟨
   λ s : multiset α, encode $ lower ((s.map encode).sort (≤)) 0,
   λ n, multiset.map (of_nat α) (raise (of_nat (list ℕ) n) 0),
   λ s, by have := raise_lower
-      (list.sorted_cons.2 ⟨λ n _, zero_le n, (s.map encode).sort_sorted _⟩);
+      (list.sorted_cons.2 ⟨λ n _, nat.zero_le n, (s.map encode).sort_sorted _⟩);
     simp [-multiset.coe_map, this],
   λ n, by simp [-multiset.coe_map, list.merge_sort_eq_self _ (raise_sorted _ _), lower_raise]⟩
 
@@ -270,7 +270,7 @@ instance finset : denumerable (finset α) := mk' ⟨
   λ s : finset α, encode $ lower' ((s.map (eqv α).to_embedding).sort (≤)) 0,
   λ n, finset.map (eqv α).symm.to_embedding (raise'_finset (of_nat (list ℕ) n) 0),
   λ s, finset.eq_of_veq $ by simp [-multiset.coe_map, raise'_finset,
-    raise_lower' (λ n _, zero_le n) (finset.sort_sorted_lt _)],
+    raise_lower' (λ n _, nat.zero_le n) (finset.sort_sorted_lt _)],
   λ n, by simp [-multiset.coe_map, finset.map, raise'_finset, finset.sort,
     list.merge_sort_eq_self (≤) ((raise'_sorted _ _).imp (@le_of_lt _ _)),
     lower_raise']⟩

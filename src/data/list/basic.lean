@@ -1573,7 +1573,7 @@ by rw ← h; apply take_left
 
 theorem take_take : ∀ (n m) (l : list α), take n (take m l) = take (min n m) l
 | n         0        l      := by rw [min_zero, take_zero, take_nil]
-| 0         m        l      := by rw [zero_min, take_zero, take_zero]
+| 0         m        l      := by rw [nat.zero_min, take_zero, take_zero]
 | (succ n)  (succ m) nil    := by simp only [take_nil]
 | (succ n)  (succ m) (a::l) := by simp only [take, min_succ_succ, take_take n m l]; split; refl
 

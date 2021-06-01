@@ -1310,7 +1310,7 @@ lemma mul_le_mul {a b c d : α} (hab : a ≤ b) (hcd : c ≤ d) : a * c ≤ b * 
 begin
   rcases (le_iff_exists_add _ _).1 hab with ⟨b, rfl⟩,
   rcases (le_iff_exists_add _ _).1 hcd with ⟨d, rfl⟩,
-  suffices : a * c ≤ a * c + (a * d + b * c + b * d), by simpa [mul_add, add_mul, add_assoc],
+  suffices : a * c ≤ a * c + (a * d + b * c + b * d), by simp [mul_add, add_mul, add_assoc],
   exact (le_iff_exists_add _ _).2 ⟨_, rfl⟩
 end
 

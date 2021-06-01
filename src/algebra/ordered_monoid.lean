@@ -590,7 +590,7 @@ calc  a ≤ b     : h
 le_mul_right rfl.le
 -/
 
-@[to_additive] lemma le_self_mul : a ≤ a * b :=
+@[simp, to_additive] lemma le_self_mul : a ≤ a * b :=
 le_mul_right rfl.le
 
 end left
@@ -603,7 +603,7 @@ calc  a ≤ c     : h
     ... = 1 * c : (one_mul _).symm
     ... ≤ b * c : mul_le_mul_right' (one_le _) _
 
-@[to_additive] lemma le_mul_self : a ≤ b * a :=
+@[simp, to_additive] lemma le_mul_self : a ≤ b * a :=
 le_mul_left (le_refl a)
 
 end right
@@ -625,7 +625,7 @@ attribute [to_additive] self_le_mul_right
 alias one_min.le_mul_self ← self_le_mul_left
 attribute [to_additive] self_le_mul_left
 
-@[to_additive zero_le]
+@[simp, to_additive zero_le]
 lemma one_le [has_one α] [has_le α] [one_min α] : ∀ (a : α), 1 ≤ a :=
 one_min.one_le
 
@@ -649,6 +649,9 @@ attribute [to_additive] le_mul_right
 
 alias one_min.le_self_mul ← le_self_mul
 attribute [to_additive] le_self_mul
+
+alias zero_min.pos_of_gt ← one_lt_of_gt
+attribute [to_additive] one_lt_of_gt
 
 section canonically_ordered_monoid
 
@@ -716,9 +719,6 @@ instance canonically_ordered_monoid.has_exists_mul_of_le (α : Type u)
 { exists_mul_of_le := λ a b hab, le_iff_exists_mul.mp hab }
 
 end canonically_ordered_monoid
-
-lemma pos_of_gt {M : Type*} [canonically_ordered_add_monoid M] {n m : M} (h : n < m) : 0 < m :=
-lt_of_le_of_lt (zero_le _) h
 
 /-- A canonically linear-ordered additive monoid is a canonically ordered additive monoid
     whose ordering is a linear order. -/

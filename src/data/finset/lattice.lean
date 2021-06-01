@@ -786,7 +786,7 @@ lemma mem_sup {α β} [decidable_eq β] {s : finset α} {f : α → multiset β}
 begin
   classical,
   apply s.induction_on,
-  { simp },
+  { tauto, },
   { intros a s has hxs,
     rw [finset.sup_insert, multiset.sup_eq_union, multiset.mem_union],
     split,

@@ -215,20 +215,18 @@ attribute [simp] val_zero
 @[simp] lemma val_zero' (n) : (0 : fin (n+1)).val = 0 := rfl
 @[simp] lemma mk_zero : (⟨0, nat.succ_pos'⟩ : fin (n + 1)) = (0 : fin _) := rfl
 
-lemma zero_le (a : fin (n + 1)) : 0 ≤ a := zero_le a.1
+lemma zero_le (a : fin (n + 1)) : 0 ≤ a := a.val.zero_le
 
 lemma pos_iff_ne_zero (a : fin (n+1)) : 0 < a ↔ a ≠ 0 :=
 begin
   split,
   { rintros h rfl, exact lt_irrefl _ h, },
   { rintros h,
-    apply (@pos_iff_ne_zero _ _ (a : ℕ)).mpr,
-    cases a,
-    rintro w,
-    apply h,
-    simp at w,
-    subst w,
-    refl, },
+    refine (pos_iff_ne_zero.mpr _ : 0 < (a : ℕ)),
+    rcases a with ⟨a, ha⟩,
+    rw coe_mk,
+    rintro rfl,
+    exact h rfl },
 end
 
 /-- The greatest value of `fin (n+1)` -/
