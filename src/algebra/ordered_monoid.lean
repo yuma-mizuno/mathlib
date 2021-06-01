@@ -512,7 +512,7 @@ class canonically_ordered_add_monoid (α : Type*) extends ordered_add_comm_monoi
 /-- A canonically ordered monoid is an ordered commutative monoid
   in which the ordering coincides with the divisibility relation,
   which is to say, `a ≤ b` iff there exists `c` with `b = a * c`.
-  Example seem rare; it seems more likely that the `order_dual`
+  Examples seem rare; it seems more likely that the `order_dual`
   of a naturally-occurring lattice satisfies this than the lattice
   itself (for example, dual of the lattice of ideals of a PID or
   Dedekind domain satisfy this; collections of all things ≤ 1 seem to
