@@ -21,7 +21,9 @@ variables {γ : Type*} [canonically_linear_ordered_add_monoid γ]
 namespace finsupp
 
 instance : order_bot (α →₀ μ) :=
-{ bot := 0, bot_le := by simp [finsupp.le_def, ← bot_eq_zero], .. finsupp.partial_order}
+{ bot := 0,
+  bot_le := by { simp only [le_def, coe_zero, pi.zero_apply, implies_true_iff, zero_le] },
+  .. finsupp.partial_order }
 
 instance [semilattice_inf β] : semilattice_inf (α →₀ β) :=
 { inf := zip_with (⊓) inf_idem,
@@ -59,6 +61,7 @@ lemma support_sup
   {f g : α →₀ γ} : (f ⊔ g).support = f.support ∪ g.support :=
 begin
   ext, simp only [finset.mem_union, mem_support_iff, sup_apply, ne.def, ← bot_eq_zero],
+--  simp,
   rw sup_eq_bot_iff, tauto,
 end
 
