@@ -555,15 +555,15 @@ iff.intro ne_of_gt $ assume hne, lt_of_le_of_ne (one_le _) hne.symm
 @[to_additive
 "Any Type with a `zero_min` class automatically has `0` as the bottom element."]
  -- see Note [lower instance priority]
-def order_bot (α) [has_one α] [partial_order α] [one_min α] : order_bot α :=
+def to_order_bot (α) [has_one α] [partial_order α] [one_min α] : order_bot α :=
 { bot    := 1,
   bot_le := one_min.one_le,
   ..‹partial_order α› }
 
 
 @[simp, to_additive]
-lemma bot_eq_one : ((one_min.order_bot α).bot : α) = 1 :=
-le_antisymm (by { convert @bot_le α (order_bot α), simpa }) (one_le _)
+lemma bot_eq_one : ((one_min.to_order_bot α).bot : α) = 1 :=
+le_antisymm (by { convert @bot_le α (to_order_bot α), simpa }) (one_le _)
 
 end has_one
 
