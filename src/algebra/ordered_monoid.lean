@@ -565,6 +565,14 @@ def to_order_bot (α) [has_one α] [partial_order α] [one_min α] : order_bot �
 lemma bot_eq_one : ((one_min.to_order_bot α).bot : α) = 1 :=
 le_antisymm (by { convert @bot_le α (to_order_bot α), simpa }) (one_le _)
 
+@[priority 10, to_additive]  --  see Note [lower_instance_priority]
+instance pro (α : Type*) [has_one α] [linear_order α] [one_min α] : semilattice_sup_bot α :=
+{ sup := max,
+  le_sup_left := λ a b, le_max_left a b,
+  le_sup_right := λ a b, le_sup_right,
+  sup_le := λ a b c ac bc, sup_le ac bc,
+  ..(one_min.to_order_bot α) }
+
 end has_one
 
 section mul_one_class

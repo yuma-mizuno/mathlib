@@ -87,10 +87,10 @@ begin
   rw [indicator],
   refine le_trans (degrees_prod _ _) (finset.sum_le_sum $ assume s hs, _),
   refine le_trans (degrees_sub _ _) _,
-  rw [degrees_one, ← bot_eq_zero, bot_sup_eq],
+  erw [degrees_one, ← bot_eq_zero, bot_sup_eq],
   refine le_trans (degrees_pow _ _) (nsmul_le_nsmul_of_le_right _ _),
   refine le_trans (degrees_sub _ _) _,
-  rw [degrees_C, ← bot_eq_zero, sup_bot_eq],
+  erw [degrees_C, ← bot_eq_zero, sup_bot_eq],
   exact degrees_X' _
 end
 

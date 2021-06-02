@@ -57,55 +57,16 @@ instance [semilattice_sup β] : semilattice_sup (α →₀ β) :=
 lemma sup_apply [semilattice_sup β] {a : α} {f g : α →₀ β} : (f ⊔ g) a = f a ⊔ g a := rfl
 
 universes u v
-variables {α₁ : Type u} {γ₁ : Type v} [add_comm_monoid γ₁] [linear_order γ₁] [zero_min γ₁]
-
-@[simp]
-lemma orf : ((zero_min.to_order_bot γ₁).bot : γ₁) = 0 := rfl
+variables {α₁ : Type u} {γ₁ : Type v} [add_monoid γ₁] [linear_order γ₁] [zero_min γ₁]
 
 @[simp]
 lemma support_sup
-  {f g : α₁ →₀ γ₁} : (f ⊔ g).support = f.support ∪ g.support :=
+  {f g : α →₀ γ} : (f ⊔ g).support = f.support ∪ g.support :=
 begin
---  ext,
-    ext, simp only [finset.mem_union, mem_support_iff, sup_apply, ne.def, ← bot_eq_zero],
-  haveI := zero_min.to_order_bot γ₁,
-  have : (¬ (f a : γ₁) ⊔ g a = ⊥ ↔ ¬(f a : γ₁) = ⊥ ∨ ¬(g a : γ₁) = (⊥ : γ₁)),
-  sorry,
-  rw [orf],
-  rw bot_eq_zero,
-  convert this,
---  hint,
-  simp [bot_eq_zero],
-  show (¬ (f a : γ₁) ⊔ g a = ⊥ ↔ ¬(f a : γ₁) = ⊥ ∨ ¬(g a : γ₁) = (⊥ : γ₁)), by {
-    sorry
-  },
-  rw sup_eq_bot_iff, tauto,
-
-   simp,
-
-  rw [← bot_eq_zero],
-have : (¬ (f a : γ₁) ⊔ g a = (⊥ : γ₁) ↔ ¬(f a : γ₁) = ⊥ ∨ ¬(g a : γ₁) = (⊥ : γ₁)) →
-  (¬f a ⊔ g a = _inst.bot ↔ ¬(f a) = _inst.bot ∨ ¬(g a) = (_inst.bot) ),
-sorry,
-convert this _,
-sorry,
-sorry,
-sorry,
-  erw sup_eq_bot_iff, tauto,
-tauto,
-simp [_inst],
-
-  rw @sup_eq_bot_iff γ (by {
-    exact canonically_linear_ordered_add_monoid.semilattice_sup_bot
-  }) (f a : γ) (g a : γ), tauto,
---  simp,
-  convert iff.trans _ (sup_eq_bot_iff).symm,
-  rotate, exact α →₀ γ ,exact 0,
-
-  apply generalized_boolean_algebra.to_semilattice_sup_bot,
-  simp,
-  ext, simp only [finset.mem_union, mem_support_iff, sup_apply, ne.def, ← bot_eq_zero],
-  rw sup_eq_bot_iff, tauto
+    ext, simp only [finset.mem_union, mem_support_iff, sup_apply, ne.def],
+    rw [← not_and_distrib, not_iff_not],
+    convert (@sup_eq_bot_iff γ _ (f a) (g a));
+    exact le_antisymm (zero_le ⊥) bot_le,
 end
 
 instance lattice [lattice β] : lattice (α →₀ β) :=

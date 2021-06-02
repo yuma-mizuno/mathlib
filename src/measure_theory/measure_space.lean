@@ -2186,7 +2186,7 @@ begin
         repeat {rw measure_eq_inter_diff h_meas_t h_meas_s, rw set.diff_eq},
         refine add_le_add _ _,
         { rw add_apply,
-          apply le_add_right _,
+          refine le_add_right _,
           rw add_apply,
           rw ← @restrict_eq_self _ _ μ s _ h_meas_t_inter_s (set.inter_subset_right _ _),
           rw ← @restrict_eq_self _ _ ν s _ h_meas_t_inter_s (set.inter_subset_right _ _),

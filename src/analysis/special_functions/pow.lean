@@ -1011,7 +1011,7 @@ nnreal.eq $ real.rpow_one _
 nnreal.eq $ real.one_rpow _
 
 lemma rpow_add {x : ℝ≥0} (hx : x ≠ 0) (y z : ℝ) : x ^ (y + z) = x ^ y * x ^ z :=
-nnreal.eq $ real.rpow_add (pos_iff_ne_zero.2 hx) _ _
+nnreal.eq $ real.rpow_add (by apply pos_iff_ne_zero.2 hx) _ _
 
 lemma rpow_add' (x : ℝ≥0) {y z : ℝ} (h : y + z ≠ 0) : x ^ (y + z) = x ^ y * x ^ z :=
 nnreal.eq $ real.rpow_add' x.2 h
@@ -1026,7 +1026,7 @@ lemma rpow_neg_one (x : ℝ≥0) : x ^ (-1 : ℝ) = x ⁻¹ :=
 by simp [rpow_neg]
 
 lemma rpow_sub {x : ℝ≥0} (hx : x ≠ 0) (y z : ℝ) : x ^ (y - z) = x ^ y / x ^ z :=
-nnreal.eq $ real.rpow_sub (pos_iff_ne_zero.2 hx) y z
+nnreal.eq $ real.rpow_sub (by apply pos_iff_ne_zero.2 hx) y z
 
 lemma rpow_sub' (x : ℝ≥0) {y z : ℝ} (h : y - z ≠ 0) :
   x ^ (y - z) = x ^ y / x ^ z :=

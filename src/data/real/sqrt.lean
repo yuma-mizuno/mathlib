@@ -43,7 +43,7 @@ variables {x y : ℝ≥0}
 order_iso.symm $ strict_mono.order_iso_of_surjective (λ x, x * x)
   (λ x y h, mul_self_lt_mul_self x.2 h) $
   (continuous_id.mul continuous_id).surjective tendsto_mul_self_at_top $
-    by simp [order_bot.at_bot_eq]
+    by {simp [order_bot.at_bot_eq, bot_eq_zero] }
 
 lemma sqrt_eq_iff_sq_eq : sqrt x = y ↔ y * y = x :=
 sqrt.to_equiv.apply_eq_iff_eq_symm_apply.trans eq_comm

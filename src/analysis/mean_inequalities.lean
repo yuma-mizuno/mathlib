@@ -606,7 +606,7 @@ private lemma add_rpow_le_one_of_add_le_one {p : ℝ} (a b : ℝ≥0∞) (hab : 
 begin
   have h_le_one : ∀ x : ℝ≥0∞, x ≤ 1 → x ^ p ≤ x, from λ x hx, rpow_le_self_of_le_one hx hp1,
   have ha : a ≤ 1, from self_le_add_right.trans hab,
-  have hb : b ≤ 1, from self_le_add_right.trans hab,
+  have hb : b ≤ 1, from self_le_add_left.trans hab,
   exact (add_le_add (h_le_one a ha) (h_le_one b hb)).trans hab,
 end
 
