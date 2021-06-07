@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aaron Anderson, Jesse Michael Han, Floris van Doorn
 -/
 import data.nat.basic
+import set_theory.zfc
 
 /-!
 # Basics on First-Order Structures
@@ -83,7 +84,12 @@ class Structure :=
 (fun_map : ∀{n}, L.functions n → (fin n → M) → M)
 (rel_map : ∀{n}, L.relations n → (fin n → M) → Prop)
 
-variables (N : Type*) [L.Structure M] [L.Structure N]
+variables {L} {M}
+
+/-- Given a binary function, translates it into the form required for `fun_map`. -/
+def binary_fun_map (f : M → M → M) (x : fin 2 → M) : M := f (x 0) (x 1)
+
+variables (L) (M) (N : Type*) [L.Structure M] [L.Structure N]
 
 open first_order.language.Structure
 
