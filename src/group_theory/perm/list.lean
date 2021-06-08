@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yakov Pechersky
 -/
 
-import data.list.rotate
+import data.list.cycle
 import group_theory.perm.support
 
 /-!
@@ -17,9 +17,24 @@ we prove that `equiv.perm.support (form_perm l) = l.to_finset`, and that
 
 -/
 
+lemma nat.lt_one_iff {n : ℕ} :
+  n < 1 ↔ n = 0 :=
+⟨λ h, le_antisymm (nat.le_of_lt_succ h) n.zero_le, λ h, nat.lt_succ_of_le h.le⟩
+
 namespace list
 
 variables {α β : Type*}
+
+lemma not_mem_imp_ne_last {l : list α} {x : α} (hx : x ∉ l) (hl : l ≠ []) :
+  x ≠ l.last hl :=
+begin
+  induction l with hd tl IH,
+  { contradiction },
+  { simp only [not_or_distrib, mem_cons_iff] at hx,
+    cases tl,
+    { simpa using hx.left },
+    { simpa using IH hx.right _ } }
+end
 
 section form_perm
 
@@ -52,6 +67,71 @@ begin
         ←rotate_zero (z :: (w :: xs ++ [x])), ←cons_append, ←rotate_cons_succ,
         ←zip_with_distrib_tail, prod_cons, ←form_perm, tail_cons] }
 end
+
+-- lemma form_perm_apply_eq_iff (xs : list α) (x y : α) :
+--   form_perm xs x = y ↔ (x ∉ xs ∧ x = y) ∨ (∃ h : x ∈ xs, y = next xs x h) :=
+-- begin
+--   cases xs with a xs,
+--   { simp },
+--   cases xs with b xs,
+--   { by_cases hx : x = a,
+--     { simp [hx, eq_comm] },
+--     { simp [hx] } },
+--   induction xs with c xs IH generalizing x y a b,
+--   { simp only [mem_cons_iff, form_perm_pair, mem_singleton],
+--     by_cases ha : x = a,
+--     { simp [ha, eq_comm] },
+--     by_cases hb : x = b,
+--     { by_cases hab : a = b;
+--       simp [hb, hab, next, eq_comm] },
+--     { simp [swap_apply_of_ne_of_ne, ha, hb] } },
+--   { rw form_perm_cons_cons_cons,
+--     simp only [mem_cons_iff, coe_mul, function.comp_app],
+--     rw apply_eq_iff_eq_symm_apply,
+--     rw IH,
+--     rw ←apply_eq_iff_eq_symm_apply,
+--     simp only [mem_cons_iff, symm_swap, not_or_distrib],
+--     split,
+--     { rintro (⟨⟨ha, hc, hm⟩, rfl⟩ | ⟨hm, h⟩),
+--       { by_cases hb : x = b,
+--         { subst hb,
+--           refine or.inr ⟨_, _⟩,
+--           { simp },
+--           { rw next_ne_head_ne_last _ _ _ _ ha,
+--             { simp },
+--             { simp only [last, ne.def],
+--               refine not_mem_imp_ne_last _ _,
+--               simp [not_or_distrib, hc, hm] } } },
+--         { simp [ha, hb, hc, hm, swap_apply_of_ne_of_ne] } },
+--       { simp only [mem_cons_iff] at hm,
+--         by_cases ha : x = a,
+--         { simpa [ha, swap_apply_eq_iff] using h },
+--         by_cases hc : x = c,
+--         { subst hc,
+--           by_cases hb : y = b,
+--           { simp only [hb, next, ha, swap_apply_left, last_cons_cons, last, dif_neg,
+--                        not_false_iff] at h,
+--             split_ifs at h with h' h',
+--             { contradiction },
+--             { simp [hb], },
+--             simp,
+--           },
+--           {  },
+--           },
+--         -- rw swap_apply_eq_iff at h,
+--         -- rcases hm with rfl|rfl|hm,
+--         -- { simpa using h },
+--         -- {
+--         --   simp,
+--         --   sorry,
+--         --   },
+--         -- { simp [hm], },
+--         -- simp [h],
+--       },
+--     },
+--     {  },
+--   },
+-- end
 
 lemma form_perm_apply_last_concat (x y : α) (xs : list α) (h : nodup (x :: (xs ++ [y]))) :
   form_perm (x :: (xs ++ [y])) y = x :=
@@ -476,16 +556,23 @@ begin
   exact form_perm_ne_self_imp_mem _ _ h
 end
 
+lemma form_perm_eq_one_iff (hl : nodup l) :
+  form_perm l = 1 ↔ l.length ≤ 1 :=
+begin
+  cases l with hd tl,
+  { simp },
+  { rw ←form_perm_apply_mem_eq_self_iff _ hl hd (mem_cons_self _ _),
+    split,
+    { simp {contextual := tt} },
+    { intro h,
+      simp only [(hd :: tl).form_perm_apply_mem_eq_self_iff hl hd (mem_cons_self hd tl),
+                 add_le_iff_nonpos_left, length, nonpos_iff_eq_zero, length_eq_zero] at h,
+      simp [h] } }
+end
+
 lemma sublist.mem_of_mem {α : Type*} {l l' : list α} (h : l <+ l') (x : α) (hx : x ∈ l) :
   x ∈ l' :=
-begin
-  induction h with sl tl hd h IH sl tl hd h IH,
-  { simpa using hx },
-  { exact mem_cons_of_mem _ (IH hx) },
-  { rcases hx with rfl|hx,
-    { exact mem_cons_self _ _ },
-    { exact mem_cons_of_mem _ (IH hx) } }
-end
+h.subset hx
 
 lemma mem_of_mem_tail {α : Type*} {l : list α} (x : α) (h : x ∈ l.tail) : x ∈ l :=
 (tail_sublist _).mem_of_mem x h
@@ -663,7 +750,6 @@ def partition_nodup : list α → list (list α)
         simp [nodup_prefix_cons],
       end,
     nodup_prefix l :: partition_nodup (drop (nodup_prefix l).length l)
-
 end form_perm
 
 end list
