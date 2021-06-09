@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aaron Anderson, Jesse Michael Han, Floris van Doorn
 -/
 import data.nat.basic
+import logic.arity
 
 /-!
 # Basics on First-Order Structures
@@ -40,22 +41,20 @@ namespace first_order
 /-- A first-order language consists of a type of functions of every natural-number arity and a
   type of relations of every natural-number arity. -/
 structure language :=
-(functions : ℕ → Type*) (relations : ℕ → Type*)
+(consts : Type*) (functions : ℕ → Type*) (relations : ℕ → Type*)
 
 namespace language
 
 /-- The empty language has no symbols. -/
-def empty : language := ⟨λ _, pempty, λ _, pempty⟩
+def empty : language := ⟨pempty, λ _, pempty, λ _, pempty⟩
 
 instance : inhabited language := ⟨empty⟩
-
-/-- The type of constants in a given language. -/
-@[nolint has_inhabited_instance] def const (L : language) := L.functions 0
 
 variable (L : language)
 
 /-- A language is relational when it has no function symbols. -/
 class is_relational : Prop :=
+(empty_consts : L.consts → false)
 (empty_functions : ∀ n, L.functions n → false)
 
 /-- A language is algebraic when it has no relation symbols. -/
@@ -64,11 +63,13 @@ class is_algebraic : Prop :=
 
 variable {L}
 
-instance is_relational_of_empty_functions {symb : ℕ → Type*} : is_relational ⟨λ _, pempty, symb⟩ :=
-⟨by { intro n, apply pempty.elim }⟩
+instance is_relational_of_empty_functions {symb : ℕ → Type*} :
+  is_relational ⟨pempty, λ _, pempty, symb⟩ :=
+⟨pempty.elim, λ n, pempty.elim⟩
 
-instance is_algebraic_of_empty_relations {symb : ℕ → Type*}  : is_algebraic ⟨symb, λ _, pempty⟩ :=
-⟨by { intro n, apply pempty.elim }⟩
+instance is_algebraic_of_empty_relations {csymb : Type*} {fsymb : ℕ → Type*} :
+  is_algebraic ⟨csymb, fsymb, λ _, pempty⟩ :=
+⟨λ n, pempty.elim⟩
 
 instance is_relational_empty : is_relational (empty) := language.is_relational_of_empty_functions
 instance is_algebraic_empty : is_algebraic (empty) := language.is_algebraic_of_empty_relations
@@ -80,8 +81,9 @@ variables (L) (M : Type*)
   (modeled as `(fin n → M)`) to `M`, and a relation of arity `n` is a function from tuples of length
   `n` to `Prop`. -/
 class Structure :=
-(fun_map : ∀{n}, L.functions n → (fin n → M) → M)
-(rel_map : ∀{n}, L.relations n → (fin n → M) → Prop)
+(const_map : L.consts → M)
+(fun_map : ∀{n}, L.functions n → ary_fun M M n)
+(rel_map : ∀{n}, L.relations n → ary_rel M n)
 
 variables (N : Type*) [L.Structure M] [L.Structure N]
 
@@ -92,24 +94,30 @@ open first_order.language.Structure
   tuples in the second structure where that relation is still true. -/
 protected structure hom :=
 (to_fun : M → N)
-(map_fun' : ∀{n} (f : L.functions n) x, to_fun (fun_map f x) = fun_map f (to_fun ∘ x) . obviously)
-(map_rel' : ∀{n} (r : L.relations n) x, rel_map r x → rel_map r (to_fun ∘ x) . obviously)
+(map_const' : ∀ (c : L.consts), to_fun (const_map c) = const_map c . obviously)
+(map_fun' : ∀{n} (f : L.functions n), (fun_map f).postcompose to_fun =
+  (fun_map f).precompose to_fun . obviously)
+(map_rel' : ∀{n} (r : L.relations n), (rel_map r) ≤ (rel_map r).precompose to_fun . obviously)
 
 localized "notation A ` →[`:25 L `] ` B := L.hom A B" in first_order
 
 /-- An embedding of first-order structures is an embedding that commutes with the
   interpretations of functions and relations. -/
 protected structure embedding extends M ↪ N :=
-(map_fun' : ∀{n} (f : L.functions n) x, to_fun (fun_map f x) = fun_map f (to_fun ∘ x) . obviously)
-(map_rel' : ∀{n} (r : L.relations n) x, rel_map r (to_fun ∘ x) ↔ rel_map r x . obviously)
+(map_const' : ∀ (c : L.consts), to_fun (const_map c) = const_map c . obviously)
+(map_fun' : ∀{n} (f : L.functions n), (fun_map f).postcompose to_fun =
+  (fun_map f).precompose to_fun . obviously)
+(map_rel' : ∀{n} (r : L.relations n), (rel_map r).precompose to_fun = (rel_map r) . obviously)
 
 localized "notation A ` ↪[`:25 L `] ` B := L.embedding A B" in first_order
 
 /-- An equivalence of first-order structures is an equivalence that commutes with the
   interpretations of functions and relations. -/
 protected structure equiv extends M ≃ N :=
-(map_fun' : ∀{n} (f : L.functions n) x, to_fun (fun_map f x) = fun_map f (to_fun ∘ x) . obviously)
-(map_rel' : ∀{n} (r : L.relations n) x, rel_map r (to_fun ∘ x) ↔ rel_map r x . obviously)
+(map_const' : ∀ (c : L.consts), to_fun (const_map c) = const_map c . obviously)
+(map_fun' : ∀{n} (f : L.functions n), (fun_map f).postcompose to_fun =
+  (fun_map f).precompose to_fun . obviously)
+(map_rel' : ∀{n} (r : L.relations n), (rel_map r).precompose to_fun = (rel_map r) . obviously)
 
 localized "notation A ` ≃[`:25 L `] ` B := L.equiv A B" in first_order
 
@@ -131,11 +139,14 @@ coe_injective (funext h)
 lemma ext_iff {f g : M →[L] N} : f = g ↔ ∀ x, f x = g x :=
 ⟨λ h x, h ▸ rfl, λ h, ext h⟩
 
-@[simp] lemma map_fun (φ : M →[L] N) {n : ℕ} (f : L.functions n) (x : fin n → M) :
-  φ (fun_map f x) = fun_map f (φ ∘ x) := φ.map_fun' f x
+@[simp] lemma map_const (φ : M →[L] N) (c : L.consts) :
+  φ (const_map c) = const_map c := φ.map_const' c
 
-@[simp] lemma map_rel (φ : M →[L] N) {n : ℕ} (r : L.relations n) (x : fin n → M) :
-  rel_map r x → rel_map r (φ ∘ x) := φ.map_rel' r x
+@[simp] lemma map_fun (φ : M →[L] N) {n : ℕ} (f : L.functions n) :
+  (fun_map f).postcompose φ = (fun_map f).precompose φ := φ.map_fun' f
+
+@[simp] lemma map_rel (φ : M →[L] N) {n : ℕ} (r : L.relations n) :
+  (rel_map r) ≤ (rel_map r).precompose φ := φ.map_rel' r
 
 variables (L) (M)
 /-- The identity map from a structure to itself -/
@@ -152,7 +163,14 @@ instance : inhabited (M →[L] M) := ⟨id L M⟩
 /-- Composition of first-order homomorphisms -/
 @[trans] def comp (hnp : N →[L] P) (hmn : M →[L] N) : M →[L] P :=
 { to_fun := hnp ∘ hmn,
-  map_rel' := λ _ _ _ h, by simp [h] }
+  map_fun' := λ n f, begin
+    rw [ary_fun.precompose_comp, ary_fun.postcompose_comp],
+    simp [ary_fun.precompose_postcompose],
+  end,
+  map_rel' := λ n r, begin
+    rw [ary_fun.precompose_comp],
+    exact le_trans (hmn.map_rel r) (ary_rel.precompose_mono (hnp.map_rel r)),
+  end }
 
 @[simp] lemma comp_apply (g : N →[L] P) (f : M →[L] N) (x : M) :
   g.comp f x = g (f x) := rfl
@@ -168,11 +186,14 @@ namespace embedding
 @[simps] instance has_coe_to_fun : has_coe_to_fun (M ↪[L] N) :=
 ⟨(λ _, M → N), λ f, f.to_fun⟩
 
-@[simp] lemma map_fun (φ : M ↪[L] N) {n : ℕ} (f : L.functions n) (x : fin n → M) :
-  φ (fun_map f x) = fun_map f (φ ∘ x) := φ.map_fun' f x
+@[simp] lemma map_const (φ : M ↪[L] N) (c : L.consts) :
+  φ (const_map c) = const_map c := φ.map_const' c
 
-@[simp] lemma map_rel (φ : M ↪[L] N) {n : ℕ} (r : L.relations n) (x : fin n → M) :
-  rel_map r (φ ∘ x) ↔ rel_map r x := φ.map_rel' r x
+@[simp] lemma map_fun (φ : M ↪[L] N) {n : ℕ} (f : L.functions n) :
+  (fun_map f).postcompose φ = (fun_map f).precompose φ := φ.map_fun' f
+
+@[simp] lemma map_rel (φ : M ↪[L] N) {n : ℕ} (r : L.relations n) :
+  (rel_map r).precompose φ = rel_map r := φ.map_rel' r
 
 /-- A first-order embedding is also a first-order homomorphism. -/
 def to_hom (f : M ↪[L] N) : M →[L] N :=
@@ -203,7 +224,8 @@ lemma injective (f : M ↪[L] N) : function.injective f := f.to_embedding.inject
 variables (L) (M)
 /-- The identity embedding from a structure to itself -/
 @[refl] def refl : M ↪[L] M :=
-{ to_embedding := function.embedding.refl M }
+{ to_fun := id,
+  inj' := (function.embedding.refl _).injective }
 
 variables {L} {M}
 
@@ -215,6 +237,8 @@ instance : inhabited (M ↪[L] M) := ⟨refl L M⟩
 /-- Composition of first-order embeddings -/
 @[trans] def comp (hnp : N ↪[L] P) (hmn : M ↪[L] N) : M ↪[L] P :=
 { to_fun := hnp ∘ hmn,
+  map_fun' := sorry,
+  map_rel' := sorry,
   inj' := hnp.injective.comp hmn.injective }
 
 @[simp] lemma comp_apply (g : N ↪[L] P) (f : M ↪[L] N) (x : M) :
@@ -246,8 +270,8 @@ namespace equiv
 @[simps] instance has_coe_to_fun : has_coe_to_fun (M ≃[L] N) :=
 ⟨(λ _, M → N), λ f, f.to_fun⟩
 
-@[simp] lemma map_fun (φ : M ≃[L] N) {n : ℕ} (f : L.functions n) (x : fin n → M) :
-  φ (fun_map f x) = fun_map f (φ ∘ x) := φ.map_fun' f x
+@[simp] lemma map_fun (φ : M →[L] N) {n : ℕ} (f : L.functions n) :
+  (fun_map f).postcompose φ = (fun_map f).precompose φ := φ.map_fun' f
 
 @[simp] lemma map_rel (φ : M ≃[L] N) {n : ℕ} (r : L.relations n) (x : fin n → M) :
   rel_map r (φ ∘ x) ↔ rel_map r x := φ.map_rel' r x
