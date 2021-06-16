@@ -330,15 +330,24 @@ lemma is_cycle.same_cycle {f : perm β} (hf : is_cycle f) {x y : β}
   (hx : f x ≠ x) (hy : f y ≠ y) : same_cycle f x y :=
 hf.exists_gpow_eq hx hy
 
-lemma same_cycle.nat' [fintype β] (f : perm β) {x y : β} (h : same_cycle f x y) :
-  ∃ (i : ℕ), (f ^ i) x = y :=
+lemma same_cycle.nat' [fintype β] {f : perm β} {x y : β} (h : same_cycle f x y) :
+  ∃ (i : ℕ) (h : i < order_of f), (f ^ i) x = y :=
 begin
   classical,
   obtain ⟨k, rfl⟩ := id h,
   use ((k % order_of f).nat_abs),
   rw [←gpow_coe_nat, int.nat_abs_of_nonneg, ←gpow_eq_mod_order_of],
-  refine int.mod_nonneg _ (int.coe_nat_ne_zero_iff_pos.mpr _),
-  exact order_of_pos _
+  split,
+  { rw [←int.coe_nat_lt, int.nat_abs_of_nonneg],
+    { refine (int.mod_lt _ _).trans_le _,
+      { rw int.coe_nat_ne_zero_iff_pos,
+        exact order_of_pos _ },
+      { simp } },
+    { refine int.mod_nonneg _ (int.coe_nat_ne_zero_iff_pos.mpr _),
+      exact order_of_pos _ } },
+  { refl },
+  { refine int.mod_nonneg _ (int.coe_nat_ne_zero_iff_pos.mpr _),
+    exact order_of_pos _ }
 end
 
 instance [fintype α] (f : perm α) : decidable_rel (same_cycle f) :=
@@ -827,50 +836,58 @@ begin
       { exact λ H, hd.disjoint_cycle_factors_finset (mem_inter_of_mem H hf) } } }
 end
 
-lemma order_of_le_support_card [fintype α] [decidable_eq α] (f : perm α) (hf : f ≠ 1) :
-  order_of f ≤ f.support.card :=
-begin
-  -- induction h : order_of f using nat.strong_induction_on with n IH,
-  -- simp at IH,
-  -- contrapose! hf,
-
-  -- refine card_le
-  -- by_cases H : ∃ (x : α), x ∈ f.support,
-  -- { obtain ⟨x, hx⟩ := H,
-  -- },
-  -- {  },
-
-  -- revert f,
-  -- intro f,
-  -- apply cycle_induction_on _ f,
-  -- { simp },
-  -- { intros g hg,
-  --   simp [order_of_is_cycle hg, le_rfl] },
-  -- { intros g h hd hg IH IH' hgh,
-  --   -- have := commute.order_of_mul_dvd_lcm,
-  --   -- have : order_of (g * h) ≤ (order_of g).lcm (order_of h),
-  -- },
-end
-
 lemma same_cycle.nat [fintype α] (f : perm α) {x y : α} (h : same_cycle f x y) :
-  ∃ (i : ℕ) (hi : i < f.support.card), (f ^ i) x = y :=
+  ∃ (i : ℕ) (hi : i ≤ f.support.card), (f ^ i) x = y :=
 begin
-  obtain ⟨k, rfl⟩ := id h,
-  use ((k % order_of f).nat_abs),
-  rw [←gpow_coe_nat, ←int.coe_nat_lt, int.nat_abs_of_nonneg, ←gpow_eq_mod_order_of],
-  split,
-  { refine (int.mod_lt _ _).trans_le _,
-    { rw int.coe_nat_ne_zero_iff_pos,
-      exact order_of_pos _ },
-    { simp,
-    },
-  },
-  { refl },
-  { refine int.mod_nonneg _ (int.coe_nat_ne_zero_iff_pos.mpr _),
-    exact order_of_pos _ },
+  revert f,
+  intro f,
+  apply cycle_induction_on _ f,
+  { rintro ⟨k, rfl⟩,
+    simp },
+  { intros g hg H,
+    rw ←order_of_is_cycle hg,
+    obtain ⟨n, hn, rfl⟩ := H.nat',
+    exact ⟨n, hn.le, rfl⟩ },
+  { rintros g h hd hg IH IH' ⟨m, rfl⟩,
+    rw [hd.card_support_mul],
+    by_cases hgx : x ∈ g.support;
+    by_cases hhx : x ∈ h.support,
+    { rw disjoint_iff_disjoint_support at hd,
+      exfalso,
+      exact hd (mem_inter_of_mem hgx hhx) },
+    { have hpow : ∀ (k : ℤ), ((g * h) ^ k) x = (g ^ k) x,
+      { intro k,
+        suffices : (h ^ k) x = x,
+        { simpa [hd.commute.mul_gpow] },
+        rw gpow_apply_eq_self_of_apply_eq_self,
+        simpa using hhx },
+      obtain ⟨k, hk, hk'⟩ := IH _,
+      { refine ⟨k, hk.trans (nat.le_add_right _ _), _⟩,
+        simpa [←gpow_coe_nat, hpow] using hk' },
+      { use m,
+        simp [hpow] } },
+    { have hpow : ∀ (k : ℤ), ((g * h) ^ k) x = (h ^ k) x,
+      { intro k,
+        suffices : (g ^ k) x = x,
+        { simpa [hd.commute.eq, hd.commute.symm.mul_gpow] },
+        rw gpow_apply_eq_self_of_apply_eq_self,
+        simpa using hgx },
+      obtain ⟨k, hk, hk'⟩ := IH' _,
+      { refine ⟨k, hk.trans (nat.le_add_left _ _), _⟩,
+        simpa [←gpow_coe_nat, hpow] using hk' },
+      { use m,
+        simp [hpow] } },
+    { refine ⟨0, zero_le _, _⟩,
+      have hmx : (h ^ m) x = x,
+      { contrapose! hhx,
+        rw [←mem_support] at hhx,
+        exact support_gpow_le h m hhx },
+      have gmx : (g ^ m) x = x,
+      { contrapose! hgx,
+        rw [←mem_support] at hgx,
+        exact support_gpow_le g m hgx },
+      simp [hd.commute.mul_gpow, hmx, gmx] } }
 end
-
-
 
 section generation
 
