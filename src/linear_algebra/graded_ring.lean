@@ -5,6 +5,7 @@ Authors: Kevin Buzzard
 -/
 
 import linear_algebra.direct_sum_module
+import ring_theory.ideal.basic
 
 /-!
 # Graded rings and algebras
@@ -29,12 +30,20 @@ https://stacks.math.columbia.edu/tag/00JL
 
 -/
 
-variables (ι : Type*) [add_monoid ι] (A : Type*) [ring A]
-  (G : ι → add_subgroup A)
+open direct_sum
 
-/-- The `direct_sum` formed by a collection of `submodule`s of `M` is said to be internal if the
-canonical map `(⨁ i, A i) →ₗ[R] M` is bijective. -/
-def direct_sum.submodule_is_internal {R M : Type*}
-  [semiring R] [add_comm_monoid M] [module R M]
-  (A : ι → submodule R M) : Prop :=
-function.bijective (to_module R ι M (λ i, (A i).subtype))
+structure add_subgroup_grading (ι : Type*) [add_monoid ι] [decidable_eq ι] (A : Type*) [ring A] :=
+  (G : ι → add_subgroup A)
+  (hG_zero : (1 : A) ∈ G 0)
+  (hG_add : ∀ {i j : ι} (a : A) (ha : a ∈ G i) (b : A) (hb : b ∈ G j), a * b ∈ G (i + j))
+  (hG : add_subgroup_is_internal G)
+
+namespace add_subgroup_grading
+
+variables {ι : Type*} [add_monoid ι] [decidable_eq ι] {A : Type*} [ring A] (g : add_subgroup_grading ι A)
+
+def component (g : add_subgroup_grading ι A) (i : ι) (a : A) : g.G i := sorry
+
+def is_homogeneous (J : ideal A) : Prop := ∀ (j ∈ J) (i : ι), (component g i j).1 ∈ J
+
+end add_subgroup_grading
