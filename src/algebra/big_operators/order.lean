@@ -431,10 +431,29 @@ end finset
 namespace fintype
 
 variables [fintype ι]
-
+set_option pp.all true
 @[mono, to_additive sum_mono]
 lemma prod_mono' [ordered_comm_monoid M] : monotone (λ f : ι → M, ∏ i, f i) :=
 λ f g hfg, finset.prod_le_prod'' $ λ x _, hfg x
+#print sum_mono
+lemma a [ordered_comm_monoid M] (m : M) :
+∏ i, (λ x : fin 2, m) i ≤
+∏ i, (λ x : fin 2, m) i :=
+begin
+  mono,
+
+
+end
+lemma aa [ordered_add_comm_monoid M] (m : M) :
+∑ i, (λ x : fin 2, m) i ≤
+∑ i, (λ x : fin 2, m) i :=
+begin
+  mono,
+
+
+end
+#print prod_mono'
+#print sum_mono
 
 @[to_additive sum_strict_mono]
 lemma prod_strict_mono' [ordered_cancel_comm_monoid M] : strict_mono (λ f : ι → M, ∏ x, f x) :=
