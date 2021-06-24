@@ -993,6 +993,17 @@ instance : comm_cancel_monoid_with_zero (ideal S) :=
 
 lemma ideal.is_unit_iff {I : ideal S} : is_unit I ↔ I = ⊤ := sorry
 
+/-- If `P` is a prime ideal, then `P^(i + 1) / P^i` is equivalent to `S / P`. -/
+instance (P : ideal S) [P_prime : P.is_prime] (i : ℕ) :
+  module P.quotient ((P^(i + 1) : submodule _ S).comap (P^i).subtype).quotient :=
+module.of_core
+{ smul := submodule.liftq _ _ _ }
+
+/-- If `P` is a prime ideal, then `P^(i + 1) / P^i` is equivalent to `S / P`. -/
+def ideal.pow_succ_quotient_equiv (P : ideal S) [P_prime : P.is_prime] (i : ℕ) :
+  ((P^(i + 1) : submodule _ S).comap (P^i).subtype).quotient ≃ₗ[ℤ] P.quotient :=
+basis.equiv _ (basis.singleton (fin 1) _) (equiv.refl _)
+
 /-- Multiplicity of the ideal norm, for powers of prime ideals. -/
 lemma card_norm_pow_of_prime (b : basis ι ℤ S) [unique_factorization_monoid (ideal S)]
   (P : ideal S) [P_prime : P.is_prime] {i : ℕ} :
