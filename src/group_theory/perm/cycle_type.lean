@@ -175,6 +175,19 @@ begin
   exact dvd_lcm h,
 end
 
+lemma order_of_cycle_of_dvd_order_of [fintype α] (f : perm α) (x : α) :
+  order_of (cycle_of f x) ∣ order_of f :=
+begin
+  by_cases hx : f x = x,
+  { rw ←cycle_of_eq_one_iff at hx,
+    simp [hx] },
+  { refine dvd_of_mem_cycle_type _,
+    rw [cycle_type, multiset.mem_map],
+    refine ⟨f.cycle_of x, _, _⟩,
+    { rwa [←finset.mem_def, cycle_of_mem_cycle_factors_finset_iff, mem_support] },
+    { simp [order_of_is_cycle (is_cycle_cycle_of _ hx)] } }
+end
+
 lemma two_dvd_card_support {σ : perm α} (hσ : σ ^ 2 = 1) : 2 ∣ σ.support.card :=
 (congr_arg (has_dvd.dvd 2) σ.sum_cycle_type).mp
   (multiset.dvd_sum (λ n hn, by rw le_antisymm (nat.le_of_dvd zero_lt_two (dvd_trans
