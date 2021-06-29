@@ -570,6 +570,31 @@ begin
       simp [h] } }
 end
 
+lemma form_perm_eq_form_perm_iff {l l' : list α} (hl : l.nodup) (hl' : l'.nodup) :
+  l.form_perm = l'.form_perm ↔ l ~r l' ∨ l.length ≤ 1 ∧ l'.length ≤ 1 :=
+begin
+  rcases l with (_ | ⟨x, _ | ⟨y, l⟩⟩),
+  { suffices : l'.length ≤ 1 ↔ l' = nil ∨ l'.length ≤ 1,
+    { simpa [eq_comm, form_perm_eq_one_iff, hl, hl', length_eq_zero] },
+    refine ⟨λ h, or.inr h, _⟩,
+    rintro (rfl | h),
+    { simp },
+    { exact h } },
+  { suffices : l'.length ≤ 1 ↔ [x] ~r l' ∨ l'.length ≤ 1,
+    { simpa [eq_comm, form_perm_eq_one_iff, hl, hl', length_eq_zero, le_rfl] },
+    refine ⟨λ h, or.inr h, _⟩,
+    rintro (h | h),
+    { simp [←h.perm.length_eq] },
+    { exact h } },
+  { rcases l' with (_ | ⟨x', _ | ⟨y', l'⟩⟩),
+    { simp [form_perm_eq_one_iff, hl] },
+    { suffices : ¬ (x :: y :: l) ~r [x'],
+      { simpa [form_perm_eq_one_iff, hl] },
+      intro h,
+      simpa using h.perm.length_eq },
+    { simp [form_perm_ext_iff hl hl'] } }
+end
+
 lemma sublist.mem_of_mem {α : Type*} {l l' : list α} (h : l <+ l') (x : α) (hx : x ∈ l) :
   x ∈ l' :=
 h.subset hx
