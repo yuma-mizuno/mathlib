@@ -1345,7 +1345,7 @@ def choose (hp : ∃! a, p a) : α := choose_x p hp
 lemma choose_spec (hp : ∃! a, p a) : p (choose p hp) :=
 (choose_x p hp).property
 
-@[simp] lemma fintype.choose_subtype_eq {α : Type*} (p : α → Prop) [fintype {a : α // p a}]
+@[simp] lemma choose_subtype_eq {α : Type*} (p : α → Prop) [fintype {a : α // p a}]
   [decidable_eq α] (x : {a : α // p a})
   (h : ∃! (a : {a // p a}), (a : α) = x := ⟨x, rfl, λ y hy, by simpa [subtype.ext_iff] using hy⟩) :
   fintype.choose (λ (y : {a : α // p a}), (y : α) = x) h = x :=
