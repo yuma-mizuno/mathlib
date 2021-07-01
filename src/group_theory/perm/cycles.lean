@@ -926,7 +926,7 @@ by simp [cycle_factors_finset_eq_empty_iff]
   f.cycle_factors_finset = {f} ↔ f.is_cycle :=
 by simp [cycle_factors_finset_eq_finset]
 
-lemma is_cycle.cycle_factors_finset_eq_singleton (hf : is_cycle f) :
+lemma is_cycle.cycle_factors_finset_eq_singleton {f : perm α} (hf : is_cycle f) :
   f.cycle_factors_finset = {f} :=
 cycle_factors_finset_eq_singleton_self_iff.mpr hf
 
