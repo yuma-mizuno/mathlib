@@ -856,7 +856,6 @@ begin
   exact hd p hp q hq h
 end
 
--- TODO: use #7578
 lemma cycle_factors_finset_mem_commute (p : perm α) (hp : p ∈ cycle_factors_finset f)
   (q : perm α) (hq : q ∈ cycle_factors_finset f) :
   _root_.commute p q :=
@@ -867,8 +866,10 @@ begin
 end
 
 /-- The product of cycle factors is equal to the original `f : perm α`. -/
-lemma cycle_factors_finset_noncomm_prod :
-  f.cycle_factors_finset.noncomm_prod id (cycle_factors_finset_mem_commute f) = f :=
+lemma cycle_factors_finset_noncomm_prod
+  (comm : ∀ (g ∈ f.cycle_factors_finset) (h ∈ f.cycle_factors_finset),
+    commute (id g) (id h) := cycle_factors_finset_mem_commute f) :
+  f.cycle_factors_finset.noncomm_prod id (comm) = f :=
 begin
   have : f.cycle_factors_finset = f.cycle_factors_finset := rfl,
   obtain ⟨-, hd, hp⟩ := cycle_factors_finset_eq_finset.mp this,
@@ -913,7 +914,7 @@ begin
   rwa [mem_support, ←h.right x hx, ←mem_support]
 end
 
-lemma cycle_factors_finset_eq_empty_iff :
+lemma cycle_factors_finset_eq_empty_iff {f : perm α} :
   cycle_factors_finset f = ∅ ↔ f = 1 :=
 by simpa [cycle_factors_finset_eq_finset] using eq_comm
 
@@ -921,7 +922,7 @@ by simpa [cycle_factors_finset_eq_finset] using eq_comm
   cycle_factors_finset (1 : perm α) = ∅ :=
 by simp [cycle_factors_finset_eq_empty_iff]
 
-@[simp] lemma cycle_factors_finset_eq_singleton_self_iff :
+@[simp] lemma cycle_factors_finset_eq_singleton_self_iff {f : perm α} :
   f.cycle_factors_finset = {f} ↔ f.is_cycle :=
 by simp [cycle_factors_finset_eq_finset]
 
@@ -929,7 +930,7 @@ lemma is_cycle.cycle_factors_finset_eq_singleton (hf : is_cycle f) :
   f.cycle_factors_finset = {f} :=
 cycle_factors_finset_eq_singleton_self_iff.mpr hf
 
-lemma cycle_factors_finset_eq_singleton_iff :
+lemma cycle_factors_finset_eq_singleton_iff {f g : perm α} :
   f.cycle_factors_finset = {g} ↔ f.is_cycle ∧ f = g :=
 begin
   suffices : f = g → (g.is_cycle ↔ f.is_cycle),
@@ -946,7 +947,7 @@ begin
   simpa [h] using cycle_factors_finset_noncomm_prod g
 end
 
-lemma disjoint.disjoint_cycle_factors_finset (h : disjoint f g) :
+lemma disjoint.disjoint_cycle_factors_finset {f g : perm α} (h : disjoint f g) :
   _root_.disjoint (cycle_factors_finset f) (cycle_factors_finset g) :=
 begin
   rw disjoint_iff_disjoint_support at h,
@@ -957,7 +958,7 @@ begin
   simp [ha, ←hf a ha, ←hg a ha]
 end
 
-lemma disjoint.cycle_factors_finset_mul_eq_union (h : disjoint f g) :
+lemma disjoint.cycle_factors_finset_mul_eq_union {f g : perm α} (h : disjoint f g) :
   cycle_factors_finset (f * g) = cycle_factors_finset f ∪ cycle_factors_finset g :=
 begin
   rw cycle_factors_finset_eq_finset,
@@ -978,7 +979,7 @@ begin
       rw [cycle_factors_finset_noncomm_prod, cycle_factors_finset_noncomm_prod] } }
 end
 
-lemma disjoint_mul_inv_of_mem_cycle_factors_finset (h : f ∈ cycle_factors_finset g) :
+lemma disjoint_mul_inv_of_mem_cycle_factors_finset {f g : perm α} (h : f ∈ cycle_factors_finset g) :
   disjoint (g * f⁻¹) f :=
 begin
   rw mem_cycle_factors_finset_iff at h,
