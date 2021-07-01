@@ -39,6 +39,7 @@ section embed
 variables {s t : set α} (h : s ⊆ t)
 include h
 
+/-- The subset relation implies an embedding from the subset to the superset. -/
 def embed_subset : s ↪ t :=
 ⟨subtype.map id (λ _ hx, h hx), subtype.map_injective _ function.injective_id⟩
 
@@ -60,6 +61,10 @@ end embed
 
 namespace equiv.perm
 
+/--
+Regard a `perm α` as a permutation over the subtype of elements
+that are in its support.
+-/
 @[simps apply]
 protected def attach (p : perm α) : perm {x | p x ≠ x} :=
 perm.subtype_perm p (by simp)
@@ -124,6 +129,9 @@ lemma attach_mul_via_fintype_embedding [decidable_eq α]
       q.attach.via_fintype_embedding (embed_subset (subset_union_right _ _)) :=
 by { ext, simp }
 
+/--
+The subgroup of `perm α` that have finite support.
+-/
 protected def finite (α : Type*) : subgroup (perm α) :=
 { carrier := {p : perm α | set.finite {x | p x ≠ x}},
   one_mem' := by simp,
@@ -144,10 +152,10 @@ protected def finite (α : Type*) : subgroup (perm α) :=
     simp [eq_comm],
   end }
 
-@[simp] lemma finite_support_finite (p : equiv.perm.finite α) : {x | p x ≠ x}.finite :=
+@[simp] lemma finite_support_finite (p : equiv.perm.finite α) : {x | ¬ p x = x}.finite :=
 p.prop
 
-@[simp] lemma mem_finite_iff (p : perm α) : p ∈ perm.finite α ↔ {x | p x ≠ x}.finite := iff.rfl
+@[simp] lemma mem_finite_iff (p : perm α) : p ∈ perm.finite α ↔ {x | ¬ p x = x}.finite := iff.rfl
 
 @[simp] lemma finite_eq_top [fintype α] : perm.finite α = ⊤ :=
 begin
@@ -170,6 +178,13 @@ noncomputable instance fintype_finite_set_support_coe (p : perm.finite α) :
   sign p.attach = sign p :=
 by simp [attach_def, sign_subtype_perm]
 
+/--
+The sign of a permutation, given that it is finite. Works for over
+not-necessarily `[fintype α]` by requiring the finiteness assumption to
+be provided by membership in `perm.finite α`.
+See `equiv.perm.sign_eq_sign` for a proof that this function
+is equal to `equiv.perm.sign` over `[fintype α]`.
+-/
 noncomputable def finite.sign [decidable_eq α] : perm.finite α →* units ℤ :=
 monoid_hom.mk'
   (λ p, sign (perm.attach (p : perm α)))

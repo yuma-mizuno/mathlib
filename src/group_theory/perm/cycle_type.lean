@@ -175,7 +175,7 @@ begin
   exact dvd_lcm h,
 end
 
-lemma order_of_cycle_of_dvd_order_of [fintype α] (f : perm α) (x : α) :
+lemma order_of_cycle_of_dvd_order_of (f : perm α) (x : α) :
   order_of (cycle_of f x) ∣ order_of f :=
 begin
   by_cases hx : f x = x,

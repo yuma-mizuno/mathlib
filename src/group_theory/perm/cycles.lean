@@ -102,16 +102,17 @@ let ⟨a, ha⟩ := hg.2 x hx in
 let ⟨b, hb⟩ := hg.2 y hy in
 ⟨b - a, by rw [← ha, ← mul_apply, ← gpow_add, sub_add_cancel, hb]⟩
 
-lemma is_cycle.exists_pow_eq {f : perm α} (hf : is_cycle f) {x y : α}
+lemma is_cycle.exists_pow_eq [fintype β] {f : perm β} (hf : is_cycle f) {x y : β}
   (hx : f x ≠ x) (hy : f y ≠ y) : ∃ i : ℕ, (f ^ i) x = y :=
 let ⟨n, hn⟩ := hf.exists_gpow_eq hx hy in
 by classical; exact ⟨(n % order_of f).to_nat, by {
   have := n.mod_nonneg (int.coe_nat_ne_zero.mpr (ne_of_gt (order_of_pos f))),
   rwa [← gpow_coe_nat, int.to_nat_of_nonneg this, ← gpow_eq_mod_order_of] }⟩
 
-lemma is_cycle.exists_pow_ge_one_eq_one {f : perm α} (hf : is_cycle f) :
+lemma is_cycle.exists_pow_ge_one_eq_one [fintype β] {f : perm β} (hf : is_cycle f) :
   ∃ (k : ℕ) (hk : 1 < k), f ^ k = 1 :=
 begin
+  classical,
   have : is_of_fin_order f := exists_pow_eq_one f,
   rw is_of_fin_order_iff_pow_eq_one at this,
   obtain ⟨x, hx, hx'⟩ := hf,
@@ -302,11 +303,11 @@ begin
   { exact (hb (extend_domain_apply_not_subtype _ _ pb)).elim }
 end
 
-lemma nodup_of_pairwise_disjoint_cycles {l : list (perm α)} (h1 : ∀ (f ∈ l), is_cycle f)
+lemma nodup_of_pairwise_disjoint_cycles {l : list (perm β)} (h1 : ∀ (f ∈ l), is_cycle f)
   (h2 : l.pairwise disjoint) : l.nodup :=
 nodup_of_pairwise_disjoint (λ h, (h1 1 h).ne_one rfl) h2
 
-lemma pow_inj_on_lt_order_of (f : perm α) (n m : ℕ) (hn : n < order_of f) (hm : m < order_of f) :
+lemma pow_inj_on_lt_order_of (f : perm β) (n m : ℕ) (hn : n < order_of f) (hm : m < order_of f) :
   f ^ n = f ^ m ↔ n = m :=
 begin
   refine ⟨λ h, _, λ h, congr_arg _ h⟩,
@@ -418,7 +419,7 @@ lemma same_cycle_inv (f : perm β) {x y : β} : same_cycle f⁻¹ x y ↔ same_c
 lemma same_cycle_inv_apply {f : perm β} {x y : β} : same_cycle f x (f⁻¹ y) ↔ same_cycle f x y :=
 by rw [← same_cycle_inv, same_cycle_apply, same_cycle_inv]
 
-@[simp] lemma same_cycle_pow_left_iff {f : perm α} {x y : α} {n : ℕ} :
+@[simp] lemma same_cycle_pow_left_iff {f : perm β} {x y : β} {n : ℕ} :
   same_cycle f ((f ^ n) x) y ↔ same_cycle f x y :=
 begin
   split,
@@ -489,9 +490,10 @@ begin
       simpa using H } }
 end
 
-lemma is_cycle.pow_iff [fintype α] {f : perm α} (hf : is_cycle f) {n : ℕ} :
+lemma is_cycle.pow_iff [fintype β] {f : perm β} (hf : is_cycle f) {n : ℕ} :
   is_cycle (f ^ n) ↔ n.coprime (order_of f) :=
 begin
+  classical,
   split,
   { intro h,
     have hr : support (f ^ n) = support f,
@@ -547,9 +549,10 @@ begin
   rwa order_of_is_cycle hf
 end
 
-lemma is_cycle.is_cycle_pow_pos_of_lt_prime_order [fintype α] {f : perm α} (hf : is_cycle f)
+lemma is_cycle.is_cycle_pow_pos_of_lt_prime_order [fintype β] {f : perm β} (hf : is_cycle f)
   (hf' : (order_of f).prime) (n : ℕ) (hn : 0 < n) (hn' : n < order_of f) : is_cycle (f ^ n) :=
 begin
+  classical,
   have : n.coprime (order_of f),
   { refine nat.coprime.symm _,
     rw nat.prime.coprime_iff_not_dvd hf',

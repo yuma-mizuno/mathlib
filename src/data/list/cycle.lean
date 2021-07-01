@@ -622,7 +622,7 @@ fintype.subtype (((finset.univ : finset {s : cycle α // s.nodup}).map
 /--
 The `finset` of lists that can make the cycle.
 -/
-def lists [decidable_eq α] (s : cycle α) : finset (list α) :=
+def lists (s : cycle α) : finset (list α) :=
 quotient.lift_on' s (λ l, (l.permutations.filter (λ (l' : list α), (l' : cycle α) = s)).to_finset) $
   λ l₁ l₂ (h : l₁ ~r l₂),
   begin
