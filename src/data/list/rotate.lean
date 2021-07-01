@@ -6,6 +6,20 @@ Authors: Chris Hughes, Yakov Pechersky
 import data.list.perm
 import data.list.range
 
+/-!
+# List rotation
+
+This file proves basic results about `list.rotate`, the list rotation.
+
+## Main declarations
+
+* `is_rotated l₁ l₂`: States that `l₁` is a rotated version of `l₂`.
+
+## Tags
+
+rotated, rotation, permutation, cycle
+-/
+
 universe u
 variables {α : Type u}
 
@@ -164,7 +178,7 @@ by simp
 
 lemma nth_le_rotate_one (l : list α) (k : ℕ) (hk : k < (l.rotate 1).length) :
   (l.rotate 1).nth_le k hk = l.nth_le ((k + 1) % l.length)
-    (nat.mod_lt _ (k.zero_le.trans_lt (hk.trans_le (length_rotate _ _).le))) :=
+    (mod_lt _ (length_rotate l 1 ▸ k.zero_le.trans_lt hk)) :=
 begin
   cases l with hd tl,
   { simp },
@@ -178,7 +192,7 @@ end
 
 lemma nth_le_rotate (l : list α) (n k : ℕ) (hk : k < (l.rotate n).length) :
   (l.rotate n).nth_le k hk = l.nth_le ((k + n) % l.length)
-    (nat.mod_lt _ (k.zero_le.trans_lt (hk.trans_le (length_rotate _ _).le))) :=
+    (mod_lt _ (length_rotate l n ▸ k.zero_le.trans_lt hk)) :=
 begin
   induction n with n hn generalizing l k,
   { have hk' : k < l.length := by simpa using hk,
@@ -189,8 +203,7 @@ end
 /-- A variant of `nth_le_rotate` useful for rewrites. -/
 lemma nth_le_rotate' (l : list α) (n k : ℕ) (hk : k < l.length) :
   (l.rotate n).nth_le ((l.length - n % l.length + k) % l.length)
-      ((nat.mod_lt _ (k.zero_le.trans_lt hk)).trans_le (length_rotate _ _).ge)
-    = l.nth_le k hk :=
+      ((nat.mod_lt _ (k.zero_le.trans_lt hk)).trans_le (length_rotate _ _).ge) = l.nth_le k hk :=
 begin
   rw nth_le_rotate,
   congr,
@@ -374,14 +387,6 @@ lemma is_rotated_iff_mem_map_range : l ~r l' ↔ l' ∈ (list.range (l.length + 
 begin
   simp_rw [mem_map, mem_range, is_rotated_iff_mod],
   exact ⟨λ ⟨n, hn, h⟩, ⟨n, nat.lt_succ_of_le hn, h⟩, λ ⟨n, hn, h⟩, ⟨n, nat.le_of_lt_succ hn, h⟩⟩
-end
-
-@[congr] theorem is_rotated.map {β : Type*} {l₁ l₂ : list α} (h : l₁ ~r l₂) (f : α → β) :
-  map f l₁ ~r map f l₂ :=
-begin
-  obtain ⟨n, rfl⟩ := h,
-  rw map_rotate,
-  use n
 end
 
 section decidable

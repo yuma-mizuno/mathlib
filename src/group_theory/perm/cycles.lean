@@ -833,17 +833,16 @@ begin
     rw [hp, hp'] }
 end
 
--- TODO: use #7578
 lemma cycle_factors_finset_eq_finset {σ : perm α} {s : finset (perm α)} :
   σ.cycle_factors_finset = s ↔ (∀ f : perm α, f ∈ s → f.is_cycle) ∧
-    (∃ h : (∀ (a ∈ s) (b ∈ s), a ≠ b → disjoint a b), s.noncomm_prod
+    (∃ h : (∀ (a ∈ s) (b ∈ s), a ≠ b → disjoint a b), s.noncomm_prod id
       (λ a ha b hb, (em (a = b)).by_cases (λ h, h ▸ commute.refl a)
         (set.pairwise_on.mono' (λ _ _, disjoint.commute) h a ha b hb)) = σ) :=
 begin
   obtain ⟨l, hl, rfl⟩ := s.exists_list_nodup_eq,
   rw cycle_factors_finset_eq_list_to_finset hl,
   simp only [noncomm_prod_to_finset, hl, exists_prop, list.mem_to_finset, and.congr_left_iff,
-             and.congr_right_iff],
+             and.congr_right_iff, list.map_id, ne.def],
   intros,
   exact ⟨list.forall_of_pairwise disjoint.symmetric, hl.pairwise_of_forall_ne⟩
 end
@@ -869,16 +868,14 @@ end
 
 /-- The product of cycle factors is equal to the original `f : perm α`. -/
 lemma cycle_factors_finset_noncomm_prod :
-  f.cycle_factors_finset.noncomm_prod (cycle_factors_finset_mem_commute f) = f :=
+  f.cycle_factors_finset.noncomm_prod id (cycle_factors_finset_mem_commute f) = f :=
 begin
   have : f.cycle_factors_finset = f.cycle_factors_finset := rfl,
   obtain ⟨-, hd, hp⟩ := cycle_factors_finset_eq_finset.mp this,
   exact hp
 end
 
-variables {f} {g : perm α}
-
-lemma mem_cycle_factors_finset_iff {p : perm α} :
+lemma mem_cycle_factors_finset_iff {f p : perm α} :
   p ∈ cycle_factors_finset f ↔ p.is_cycle ∧ ∀ (a ∈ p.support), p a = f a :=
 begin
   obtain ⟨l, hl, hl'⟩ := f.cycle_factors_finset.exists_list_nodup_eq,

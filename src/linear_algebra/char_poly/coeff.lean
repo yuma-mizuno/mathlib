@@ -9,7 +9,7 @@ import data.matrix.char_p
 import field_theory.finite.basic
 import group_theory.perm.cycles
 import linear_algebra.char_poly.basic
-import linear_algebra.matrix
+import linear_algebra.matrix.trace
 import ring_theory.polynomial.basic
 import ring_theory.power_basis
 
@@ -81,7 +81,7 @@ begin
 end
 
 lemma det_of_card_zero (h : fintype.card n = 0) (M : matrix n n R) : M.det = 1 :=
-by { rw fintype.card_eq_zero_iff at h, suffices : M = 1, { simp [this] }, ext, tauto }
+by { rw fintype.card_eq_zero_iff at h, suffices : M = 1, { simp [this] }, ext i, exact h.elim i }
 
 theorem char_poly_degree_eq_dim [nontrivial R] (M : matrix n n R) :
 (char_poly M).degree = fintype.card n :=
@@ -132,8 +132,8 @@ begin
   unfold polynomial.eval, unfold eval₂,
   transitivity polynomial.sum (mat_poly_equiv M) (λ (e : ℕ) (a : matrix n n R),
     (a * (scalar n) r ^ e) i j),
-  { unfold polynomial.sum, rw sum_apply, rw sum_apply, dsimp, refl, },
-  { simp_rw ← (scalar n).map_pow, simp_rw ← (matrix.scalar.commute _ _).eq,
+  { unfold polynomial.sum, rw matrix.sum_apply, dsimp, refl },
+  { simp_rw [←ring_hom.map_pow, ←(matrix.scalar.commute _ _).eq],
     simp only [coe_scalar, matrix.one_mul, ring_hom.id_apply,
       pi.smul_apply, smul_eq_mul, mul_eq_mul, algebra.smul_mul_assoc],
     have h : ∀ x : ℕ, (λ (e : ℕ) (a : R), r ^ e * a) x 0 = 0 := by simp,
