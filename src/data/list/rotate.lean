@@ -389,6 +389,14 @@ begin
   exact ⟨λ ⟨n, hn, h⟩, ⟨n, nat.lt_succ_of_le hn, h⟩, λ ⟨n, hn, h⟩, ⟨n, nat.le_of_lt_succ hn, h⟩⟩
 end
 
+@[congr] theorem is_rotated.map {β : Type*} {l₁ l₂ : list α} (h : l₁ ~r l₂) (f : α → β) :
+  map f l₁ ~r map f l₂ :=
+begin
+  obtain ⟨n, rfl⟩ := h,
+  rw map_rotate,
+  use n
+end
+
 section decidable
 
 variables [decidable_eq α]
