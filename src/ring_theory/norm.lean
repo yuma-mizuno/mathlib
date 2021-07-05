@@ -814,6 +814,16 @@ calc card_norm ⊤ = fintype.card (submodule.quotient ⊤) : card_norm_apply _
 ... = fintype.card punit : fintype.card_eq.mpr ⟨equiv_of_subsingleton_of_subsingleton 0 0⟩
 ... = 1 : fintype.card_punit
 
+.
+
+/-- `[M : S] [S : T] = [M : T]` -/
+lemma card_quotient_mul_card_quotient (S T : submodule R M)
+  [fintype S.quotient] [fintype ((S ⊓ T).comap S.subtype).quotient] [fintype T.quotient] :
+  fintype.card S.quotient * fintype.card ((S ⊓ T).comap S.subtype).quotient = fintype.card T.quotient :=
+begin
+  rw fintype.card_eq.mpr ⟨(quotient_inf_equiv_sup_quotient S T).to_equiv⟩,
+end
+
 end
 
 end submodule
@@ -821,7 +831,7 @@ end submodule
 open submodule
 
 /-- We can write the quotient of an ideal over a PID as a product of quotients by principal ideals. -/
-noncomputable def ideal.quotient_equiv_pi_span [decidable_eq ι]
+noncomputable def ideal.quotient_equiv_pi_span [is_principal_ideal_ring R] [decidable_eq ι]
   (I : ideal S) (b : basis ι R S) (hI : I ≠ ⊥) :
   I.quotient ≃ₗ[R] Π i, (ideal.span ({I.smith_coeffs b hI i} : set R)).quotient :=
 begin
@@ -994,15 +1004,9 @@ instance : comm_cancel_monoid_with_zero (ideal S) :=
 lemma ideal.is_unit_iff {I : ideal S} : is_unit I ↔ I = ⊤ := sorry
 
 /-- If `P` is a prime ideal, then `P^(i + 1) / P^i` is equivalent to `S / P`. -/
-instance (P : ideal S) [P_prime : P.is_prime] (i : ℕ) :
-  module P.quotient ((P^(i + 1) : submodule _ S).comap (P^i).subtype).quotient :=
-module.of_core
-{ smul := submodule.liftq _ _ _ }
-
-/-- If `P` is a prime ideal, then `P^(i + 1) / P^i` is equivalent to `S / P`. -/
 def ideal.pow_succ_quotient_equiv (P : ideal S) [P_prime : P.is_prime] (i : ℕ) :
   ((P^(i + 1) : submodule _ S).comap (P^i).subtype).quotient ≃ₗ[ℤ] P.quotient :=
-basis.equiv _ (basis.singleton (fin 1) _) (equiv.refl _)
+basis.equiv _ (basis.singleton (fin 1) _) (equiv.refl (fin 1))
 
 /-- Multiplicity of the ideal norm, for powers of prime ideals. -/
 lemma card_norm_pow_of_prime (b : basis ι ℤ S) [unique_factorization_monoid (ideal S)]
