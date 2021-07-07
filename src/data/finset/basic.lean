@@ -367,6 +367,10 @@ classical.by_cases or.inl (λ h, or.inr (nonempty_of_ne_empty h))
 by rw [← coe_empty, coe_inj]
 
 /-- A `finset` for an empty type is empty. -/
+lemma eq_empty_of_is_empty [is_empty α] (s : finset α) : s = ∅ :=
+finset.eq_empty_of_forall_not_mem is_empty_elim
+
+/-- A `finset` for an empty type is empty. -/
 lemma eq_empty_of_not_nonempty (h : ¬ nonempty α) (s : finset α) : s = ∅ :=
 finset.eq_empty_of_forall_not_mem $ λ x, false.elim $ not_nonempty_iff_imp_false.1 h x
 
@@ -2918,21 +2922,13 @@ by { ext, simp [-finset.mem_map, -equiv.trans_to_embedding] }
 
 end equiv
 
-namespace list
-variable [decidable_eq α]
-
-theorem to_finset_card_of_nodup {l : list α} (h : l.nodup) : l.to_finset.card = l.length :=
-congr_arg card $ (@multiset.erase_dup_eq_self α _ l).2 h
-
-end list
-
 namespace multiset
 variable [decidable_eq α]
 
 theorem to_finset_card_of_nodup {l : multiset α} (h : l.nodup) : l.to_finset.card = l.card :=
-congr_arg card $ (@multiset.erase_dup_eq_self α _ l).2 h
+congr_arg card $ multiset.erase_dup_eq_self.mpr h
 
-lemma disjoint_to_finset (m1 m2 : multiset α) :
+lemma disjoint_to_finset {m1 m2 : multiset α} :
   _root_.disjoint m1.to_finset m2.to_finset ↔ m1.disjoint m2 :=
 begin
   rw finset.disjoint_iff_ne,
@@ -2947,3 +2943,15 @@ begin
 end
 
 end multiset
+
+namespace list
+variable [decidable_eq α]
+
+theorem to_finset_card_of_nodup {l : list α} (h : l.nodup) : l.to_finset.card = l.length :=
+multiset.to_finset_card_of_nodup h
+
+lemma disjoint_to_finset_iff_disjoint {l l' : list α} :
+  _root_.disjoint l.to_finset l'.to_finset ↔ l.disjoint l' :=
+multiset.disjoint_to_finset
+
+end list
