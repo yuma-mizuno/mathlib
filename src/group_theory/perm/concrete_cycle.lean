@@ -71,9 +71,9 @@ begin
     by_cases hx : x ∈ l;
     by_cases hx' : x ∈ l',
     { simpa using h hx hx' },
-    { simp [form_perm_not_mem_apply _ _ hx'] },
-    { simp [form_perm_not_mem_apply _ _ hx] },
-    { simp [form_perm_not_mem_apply _ _ hx'] } }
+    { simp [form_perm_apply_not_mem _ _ hx'] },
+    { simp [form_perm_apply_not_mem _ _ hx] },
+    { simp [form_perm_apply_not_mem _ _ hx'] } }
 end
 
 lemma is_cycle_form_perm (hl : nodup l) (hn : 2 ≤ l.length) :

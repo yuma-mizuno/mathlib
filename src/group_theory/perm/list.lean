@@ -393,6 +393,13 @@ begin
   simpa using h
 end
 
+lemma form_perm_ne_self_imp_mem (l : list α) (x : α) (h : form_perm l x ≠ x) :
+  x ∈ l :=
+begin
+  contrapose! h,
+  exact form_perm_apply_not_mem _ _ h
+end
+
 lemma form_perm_eq_one_iff (hl : nodup l) :
   form_perm l = 1 ↔ l.length ≤ 1 :=
 begin
