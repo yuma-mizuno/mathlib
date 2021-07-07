@@ -284,7 +284,8 @@ def inverse [module R M] [module S M₂] {σ : R ≃+* S}
 by dsimp [left_inverse, function.right_inverse] at h₁ h₂; exact
   { to_fun := g,
     map_add' := λ x y, by { rw [← h₁ (g (x + y)), ← h₁ (g x + g y)]; simp [h₂] },
-    map_smul' := λ a b, by { dsimp, rw [← h₁ (g (a • b)), ← h₁ (a • g b)]; simp [h₂] } }
+    map_smul' := λ a b,
+      by { rw [← h₁ (g (a • b)), ← h₁ ((σ.symm.to_ring_hom a) • g b)], simp [h₂] } }
 
 end add_comm_monoid
 
@@ -544,20 +545,20 @@ end
 /-- Linear equivalences are symmetric. -/
 @[symm]
 def symm : M₂ ≃ₛₗ[σ.symm] M :=
---{ .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
---  .. e.to_equiv.symm }
-{
+{ .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
+  .. e.to_equiv.symm }
 
-}
-
-/-- See Note [custom simps projection] -/
-def simps.symm_apply [module R M] [module R M₂] (e : M ≃ₗ[R] M₂) : M₂ → M := e.symm
+--/-- See Note [custom simps projection] -/
+--def simps.symm_apply [module R M] [module S M₂] {σ : R ≃+* S} (e : M ≃ₛₗ[σ] M₂) : M₂ → M := e.symm
 
 initialize_simps_projections linear_equiv (to_fun → apply, inv_fun → symm_apply)
 
 @[simp] lemma inv_fun_eq_symm : e.inv_fun = e.symm := rfl
 
-variables {module_M₃ : module R M₃} (e₁ : M ≃ₗ[R] M₂) (e₂ : M₂ ≃ₗ[R] M₃)
+variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
+variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 /-- Linear equivalences are transitive. -/
 @[trans]
