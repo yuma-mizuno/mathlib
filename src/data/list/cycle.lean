@@ -634,21 +634,6 @@ quotient.lift_on' s (λ l, (l.permutations.filter (λ (l' : list α), (l' : cycl
   end
 
 /--
-The `finset` of lists that can make the cycle.
--/
-def lists (s : cycle α) : finset (list α) :=
-quotient.lift_on' s (λ l, (l.permutations.filter (λ (l' : list α), (l' : cycle α) = s)).to_finset) $
-  λ l₁ l₂ (h : l₁ ~r l₂),
-  begin
-    induction s using quotient.induction_on',
-    ext,
-    simp only [mem_filter, coe_eq_coe, mk'_eq_coe, and.congr_left_iff, mem_permutations,
-               mem_to_finset],
-    intro,
-    exact ⟨λ H, H.trans h.perm, λ H, H.trans h.perm.symm⟩
-  end
-
-/--
 The `s : cycle α` as a `finset α`.
 -/
 def to_finset (s : cycle α) : finset α :=
