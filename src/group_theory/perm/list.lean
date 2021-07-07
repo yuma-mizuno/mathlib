@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yakov Pechersky
 -/
 
-import data.list.cycle
+import data.list.rotate
 import group_theory.perm.support
 
 /-!
@@ -383,25 +383,14 @@ begin
   exact ⟨nat.succ_le_of_lt, nat.lt_of_succ_le⟩
 end
 
-lemma form_perm_concat_concat_concat (x y z : α) (xs : list α) (h : (xs ++ [x, y, z]).nodup) :
-  form_perm (xs ++ [x, y, z]) = form_perm (xs ++ [x, z]) * swap y x :=
-begin
-  rw ←inv_inj,
-  rw ←form_perm_reverse _ h,
-  rw mul_inv_rev,
-  rw ←form_perm_reverse,
-  { simp [form_perm_cons_cons_cons] },
-  { refine nodup_of_sublist _ h,
-    rw append_sublist_append_left,
-    refine sublist.cons2 [z] [y, z] x _,
-    exact sublist_cons y [z] }
-end
-
 lemma form_perm_apply_not_mem (l : list α) (x : α) (h : x ∉ l) :
   form_perm l x = x :=
 begin
   contrapose! h,
-  exact form_perm_ne_self_imp_mem _ _ h
+  suffices : x ∈ {y | form_perm l y ≠ y},
+  { rw ←mem_to_finset,
+    exact support_form_perm_le' _ this },
+  simpa using h
 end
 
 lemma form_perm_eq_one_iff (hl : nodup l) :
@@ -435,12 +424,12 @@ begin
     { simp [←h.perm.length_eq] },
     { exact h } },
   { rcases l' with (_ | ⟨x', _ | ⟨y', l'⟩⟩),
-    { simp [form_perm_eq_one_iff, hl] },
+    { simp [form_perm_eq_one_iff, hl, -form_perm_cons_cons] },
     { suffices : ¬ (x :: y :: l) ~r [x'],
-      { simpa [form_perm_eq_one_iff, hl] },
+      { simpa [form_perm_eq_one_iff, hl, -form_perm_cons_cons] },
       intro h,
       simpa using h.perm.length_eq },
-    { simp [form_perm_ext_iff hl hl'] } }
+    { simp [-form_perm_cons_cons, form_perm_ext_iff hl hl'] } }
 end
 
 lemma form_perm_gpow_apply_mem_imp_mem (l : list α) (x : α) (hx : x ∈ l) (n : ℤ) :
