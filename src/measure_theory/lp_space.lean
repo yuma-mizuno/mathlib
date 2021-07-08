@@ -546,6 +546,10 @@ begin
     (ennreal.to_real_pos_iff.mpr ⟨lt_of_le_of_ne (zero_le _) h0.symm, h_top⟩) hf,
 end
 
+lemma snorm_eq_zero_iff' {f : α → E} (hf : ae_measurable f μ) (h0 : p ≠ 0) :
+  snorm f p μ = 0 ↔ (λ x, ∥f x∥) =ᵐ[μ] 0 :=
+by rw [← snorm_norm f, snorm_eq_zero_iff hf.norm h0]
+
 end normed_group
 
 section trim
@@ -1161,6 +1165,12 @@ begin
   { exact absurd hf (snorm_ne_top f), },
 end
 
+lemma norm_eq_zero_iff' {f : Lp E p μ} (hp : p ≠ 0) : ∥f∥ = 0 ↔ (λ x, ∥f x∥) =ᵐ[μ] 0 :=
+begin
+  rw [norm_def, ennreal.to_real_eq_zero_iff, snorm_eq_zero_iff' (Lp.ae_measurable f) hp],
+  simp [snorm_ne_top f],
+end
+
 lemma eq_zero_iff_ae_eq_zero {f : Lp E p μ} : f = 0 ↔ f =ᵐ[μ] 0 :=
 begin
   split,
@@ -1331,7 +1341,7 @@ end Lp
 namespace mem_ℒp
 
 variables [borel_space E] [second_countable_topology E]
-  {𝕜 : Type*} [normed_field 𝕜] [semi_normed_space 𝕜 E] [normed_space 𝕜 E'] [measurable_space 𝕜]
+  {𝕜 : Type*} [normed_field 𝕜] [semi_normed_space 𝕜 E] [measurable_space 𝕜]
   [opens_measurable_space 𝕜]
 
 lemma to_Lp_const_smul {f : α → E} (c : 𝕜) (hf : mem_ℒp f p μ) :
@@ -1682,7 +1692,6 @@ We show that `L^p` is a complete space for `1 ≤ p`.
 section complete_space
 
 variables [borel_space E] [second_countable_topology E]
-  [borel_space E'] [second_countable_topology E']
 
 namespace measure_theory
 namespace Lp
@@ -2087,7 +2096,6 @@ namespace bounded_continuous_function
 
 open_locale bounded_continuous_function
 variables [borel_space E] [second_countable_topology E]
-  [borel_space E'] [second_countable_topology E']
   [topological_space α] [borel_space α]
   [finite_measure μ]
 
@@ -2158,7 +2166,6 @@ namespace continuous_map
 open_locale bounded_continuous_function
 
 variables [borel_space E] [second_countable_topology E]
-  [borel_space E'] [second_countable_topology E']
 variables [topological_space α] [compact_space α] [borel_space α]
 variables [finite_measure μ]
 
@@ -2196,7 +2203,8 @@ rfl
   (to_Lp p μ 𝕜 f : α →ₘ[μ] E) = f.to_ae_eq_fun μ :=
 rfl
 
-variables [nondiscrete_normed_field 𝕜] [opens_measurable_space 𝕜] [normed_space 𝕜 E']
+variables [nondiscrete_normed_field 𝕜] [opens_measurable_space 𝕜]
+  [borel_space E'] [second_countable_topology E'] [normed_space 𝕜 E']
 
 lemma to_Lp_norm_eq_to_Lp_norm_coe :
   ∥@to_Lp _ E' _ p μ _ _ _ _ _ _ _ _ 𝕜 _ _ _ _ _∥
