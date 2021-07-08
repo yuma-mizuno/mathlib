@@ -212,10 +212,8 @@ begin
 end
 
 @[simp] lemma snorm_ess_sup_zero : snorm_ess_sup (0 : α → F) μ = 0 :=
-begin
-  simp_rw [snorm_ess_sup, pi.zero_apply, nnnorm_zero, ennreal.coe_zero, ←ennreal.bot_eq_zero],
-  exact ess_sup_const_bot,
-end
+by simp_rw [snorm_ess_sup, pi.zero_apply, nnnorm_zero, ennreal.coe_zero, ←ennreal.bot_eq_zero,
+    ess_sup_const_bot]
 
 @[simp] lemma snorm_zero : snorm (0 : α → F) p μ = 0 :=
 begin
@@ -508,6 +506,12 @@ lemma snorm'_eq_zero_of_ae_zero' (hq0_ne : q ≠ 0) (hμ : μ ≠ 0) {f : α →
   snorm' f q μ = 0 :=
 by rw [snorm'_congr_ae hf_zero, snorm'_zero' hq0_ne hμ]
 
+lemma coe_nnnorm_ae_le_snorm_ess_sup (f : α → F) (μ : measure α) :
+  ∀ᵐ x ∂μ, (nnnorm (f x) : ℝ≥0∞) ≤ snorm_ess_sup f μ :=
+ennreal.ae_le_ess_sup (λ x, (nnnorm (f x) : ℝ≥0∞))
+
+section normed_group  -- and not only semi_normed_group
+
 lemma ae_eq_zero_of_snorm'_eq_zero {f : α → E'} (hq0 : 0 ≤ q) (hf : ae_measurable f μ)
   (h : snorm' f q μ = 0) : f =ᵐ[μ] 0 :=
 begin
@@ -529,10 +533,6 @@ lemma snorm'_eq_zero_iff (hq0_lt : 0 < q) {f : α → E'} (hf : ae_measurable f 
   snorm' f q μ = 0 ↔ f =ᵐ[μ] 0 :=
 ⟨ae_eq_zero_of_snorm'_eq_zero (le_of_lt hq0_lt) hf, snorm'_eq_zero_of_ae_zero hq0_lt⟩
 
-lemma coe_nnnorm_ae_le_snorm_ess_sup (f : α → F) (μ : measure α) :
-  ∀ᵐ x ∂μ, (nnnorm (f x) : ℝ≥0∞) ≤ snorm_ess_sup f μ :=
-ennreal.ae_le_ess_sup (λ x, (nnnorm (f x) : ℝ≥0∞))
-
 @[simp] lemma snorm_ess_sup_eq_zero_iff {f : α → F'} : snorm_ess_sup f μ = 0 ↔ f =ᵐ[μ] 0 :=
 by simp [eventually_eq, snorm_ess_sup]
 
@@ -545,6 +545,8 @@ begin
   exact snorm'_eq_zero_iff
     (ennreal.to_real_pos_iff.mpr ⟨lt_of_le_of_ne (zero_le _) h0.symm, h_top⟩) hf,
 end
+
+end normed_group
 
 section trim
 
@@ -955,20 +957,22 @@ begin
   simpa
 end
 
-lemma snorm_le_mul_snorm_aux_of_neg {f : α → F'} {g : α → G'} {c : ℝ}
+lemma snorm_le_mul_snorm_aux_of_neg {f : α → F} {g : α → G} {c : ℝ}
   (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) (hc : c < 0) (p : ℝ≥0∞) :
   snorm f p μ = 0 ∧ snorm g p μ = 0 :=
 begin
-  suffices : f =ᵐ[μ] 0 ∧ g =ᵐ[μ] 0,
-    by simp [snorm_congr_ae this.1, snorm_congr_ae this.2],
-  refine ⟨h.mono $ λ x hx, _, h.mono $ λ x hx, _⟩,
-  { refine norm_le_zero_iff.1 (hx.trans _),
-    exact mul_nonpos_of_nonpos_of_nonneg hc.le (norm_nonneg _) },
-  { refine norm_le_zero_iff.1 (nonpos_of_mul_nonneg_right _ hc),
-    exact (norm_nonneg _).trans hx }
+  rw [← snorm_norm f, ← snorm_norm g],
+  have hf_zero : (λ x, ∥f x∥) =ᵐ[μ] 0,
+  { refine h.mono (λ x hx, _),
+    exact le_antisymm (hx.trans (mul_nonpos_of_nonpos_of_nonneg hc.le (norm_nonneg _)))
+      (norm_nonneg _), },
+  have hg_zero : (λ x, ∥g x∥) =ᵐ[μ] 0,
+  { refine h.mono (λ x hx, _),
+    exact le_antisymm (nonpos_of_mul_nonneg_right ((norm_nonneg _).trans hx) hc) (norm_nonneg _), },
+  simp [snorm_congr_ae hf_zero, snorm_congr_ae hg_zero],
 end
 
-lemma snorm_le_mul_snorm_of_ae_le_mul {f : α → F'} {g : α → G'} {c : ℝ}
+lemma snorm_le_mul_snorm_of_ae_le_mul {f : α → F} {g : α → G} {c : ℝ}
   (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) (p : ℝ≥0∞) :
   snorm f p μ ≤ (ennreal.of_real c) * snorm g p μ :=
 begin
@@ -977,7 +981,7 @@ begin
   { simp [snorm_le_mul_snorm_aux_of_neg h hc p] }
 end
 
-lemma mem_ℒp.of_le_mul [measurable_space F'] {f : α → E'} {g : α → F'} {c : ℝ}
+lemma mem_ℒp.of_le_mul [measurable_space F] {f : α → E} {g : α → F} {c : ℝ}
   (hg : mem_ℒp g p μ) (hf : ae_measurable f μ) (hfg : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) :
   mem_ℒp f p μ :=
 begin
@@ -1174,9 +1178,9 @@ end
 @[simp] lemma norm_neg {f : Lp E p μ} : ∥-f∥ = ∥f∥ :=
 by rw [norm_def, norm_def, snorm_congr_ae (coe_fn_neg _), snorm_neg]
 
-lemma norm_le_mul_norm_of_ae_le_mul
-  [second_countable_topology F'] [measurable_space F'] [borel_space F']
-  {c : ℝ} {f : Lp E' p μ} {g : Lp F' p μ} (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) : ∥f∥ ≤ c * ∥g∥ :=
+lemma norm_le_mul_norm_of_ae_le_mul [second_countable_topology F] [measurable_space F]
+  [borel_space F] {c : ℝ} {f : Lp E p μ} {g : Lp F p μ} (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) :
+  ∥f∥ ≤ c * ∥g∥ :=
 begin
   by_cases pzero : p = 0,
   { simp [pzero, norm_def] },
@@ -1188,7 +1192,14 @@ begin
     { simp [(Lp.mem_ℒp _).snorm_ne_top] } },
   { have := snorm_le_mul_snorm_aux_of_neg h hc p,
     simp only [snorm_eq_zero_iff (Lp.ae_measurable _) pzero, ← eq_zero_iff_ae_eq_zero] at this,
-    simp [this] }
+    rw [← snorm_norm f, ← snorm_norm g] at this,
+    have hf_zero : (λ x, ∥f x∥) =ᵐ[μ] 0,
+      from (snorm_eq_zero_iff (Lp.ae_measurable f).norm pzero).mp this.1,
+    have hg_zero : (λ x, ∥g x∥) =ᵐ[μ] 0,
+      from (snorm_eq_zero_iff (Lp.ae_measurable g).norm pzero).mp this.2,
+    rw [norm_def, norm_def, ← snorm_norm f, ← snorm_norm g, snorm_congr_ae hf_zero,
+      snorm_congr_ae hg_zero],
+    simp, }
 end
 
 lemma norm_le_norm_of_ae_le [second_countable_topology F] [measurable_space F] [borel_space F]
@@ -1198,8 +1209,8 @@ begin
   exact snorm_mono_ae h
 end
 
-lemma mem_Lp_of_ae_le_mul [second_countable_topology F'] [measurable_space F'] [borel_space F']
-  {c : ℝ} {f : α →ₘ[μ] E'} {g : Lp F' p μ} (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) : f ∈ Lp E' p μ :=
+lemma mem_Lp_of_ae_le_mul [second_countable_topology F] [measurable_space F] [borel_space F]
+  {c : ℝ} {f : α →ₘ[μ] E} {g : Lp F p μ} (h : ∀ᵐ x ∂μ, ∥f x∥ ≤ c * ∥g x∥) : f ∈ Lp E p μ :=
 mem_Lp_iff_mem_ℒp.2 $ mem_ℒp.of_le_mul (Lp.mem_ℒp g) f.ae_measurable h
 
 lemma mem_Lp_of_ae_le [second_countable_topology F] [measurable_space F] [borel_space F]
@@ -1488,10 +1499,8 @@ part of an `L^p` function.
 section composition
 
 variables [second_countable_topology E] [borel_space E]
-  [second_countable_topology E'] [borel_space E']
   [second_countable_topology F] [measurable_space F] [borel_space F]
-  [second_countable_topology F'] [measurable_space F'] [borel_space F']
-  {g : E → F} {g' : E' → F'} {c : ℝ≥0}
+  {g : E → F} {c : ℝ≥0}
 
 namespace lipschitz_with
 
@@ -1519,33 +1528,33 @@ end
 
 /-- When `g` is a Lipschitz function sending `0` to `0` and `f` is in `Lp`, then `g ∘ f` is well
 defined as an element of `Lp`. -/
-def comp_Lp (hg : lipschitz_with c g') (g0 : g' 0 = 0) (f : Lp E' p μ) : Lp F' p μ :=
-⟨ae_eq_fun.comp g' hg.continuous.measurable (f : α →ₘ[μ] E'),
+def comp_Lp (hg : lipschitz_with c g) (g0 : g 0 = 0) (f : Lp E p μ) : Lp F p μ :=
+⟨ae_eq_fun.comp g hg.continuous.measurable (f : α →ₘ[μ] E),
 begin
-  suffices : ∀ᵐ x ∂μ, ∥ae_eq_fun.comp g' hg.continuous.measurable (f : α →ₘ[μ] E') x∥ ≤ c * ∥f x∥,
+  suffices : ∀ᵐ x ∂μ, ∥ae_eq_fun.comp g hg.continuous.measurable (f : α →ₘ[μ] E) x∥ ≤ c * ∥f x∥,
     { exact Lp.mem_Lp_of_ae_le_mul this },
-  filter_upwards [ae_eq_fun.coe_fn_comp g' hg.continuous.measurable (f : α →ₘ[μ] E')],
+  filter_upwards [ae_eq_fun.coe_fn_comp g hg.continuous.measurable (f : α →ₘ[μ] E)],
   assume a ha,
   simp only [ha],
   rw [← dist_zero_right, ← dist_zero_right, ← g0],
   exact hg.dist_le_mul (f a) 0,
 end⟩
 
-lemma coe_fn_comp_Lp (hg : lipschitz_with c g') (g0 : g' 0 = 0) (f : Lp E' p μ) :
-  hg.comp_Lp g0 f =ᵐ[μ] g' ∘ f :=
+lemma coe_fn_comp_Lp (hg : lipschitz_with c g) (g0 : g 0 = 0) (f : Lp E p μ) :
+  hg.comp_Lp g0 f =ᵐ[μ] g ∘ f :=
 ae_eq_fun.coe_fn_comp _ _ _
 
-@[simp] lemma comp_Lp_zero (hg : lipschitz_with c g') (g0 : g' 0 = 0) :
-  hg.comp_Lp g0 (0 : Lp E' p μ) = 0 :=
+@[simp] lemma comp_Lp_zero (hg : lipschitz_with c g) (g0 : g 0 = 0) :
+  hg.comp_Lp g0 (0 : Lp E p μ) = 0 :=
 begin
   rw Lp.eq_zero_iff_ae_eq_zero,
   apply (coe_fn_comp_Lp _ _ _).trans,
-  filter_upwards [Lp.coe_fn_zero E' p μ],
+  filter_upwards [Lp.coe_fn_zero E p μ],
   assume a ha,
   simp [ha, g0]
 end
 
-lemma norm_comp_Lp_sub_le (hg : lipschitz_with c g') (g0 : g' 0 = 0) (f f' : Lp E' p μ) :
+lemma norm_comp_Lp_sub_le (hg : lipschitz_with c g) (g0 : g 0 = 0) (f f' : Lp E p μ) :
   ∥hg.comp_Lp g0 f - hg.comp_Lp g0 f'∥ ≤ c * ∥f - f'∥ :=
 begin
   apply Lp.norm_le_mul_norm_of_ae_le_mul,
@@ -1556,39 +1565,38 @@ begin
   exact hg.dist_le_mul (f a) (f' a)
 end
 
-lemma norm_comp_Lp_le (hg : lipschitz_with c g') (g0 : g' 0 = 0) (f : Lp E' p μ) :
+lemma norm_comp_Lp_le (hg : lipschitz_with c g) (g0 : g 0 = 0) (f : Lp E p μ) :
   ∥hg.comp_Lp g0 f∥ ≤ c * ∥f∥ :=
 by simpa using hg.norm_comp_Lp_sub_le g0 f 0
 
-lemma lipschitz_with_comp_Lp [fact (1 ≤ p)] (hg : lipschitz_with c g') (g0 : g' 0 = 0) :
-  lipschitz_with c (hg.comp_Lp g0 : Lp E' p μ → Lp F' p μ) :=
+lemma lipschitz_with_comp_Lp [fact (1 ≤ p)] (hg : lipschitz_with c g) (g0 : g 0 = 0) :
+  lipschitz_with c (hg.comp_Lp g0 : Lp E p μ → Lp F p μ) :=
 lipschitz_with.of_dist_le_mul $ λ f g', by simp [dist_eq_norm, norm_comp_Lp_sub_le]
 
-lemma continuous_comp_Lp [fact (1 ≤ p)] (hg : lipschitz_with c g') (g0 : g' 0 = 0) :
-  continuous (hg.comp_Lp g0 : Lp E' p μ → Lp F' p μ) :=
+lemma continuous_comp_Lp [fact (1 ≤ p)] (hg : lipschitz_with c g) (g0 : g 0 = 0) :
+  continuous (hg.comp_Lp g0 : Lp E p μ → Lp F p μ) :=
 (lipschitz_with_comp_Lp hg g0).continuous
 
 end lipschitz_with
 
 namespace continuous_linear_map
 variables {𝕜 : Type*} [nondiscrete_normed_field 𝕜] [semi_normed_space 𝕜 E] [semi_normed_space 𝕜 F]
-  [normed_space 𝕜 E'] [normed_space 𝕜 F']
 
 /-- Composing `f : Lp ` with `L : E →L[𝕜] F`. -/
-def comp_Lp (L : E' →L[𝕜] F') (f : Lp E' p μ) : Lp F' p μ :=
+def comp_Lp (L : E →L[𝕜] F) (f : Lp E p μ) : Lp F p μ :=
 L.lipschitz.comp_Lp (map_zero L) f
 
-lemma coe_fn_comp_Lp (L : E' →L[𝕜] F') (f : Lp E' p μ) :
+lemma coe_fn_comp_Lp (L : E →L[𝕜] F) (f : Lp E p μ) :
   ∀ᵐ a ∂μ, (L.comp_Lp f) a = L (f a) :=
 lipschitz_with.coe_fn_comp_Lp _ _ _
 
-lemma norm_comp_Lp_le (L : E' →L[𝕜] F') (f : Lp E' p μ)  : ∥L.comp_Lp f∥ ≤ ∥L∥ * ∥f∥ :=
+lemma norm_comp_Lp_le (L : E →L[𝕜] F) (f : Lp E p μ)  : ∥L.comp_Lp f∥ ≤ ∥L∥ * ∥f∥ :=
 lipschitz_with.norm_comp_Lp_le _ _ _
 
 variables (μ p) [measurable_space 𝕜] [opens_measurable_space 𝕜]
 
 /-- Composing `f : Lp E p μ` with `L : E →L[𝕜] F`, seen as a `𝕜`-linear map on `Lp E p μ`. -/
-def comp_Lpₗ (L : E' →L[𝕜] F') : (Lp E' p μ) →ₗ[𝕜] (Lp F' p μ) :=
+def comp_Lpₗ (L : E →L[𝕜] F) : (Lp E p μ) →ₗ[𝕜] (Lp F p μ) :=
 { to_fun := λ f, L.comp_Lp f,
   map_add' := begin
     intros f g,
@@ -1609,10 +1617,10 @@ def comp_Lpₗ (L : E' →L[𝕜] F') : (Lp E' p μ) →ₗ[𝕜] (Lp F' p μ) :
 
 /-- Composing `f : Lp E p μ` with `L : E →L[𝕜] F`, seen as a continuous `𝕜`-linear map on
 `Lp E p μ`. -/
-def comp_LpL [fact (1 ≤ p)] (L : E' →L[𝕜] F') : (Lp E' p μ) →L[𝕜] (Lp F' p μ) :=
+def comp_LpL [fact (1 ≤ p)] (L : E →L[𝕜] F) : (Lp E p μ) →L[𝕜] (Lp F p μ) :=
 linear_map.mk_continuous (L.comp_Lpₗ p μ) ∥L∥ L.norm_comp_Lp_le
 
-lemma norm_compLpL_le [fact (1 ≤ p)] (L : E' →L[𝕜] F') :
+lemma norm_compLpL_le [fact (1 ≤ p)] (L : E →L[𝕜] F) :
   ∥L.comp_LpL p μ∥ ≤ ∥L∥ :=
 linear_map.mk_continuous_norm_le _ (norm_nonneg _) _
 
