@@ -690,16 +690,16 @@ instance [module R M] [module S M₂] : has_coe (M ≃ₛₗ[σ.symm.symm] M₂)
 
 lemma symm_bijective [module R M] [module S M₂] :
   function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ.symm] M)) :=
-equiv.bijective ⟨symm, symm, symm_symm, symm_symm⟩
+equiv.bijective ⟨symm, coe ∘ symm, symm_symm, symm_symm⟩
 
 @[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) :
-  (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₗ[R] M) = e.symm :=
+  (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ.symm] M) = e.symm :=
 symm_bijective.injective $ ext $ λ x, rfl
 
 @[simp] theorem symm_mk (f h₁ h₂ h₃ h₄) :
-  (⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₗ[R] M₂).symm =
+  (⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₛₗ[σ] M₂).symm =
   { to_fun := f, inv_fun := e,
-    ..(⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₗ[R] M₂).symm } := rfl
+    ..(⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₛₗ[σ] M₂).symm } := rfl
 
 protected lemma bijective : function.bijective e := e.to_equiv.bijective
 protected lemma injective : function.injective e := e.to_equiv.injective
