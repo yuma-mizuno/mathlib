@@ -27,8 +27,72 @@ open function
 open_locale big_operators
 
 universes u u' v w x y z
-variables {R : Type u} {k : Type u'} {S : Type v} {M : Type w} {M₂ : Type x} {M₃ : Type y}
-  {ι : Type z}
+variables {R : Type*} {k : Type*} {S : Type*} {M : Type*} {M₂ : Type*} {M₃ : Type*}
+  {ι : Type*}
+
+-- SLFIXME: Move this comp triple stuff to another file?
+
+section
+
+variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables (σ₁₂ : R₁ →+* R₂) (σ₂₃ : R₂ →+* R₃) (σ₁₃ : out_param (R₁ →+* R₃))
+
+class ring_hom_comp_triple : Prop :=
+  (is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
+variables {σ₁₂} {σ₂₃} {σ₁₃}
+
+namespace ring_hom_comp_triple
+
+@[simp] lemma comp_eq [t : ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] : σ₂₃.comp σ₁₂ = σ₁₃ :=
+t.is_comp_triple.symm
+
+@[simp] lemma comp_apply [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
+  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
+by { change (σ₂₃.comp σ₁₂) x = σ₁₃ x, rw [comp_eq] }
+
+instance ids : ring_hom_comp_triple (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by simp⟩
+instance right_ids : ring_hom_comp_triple σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by simp⟩
+
+end ring_hom_comp_triple
+
+end
+
+section
+
+variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
+
+class ring_equiv_comp_triple : Prop :=
+  (is_comp_triple : σ₁₃ = σ₁₂.trans σ₂₃)
+variables {σ₁₂} {σ₂₃} {σ₁₃}
+
+namespace ring_equiv_comp_triple
+
+@[simp] lemma comp_eq [t : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] : σ₁₂.trans σ₂₃ = σ₁₃ :=
+t.is_comp_triple.symm
+
+@[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
+  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
+by { change (σ₁₂.trans σ₂₃) x = σ₁₃ x, rw [comp_eq] }
+
+instance ids : ring_equiv_comp_triple (ring_equiv.refl R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
+instance right_ids : ring_equiv_comp_triple σ₁₂ (ring_equiv.refl R₂) σ₁₂ := ⟨by {ext, simp}⟩
+
+end ring_equiv_comp_triple
+
+instance [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
+  ring_hom_comp_triple σ₁₂.to_ring_hom σ₂₃.to_ring_hom σ₁₃.to_ring_hom :=
+⟨begin
+  simp [←ring_equiv.to_ring_hom_trans],
+  rw [ring_equiv_comp_triple.comp_eq]   -- SLFIXME: rw works but simp doens't
+end⟩
+
+end
+
 
 /-- A map `f` between modules over a semiring is linear if it satisfies the two properties
 `f (x + y) = f x + f y` and `f (c • x) = c • f x`. The predicate `is_linear_map R f` asserts this
@@ -209,16 +273,16 @@ end restrict_scalars
 variable {R}
 
 @[simp] lemma map_sum {ι} {t : finset ι} {g : ι → M} :
-  f (∑ i in t, g i) = (∑ i in t, f (g i)) :=
-f.to_add_monoid_hom.map_sum _ _
+  f' (∑ i in t, g i) = (∑ i in t, f' (g i)) :=
+f'.to_add_monoid_hom.map_sum _ _
 
 theorem to_add_monoid_hom_injective :
-  function.injective (to_add_monoid_hom : (M →ₗ[R] M₂) → (M →+ M₂)) :=
+  function.injective (to_add_monoid_hom : (M →ₛₗ[σ] M₃) → (M →+ M₃)) :=
 λ f g h, ext $ add_monoid_hom.congr_fun h
 
 /-- If two `R`-linear maps from `R` are equal on `1`, then they are equal. -/
-@[ext] theorem ext_ring {f g : R →ₗ[R] M} (h : f 1 = g 1) : f = g :=
-ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smul, g.map_smul, h]
+@[ext] theorem ext_ring {f g : R →ₛₗ[σ] M₃} (h : f 1 = g 1) : f = g :=
+ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smul'', g.map_smul'', h]
 
 theorem ext_ring_iff {f g : R →ₗ[R] M} : f = g ↔ f 1 = g 1 :=
 ⟨λ h, h ▸ rfl, ext_ring⟩
@@ -237,36 +301,22 @@ section
 
 variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables (σ₁₂ : R₁ →+* R₂) (σ₂₃ : R₂ →+* R₃) (σ₁₃ : out_param (R₁ →+* R₃))
+variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : out_param (R₁ →+* R₃)}
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
 
-class comp_triple : Prop :=
-  (is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
-variables {σ₁₂} {σ₂₃} {σ₁₃}
-
-@[simp] lemma comp_triple.comp [t : comp_triple σ₁₂ σ₂₃ σ₁₃] : σ₂₃.comp σ₁₂ = σ₁₃ :=
-t.is_comp_triple.symm
-
-@[simp] lemma comp_triple.comp_apply [comp_triple σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
-  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
-by { change (σ₂₃.comp σ₁₂) x = σ₁₃ x, rw [comp_triple.comp] }
-
-def comp [comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
+def comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
   M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
   map_smul' := λ r x,
   begin
     simp,
-    rw [comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
+    rw [ring_hom_comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
   end }
 
-instance ids_comp_triple : comp_triple (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by simp⟩
-instance right_ids_comp_triple : comp_triple σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by simp⟩
+@[simp] lemma comp_apply [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
 
-@[simp] lemma comp_apply [comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
-
-@[simp, norm_cast] lemma coe_comp [comp_triple σ₁₂ σ₂₃ σ₁₃] :
+@[simp, norm_cast] lemma coe_comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] :
   (f.comp g : M₁ → M₃) = f ∘ g := rfl
 
 @[simp] theorem comp_id : f.comp id = f :=
@@ -475,6 +525,7 @@ variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
 include R
 
 instance : has_coe (M ≃ₛₗ[σ] M₂) (M →ₛₗ[σ.to_ring_hom] M₂) := ⟨to_linear_map⟩
+instance linear_map.has_coe_l : has_coe (M ≃ₗ[R] M₃) (M →ₗ[R] M₃) := ⟨to_linear_map⟩
 -- see Note [function coercion]
 instance : has_coe_to_fun (M ≃ₛₗ[σ] M₂) := ⟨_, λ f, f.to_fun⟩
 
@@ -555,16 +606,21 @@ initialize_simps_projections linear_equiv (to_fun → apply, inv_fun → symm_ap
 
 @[simp] lemma inv_fun_eq_symm : e.inv_fun = e.symm := rfl
 
-variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+--variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {M₁ : Type*}
+variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
+variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
+variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 /-- Linear equivalences are transitive. -/
 @[trans]
-def trans : M ≃ₗ[R] M₃ :=
-{ .. e₂.to_linear_map.comp e₁.to_linear_map,
-  .. e₁.to_equiv.trans e₂.to_equiv }
+def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
+{ .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
+  .. e₁₂.to_equiv.trans e₂₃.to_equiv }
+
+variables {e₁₂} {e₂₃}
 
 @[simp] lemma coe_to_add_equiv : ⇑(e.to_add_equiv) = e := rfl
 
@@ -573,13 +629,14 @@ lemma to_add_monoid_hom_commutes :
   e.to_linear_map.to_add_monoid_hom = e.to_add_equiv.to_add_monoid_hom :=
 rfl
 
-@[simp] theorem trans_apply (c : M) :
-  (e₁.trans e₂) c = e₂ (e₁ c) := rfl
+@[simp] theorem trans_apply (c : M₁) :
+  (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃) c = e₂₃ (e₁₂ c) := rfl
 @[simp] theorem apply_symm_apply (c : M₂) : e (e.symm c) = c := e.right_inv c
 @[simp] theorem symm_apply_apply (b : M) : e.symm (e b) = b := e.left_inv b
-@[simp] lemma symm_trans_apply (c : M₃) : (e₁.trans e₂).symm c = e₁.symm (e₂.symm c) := rfl
+@[simp] lemma symm_trans_apply (c : M₃) :
+  (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 
-@[simp] lemma trans_refl : e.trans (refl R M₂) = e := to_equiv_injective e.to_equiv.trans_refl
+@[simp] lemma trans_refl : e.trans (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
 @[simp] lemma refl_trans : (refl R M).trans e = e := to_equiv_injective e.to_equiv.refl_trans
 
 lemma symm_apply_eq {x y} : e.symm x = y ↔ x = e y := e.to_equiv.symm_apply_eq
@@ -606,11 +663,11 @@ lemma comp_coe [module R M] [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M�
 rfl
 
 @[simp] lemma mk_coe (h₁ h₂ f h₃ h₄) :
-  (linear_equiv.mk e h₁ h₂ f h₃ h₄ : M ≃ₗ[R] M₂) = e := ext $ λ _, rfl
+  (linear_equiv.mk e h₁ h₂ f h₃ h₄ : M ≃ₛₗ[σ] M₂) = e := ext $ λ _, rfl
 
 @[simp] theorem map_add (a b : M) : e (a + b) = e a + e b := e.map_add' a b
 @[simp] theorem map_zero : e 0 = 0 := e.to_linear_map.map_zero
-@[simp] theorem map_smul (c : R) (x : M) : e (c • x) = c • e x := e.map_smul' c x
+@[simp] theorem map_smul (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
 
 @[simp] lemma map_sum {s : finset ι} (u : ι → M) : e (∑ i in s, u i) = ∑ i in s, e (u i) :=
 e.to_linear_map.map_sum
