@@ -152,7 +152,7 @@ protected def finite (α : Type*) : subgroup (perm α) :=
     simp [eq_comm],
   end }
 
-@[simp] lemma finite_support_finite (p : equiv.perm.finite α) : {x | ¬ p x = x}.finite :=
+lemma finite_support_finite (p : equiv.perm.finite α) : {x | p x ≠ x}.finite :=
 p.prop
 
 @[simp] lemma mem_finite_iff (p : perm α) : p ∈ perm.finite α ↔ {x | ¬ p x = x}.finite := iff.rfl
