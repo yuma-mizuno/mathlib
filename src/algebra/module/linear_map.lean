@@ -677,10 +677,19 @@ e.to_add_equiv.map_eq_zero_iff
 theorem map_ne_zero_iff {x : M} : e x ≠ 0 ↔ x ≠ 0 :=
 e.to_add_equiv.map_ne_zero_iff
 
-@[simp] theorem symm_symm : e.symm.symm = e := by { cases e, refl }
+instance [module R M] [module S M₂] : has_coe (M ≃ₛₗ[σ.symm.symm] M₂) (M ≃ₛₗ[σ] M₂) :=
+⟨λ e',
+{ to_fun := e'.to_fun,
+  map_add' := e'.map_add',
+  map_smul' := e'.map_smul',
+  inv_fun := e'.inv_fun,
+  left_inv := e'.left_inv,
+  right_inv := e'.right_inv }⟩
 
-lemma symm_bijective [module R M] [module R M₂] :
-  function.bijective (symm : (M ≃ₗ[R] M₂) → (M₂ ≃ₗ[R] M)) :=
+@[simp] theorem symm_symm : (e.symm.symm : M ≃ₛₗ[σ] M₂) = e := by { cases e, refl }
+
+lemma symm_bijective [module R M] [module S M₂] :
+  function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ.symm] M)) :=
 equiv.bijective ⟨symm, symm, symm_symm, symm_symm⟩
 
 @[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) :
