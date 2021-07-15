@@ -575,7 +575,20 @@ section semiring
 
 variables [semiring R] [add_comm_monoid M] [module R M]
 
-instance endomorphism_semiring : semiring (M →ₗ[R] M) := sorry
+instance endomorphism_semiring : semiring (M →ₗ[R] M) :=
+{ mul := (*),
+  one := (1 : M →ₗ[R] M),
+  zero := 0,
+  add := (+),
+  npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
+  left_distrib := λ f g h, by { ext, simp },
+  right_distrib := λ f g h, by { ext, simp },
+  zero_mul := λ f, by { ext, simp },
+  mul_zero := λ f, by { ext, simp },
+  mul_assoc := λ f g h, by { ext, simp [mul_assoc] },
+  one_mul := λ f, by { ext, simp },
+  mul_one := λ f, by { ext, simp },
+  .. linear_map.add_comm_monoid }
 --by refine_struct
 --  { mul := (*),
 --    one := (1 : M →ₗ[R] M),
@@ -584,24 +597,6 @@ instance endomorphism_semiring : semiring (M →ₗ[R] M) := sorry
 --    npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
 --    .. linear_map.add_comm_monoid, .. };
 --intros; try { refl }; apply linear_map.ext; simp {proj := ff}
---begin
---refine_struct
---  { mul := (*),
---    one := (1 : M →ₗ[R] M),
---    zero := 0,
---    add := (+),
---    npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
---    .. linear_map.add_comm_monoid, .. },
---{ intros, ext x, simp },
---{ intros, refl },
---{ intros, refl },
---{ intros, ext x, simp },
---{ intros, refl },
---{ intros, ext x, simp },
---{ intros, ext x, simp },
---{ intros, refl },
---{ intros, refl }
---end
 
 end semiring
 
