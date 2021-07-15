@@ -66,7 +66,7 @@ open_locale big_operators
 --universes u v w x y z u' v' w' y'
 variables {R : Type*} {K : Type*} {M : Type*} {V : Type*} {M₂ : Type*} {V₂ : Type*}
 variables {R₂ : Type*} {R₃ : Type*} {R₄ : Type*}
-variables {M₃ : Type*} {V₃ : Type*} {M₄ : Type*} {ι : Type*}
+variables {M₁ : Type*} {M₃ : Type*} {V₃ : Type*} {M₄ : Type*} {ι : Type*}
 
 namespace finsupp
 
@@ -134,8 +134,9 @@ namespace linear_map
 
 section add_comm_monoid
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
-variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables [module R M] [module R₂ M₂] [module R₃ M₃] [module R₄ M₄]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
+variables [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [module R M] [module R M₁] [module R₂ M₂] [module R₃ M₃] [module R₄ M₄]
 variables {σ₁₂ : R →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₃₄ : R₃ →+* R₄}
 variables {σ₁₃ : out_param (R →+* R₃)} {σ₂₄ : out_param (R₂ →+* R₄)}
 variables {σ₁₄ : out_param (R →+* R₄)}
@@ -216,8 +217,6 @@ instance : has_add (M →ₛₗ[σ₁₂] M₂) :=
 
 @[simp] lemma add_apply (f' : M →ₛₗ[σ₁₂] M₂) (x : M) : (f + f') x = f x + f' x := rfl
 
-#check linear_map.simps.apply
-
 /-- The type of linear maps is an additive monoid. -/
 instance [s : smul_comm_class ℕ R₂ M₂] : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
 { zero := 0,
@@ -236,39 +235,40 @@ instance [s : smul_comm_class ℕ R₂ M₂] : add_comm_monoid (M →ₛₗ[σ�
   nsmul_zero' := λ f, by { ext x, change 0 • f x = 0, simp only [zero_smul] },
   nsmul_succ' := λ n f, begin
     ext x,
-    rw [linear_map.apply],
+    change n.succ • (f x) = f x + n • (f x),   -- SLFIXME: no idea why simp doesn't figure it out!
+    simp [nat.succ_eq_one_add, add_nsmul],
   end --{ ext x, simp [nat.succ_eq_one_add, add_nsmul] }
   }
 
 instance linear_map_apply_is_add_monoid_hom (a : M) :
-  is_add_monoid_hom (λ f : M →ₗ[R] M₂, f a) :=
+  is_add_monoid_hom (λ f : M →ₛₗ[σ₁₂] M₂, f a) :=
 { map_add := λ f g, linear_map.add_apply f g a,
   map_zero := rfl }
 
-lemma add_comp (g : M₂ →ₗ[R] M₃) (h : M₂ →ₗ[R] M₃) :
-  (h + g).comp f = h.comp f + g.comp f := rfl
+lemma add_comp (g : M₂ →ₛₗ[σ₂₃] M₃) (h : M₂ →ₛₗ[σ₂₃] M₃) :
+  ((h + g).comp f : M →ₛₗ[σ₁₃] M₃) = h.comp f + g.comp f := rfl
 
-lemma comp_add (g : M →ₗ[R] M₂) (h : M₂ →ₗ[R] M₃) :
-  h.comp (f + g) = h.comp f + h.comp g := by { ext, simp }
+lemma comp_add (g : M →ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃) :
+  (h.comp (f + g) : M →ₛₗ[σ₁₃] M₃)  = h.comp f + h.comp g := by { ext, simp }
 
-lemma sum_apply (t : finset ι) (f : ι → M →ₗ[R] M₂) (b : M) :
+lemma sum_apply (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) (b : M) :
   (∑ d in t, f d) b = ∑ d in t, f d b :=
-(t.sum_hom (λ g : M →ₗ[R] M₂, g b)).symm
+(t.sum_hom (λ g : M →ₛₗ[σ₁₂] M₂, g b)).symm
 
 section smul_right
 
 variables {S : Type*} [semiring S] [module R S] [module S M] [is_scalar_tower R S M]
 
 /-- When `f` is an `R`-linear map taking values in `S`, then `λb, f b • x` is an `R`-linear map. -/
-def smul_right (f : M₂ →ₗ[R] S) (x : M) : M₂ →ₗ[R] M :=
+def smul_right (f : M₁ →ₗ[R] S) (x : M) : M₁ →ₗ[R] M :=
 { to_fun := λb, f b • x,
   map_add' := λ x y, by rw [f.map_add, add_smul],
   map_smul' := λ b y, by dsimp; rw [f.map_smul, smul_assoc] }
 
-@[simp] theorem coe_smul_right (f : M₂ →ₗ[R] S) (x : M) :
-  (smul_right f x : M₂ → M) = λ c, f c • x := rfl
+@[simp] theorem coe_smul_right (f : M₁ →ₗ[R] S) (x : M) :
+  (smul_right f x : M₁ → M) = λ c, f c • x := rfl
 
-theorem smul_right_apply (f : M₂ →ₗ[R] S) (x : M) (c : M₂) :
+theorem smul_right_apply (f : M₁ →ₗ[R] S) (x : M) (c : M₁) :
   smul_right f x c = f c • x := rfl
 
 end smul_right
@@ -291,15 +291,14 @@ begin
   exact nontrivial_of_ne 1 0 (λ p, ne (linear_map.congr_fun p m)),
 end
 
-@[simp] theorem comp_zero : f.comp (0 : M₃ →ₗ[R] M) = 0 :=
-ext $ assume c, by rw [comp_apply, zero_apply, zero_apply, f.map_zero]
+@[simp] theorem comp_zero : (g.comp (0 : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃) = 0 :=
+ext $ assume c, by rw [comp_apply, zero_apply, zero_apply, g.map_zero]
 
-@[simp] theorem zero_comp : (0 : M₂ →ₗ[R] M₃).comp f = 0 :=
-rfl
+@[simp] theorem zero_comp : ((0 : M₂ →ₛₗ[σ₂₃] M₃).comp f : M →ₛₗ[σ₁₃] M₃) = 0 := rfl
 
-@[simp, norm_cast] lemma coe_fn_sum {ι : Type*} (t : finset ι) (f : ι → M →ₗ[R] M₂) :
+@[simp, norm_cast] lemma coe_fn_sum {ι : Type*} (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) :
   ⇑(∑ i in t, f i) = ∑ i in t, (f i : M → M₂) :=
-add_monoid_hom.map_sum ⟨@to_fun R R _ _ (ring_hom.id R) M M₂ _ _ _ _, rfl, λ x y, rfl⟩ _ _
+add_monoid_hom.map_sum ⟨@to_fun R R₂ _ _ σ₁₂ M M₂ _ _ _ _, rfl, λ x y, rfl⟩ _ _
 
 instance : monoid (M →ₗ[R] M) :=
 by refine_struct { mul := (*), one := (1 : M →ₗ[R] M), npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩ };
@@ -319,7 +318,7 @@ lemma pow_map_zero_of_le
 by rw [← nat.sub_add_cancel hk, pow_add, mul_apply, hm, map_zero]
 
 lemma commute_pow_left_of_commute
-  {f : M →ₗ[R] M₂} {g : module.End R M} {g₂ : module.End R M₂} (h : g₂.comp f = f.comp g) (k : ℕ) :
+  {f : M →ₛₗ[σ₁₂] M₂} {g : module.End R M} {g₂ : module.End R₂ M₂} (h : g₂.comp f = f.comp g) (k : ℕ) :
   (g₂^k).comp f = f.comp (g^k) :=
 begin
   induction k with k ih,
@@ -576,15 +575,33 @@ section semiring
 
 variables [semiring R] [add_comm_monoid M] [module R M]
 
-instance endomorphism_semiring : semiring (M →ₗ[R] M) :=
-by refine_struct
-  { mul := (*),
-    one := (1 : M →ₗ[R] M),
-    zero := 0,
-    add := (+),
-    npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
-    .. linear_map.add_comm_monoid, .. };
-intros; try { refl }; apply linear_map.ext; simp {proj := ff}
+instance endomorphism_semiring : semiring (M →ₗ[R] M) := sorry
+--by refine_struct
+--  { mul := (*),
+--    one := (1 : M →ₗ[R] M),
+--    zero := 0,
+--    add := (+),
+--    npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
+--    .. linear_map.add_comm_monoid, .. };
+--intros; try { refl }; apply linear_map.ext; simp {proj := ff}
+--begin
+--refine_struct
+--  { mul := (*),
+--    one := (1 : M →ₗ[R] M),
+--    zero := 0,
+--    add := (+),
+--    npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩,
+--    .. linear_map.add_comm_monoid, .. },
+--{ intros, ext x, simp },
+--{ intros, refl },
+--{ intros, refl },
+--{ intros, ext x, simp },
+--{ intros, refl },
+--{ intros, ext x, simp },
+--{ intros, ext x, simp },
+--{ intros, refl },
+--{ intros, refl }
+--end
 
 end semiring
 
@@ -1180,7 +1197,7 @@ lemma not_mem_span_of_apply_not_mem_span_image
    x ∉ submodule.span R s :=
 not.imp h (apply_mem_span_image_of_mem_span f)
 
-lemma supr_eq_span {ι : Sort w} (p : ι → submodule R M) :
+lemma supr_eq_span {ι : Sort*} (p : ι → submodule R M) :
   (⨆ (i : ι), p i) = submodule.span R (⋃ (i : ι), ↑(p i)) :=
 le_antisymm
   (supr_le $ assume i, subset.trans (assume m hm, set.mem_Union.mpr ⟨i, hm⟩) subset_span)
@@ -1226,7 +1243,7 @@ begin
       exact this (mem_span_singleton_self a), } },
 end
 
-lemma mem_supr {ι : Sort w} (p : ι → submodule R M) {m : M} :
+lemma mem_supr {ι : Sort*} (p : ι → submodule R M) {m : M} :
   (m ∈ ⨆ i, p i) ↔ (∀ N, (∀ i, p i ≤ N) → m ∈ N) :=
 begin
   rw [← span_singleton_le_iff_mem, le_supr_iff],
@@ -2071,28 +2088,29 @@ by simp [f.range_cod_restrict _]
 namespace linear_equiv
 
 section add_comm_monoid
-variables [semiring R] [add_comm_monoid M] [add_comm_monoid M₂]
-[add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
+variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables {σ₁₂ : R ≃+* R₂}
 
 section subsingleton
-variables [module R M] [module R M₂] [subsingleton M] [subsingleton M₂]
+variables [module R M] [module R₂ M₂] [subsingleton M] [subsingleton M₂]
 
 /-- Between two zero modules, the zero map is an equivalence. -/
-instance : has_zero (M ≃ₗ[R] M₂) :=
+instance : has_zero (M ≃ₛₗ[σ₁₂] M₂) :=
 ⟨{ to_fun := 0,
    inv_fun := 0,
    right_inv := λ x, subsingleton.elim _ _,
    left_inv := λ x, subsingleton.elim _ _,
-   ..(0 : M →ₗ[R] M₂)}⟩
+   ..(0 : M →ₛₗ[σ₁₂.to_ring_hom] M₂)}⟩
 
 -- Even though these are implied by `subsingleton.elim` via the `unique` instance below, they're
 -- nice to have as `rfl`-lemmas for `dsimp`.
-@[simp] lemma zero_symm : (0 : M ≃ₗ[R] M₂).symm = 0 := rfl
-@[simp] lemma coe_zero : ⇑(0 : M ≃ₗ[R] M₂) = 0 := rfl
-lemma zero_apply (x : M) : (0 : M ≃ₗ[R] M₂) x = 0 := rfl
+@[simp] lemma zero_symm : (0 : M ≃ₛₗ[σ₁₂] M₂).symm = 0 := rfl
+@[simp] lemma coe_zero : ⇑(0 : M ≃ₛₗ[σ₁₂] M₂) = 0 := rfl
+lemma zero_apply (x : M) : (0 : M ≃ₛₗ[σ₁₂] M₂) x = 0 := rfl
 
 /-- Between two zero modules, the zero map is the only equivalence. -/
-instance : unique (M ≃ₗ[R] M₂) :=
+instance : unique (M ≃ₛₗ[σ₁₂] M₂) :=
 { uniq := λ f, to_linear_map_injective (subsingleton.elim _ _),
   default := 0 }
 
