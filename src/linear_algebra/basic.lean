@@ -663,9 +663,12 @@ namespace submodule
 
 section add_comm_monoid
 
-variables [semiring R] [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
-variables [module R M] [module R M₂] [module R M₃]
-variables (p p' : submodule R M) (q q' : submodule R M₂)
+variables [semiring R] [semiring R₂] [semiring R₃]
+variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [module R M] [module R₂ M₂] [module R₃ M₃]
+variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R ≃+* R₃)}
+variables [ring_hom_comp_triple σ₁₂.to_ring_hom σ₂₃.to_ring_hom σ₁₃.to_ring_hom]
+variables (p p' : submodule R M) (q q' : submodule R₂ M₂)
 variables {r : R} {x y : M}
 open set
 
@@ -740,106 +743,116 @@ theorem mem_left_iff_eq_zero_of_disjoint {p p' : submodule R M} (h : disjoint p 
 ⟨λ hx, coe_eq_zero.1 $ disjoint_def.1 h x hx x.2, λ h, h.symm ▸ p.zero_mem⟩
 
 /-- The pushforward of a submodule `p ⊆ M` by `f : M → M₂` -/
-def map (f : M →ₗ[R] M₂) (p : submodule R M) : submodule R M₂ :=
+def map (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : submodule R M) : submodule R₂ M₂ :=
+--{ carrier   := f '' p,
+--  smul_mem' := by rintro a _ ⟨b, hb, rfl⟩; exact ⟨_, p.smul_mem _ hb, f.map_smul'' _ _⟩,
+--  .. p.to_add_submonoid.map f.to_add_monoid_hom }
 { carrier   := f '' p,
-  smul_mem' := by rintro a _ ⟨b, hb, rfl⟩; exact ⟨_, p.smul_mem _ hb, f.map_smul _ _⟩,
+  smul_mem' :=
+  begin
+    rintro c x ⟨b, hb, rfl⟩,
+    refine ⟨_, p.smul_mem (σ₁₂.symm c) hb, _⟩,
+    have h : σ₁₂.to_ring_hom (σ₁₂.symm c) = c := by { change σ₁₂ (σ₁₂.symm c) = c, simp },
+    simp [h],
+  end,
   .. p.to_add_submonoid.map f.to_add_monoid_hom }
 
-@[simp] lemma map_coe (f : M →ₗ[R] M₂) (p : submodule R M) :
+@[simp] lemma map_coe (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : submodule R M) :
   (map f p : set M₂) = f '' p := rfl
 
-@[simp] lemma mem_map {f : M →ₗ[R] M₂} {p : submodule R M} {x : M₂} :
+@[simp] lemma mem_map {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {p : submodule R M} {x : M₂} :
   x ∈ map f p ↔ ∃ y, y ∈ p ∧ f y = x := iff.rfl
 
-theorem mem_map_of_mem {f : M →ₗ[R] M₂} {p : submodule R M} {r} (h : r ∈ p) : f r ∈ map f p :=
-set.mem_image_of_mem _ h
+theorem mem_map_of_mem {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {p : submodule R M} {r} (h : r ∈ p) :
+  f r ∈ map f p := set.mem_image_of_mem _ h
 
-lemma apply_coe_mem_map (f : M →ₗ[R] M₂) {p : submodule R M} (r : p) : f r ∈ map f p :=
-mem_map_of_mem r.prop
+lemma apply_coe_mem_map (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) {p : submodule R M} (r : p) :
+  f r ∈ map f p := mem_map_of_mem r.prop
 
 @[simp] lemma map_id : map linear_map.id p = p :=
 submodule.ext $ λ a, by simp
 
-lemma map_comp (f : M →ₗ[R] M₂) (g : M₂ →ₗ[R] M₃) (p : submodule R M) :
-  map (g.comp f) p = map g (map f p) :=
+lemma map_comp (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (g : M₂ →ₛₗ[σ₂₃.to_ring_hom] M₃)
+  (p : submodule R M) : map (g.comp f : M →ₛₗ[σ₁₃.to_ring_hom] M₃) p = map g (map f p) :=
 set_like.coe_injective $ by simp [map_coe]; rw ← image_comp
 
-lemma map_mono {f : M →ₗ[R] M₂} {p p' : submodule R M} : p ≤ p' → map f p ≤ map f p' :=
-image_subset _
+lemma map_mono {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {p p' : submodule R M} :
+  p ≤ p' → map f p ≤ map f p' := image_subset _
 
-@[simp] lemma map_zero : map (0 : M →ₗ[R] M₂) p = ⊥ :=
+@[simp] lemma map_zero : map (0 : M →ₛₗ[σ₁₂.to_ring_hom] M₂) p = ⊥ :=
 have ∃ (x : M), x ∈ p := ⟨0, p.zero_mem⟩,
 ext $ by simp [this, eq_comm]
 
 lemma range_map_nonempty (N : submodule R M) :
-  (set.range (λ ϕ, submodule.map ϕ N : (M →ₗ[R] M₂) → submodule R M₂)).nonempty :=
+  (set.range (λ ϕ, submodule.map ϕ N : (M →ₛₗ[σ₁₂.to_ring_hom] M₂) → submodule R₂ M₂)).nonempty :=
 ⟨_, set.mem_range.mpr ⟨0, rfl⟩⟩
 
 /-- The pushforward of a submodule by an injective linear map is
 linearly equivalent to the original submodule. -/
 @[simps]
-noncomputable def equiv_map_of_injective (f : M →ₗ[R] M₂) (i : injective f) (p : submodule R M) :
-  p ≃ₗ[R] p.map f :=
+noncomputable def equiv_map_of_injective (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (i : injective f)
+  (p : submodule R M) : p ≃ₛₗ[σ₁₂] p.map f :=
 { map_add' := by { intros, simp, refl, },
   map_smul' := by { intros, simp, refl, },
   ..(equiv.set.image f p i) }
 
 /-- The pullback of a submodule `p ⊆ M₂` along `f : M → M₂` -/
-def comap (f : M →ₗ[R] M₂) (p : submodule R M₂) : submodule R M :=
+def comap (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : submodule R₂ M₂) : submodule R M :=
 { carrier   := f ⁻¹' p,
   smul_mem' := λ a x h, by simp [p.smul_mem _ h],
   .. p.to_add_submonoid.comap f.to_add_monoid_hom }
 
-@[simp] lemma comap_coe (f : M →ₗ[R] M₂) (p : submodule R M₂) :
+@[simp] lemma comap_coe (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : submodule R₂ M₂) :
   (comap f p : set M) = f ⁻¹' p := rfl
 
-@[simp] lemma mem_comap {f : M →ₗ[R] M₂} {p : submodule R M₂} :
+@[simp] lemma mem_comap {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {p : submodule R₂ M₂} :
   x ∈ comap f p ↔ f x ∈ p := iff.rfl
 
 lemma comap_id : comap linear_map.id p = p :=
 set_like.coe_injective rfl
 
-lemma comap_comp (f : M →ₗ[R] M₂) (g : M₂ →ₗ[R] M₃) (p : submodule R M₃) :
-  comap (g.comp f) p = comap f (comap g p) := rfl
+lemma comap_comp (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (g : M₂ →ₛₗ[σ₂₃.to_ring_hom] M₃)
+  (p : submodule R₃ M₃) : comap (g.comp f : M →ₛₗ[σ₁₃.to_ring_hom] M₃) p = comap f (comap g p) :=
+rfl
 
-lemma comap_mono {f : M →ₗ[R] M₂} {q q' : submodule R M₂} : q ≤ q' → comap f q ≤ comap f q' :=
-preimage_mono
+lemma comap_mono {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {q q' : submodule R₂ M₂} :
+  q ≤ q' → comap f q ≤ comap f q' := preimage_mono
 
-lemma map_le_iff_le_comap {f : M →ₗ[R] M₂} {p : submodule R M} {q : submodule R M₂} :
+lemma map_le_iff_le_comap {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} {p : submodule R M} {q : submodule R₂ M₂} :
   map f p ≤ q ↔ p ≤ comap f q := image_subset_iff
 
-lemma gc_map_comap (f : M →ₗ[R] M₂) : galois_connection (map f) (comap f)
+lemma gc_map_comap (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : galois_connection (map f) (comap f)
 | p q := map_le_iff_le_comap
 
-@[simp] lemma map_bot (f : M →ₗ[R] M₂) : map f ⊥ = ⊥ :=
+@[simp] lemma map_bot (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : map f ⊥ = ⊥ :=
 (gc_map_comap f).l_bot
 
-@[simp] lemma map_sup (f : M →ₗ[R] M₂) : map f (p ⊔ p') = map f p ⊔ map f p' :=
+@[simp] lemma map_sup (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : map f (p ⊔ p') = map f p ⊔ map f p' :=
 (gc_map_comap f).l_sup
 
-@[simp] lemma map_supr {ι : Sort*} (f : M →ₗ[R] M₂) (p : ι → submodule R M) :
+@[simp] lemma map_supr {ι : Sort*} (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : ι → submodule R M) :
   map f (⨆i, p i) = (⨆i, map f (p i)) :=
 (gc_map_comap f).l_supr
 
-@[simp] lemma comap_top (f : M →ₗ[R] M₂) : comap f ⊤ = ⊤ := rfl
+@[simp] lemma comap_top (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : comap f ⊤ = ⊤ := rfl
 
-@[simp] lemma comap_inf (f : M →ₗ[R] M₂) : comap f (q ⊓ q') = comap f q ⊓ comap f q' := rfl
+@[simp] lemma comap_inf (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : comap f (q ⊓ q') = comap f q ⊓ comap f q' := rfl
 
-@[simp] lemma comap_infi {ι : Sort*} (f : M →ₗ[R] M₂) (p : ι → submodule R M₂) :
+@[simp] lemma comap_infi {ι : Sort*} (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : ι → submodule R₂ M₂) :
   comap f (⨅i, p i) = (⨅i, comap f (p i)) :=
 (gc_map_comap f).u_infi
 
-@[simp] lemma comap_zero : comap (0 : M →ₗ[R] M₂) q = ⊤ :=
+@[simp] lemma comap_zero : comap (0 : M →ₛₗ[σ₁₂.to_ring_hom] M₂) q = ⊤ :=
 ext $ by simp
 
-lemma map_comap_le (f : M →ₗ[R] M₂) (q : submodule R M₂) : map f (comap f q) ≤ q :=
+lemma map_comap_le (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (q : submodule R₂ M₂) : map f (comap f q) ≤ q :=
 (gc_map_comap f).l_u_le _
 
-lemma le_comap_map (f : M →ₗ[R] M₂) (p : submodule R M) : p ≤ comap f (map f p) :=
+lemma le_comap_map (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (p : submodule R M) : p ≤ comap f (map f p) :=
 (gc_map_comap f).le_u_l _
 
 section galois_coinsertion
-variables {f : M →ₗ[R] M₂} (hf : injective f)
+variables {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂} (hf : injective f)
 include hf
 
 /-- `map f` and `comap f` form a `galois_coinsertion` when `f` is injective. -/
@@ -877,8 +890,8 @@ lemma map_strict_mono_of_injective : strict_mono (map f) :=
 end galois_coinsertion
 
 --TODO(Mario): is there a way to prove this from order properties?
-lemma map_inf_eq_map_inf_comap {f : M →ₗ[R] M₂}
-  {p : submodule R M} {p' : submodule R M₂} :
+lemma map_inf_eq_map_inf_comap {f : M →ₛₗ[σ₁₂.to_ring_hom] M₂}
+  {p : submodule R M} {p' : submodule R₂ M₂} :
   map f p ⊓ p' = map f (p ⊓ comap f p') :=
 le_antisymm
   (by rintro _ ⟨⟨x, h₁, rfl⟩, h₂⟩; exact ⟨_, ⟨h₁, h₂⟩, rfl⟩)
@@ -916,8 +929,8 @@ le_antisymm (span_le.2 h₁) h₂
 @[simp] lemma span_eq : span R (p : set M) = p :=
 span_eq_of_le _ (subset.refl _) subset_span
 
-lemma map_span (f : M →ₗ[R] M₂) (s : set M) :
-  (span R s).map f = span R (f '' s) :=
+lemma map_span (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (s : set M) :
+  (span R s).map f = span R₂ (f '' s) :=
 eq.symm $ span_eq_of_le _ (set.image_subset f subset_span) $
 map_le_iff_le_comap.2 $ span_le.2 $ λ x hx, subset_span ⟨x, hx, rfl⟩
 
@@ -934,8 +947,8 @@ end
 alias submodule.map_span_le ← linear_map.map_span_le
 
 /- See also `span_preimage_eq` below. -/
-lemma span_preimage_le (f : M →ₗ[R] M₂) (s : set M₂) :
-  span R (f ⁻¹' s) ≤ (span R s).comap f :=
+lemma span_preimage_le (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) (s : set M₂) :
+  span R (f ⁻¹' s) ≤ (span R₂ s).comap f :=
 by { rw [span_le, comap_coe], exact preimage_mono (subset_span), }
 
 alias submodule.span_preimage_le  ← linear_map.span_preimage_le
@@ -1174,13 +1187,13 @@ span_eq_bot.trans $ by simp
 
 @[simp] lemma span_zero : span R (0 : set M) = ⊥ := by rw [←singleton_zero, span_singleton_eq_bot]
 
-@[simp] lemma span_image (f : M →ₗ[R] M₂) : span R (f '' s) = map f (span R s) :=
+@[simp] lemma span_image (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) : span R₂ (f '' s) = map f (span R s) :=
 span_eq_of_le _ (image_subset _ subset_span) $ map_le_iff_le_comap.2 $
 span_le.2 $ image_subset_iff.1 subset_span
 
 lemma apply_mem_span_image_of_mem_span
-   (f : M →ₗ[R] M₂) {x : M} {s : set M} (h : x ∈ submodule.span R s) :
-   f x ∈ submodule.span R (f '' s) :=
+   (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) {x : M} {s : set M} (h : x ∈ submodule.span R s) :
+   f x ∈ submodule.span R₂ (f '' s) :=
 begin
   rw submodule.span_image,
   exact submodule.mem_map_of_mem h
@@ -1188,7 +1201,7 @@ end
 
 /-- `f` is an explicit argument so we can `apply` this theorem and obtain `h` as a new goal. -/
 lemma not_mem_span_of_apply_not_mem_span_image
-   (f : M →ₗ[R] M₂) {x : M} {s : set M} (h : f x ∉ submodule.span R (f '' s)) :
+   (f : M →ₛₗ[σ₁₂.to_ring_hom] M₂) {x : M} {s : set M} (h : f x ∉ submodule.span R₂ (f '' s)) :
    x ∉ submodule.span R s :=
 not.imp h (apply_mem_span_image_of_mem_span f)
 
