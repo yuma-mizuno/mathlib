@@ -633,6 +633,10 @@ variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : 
 variables [ring_hom_comp_triple σ₁₂.to_ring_hom σ₂₃.to_ring_hom σ₁₃.to_ring_hom]
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
+
+instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂.self.to_ring_hom] M₂) :=
+⟨λ e, {.. e}⟩
+
 /-- Linear equivalences are transitive. -/
 @[trans]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
