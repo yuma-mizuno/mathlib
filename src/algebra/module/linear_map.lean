@@ -80,6 +80,8 @@ instance [_i : ring_hom_comp_triple σ₁₂.to_ring_hom σ₂₃.to_ring_hom σ
 
 instance ids : ring_hom_comp_triple (ring_equiv.refl R₁).to_ring_hom σ σ := ⟨by { ext, simp }⟩
 instance right_ids : ring_hom_comp_triple σ (ring_equiv.refl R₂).to_ring_hom σ := ⟨by {ext, simp}⟩
+instance inv_ids : ring_hom_comp_triple σ₁₂.to_ring_hom σ₁₂.symm.to_ring_hom
+  (ring_equiv.refl R₁).to_ring_hom := ⟨by {ext, simp}⟩
 
 example : σ₁₂.to_ring_hom = σ₁₂.self.to_ring_hom := rfl
 
@@ -145,7 +147,7 @@ add_decl_doc linear_map.to_add_hom
 
 --infixr ` →ₗ `:25 := linear_map _
 notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ M M₂
-notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_hom.id R) M M₂
+notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map ((ring_equiv.refl R).to_ring_hom) M M₂
 
 namespace linear_map
 
