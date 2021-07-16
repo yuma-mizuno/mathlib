@@ -218,7 +218,7 @@ instance : has_add (M →ₛₗ[σ₁₂] M₂) :=
 @[simp] lemma add_apply (f' : M →ₛₗ[σ₁₂] M₂) (x : M) : (f + f') x = f x + f' x := rfl
 
 /-- The type of linear maps is an additive monoid. -/
-instance [s : smul_comm_class ℕ R₂ M₂] : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
+instance  : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
 { zero := 0,
   add := (+),
   add_assoc := by intros; ext; simp [add_comm, add_left_comm],
@@ -229,9 +229,8 @@ instance [s : smul_comm_class ℕ R₂ M₂] : add_comm_monoid (M →ₛₗ[σ�
     to_fun := λ x, n • (f x),
     map_add' := λ x y, by rw [f.map_add, smul_add],
     map_smul' := λ c x, begin
-      rw [f.map_smul'', smul_comm n _ (f x)],
-      simp,
-      exact s,
+      rw [f.map_smul''],
+      simp [smul_comm n (σ₁₂ c) (f x)],
     end}, -- rw [f.map_smul, smul_comm n c (f x)] },
   nsmul_zero' := λ f, by { ext x, change 0 • f x = 0, simp only [zero_smul] },
   nsmul_succ' := λ n f, begin
