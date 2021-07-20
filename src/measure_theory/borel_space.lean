@@ -780,13 +780,8 @@ begin
   exact ⟨hg.exists.some, hg.mono (λ y hy, is_glb.unique hy hg.exists.some_spec)⟩,
 end
 
-<<<<<<< HEAD
-lemma measurable_of_monotone [linear_order β] [order_topology β] {f : β → α} (hf : monotone f) :
-  measurable f :=
-=======
 lemma measurable_of_monotone [linear_order β] [order_closed_topology β] {f : β → α}
   (hf : monotone f) : measurable f :=
->>>>>>> master
 suffices h : ∀ x, ord_connected (f ⁻¹' Ioi x),
   from measurable_of_Ioi (λ x, (h x).measurable_set),
 λ x, ord_connected_def.mpr (λ a ha b hb c hc, lt_of_lt_of_le ha (hf hc.1))
