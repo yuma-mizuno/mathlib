@@ -106,8 +106,8 @@ instance ring_equiv_comp_triple_self₂ [_i : ring_equiv_comp_triple σ₁₂ σ
   ring_equiv_comp_triple σ₁₂ σ₂₃.self σ₁₃.self :=
 ⟨ by { simp only [ring_equiv.eq_self], exact _i.is_comp_triple } ⟩
 
-instance ring_equiv_inv_pair.ids_self :
-  ring_equiv_inv_pair (ring_equiv.refl R₁).self (ring_equiv.refl R₁).self := ⟨rfl⟩
+--instance ring_equiv_inv_pair.ids_self :
+--  ring_equiv_inv_pair (ring_equiv.refl R₁).self (ring_equiv.refl R₁).self := ⟨rfl⟩
 
 --instance ids : ring_hom_comp_triple (ring_equiv.refl R₁).to_ring_hom σ σ := ⟨by { ext, simp }⟩
 --instance right_ids : ring_hom_comp_triple σ (ring_equiv.refl R₂).to_ring_hom σ := ⟨by {ext, simp}⟩

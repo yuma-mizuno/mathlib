@@ -2130,7 +2130,8 @@ namespace linear_equiv
 section add_comm_monoid
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables {σ₁₂ : R ≃+* R₂}
+variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : out_param (R₂ ≃+* R)}
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 
 section subsingleton
 variables [module R M] [module R₂ M₂] [subsingleton M] [subsingleton M₂]
@@ -2145,7 +2146,9 @@ instance : has_zero (M ≃ₛₗ[σ₁₂] M₂) :=
 
 -- Even though these are implied by `subsingleton.elim` via the `unique` instance below, they're
 -- nice to have as `rfl`-lemmas for `dsimp`.
+include σ₂₁
 @[simp] lemma zero_symm : (0 : M ≃ₛₗ[σ₁₂] M₂).symm = 0 := rfl
+omit σ₂₁
 @[simp] lemma coe_zero : ⇑(0 : M ≃ₛₗ[σ₁₂] M₂) = 0 := rfl
 lemma zero_apply (x : M) : (0 : M ≃ₛₗ[σ₁₂] M₂) x = 0 := rfl
 
@@ -2161,7 +2164,7 @@ variables {module_M : module R M} {module_M₂ : module R₂ M₂}
 variables (e e' : M ≃ₛₗ[σ₁₂] M₂)
 
 lemma map_eq_comap {p : submodule R M} :
-  (p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂) = p.comap (e.symm : M₂ →ₛₗ[σ₁₂.symm] M) :=
+  (p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂) = p.comap (e.symm : M₂ →ₛₗ[σ₂₁] M) :=
 set_like.coe_injective $ by simp [e.image_eq_preimage]
 
 /-- A linear equivalence of two modules restricts to a linear equivalence from any submodule
@@ -2169,18 +2172,21 @@ set_like.coe_injective $ by simp [e.image_eq_preimage]
 
 This is `linear_equiv.of_submodule'` but with `map` on the right instead of `comap` on the left. -/
 def of_submodule (p : submodule R M) : p ≃ₛₗ[σ₁₂] ↥(p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂) :=
-{ inv_fun   := λ y, ⟨e.symm y, by {
+{ inv_fun   := λ y, ⟨(e.symm : M₂ →ₛₗ[σ₂₁] M) y, by {
     rcases y with ⟨y', hy⟩, rw submodule.mem_map at hy, rcases hy with ⟨x, hx, hxy⟩, subst hxy,
     simp only [symm_apply_apply, submodule.coe_mk, coe_coe, hx], }⟩,
   left_inv  := λ x, by simp,
   right_inv := λ y, by { apply set_coe.ext, simp, },
   ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrict p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂)) (λ x, ⟨x, by simp⟩) }
 
+include σ₂₁
 @[simp] lemma of_submodule_apply (p : submodule R M) (x : p) :
   ↑(e.of_submodule p x) = e x := rfl
 
 @[simp] lemma of_submodule_symm_apply (p : submodule R M) (x : (p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂)) :
   ↑((e.of_submodule p).symm x) = e.symm x := rfl
+
+omit σ₂₁
 
 end
 
@@ -2220,10 +2226,12 @@ variables {p q}
 
 @[simp] lemma of_eq_symm (h : p = q) : (of_eq p q h).symm = of_eq q p h.symm := rfl
 
+include σ₂₁
 /-- A linear equivalence which maps a submodule of one module onto another, restricts to a linear
 equivalence of the two submodules. -/
 def of_submodules (p : submodule R M) (q : submodule R₂ M₂) (h : p.map (e : M →ₛₗ[σ₁₂] M₂) = q) : p ≃ₛₗ[σ₁₂] q :=
 (e.of_submodule p).trans (linear_equiv.of_eq _ _ h)
+
 
 @[simp] lemma of_submodules_apply {p : submodule R M} {q : submodule R₂ M₂}
   (h : p.map ↑e = q) (x : p) : ↑(e.of_submodules p q h x) = e x := rfl
@@ -2257,6 +2265,7 @@ lemma of_submodule'_symm_apply [module R M] [module R₂ M₂]
 
 variable (p)
 
+omit σ₂₁
 /-- The top submodule of `M` is linearly equivalent to `M`. -/
 def of_top (h : p = ⊤) : p ≃ₗ[R] M :=
 { inv_fun   := λ x, ⟨x, h.symm ▸ trivial⟩,
@@ -2281,17 +2290,21 @@ def of_linear (h₁ : f.comp g = linear_map.id) (h₂ : g.comp f = linear_map.id
 
 @[simp] theorem of_linear_apply {h₁ h₂} (x : M) : of_linear f g h₁ h₂ x = f x := rfl
 
+include σ₂₁
 @[simp] theorem of_linear_symm_apply {h₁ h₂} (x : M₂) : (of_linear f g h₁ h₂).symm x = g x := rfl
+omit σ₂₁
 
 @[simp] protected theorem range : (e : M →ₛₗ[σ₁₂] M₂).range = ⊤ :=
 linear_map.range_eq_top.2 e.to_equiv.surjective
 
+include σ₂₁
 lemma eq_bot_of_equiv [module R₂ M₂] (e : p ≃ₛₗ[σ₁₂] (⊥ : submodule R₂ M₂)) : p = ⊥ :=
 begin
   refine bot_unique (set_like.le_def.2 $ assume b hb, (submodule.mem_bot R).2 _),
   rw [← p.mk_eq_zero hb, ← e.map_eq_zero_iff],
   apply submodule.eq_zero_of_bot_submodule
 end
+omit σ₂₁
 
 @[simp] protected theorem ker : (e : M →ₛₗ[σ₁₂] M₂).ker = ⊥ :=
 linear_map.ker_eq_bot_of_injective e.to_equiv.injective
@@ -2323,9 +2336,11 @@ def of_left_inverse {g : M₂ → M} (h : function.left_inverse g f) : M ≃ₛ�
   (h : function.left_inverse g f) (x : M) :
   ↑(of_left_inverse h x) = f x := rfl
 
+include σ₂₁
 @[simp] lemma of_left_inverse_symm_apply
   (h : function.left_inverse g f) (x : f.range) :
   (of_left_inverse h).symm x = g x := rfl
+omit σ₂₁
 
 end
 
@@ -2400,8 +2415,6 @@ of_linear ((a:R) • 1 : M →ₗ[R] M) (((a⁻¹ : units R) : R) • 1 : M →�
   (by rw [smul_comp, comp_smul, smul_smul, units.mul_inv, one_smul]; refl)
   (by rw [smul_comp, comp_smul, smul_smul, units.inv_mul, one_smul]; refl)
 
-example : (ring_equiv.refl R).symm.self = (ring_equiv.refl R).self := rfl
-
 /-- A linear isomorphism between the domains and codomains of two spaces of linear maps gives a
 linear isomorphism between the two function spaces. -/
 def arrow_congr {R M₁ M₂ M₂₁ M₂₂ : Sort*} [comm_ring R]
@@ -2409,8 +2422,8 @@ def arrow_congr {R M₁ M₂ M₂₁ M₂₂ : Sort*} [comm_ring R]
   [module R M₁] [module R M₂] [module R M₂₁] [module R M₂₂]
   (e₁ : M₁ ≃ₗ[R] M₂) (e₂ : M₂₁ ≃ₗ[R] M₂₂) :
   (M₁ →ₗ[R] M₂₁) ≃ₗ[R] (M₂ →ₗ[R] M₂₂) :=
-{ to_fun := λ f : M₁ →ₗ[R] M₂₁, (e₂ : M₂₁ →ₗ[R] M₂₂).comp $ f.comp (e₁.symm : M₂ →ₛₗ[((ring_equiv.refl R).symm)] M₁),
-  inv_fun := λ f, (e₂.symm : M₂₂ →ₛₗ[((ring_equiv.refl R).symm)] M₂₁).comp $ f.comp (e₁ : M₁ →ₗ[R] M₂),
+{ to_fun := λ f : M₁ →ₗ[R] M₂₁, (e₂ : M₂₁ →ₗ[R] M₂₂).comp $ f.comp e₁.symm,
+  inv_fun := λ f, e₂.symm.comp $ f.comp (e₁ : M₁ →ₗ[R] M₂),
   left_inv := λ f, by { ext x, simp },
   right_inv := λ f, by { ext x, simp },
   map_add' := λ f g, by { ext x, simp },
