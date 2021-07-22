@@ -27,34 +27,34 @@ open function
 open_locale big_operators
 
 universes u u' v w x y z
-variables {R : Type*} {k : Type*} {S : Type*} {M : Type*} {M₂ : Type*} {M₃ : Type*}
+variables {R : Type} {k : Type*} {S : Type*} {M : Type} {M₂ : Type} {M₃ : Type}
   {ι : Type*}
 
 -- SLFIXME: Move this comp triple stuff to another file?
 
 section
 
-variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables {R₁ R₂ R₃ M₁ : Type} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables (σ₁₂ : R₁ →+* R₂) (σ₂₃ : R₂ →+* R₃) (σ₁₃ : out_param (R₁ →+* R₃))
 
-class ring_hom_is_trans : Prop :=
-  (is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
-variables {σ₁₂} {σ₂₃} {σ₁₃}
+-- class ring_hom_is_trans : Prop :=
+--   (is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
+-- variables {σ₁₂} {σ₂₃} {σ₁₃}
 
-namespace ring_hom_is_trans
+-- namespace ring_hom_is_trans
 
-@[simp] lemma comp_eq [t : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] : σ₂₃.comp σ₁₂ = σ₁₃ :=
-t.is_comp_triple.symm
+-- @[simp] lemma comp_eq [t : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] : σ₂₃.comp σ₁₂ = σ₁₃ :=
+-- t.is_comp_triple.symm
 
-@[simp] lemma comp_apply [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
-  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
-by { change (σ₂₃.comp σ₁₂) x = σ₁₃ x, rw [comp_eq] }
+-- @[simp] lemma comp_apply [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
+--   σ₂₃ (σ₁₂ x) = σ₁₃ x :=
+-- by { change (σ₂₃.comp σ₁₂) x = σ₁₃ x, rw [comp_eq] }
 
-instance ids : ring_hom_is_trans (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
-instance right_ids : ring_hom_is_trans σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by { ext, simp }⟩
-end ring_hom_is_trans
+-- instance ids : ring_hom_is_trans (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
+-- instance right_ids : ring_hom_is_trans σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by { ext, simp }⟩
+-- end ring_hom_is_trans
 
 variables (σ₁₂) (σ₂₁ : out_param (R₂ →+* R₁))
 
@@ -86,15 +86,95 @@ instance ids : ring_hom_is_symm (ring_hom.id R₁) (ring_hom.id R₁) :=
 { left_inv' := by {ext, simp },
   right_inv' := by { ext, simp } }
 
-variables {σ₃₂ : out_param (R₃ →+* R₂)} {σ₃₁ : out_param (R₃ →+* R₁)}
+-- variables {σ₃₂ : out_param (R₃ →+* R₂)} {σ₃₁ : out_param (R₃ →+* R₁)}
 
-@[priority 60] instance trans [t : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃]
-  [t' : ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁] [s : ring_hom_is_symm σ₁₂ σ₂₁]
-  [s' : ring_hom_is_symm σ₂₃ σ₃₂] : ring_hom_is_symm σ₁₃ σ₃₁ :=
-{ left_inv' := by { ext, simp [t.is_comp_triple, t'.is_comp_triple] },
-  right_inv' := by { ext, simp [t.is_comp_triple, t'.is_comp_triple] } }
+-- -- def trans [t : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃]
+-- --   [t' : ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁] [s : ring_hom_is_symm σ₁₂ σ₂₁]
+-- --   [s' : ring_hom_is_symm σ₂₃ σ₃₂] : ring_hom_is_symm σ₁₃ σ₃₁ :=
+-- -- { left_inv' := by { ext, simp [t.is_comp_triple, t'.is_comp_triple] },
+-- --   right_inv' := by { ext, simp [t.is_comp_triple, t'.is_comp_triple] } }
+
+-- def trans [t : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃]
+--   [s : ring_hom_is_symm σ₁₂ σ₂₁] [s' : ring_hom_is_symm σ₂₃ σ₃₂]
+--   [s'' : ring_hom_is_symm σ₁₃ σ₃₁] : ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁ :=
+-- sorry
 
 end ring_hom_is_symm
+
+variables (σ₁₂ σ₂₃ σ₁₃ σ₂₁) (σ₃₂ : out_param (R₃ →+* R₂)) (σ₃₁ : out_param (R₃ →+* R₁))
+
+class ring_hom_is_trans [ring_hom_is_symm σ₁₂ σ₂₁] [ring_hom_is_symm σ₂₃ σ₃₂]
+  [out_param (ring_hom_is_symm σ₁₃ σ₃₁)] : Prop :=
+(is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
+variables {σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁}
+
+namespace ring_hom_is_trans
+
+-- instance symm [ring_hom_is_symm σ₁₂ σ₂₁] [ring_hom_is_symm σ₂₃ σ₃₂]
+--   [out_param (ring_hom_is_symm σ₁₃ σ₃₁)] : ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁ σ₂₃ σ₁₂ σ₁₃ :=
+-- ⟨sorry⟩
+
+variables [ring_hom_is_symm σ₁₂ σ₂₁]
+
+-- example : ring_hom_is_symm (ring_hom.id R₁) (ring_hom.id R₁) := by show_term {apply_instance}
+
+-- exampl
+
+-- #check ring_hom_is_trans (ring_hom.id R₁) σ₁₂ σ₁₂ (ring_hom.id R₁) σ₂₁
+
+instance ids [ring_hom_is_symm σ₁₂ σ₂₁] : ring_hom_is_trans (ring_hom.id R₁) σ₁₂ σ₁₂ (ring_hom.id R₁) σ₂₁ σ₂₁ :=
+sorry
+
+instance right_ids [ring_hom_is_symm σ₁₂ σ₂₁] : ring_hom_is_trans σ₁₂ (ring_hom.id R₂) σ₁₂ σ₂₁ (ring_hom.id R₂) σ₂₁ :=
+sorry
+
+-- instance swap [ring_hom_is_symm σ₁₂ σ₂₁] : ring_hom_is_trans σ₁₂ σ₂₁ (ring_hom.id R₁) σ₂₁ σ₁₂ (ring_hom.id R₁) :=
+-- sorry
+
+end ring_hom_is_trans
+
+
+-- class all_together : Prop :=
+-- (is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
+-- (is_comp_triple_inv : σ₃₁ = σ₂₁.comp σ₃₂)
+-- (left_inv'₁₂ : σ₂₁.comp σ₁₂ = ring_hom.id R₁)
+-- (left_inv'₂₃ : σ₃₂.comp σ₂₃ = ring_hom.id R₂)
+-- (right_inv'₁₂ : σ₁₂.comp σ₂₁ = ring_hom.id R₂)
+-- (right_inv'₂₃ : σ₂₃.comp σ₃₂ = ring_hom.id R₃)
+-- (left_inv'₁₃ : σ₃₁.comp σ₁₃ = ring_hom.id R₁)
+-- (right_inv'₁₃ : σ₁₃.comp σ₃₁ = ring_hom.id R₃)
+-- variables {σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁}
+
+-- namespace all_together
+
+-- instance trans [t : all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] : ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃ :=
+-- { is_comp_triple := t.is_comp_triple }
+
+-- instance trans_inv [t : all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] : ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁ :=
+-- { is_comp_triple := t.is_comp_triple_inv }
+
+-- def symm₁₂ [t : all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] : ring_hom_is_symm σ₁₂ σ₂₁ :=
+-- { left_inv' := t.left_inv'₁₂,
+--   right_inv' := t.right_inv'₁₂ }
+
+-- def symm₂₃ [t : all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] : ring_hom_is_symm σ₂₃ σ₃₂ :=
+-- { left_inv' := t.left_inv'₂₃,
+--   right_inv' := t.right_inv'₂₃ }
+
+-- def symm₁₃ [t : all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] : ring_hom_is_symm σ₁₃ σ₃₁ :=
+-- { left_inv' := t.left_inv'₁₃,
+--   right_inv' := t.right_inv'₁₃ }
+
+-- instance ids : all_together (ring_hom.id R₁) σ₁₂ σ₁₂ (ring_hom.id R₁) σ₂₁ σ₂₁ :=
+-- sorry
+
+-- instance right_ids : all_together σ₁₂ (ring_hom.id R₂) σ₁₂ σ₂₁ (ring_hom.id R₂) σ₂₁ :=
+-- sorry
+
+-- instance swap [ring_hom_is_symm σ₁₂ σ₂₁] : all_together σ₁₂ σ₂₁ (ring_hom.id R₁) σ₂₁ σ₁₂ (ring_hom.id R₁) :=
+-- sorry
+
+-- end all_together
 
 end
 
@@ -293,28 +373,40 @@ end
 
 section
 
-variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables {R₁ R₂ R₃ M₁ : Type} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : out_param (R₁ →+* R₃)}
+variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : out_param (R₁ →+* R₃)} {σ₂₁ : out_param (R₂ →+* R₁)}
+  {σ₃₂ : out_param (R₃ →+* R₂)} {σ₃₁ : out_param (R₃ →+* R₁)} [ring_hom_is_symm σ₁₂ σ₂₁]
+  [ring_hom_is_symm σ₁₃ σ₃₁] [ring_hom_is_symm σ₂₃ σ₃₂]
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
 
 /-- Composition of two linear maps is a linear map -/
-def comp [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
+def comp [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
   M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
   map_smul' := λ r x,
   begin
     simp,
-    rw [ring_hom_is_trans.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
+    sorry
+    -- rw [ring_hom_is_trans.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
   end }
 
-@[simp] lemma comp_apply [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
+@[simp] lemma comp_apply [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] (x : M₁) : f.comp g x = f (g x) := rfl
 
-@[simp, norm_cast] lemma coe_comp [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] :
+@[simp, norm_cast] lemma coe_comp [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁] :
   (f.comp g : M₁ → M₃) = f ∘ g := rfl
 
-@[simp] theorem comp_id : f.comp id = f :=
+example :  (M₂ →ₛₗ[σ₂₃] M₃)  → (M₂ →ₛₗ[σ₂₃] M₃)  :=
+begin
+  convert comp id,
+end
+
+#check @comp M₂ M₃ _ _ R₂ R₂ R₃ M₂ _ _ _ _ _ _ _ (ring_hom.id R₂) σ₂₃ _ _ _ _ _ _ _ _ f (id : M₂ →ₗ[R₂] M₂)
+
+#check (id : M₂ →ₗ[R₂] M₂)
+
+@[simp] theorem comp_id : comp f (id : M₂ →ₗ[R₂] M₂) = f :=
 linear_map.ext $ λ x, rfl
 
 @[simp] theorem id_comp : id.comp f = f :=
@@ -585,6 +677,9 @@ end
 
 @[simp] lemma refl_apply [module R M] (x : M) : refl R M x = x := rfl
 
+section
+
+local attribute [instance] ring_hom_is_symm.swap
 /-- Linear equivalences are symmetric. -/
 @[symm]
 def symm : M₂ ≃ₛₗ[τ] M :=
@@ -598,15 +693,22 @@ initialize_simps_projections linear_equiv (to_fun → apply, inv_fun → symm_ap
 
 @[simp] lemma inv_fun_eq_symm : e.inv_fun = e.symm := rfl
 
+end
+
 variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {M₁ : Type*}
 variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : out_param (R₁ →+* R₃)}
 variables {σ₂₁ : out_param (R₂ →+* R₁)} {σ₃₂ : out_param (R₃ →+* R₂)} {σ₃₁ : out_param (R₃ →+* R₁)}
-variables [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] [ring_hom_is_symm σ₁₂ σ₂₁] [ring_hom_is_symm σ₂₃ σ₃₂] [ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁]
-variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
+-- variables [ring_hom_is_trans σ₁₂ σ₂₃ σ₁₃] [ring_hom_is_symm σ₁₂ σ₂₁] [ring_hom_is_symm σ₂₃ σ₃₂]
+--   -- [ring_hom_is_trans σ₃₂ σ₂₁ σ₃₁]
+--   [ring_hom_is_symm σ₁₃ σ₃₁]
+variables [all_together σ₁₂ σ₂₃ σ₁₃ σ₂₁ σ₃₂ σ₃₁]
 
--- local attribute [priority 500] ring_hom_is_symm.trans
+section
+local attribute [instance] all_together.symm₁₂ all_together.symm₂₃
+  variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
+end
 
 /-- Linear equivalences are transitive. -/
 @[trans]
@@ -621,11 +723,11 @@ lemma to_add_monoid_hom_commutes :
   e.to_linear_map.to_add_monoid_hom = e.to_add_equiv.to_add_monoid_hom :=
 rfl
 
-@[simp] theorem trans_apply (c : M) :
-  (e₁.trans e₂) c = e₂ (e₁ c) := rfl
+@[simp] theorem trans_apply (c : M₁) :
+  (e₁₂.trans e₂₃) c = e₂₃ (e₁₂ c) := rfl
 @[simp] theorem apply_symm_apply (c : M₂) : e (e.symm c) = c := e.right_inv c
 @[simp] theorem symm_apply_apply (b : M) : e.symm (e b) = b := e.left_inv b
-@[simp] lemma symm_trans_apply (c : M₃) : (e₁.trans e₂).symm c = e₁.symm (e₂.symm c) := rfl
+@[simp] lemma symm_trans_apply (c : M₃) : (e₁₂.trans e₂₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 
 @[simp] lemma trans_refl : e.trans (refl R M₂) = e := to_equiv_injective e.to_equiv.trans_refl
 @[simp] lemma refl_trans : (refl R M).trans e = e := to_equiv_injective e.to_equiv.refl_trans
