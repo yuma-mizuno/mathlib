@@ -74,10 +74,20 @@ namespace ring_equiv_inv_pair
 @[simp] lemma symm_apply [t : ring_equiv_inv_pair σ σ'] {x : R₁} : σ'.symm x = σ x :=
 by rw [symm_eq]
 
+variables (σ) (σ')
 lemma symm_symm [ring_equiv_inv_pair σ σ'] : σ.symm = σ' :=
 by rw [←(show σ'.symm = σ, from symm_eq), ring_equiv.symm_symm]
+variables {σ} {σ'}
 
-lemma symm_symm_apply [ring_equiv_inv_pair σ σ'] {x : R₂} : σ.symm x = σ' x := by rw [symm_symm]
+variables [ring_equiv_inv_pair σ σ']
+
+lemma symm_symm_apply {x : R₂} : σ.symm x = σ' x := by rw [symm_symm]
+
+@[simp] lemma inv_pair_apply {x : R₁} : σ' (σ x) = x :=
+by { rw [←symm_symm σ σ'], simp }
+
+@[simp] lemma inv_pair_apply₂ {x : R₂} : σ (σ' x) = x :=
+by { rw [←symm_symm σ σ'], simp }
 
 instance ids : ring_equiv_inv_pair (ring_equiv.refl R₁) (ring_equiv.refl R₁) := ⟨rfl⟩
 
@@ -177,8 +187,8 @@ add_decl_doc linear_map.to_add_hom
 --add_decl_doc linear_map.to_mul_action_hom
 
 --infixr ` →ₗ `:25 := linear_map _
-notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ.self M M₂
-notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_equiv.refl R).self M M₂
+notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ M M₂
+notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_equiv.refl R) M M₂
 
 namespace linear_map
 
@@ -380,14 +390,13 @@ linear_map.ext $ λ x, rfl
 end
 
 /-- If a function `g` is a left and right inverse of a linear map `f`, then `g` is linear itself. -/
-def inverse [module R M] [module S M₂] {σ : R ≃+* S}
+def inverse [module R M] [module S M₂] {σ : R ≃+* S} {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ']
   (f : M →ₛₗ[σ] M₂) (g : M₂ → M) (h₁ : left_inverse g f) (h₂ : right_inverse g f) :
-  M₂ →ₛₗ[σ.symm] M :=
+  M₂ →ₛₗ[σ'] M :=
 by dsimp [left_inverse, function.right_inverse] at h₁ h₂; exact
   { to_fun := g,
     map_add' := λ x y, by { rw [← h₁ (g (x + y)), ← h₁ (g x + g y)]; simp [h₂] },
-    map_smul' := λ a b,
-      by { simp, rw [← h₁ (g (a • b)), ← h₁ ((σ.symm a) • g b)], simp [h₂] } }
+    map_smul' := λ a b, by { rw [← h₁ (g (a • b)), ← h₁ ((σ' a) • g b)], simp [h₂] } }
 
 end add_comm_monoid
 
@@ -561,8 +570,8 @@ attribute [nolint doc_blame] linear_equiv.to_linear_map
 attribute [nolint doc_blame] linear_equiv.to_add_equiv
 
 --infix ` ≃ₗ ` := linear_equiv _
-notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ.self M M₂
-notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R).self M M₂
+notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
+notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
 --notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
 --notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
 
@@ -579,7 +588,7 @@ variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
 include R
 
 instance : has_coe (M ≃ₛₗ[σ] M₂) (M →ₛₗ[σ] M₂) := ⟨to_linear_map⟩
-instance linear_map.has_coe_l : has_coe (M ≃ₗ[R] M₃) (M →ₗ[R] M₃) := ⟨to_linear_map⟩
+--instance linear_map.has_coe_l : has_coe (M ≃ₗ[R] M₃) (M →ₗ[R] M₃) := ⟨to_linear_map⟩
 -- see Note [function coercion]
 instance : has_coe_to_fun (M ≃ₛₗ[σ] M₂) := ⟨_, λ f, f.to_fun⟩
 
