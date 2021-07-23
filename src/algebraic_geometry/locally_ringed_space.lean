@@ -134,7 +134,8 @@ def restrict {U : Top} (X : LocallyRingedSpace)
     -- We show that the stalk of the restriction is isomorphic to the original stalk,
     have := X.to_SheafedSpace.to_PresheafedSpace.restrict_stalk_iso f h x,
     -- and then transfer `local_ring` across the ring equivalence.
-    apply (this.CommRing_iso_to_ring_equiv).local_ring, -- import data.equiv.transfer_instance
+    -- import data.equiv.transfer_algebra_instance
+    apply (this.CommRing_iso_to_ring_equiv).local_ring,
     apply X.local_ring,
   end,
   .. X.to_SheafedSpace.restrict _ f h }

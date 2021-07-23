@@ -46,8 +46,9 @@ Then we define
   - `equiv.unique` takes `e : α ≃ β` and `[unique β]` and returns `unique α`;
   - `equiv.decidable_eq` takes `e : α ≃ β` and `[decidable_eq β]` and returns `decidable_eq α`.
 
-  More definitions of this kind can be found in other files. E.g., `data/equiv/transfer_instance`
-  does it for many algebraic type classes like `group`, `module`, etc.
+  More definitions of this kind can be found in other files. E.g.,
+  `data/equiv/transfer_algebra_instance` does it for many algebraic type
+  classes like `group`, `module`, etc.
 
 ## Tags
 

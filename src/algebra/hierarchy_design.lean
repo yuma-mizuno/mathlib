@@ -102,7 +102,7 @@ when applicable:
   instance set.Z [Z α] : Z (set α) := ...
   ```
 * Definitions for transferring the entire structure across an equivalence, like `equiv.monoid`.
-  See `data.equiv.transfer_instance` for more examples. See also the `transport` tactic.
+  See `data.equiv.transfer_algebra_instance` for more examples. See also the `transport` tactic.
   ```
   def equiv.Z (e : α ≃ β) [Z β] : Z α := ...
   /- When there is a new notion of `Z`-equiv: -/

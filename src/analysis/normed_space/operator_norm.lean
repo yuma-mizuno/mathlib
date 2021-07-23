@@ -6,7 +6,7 @@ Authors: Jan-David Salchow, Sébastien Gouëzel, Jean Lo
 import algebra.algebra.tower
 import analysis.normed_space.linear_isometry
 import analysis.normed_space.riesz_lemma
-import data.equiv.transfer_instance
+import data.equiv.transfer_algebra_instance
 
 /-!
 # Operator norm on the space of continuous linear maps

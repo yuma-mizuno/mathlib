@@ -5,7 +5,7 @@ Authors: Scott Morrison, Adam Topaz
 -/
 import category_theory.preadditive
 import category_theory.preadditive.additive_functor
-import data.equiv.transfer_instance
+import data.equiv.transfer_algebra_instance
 
 /-!
 # If `C` is preadditive, `Cᵒᵖ` has a natural preadditive structure.

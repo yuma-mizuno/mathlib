@@ -6,7 +6,7 @@ Authors: Scott Morrison, Adam Topaz
 import algebra.algebra.subalgebra
 import algebra.monoid_algebra
 import linear_algebra
-import data.equiv.transfer_instance
+import data.equiv.transfer_algebra_instance
 
 /-!
 # Free Algebras
