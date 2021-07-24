@@ -330,10 +330,14 @@ begin
   by_cases H_ne_bot : H = ⊥,
   { rw H_ne_bot,
     exact ⟨⊤, is_complement_bot_top⟩ },
-  have card_H_ne_one : fintype.card H ≠ 1,
-  { refine λ h, H_ne_bot _,
-    exact eq_bot_of_card_eq h },
-  have key := sylow.exists_subgroup_card_pow_prime,
+  have card_H_ne_one : fintype.card H ≠ 1 := λ h, H_ne_bot (H.eq_bot_of_card_eq h),
+  have two_le_card_H : 2 ≤ fintype.card H := sorry, -- maybe add `H.eq_bot_of_card_le`
+  obtain ⟨p, hp, hpH⟩ := nat.exists_prime_and_dvd two_le_card_H,
+  haveI : fact p.prime := ⟨hp⟩,
+  have k : ℕ := 0,
+  have key : p ^ k ∣ fintype.card H := sorry,
+  obtain ⟨P, hP⟩ := sylow.exists_subgroup_card_pow_prime p key,
+  -- waiting on Sylow II
   sorry
 end
 
