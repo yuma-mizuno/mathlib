@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning
 -/
 
-import group_theory.group_action
-import group_theory.order_of_element
-import group_theory.quotient_group
+import group_theory.sylow
 
 /-!
 # Complements
@@ -73,6 +71,18 @@ end
 @[to_additive] lemma is_complement_comm :
   is_complement (H : set G) (K : set G) ↔ is_complement (K : set G) (H : set G) :=
 ⟨is_complement.symm, is_complement.symm⟩
+
+@[to_additive] lemma is_complement_bot_top :
+  is_complement ((⊥ : subgroup G) : set G) ((⊤ : subgroup G) : set G) :=
+begin
+  refine is_complement_iff_exists_unique.mpr (λ g, ⟨⟨1, g, mem_top g⟩, one_mul g, λ y hy, _⟩),
+  let key : y.1 = 1 := subtype.ext (subgroup.mem_bot.mp y.1.2),
+  rw [←hy, key, subtype.val_eq_coe, is_submonoid.coe_one, one_mul, subtype.eta, ←key, prod.mk.eta],
+end
+
+@[to_additive] lemma is_complement_top_bot :
+  is_complement ((⊤ : subgroup G) : set G) ((⊥ : subgroup G) : set G) :=
+is_complement_bot_top.symm
 
 @[to_additive] lemma mem_left_transversals_iff_exists_unique_inv_mul_mem :
   S ∈ left_transversals T ↔ ∀ g : G, ∃! s : S, (s : G)⁻¹ * g ∈ T :=
@@ -317,6 +327,13 @@ theorem exists_right_complement_of_coprime [fintype G] [H.normal]
   (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
   ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
 begin
+  by_cases H_ne_bot : H = ⊥,
+  { rw H_ne_bot,
+    exact ⟨⊤, is_complement_bot_top⟩ },
+  have card_H_ne_one : fintype.card H ≠ 1,
+  { refine λ h, H_ne_bot _,
+    exact eq_bot_of_card_eq h },
+  have key := sylow.exists_subgroup_card_pow_prime,
   sorry
 end
 
