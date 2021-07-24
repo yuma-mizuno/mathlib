@@ -617,7 +617,7 @@ to_linear_map_injective.eq_iff
 end
 
 section
-variables {module_M : module R M} {module_M₂ : module S M₂} {σ : out_param (R ≃+* S)}
+variables [module R M] [module S M₂] {σ : R ≃+* S}
 variables (e e' : M ≃ₛₗ[σ] M₂)
 
 lemma to_linear_map_eq_coe : e.to_linear_map = (e : M →ₛₗ[σ] M₂) := rfl
@@ -660,7 +660,7 @@ variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ']
 
 /-- Linear equivalences are symmetric. -/
 @[symm]
-def symm : M₂ ≃ₛₗ[σ'] M :=
+def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
 --{ .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
 --  .. e.to_equiv.symm }
 { to_fun := e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
@@ -682,8 +682,11 @@ omit σ'
 variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {M₁ : Type*}
 variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
+variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
+variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₁₃ σ₃₁]
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 
@@ -711,15 +714,21 @@ rfl
 include σ'
 @[simp] theorem apply_symm_apply (c : M₂) : e (e.symm c) = c := e.right_inv c
 @[simp] theorem symm_apply_apply (b : M) : e.symm (e b) = b := e.left_inv b
+omit σ'
+
+include σ₃₁ σ₂₁ σ₃₂
 @[simp] lemma symm_trans_apply (c : M₃) :
   (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
+omit σ₃₁ σ₂₁ σ₃₂
 
 @[simp] lemma trans_refl : e.trans (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
 @[simp] lemma refl_trans : (refl R M).trans e = e := to_equiv_injective e.to_equiv.refl_trans
 
+include σ'
 lemma symm_apply_eq {x y} : e.symm x = y ↔ x = e y := e.to_equiv.symm_apply_eq
 
 lemma eq_symm_apply {x y} : y = e.symm x ↔ e y = x := e.to_equiv.eq_symm_apply
+omit σ'
 
 @[simp] lemma refl_symm [module R M] : (refl R M).symm = linear_equiv.refl R M := rfl
 
@@ -755,29 +764,40 @@ e.to_add_equiv.map_eq_zero_iff
 theorem map_ne_zero_iff {x : M} : e x ≠ 0 ↔ x ≠ 0 :=
 e.to_add_equiv.map_ne_zero_iff
 
-@[simp] theorem symm_symm : e.symm.symm = e := by { cases e, refl }
+@[simp] theorem symm_symm [ring_equiv_inv_pair σ' σ] : e.symm.symm = e := by { cases e, refl }
 
-lemma symm_bijective [module R M] [module S M₂] :
-  function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ.symm] M)) :=
-equiv.bijective ⟨symm, symm, symm_symm, begin  -- SLFIXME: golfing this fails
-  intros e,
-  exact symm_symm e,
-end⟩
+lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ] :
+  function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
+--equiv.bijective ⟨symm, symm, symm_symm, begin  -- SLFIXME: golfing this fails
+--  intros e,
+--  exact symm_symm e,
+--end⟩
+begin  -- SLFIXME this is quite ugly
+  refine equiv.bijective ⟨_,_,_,_⟩,
+  { exact symm },
+  { exact λ e, @symm_symm _ _ _ _ _ _ _ _ _ _ _ _ _ _inst_9 _inst_24 },
+  { exact λ e, @symm_symm _ _ _ _ _ _ _ _ _ _ _ _ _ _inst_24 _inst_9 }
+end
 
-@[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) :
-  (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ.symm] M) = e.symm :=
+@[simp] lemma mk_coe' [ring_equiv_inv_pair σ' σ] (f h₁ h₂ h₃ h₄) :
+  (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ'] M) = e.symm :=
 symm_bijective.injective $ ext $ λ x, rfl
 
+include σ'
 @[simp] theorem symm_mk (f h₁ h₂ h₃ h₄) :
   (⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₛₗ[σ] M₂).symm =
   { to_fun := f, inv_fun := e,
     ..(⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₛₗ[σ] M₂).symm } := rfl
+omit σ'
 
 protected lemma bijective : function.bijective e := e.to_equiv.bijective
 protected lemma injective : function.injective e := e.to_equiv.injective
 protected lemma surjective : function.surjective e := e.to_equiv.surjective
+
+include σ'
 protected lemma image_eq_preimage (s : set M) : e '' s = e.symm ⁻¹' s :=
 e.to_equiv.image_eq_preimage s
+omit σ'
 
 end
 
