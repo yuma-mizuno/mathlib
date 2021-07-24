@@ -188,6 +188,8 @@ begin
   rw [equiv.apply_symm_apply, ←mul_smul, mul_inv_self, one_smul],
 end
 
+section is_commutative
+
 variables [is_commutative H] [fintype (quotient_group.quotient H)]
 
 variables (α β γ : left_transversals (H : set G))
@@ -299,18 +301,27 @@ begin
     apply_instance },
 end
 
-/-- **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (right) complement of `H`. -/
-theorem exists_right_complement_of_coprime [fintype G] [H.normal]
+theorem exists_right_complement_of_coprime_aux [fintype G] [H.normal]
   (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
   ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
 nonempty_of_inhabited.elim
   (λ α : H.quotient_diff, ⟨mul_action.stabilizer G α, is_complement_stabilizer_of_coprime hH⟩)
 
-/-- **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (left) complement of `H`. -/
+end is_commutative
+
+variables [fintype H] [fintype (quotient_group.quotient H)]
+
+/-- **Schur-Zassenhaus**: If `H : subgroup G` is abelian, normal, and has order coprime to its
+  index, then there exists a subgroup `K` which is a (right) complement of `H`. -/
+theorem exists_right_complement_of_coprime [fintype G] [H.normal]
+  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
+  ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
+begin
+  sorry
+end
+
+/-- **Schur-Zassenhaus**: If `H : subgroup G` is abelian, normal, and has order coprime to its
+  index, then there exists a subgroup `K` which is a (left) complement of `H`. -/
 theorem exists_left_complement_of_coprime [fintype G] [H.normal]
   (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
   ∃ K : subgroup G, is_complement (K : set G) (H : set G) :=
