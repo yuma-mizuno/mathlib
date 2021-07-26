@@ -27,14 +27,14 @@ open function
 open_locale big_operators
 
 universes u u' v w x y z
-variables {R : Type*} {k : Type*} {S : Type*} {M : Type*} {M₂ : Type*} {M₃ : Type*}
+variables {R : Type*} {k : Type*} {S : Type*} {M : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*}
   {ι : Type*}
 
 -- SLFIXME: Move this comp triple stuff to another file?
 
 section
 
-variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables {R₁ R₂ R₃ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
@@ -194,7 +194,7 @@ namespace linear_map
 
 section add_comm_monoid
 
-variables [semiring R] [semiring S] [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [semiring R] [semiring S] [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 
 section
 variables [module R M] [module R M₂] [module S M₃]
@@ -361,7 +361,7 @@ section
 --def comp : M →ₗ[R] M₃ :=
 --{ to_fun := f ∘ g, .. f.to_distrib_mul_action_hom.comp g.to_distrib_mul_action_hom }
 
-variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables {R₁ R₂ R₃ : Type*} [semiring R₁] [semiring R₂] [semiring R₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
@@ -375,6 +375,12 @@ def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ
     simp,
     rw [ring_equiv_comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
   end }
+
+abbreviation compₗ [module R M₁] [module R M₂] [module R M₃] :=
+  @comp M₁ M₂ M₃ _ _ _ R R R _ _ _ _ _ _
+  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+
+#check @compₗ
 
 @[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
 
@@ -679,7 +685,7 @@ include σ'
 omit σ'
 
 --variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
-variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {M₁ : Type*}
+variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
 variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}

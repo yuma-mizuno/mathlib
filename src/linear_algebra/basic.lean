@@ -298,7 +298,7 @@ ext $ assume c, by rw [comp_apply, zero_apply, zero_apply, g.map_zero]
 
 @[simp, norm_cast] lemma coe_fn_sum {ι : Type*} (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) :
   ⇑(∑ i in t, f i) = ∑ i in t, (f i : M → M₂) :=
-add_monoid_hom.map_sum ⟨@to_fun R R₂ _ _ σ₁₂.self M M₂ _ _ _ _, rfl, λ x y, rfl⟩ _ _
+add_monoid_hom.map_sum ⟨@to_fun R R₂ _ _ σ₁₂ M M₂ _ _ _ _, rfl, λ x y, rfl⟩ _ _
 
 instance : monoid (M →ₗ[R] M) :=
 by refine_struct { mul := (*), one := (1 : M →ₗ[R] M), npow := @npow_rec _ ⟨1⟩ ⟨(*)⟩ };
@@ -2422,8 +2422,8 @@ def arrow_congr {R M₁ M₂ M₂₁ M₂₂ : Sort*} [comm_ring R]
   [module R M₁] [module R M₂] [module R M₂₁] [module R M₂₂]
   (e₁ : M₁ ≃ₗ[R] M₂) (e₂ : M₂₁ ≃ₗ[R] M₂₂) :
   (M₁ →ₗ[R] M₂₁) ≃ₗ[R] (M₂ →ₗ[R] M₂₂) :=
-{ to_fun := λ f : M₁ →ₗ[R] M₂₁, (e₂ : M₂₁ →ₗ[R] M₂₂).comp $ f.comp e₁.symm,
-  inv_fun := λ f, e₂.symm.comp $ f.comp (e₁ : M₁ →ₗ[R] M₂),
+{ to_fun := λ f : M₁ →ₗ[R] M₂₁, (e₂ : M₂₁ →ₗ[R] M₂₂).compₗ $ f.compₗ e₁.symm,
+  inv_fun := λ f, (e₂.symm : M₂₂ →ₗ[R] M₂₁).compₗ $ f.compₗ e₁,
   left_inv := λ f, by { ext x, simp },
   right_inv := λ f, by { ext x, simp },
   map_add' := λ f g, by { ext x, simp },
@@ -2470,10 +2470,10 @@ themselves are linearly isomorphic. -/
 def conj (e : M ≃ₗ[R] M₂) : (module.End R M) ≃ₗ[R] (module.End R M₂) := arrow_congr e e
 
 lemma conj_apply (e : M ≃ₗ[R] M₂) (f : module.End R M) :
-  e.conj f = ((↑e : M →ₗ[R] M₂).comp f).comp (e.symm : M₂ →ₛₗ[((ring_equiv.refl R).symm)] M) := rfl
+  e.conj f = ((↑e : M →ₗ[R] M₂).comp f).comp (e.symm : M₂ →ₗ[R] M) := rfl
 
 lemma symm_conj_apply (e : M ≃ₗ[R] M₂) (f : module.End R M₂) :
-  e.symm.conj f = ((↑e.symm : M₂ →ₛₗ[((ring_equiv.refl R).symm)] M).comp f).comp (e : M →ₗ[R] M₂) := rfl
+  e.symm.conj f = ((↑e.symm : M₂ →ₗ[R] M).comp f).comp (e : M →ₗ[R] M₂) := rfl
 
 lemma conj_comp (e : M ≃ₗ[R] M₂) (f g : module.End R M) :
   e.conj (g.comp f) = (e.conj g).comp (e.conj f) :=
@@ -2612,7 +2612,7 @@ linear_equiv.of_linear (p.liftq id $ hp.symm ▸ bot_le) p.mkq (liftq_mkq _ _ _)
   (p.quot_equiv_of_eq_bot hp).symm x = quotient.mk x := rfl
 
 @[simp] lemma coe_quot_equiv_of_eq_bot_symm (hp : p = ⊥) :
-  ((p.quot_equiv_of_eq_bot hp).symm : M →ₛₗ[((ring_equiv.refl R).symm)] p.quotient) = p.mkq := rfl
+  ((p.quot_equiv_of_eq_bot hp).symm : M →ₗ[R] p.quotient) = p.mkq := rfl
 
 variables (q : submodule R M)
 
@@ -2899,7 +2899,7 @@ def to_linear_equiv (f : general_linear_group R M) : (M ≃ₗ[R] M) :=
 /-- An equivalence from `M` to itself determines an invertible linear map. -/
 def of_linear_equiv (f : (M ≃ₗ[R] M)) : general_linear_group R M :=
 { val := f,
-  inv := (f.symm : M →ₛₗ[((ring_equiv.refl R).symm)] M),
+  inv := (f.symm : M →ₗ[R] M),
   val_inv := linear_map.ext $ λ _, f.apply_symm_apply _,
   inv_val := linear_map.ext $ λ _, f.symm_apply_apply _ }
 
