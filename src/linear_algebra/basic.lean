@@ -149,6 +149,8 @@ theorem comp_assoc (h : M₃ →ₛₗ[σ₃₄] M₄) :
   ((h.comp g : M₂ →ₛₗ[σ₂₄] M₄).comp f : M →ₛₗ[σ₁₄] M₄)
   = h.comp (g.comp f : M →ₛₗ[σ₁₃] M₃) := rfl
 
+#check @comp_assoc
+
 omit R R₂
 
 /-- The restriction of a linear map `f : M → M₂` to a submodule `p ⊆ M` gives a linear map
@@ -2211,7 +2213,8 @@ end uncurry
 section
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
-variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₁₂.symm] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
+variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁]
 variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 variables (p q : submodule R M)

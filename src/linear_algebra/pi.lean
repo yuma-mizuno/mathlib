@@ -110,7 +110,7 @@ families of functions on these modules. See note [bundled maps over different ri
 { to_fun := λ f, ∑ i : ι, (f i).comp (proj i),
   inv_fun := λ f i, f.comp (single i),
   map_add' := λ f g, by simp only [pi.add_apply, add_comp, finset.sum_add_distrib],
-  map_smul' := λ c f, by simp only [pi.smul_apply, smul_comp, finset.smul_sum],
+  map_smul' := λ c f, by simp [pi.smul_apply, smul_comp, finset.smul_sum],
   left_inv := λ f, by { ext i x, simp [apply_single] },
   right_inv := λ f,
     begin
@@ -135,7 +135,7 @@ lemma pi_ext_iff : f = g ↔ ∀ i x, f (pi.single i x) = g (pi.single i x) :=
 
 /-- This is used as the ext lemma instead of `linear_map.pi_ext` for reasons explained in
 note [partially-applied ext lemmas]. -/
-@[ext] lemma pi_ext' (h : ∀ i, f.comp (single i) = g.comp (single i)) : f = g :=
+@[ext] lemma pi_ext' (h : ∀ i, f.compₗ (single i) = g.comp (single i)) : f = g :=
 begin
   refine pi_ext (λ i x, _),
   convert linear_map.congr_fun (h i) x
@@ -163,7 +163,9 @@ begin
     assume j hjJ,
     have : j ∉ I := assume hjI, hd ⟨hjI, hjJ⟩,
     rw [dif_neg this, zero_apply] },
-  { simp only [pi_comp, comp_assoc, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
+  {
+    rw [pi_comp],
+    simp only [pi_comp, comp_assoc, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
     ext b ⟨j, hj⟩, refl },
   { ext1 ⟨b, hb⟩,
     apply subtype.ext,

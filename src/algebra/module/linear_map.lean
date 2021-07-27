@@ -75,21 +75,29 @@ namespace ring_equiv_inv_pair
 by rw [symm_eq]
 
 variables (σ) (σ')
-lemma symm_symm [ring_equiv_inv_pair σ σ'] : σ.symm = σ' :=
+lemma symm_eq₂ [ring_equiv_inv_pair σ σ'] : σ.symm = σ' :=
 by rw [←(show σ'.symm = σ, from symm_eq), ring_equiv.symm_symm]
 variables {σ} {σ'}
 
 variables [ring_equiv_inv_pair σ σ']
 
-lemma symm_symm_apply {x : R₂} : σ.symm x = σ' x := by rw [symm_symm]
+lemma symm_eq₂_apply {x : R₂} : σ.symm x = σ' x := by rw [symm_eq₂]
+
+@[simp] lemma trans_eq : σ'.trans σ = (ring_equiv.refl R₂) :=
+by { rw [←symm_eq₂ σ σ'], simp }
+
+@[simp] lemma trans_eq₂ : σ.trans σ' = (ring_equiv.refl R₁) :=
+by { rw [←symm_eq₂ σ σ'], simp }
 
 @[simp] lemma inv_pair_apply {x : R₁} : σ' (σ x) = x :=
-by { rw [←symm_symm σ σ'], simp }
+by { rw [←symm_eq₂ σ σ'], simp }
 
 @[simp] lemma inv_pair_apply₂ {x : R₂} : σ (σ' x) = x :=
-by { rw [←symm_symm σ σ'], simp }
+by { rw [←symm_eq₂ σ σ'], simp }
 
 instance ids : ring_equiv_inv_pair (ring_equiv.refl R₁) (ring_equiv.refl R₁) := ⟨rfl⟩
+instance triples {σ₂₁ : R₂ ≃+* R₁} [ring_equiv_inv_pair σ₁₂ σ₂₁] :
+  ring_equiv_comp_triple σ₁₂ σ₂₁ (ring_equiv.refl R₁) := ⟨by simp only [trans_eq₂]⟩
 
 end ring_equiv_inv_pair
 
@@ -376,11 +384,14 @@ def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ
     rw [ring_equiv_comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
   end }
 
+-- SLFIXME: figure out the right way to do this
+
 abbreviation compₗ [module R M₁] [module R M₂] [module R M₃] :=
   @comp M₁ M₂ M₃ _ _ _ R R R _ _ _ _ _ _
   (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
-#check @compₗ
+--notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
 
 @[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
 
@@ -671,7 +682,7 @@ def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
 --  .. e.to_equiv.symm }
 { to_fun := e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   inv_fun := e.to_equiv.symm.inv_fun,
-  map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_equiv_inv_pair.symm_symm])],
+  map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_equiv_inv_pair.symm_eq₂])],
   .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   .. e.to_equiv.symm }
 
