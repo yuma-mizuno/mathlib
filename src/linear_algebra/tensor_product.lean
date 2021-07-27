@@ -160,12 +160,12 @@ flip $ linear_map.comp (flip id) f
 
 variables {R P}
 
-@[simp] theorem lcomp_apply (f : M →ₗ[R] N) (g : N →ₗ P) (x : M) :
+@[simp] theorem lcomp_apply (f : M →ₗ[R] N) (g : N →ₗ[R] P) (x : M) :
   lcomp R P f g x = g (f x) := rfl
 
 variables (R M N P)
 /-- Composing a linear map `M → N` and a linear map `N → P` to form a linear map `M → P`. -/
-def llcomp : (N →ₗ[R] P) →ₗ[R] (M →ₗ[R] N) →ₗ M →ₗ P :=
+def llcomp : (N →ₗ[R] P) →ₗ[R] (M →ₗ[R] N) →ₗ[R] M →ₗ[R] P :=
 flip { to_fun := lcomp R P,
        map_add' := λ f f', ext₂ $ λ g x, g.map_add _ _,
        map_smul' := λ (c : R) f, ext₂ $ λ g x, g.map_smul _ _ }
@@ -178,14 +178,14 @@ end
 
 /-- Composing a linear map `Q → N` and a bilinear map `M → N → P` to
 form a bilinear map `M → Q → P`. -/
-def compl₂ (g : Q →ₗ N) : M →ₗ Q →ₗ P := (lcomp R _ g).comp f
+def compl₂ (g : Q →ₗ[R] N) : M →ₗ[R] Q →ₗ[R] P := (lcomp R _ g).comp f
 
 @[simp] theorem compl₂_apply (g : Q →ₗ[R] N) (m : M) (q : Q) :
   f.compl₂ g m q = f m (g q) := rfl
 
 /-- Composing a linear map `P → Q` and a bilinear map `M × N → P` to
 form a bilinear map `M → N → Q`. -/
-def compr₂ (g : P →ₗ Q) : M →ₗ N →ₗ Q :=
+def compr₂ (g : P →ₗ[R] Q) : M →ₗ[R] N →ₗ[R] Q :=
 linear_map.comp (llcomp R N P Q g) f
 
 @[simp] theorem compr₂_apply (g : P →ₗ[R] Q) (m : M) (n : N) :
@@ -193,7 +193,7 @@ linear_map.comp (llcomp R N P Q g) f
 
 variables (R M)
 /-- Scalar multiplication as a bilinear map `R → M → M`. -/
-def lsmul : R →ₗ M →ₗ M :=
+def lsmul : R →ₗ[R] M →ₗ[R] M :=
 mk₂ R (•) add_smul (λ _ _ _, mul_smul _ _ _) smul_add
 (λ r s m, by simp only [smul_smul, smul_eq_mul, mul_comm])
 variables {R M}
@@ -495,7 +495,7 @@ tensor_product.is_scalar_tower_left  -- or right
 
 variables (R M N)
 /-- The canonical bilinear map `M → N → M ⊗[R] N`. -/
-def mk : M →ₗ N →ₗ M ⊗[R] N :=
+def mk : M →ₗ[R] N →ₗ[R] M ⊗[R] N :=
 linear_map.mk₂ R (⊗ₜ) add_tmul (λ c m n, by rw [smul_tmul, tmul_smul]) tmul_add tmul_smul
 variables {R M N}
 
@@ -585,7 +585,7 @@ variable (f)
 /-- Constructing a linear map `M ⊗ N → P` given a bilinear map `M → N → P` with the property that
 its composition with the canonical bilinear map `M → N → M ⊗ N` is
 the given bilinear map `M → N → P`. -/
-def lift : M ⊗ N →ₗ P :=
+def lift : M ⊗ N →ₗ[R] P :=
 { map_smul' := lift_aux.smul,
   .. lift_aux f }
 variable {f}
@@ -608,10 +608,10 @@ ext $ λ m n, by rw [H, lift.tmul]
 theorem lift_mk : lift (mk R M N) = linear_map.id :=
 eq.symm $ lift.unique $ λ x y, rfl
 
-theorem lift_compr₂ (g : P →ₗ Q) : lift (f.compr₂ g) = g.comp (lift f) :=
+theorem lift_compr₂ (g : P →ₗ[R] Q) : lift (f.compr₂ g) = g.comp (lift f) :=
 eq.symm $ lift.unique $ λ x y, by simp
 
-theorem lift_mk_compr₂ (f : M ⊗ N →ₗ P) : lift ((mk R M N).compr₂ f) = f :=
+theorem lift_mk_compr₂ (f : M ⊗ N →ₗ[R] P) : lift ((mk R M N).compr₂ f) = f :=
 by rw [lift_compr₂ f, lift_mk, linear_map.comp_id]
 
 /--
@@ -620,7 +620,7 @@ specific to `M →ₗ _` and `N →ₗ _`.
 
 See note [partially-applied ext lemmas]. -/
 @[ext]
-theorem mk_compr₂_inj {g h : M ⊗ N →ₗ P}
+theorem mk_compr₂_inj {g h : M ⊗ N →ₗ[R] P}
   (H : (mk R M N).compr₂ g = (mk R M N).compr₂ h) : g = h :=
 by rw [← lift_mk_compr₂ g, H, lift_mk_compr₂]
 
@@ -643,7 +643,7 @@ variables (R M N P)
 /-- A linear equivalence constructing a linear map `M ⊗ N → P` given a bilinear map `M → N → P`
 with the property that its composition with the canonical bilinear map `M → N → M ⊗ N` is
 the given bilinear map `M → N → P`. -/
-def lift.equiv : (M →ₗ N →ₗ P) ≃ₗ (M ⊗ N →ₗ P) :=
+def lift.equiv : (M →ₗ[R] N →ₗ[R] P) ≃ₗ[R] (M ⊗ N →ₗ[R] P) :=
 { inv_fun := λ f, (mk R M N).compr₂ f,
   left_inv := λ f, linear_map.ext₂ $ λ m n, lift.tmul _ _,
   right_inv := λ f, ext $ λ m n, lift.tmul _ _,
@@ -668,7 +668,7 @@ variables {R M N P}
 
 /-- Given a linear map `M ⊗ N → P`, compose it with the canonical bilinear map `M → N → M ⊗ N` to
 form a bilinear map `M → N → P`. -/
-def curry (f : M ⊗ N →ₗ P) : M →ₗ N →ₗ P := lcurry R M N P f
+def curry (f : M ⊗ N →ₗ[R] P) : M →ₗ[R] N →ₗ[R] P := lcurry R M N P f
 
 @[simp] theorem curry_apply (f : M ⊗ N →ₗ[R] P) (m : M) (n : N) :
   curry f m n = f (m ⊗ₜ n) := rfl
@@ -700,7 +700,7 @@ variables (R M)
 /--
 The base ring is a left identity for the tensor product of modules, up to linear equivalence.
 -/
-protected def lid : R ⊗ M ≃ₗ M :=
+protected def lid : R ⊗ M ≃ₗ[R] M :=
 linear_equiv.of_linear (lift $ linear_map.lsmul R M) (mk R R M 1)
   (linear_map.ext $ λ _, by simp)
   (ext $ λ r m, by simp; rw [← tmul_smul, ← smul_tmul, smul_eq_mul, mul_one])
@@ -722,7 +722,7 @@ variables (R M N)
 /--
 The tensor product of modules is commutative, up to linear equivalence.
 -/
-protected def comm : M ⊗ N ≃ₗ N ⊗ M :=
+protected def comm : M ⊗ N ≃ₗ[R] N ⊗ M :=
 linear_equiv.of_linear (lift (mk R N M).flip) (lift (mk R M N).flip)
   (ext $ λ m n, rfl)
   (ext $ λ m n, rfl)
@@ -741,7 +741,7 @@ variables (R M)
 /--
 The base ring is a right identity for the tensor product of modules, up to linear equivalence.
 -/
-protected def rid : M ⊗[R] R ≃ₗ M :=
+protected def rid : M ⊗[R] R ≃ₗ[R] M :=
 linear_equiv.trans (tensor_product.comm R M R) (tensor_product.lid R M)
 end
 
@@ -780,7 +780,7 @@ end
   (tensor_product.assoc R M N P).symm (m ⊗ₜ (n ⊗ₜ p)) = (m ⊗ₜ n) ⊗ₜ p := rfl
 
 /-- The tensor product of a pair of linear maps between modules. -/
-def map (f : M →ₗ[R] P) (g : N →ₗ Q) : M ⊗ N →ₗ[R] P ⊗ Q :=
+def map (f : M →ₗ[R] P) (g : N →ₗ[R] Q) : M ⊗ N →ₗ[R] P ⊗ Q :=
 lift $ comp (compl₂ (mk _ _ _) g) f
 
 @[simp] theorem map_tmul (f : M →ₗ[R] P) (g : N →ₗ[R] Q) (m : M) (n : N) :
@@ -924,7 +924,7 @@ def ltensor_hom : (N →ₗ[R] P) →ₗ[R] (M ⊗[R] N →ₗ[R] M ⊗[R] P) :=
   map_add' := λ f g, by {
     ext x y, simp only [compr₂_apply, mk_apply, add_apply, ltensor_tmul, tmul_add] },
   map_smul' := λ r f, by {
-    ext x y, simp only [compr₂_apply, mk_apply, tmul_smul, smul_apply, ltensor_tmul] } }
+    dsimp, ext x y, simp only [compr₂_apply, mk_apply, tmul_smul, smul_apply, ltensor_tmul] } }
 
 /-- `rtensor_hom M` is the natural linear map that sends a linear map `f : N →ₗ P` to `M ⊗ f`. -/
 def rtensor_hom : (N →ₗ[R] P) →ₗ[R] (N ⊗[R] M →ₗ[R] P ⊗[R] M) :=
@@ -932,7 +932,8 @@ def rtensor_hom : (N →ₗ[R] P) →ₗ[R] (N ⊗[R] M →ₗ[R] P ⊗[R] M) :=
   map_add' := λ f g, by {
     ext x y, simp only [compr₂_apply, mk_apply, add_apply, rtensor_tmul, add_tmul] },
   map_smul' := λ r f, by {
-    ext x y, simp only [compr₂_apply, mk_apply, smul_tmul, tmul_smul, smul_apply, rtensor_tmul] } }
+    dsimp, ext x y, simp only [compr₂_apply, mk_apply, smul_tmul, tmul_smul, smul_apply,
+    rtensor_tmul] } }
 
 @[simp] lemma coe_ltensor_hom :
   (ltensor_hom M : (N →ₗ[R] P) → (M ⊗[R] N →ₗ[R] M ⊗[R] P)) = ltensor M := rfl
