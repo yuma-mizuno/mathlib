@@ -61,7 +61,7 @@ end
 @[simps] def prod (f : M →ₗ[R] M₂) (g : M →ₗ[R] M₃) : (M →ₗ[R] M₂ × M₃) :=
 { to_fun    := λ x, (f x, g x),
   map_add'  := λ x y, by simp only [prod.mk_add_mk, map_add],
-  map_smul' := λ c x, by simp only [prod.smul_mk, map_smul] }
+  map_smul' := λ c x, by simp [prod.smul_mk, map_smul] }
 
 
 @[simp] theorem fst_prod (f : M →ₗ[R] M₂) (g : M →ₗ[R] M₃) :
@@ -156,7 +156,8 @@ See note [bundled maps over different rings] for why separate `R` and `S` semiri
   map_add' := λ a b,
     by { ext, simp only [prod.snd_add, add_apply, coprod_apply, prod.fst_add], ac_refl },
   map_smul' := λ r a,
-    by { ext, simp only [smul_add, smul_apply, prod.smul_snd, prod.smul_fst, coprod_apply] } }
+    by { dsimp, ext, simp only [smul_add, smul_apply, prod.smul_snd, prod.smul_fst,
+    coprod_apply] } }
 
 theorem prod_ext_iff {f g : M × M₂ →ₗ[R] M₃} :
   f = g ↔ f.comp (inl _ _ _) = g.comp (inl _ _ _) ∧ f.comp (inr _ _ _) = g.comp (inr _ _ _) :=
