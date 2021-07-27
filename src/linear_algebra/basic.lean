@@ -64,9 +64,10 @@ open function
 open_locale big_operators
 
 --universes u v w x y z u' v' w' y'
-variables {R : Type*} {K : Type*} {K₂ : Type*} {M : Type*} {V : Type*} {M₂ : Type*} {V₂ : Type*}
-variables {R₂ : Type*} {R₃ : Type*} {R₄ : Type*}
-variables {M₁ : Type*} {M₃ : Type*} {V₃ : Type*} {M₄ : Type*} {M' : Type*} {ι : Type*}
+variables {R : Type*} {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {R₄ : Type*}
+variables {K : Type*} {K₂ : Type*}
+variables {M : Type*} {M' : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} {M₄ : Type*} {ι : Type*}
+variables {V : Type*} {V₂ : Type*}
 
 namespace finsupp
 
@@ -2492,6 +2493,7 @@ by { ext, simp [conj_apply], }
 end comm_ring
 
 section field
+
 variables [field K] [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module K M] [module K M₂] [module K M₃]
 variables (K) (M)
