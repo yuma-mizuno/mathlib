@@ -27,14 +27,15 @@ open function
 open_locale big_operators
 
 universes u u' v w x y z
-variables {R : Type*} {k : Type*} {S : Type*} {M : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*}
+variables {R : Type*} {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
+variables {k : Type*} {S : Type*} {M : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*}
   {ι : Type*}
 
 -- SLFIXME: Move this comp triple stuff to another file?
 
 section
 
-variables {R₁ R₂ R₃ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
@@ -369,7 +370,7 @@ section
 --def comp : M →ₗ[R] M₃ :=
 --{ to_fun := f ∘ g, .. f.to_distrib_mul_action_hom.comp g.to_distrib_mul_action_hom }
 
-variables {R₁ R₂ R₃ : Type*} [semiring R₁] [semiring R₂] [semiring R₃]
+variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
@@ -387,7 +388,7 @@ def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ
 -- SLFIXME: figure out the right way to do this
 
 abbreviation compₗ [module R M₁] [module R M₂] [module R M₃] :=
-  @comp M₁ M₂ M₃ _ _ _ R R R _ _ _ _ _ _
+  @comp R R R M₁ M₂ M₃ _ _ _ _ _ _ _ _ _
   (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
 --notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -598,7 +599,8 @@ section add_comm_monoid
 
 variables {M₄ : Type*}
 variables [semiring R] [semiring S]
-variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
+variables [add_comm_monoid M₃] [add_comm_monoid M₄]
 
 section
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
@@ -695,8 +697,7 @@ include σ'
 omit σ'
 
 --variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
-variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
-variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
+variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
@@ -714,6 +715,8 @@ instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →�
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
+
+@[trans] abbreviation transₗ [module R M₂] [module R M₃] := @trans R R R M M₂ M₃ _ _ _ _ _ _ _ _ _ (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
 variables {e₁₂} {e₂₃}
 
