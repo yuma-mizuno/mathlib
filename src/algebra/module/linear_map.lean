@@ -635,6 +635,7 @@ end
 
 section
 variables [module R M] [module S M₂] {σ : R ≃+* S}
+variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ']
 variables (e e' : M ≃ₛₗ[σ] M₂)
 
 lemma to_linear_map_eq_coe : e.to_linear_map = (e : M →ₛₗ[σ] M₂) := rfl
@@ -672,8 +673,6 @@ def refl [module R M] : M ≃ₗ[R] M := { .. linear_map.id, .. equiv.refl M }
 end
 
 @[simp] lemma refl_apply [module R M] (x : M) : refl R M x = x := rfl
-
-variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ']
 
 /-- Linear equivalences are symmetric. -/
 @[symm]
@@ -747,22 +746,22 @@ lemma symm_apply_eq {x y} : e.symm x = y ↔ x = e y := e.to_equiv.symm_apply_eq
 lemma eq_symm_apply {x y} : y = e.symm x ↔ e y = x := e.to_equiv.eq_symm_apply
 omit σ'
 
-@[simp] lemma refl_symm [module R M] : (refl R M).symm = linear_equiv.refl R M := rfl
+@[simp] lemma refl_symm : (refl R M).symm = linear_equiv.refl R M := rfl
 
-@[simp] lemma trans_symm [module R M] [module R M₂] (f : M ≃ₗ[R] M₂) :
+@[simp] lemma trans_symm [module R M₂] (f : M ≃ₗ[R] M₂) :
   f.trans f.symm = linear_equiv.refl R M :=
 by { ext x, simp }
 
-@[simp] lemma symm_trans [module R M] [module R M₂] (f : M ≃ₗ[R] M₂) :
+@[simp] lemma symm_trans [module R M₂] (f : M ≃ₗ[R] M₂) :
   f.symm.trans f = linear_equiv.refl R M₂ :=
 by { ext x, simp }
 
-@[simp, norm_cast] lemma refl_to_linear_map [module R M] :
+@[simp, norm_cast] lemma refl_to_linear_map :
   (linear_equiv.refl R M : M →ₗ[R] M) = linear_map.id :=
 rfl
 
 @[simp, norm_cast]
-lemma comp_coe [module R M] [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M₂)
+lemma comp_coe [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M₂)
   (f' :  M₂ ≃ₗ[R] M₃) : (f' : M₂ →ₗ[R] M₃).comp (f : M →ₗ[R] M₂) = (f.trans f' : M →ₗ[R] M₃) :=
 rfl
 
@@ -781,19 +780,16 @@ e.to_add_equiv.map_eq_zero_iff
 theorem map_ne_zero_iff {x : M} : e x ≠ 0 ↔ x ≠ 0 :=
 e.to_add_equiv.map_ne_zero_iff
 
-@[simp] theorem symm_symm [ring_equiv_inv_pair σ' σ] : e.symm.symm = e := by { cases e, refl }
+@[simp] theorem symm_symm [ring_equiv_inv_pair σ' σ] (e : M ≃ₛₗ[σ] M₂): e.symm.symm = e :=
+by { cases e, refl }
 
-lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ] :
+lemma symm_bijective [module S M₂] [ring_equiv_inv_pair σ' σ] :
   function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
---equiv.bijective ⟨symm, symm, symm_symm, begin  -- SLFIXME: golfing this fails
---  intros e,
---  exact symm_symm e,
---end⟩
-begin  -- SLFIXME this is quite ugly
-  refine equiv.bijective ⟨_,_,_,_⟩,
-  { exact symm },
-  { exact λ e, @symm_symm _ _ _ _ _ _ _ _ _ _ _ _ _ _inst_9 _inst_24 },
-  { exact λ e, @symm_symm _ _ _ _ _ _ _ _ _ _ _ _ _ _inst_24 _inst_9 }
+--equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
+begin -- SLFIXME : ugliness, golfing fails for some weird reason
+  refine equiv.bijective ⟨symm, symm,_,_⟩,
+  exact (λ e, symm_symm _),
+  exact (λ e, symm_symm _),
 end
 
 @[simp] lemma mk_coe' [ring_equiv_inv_pair σ' σ] (f h₁ h₂ h₃ h₄) :

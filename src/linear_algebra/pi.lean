@@ -164,8 +164,7 @@ begin
     have : j ∉ I := assume hjI, hd ⟨hjI, hjJ⟩,
     rw [dif_neg this, zero_apply] },
   {
-    rw [pi_comp],
-    simp only [pi_comp, comp_assoc, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
+    simp only [pi_comp, comp_assocₗ, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
     ext b ⟨j, hj⟩, refl },
   { ext1 ⟨b, hb⟩,
     apply subtype.ext,

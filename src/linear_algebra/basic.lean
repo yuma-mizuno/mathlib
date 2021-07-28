@@ -139,8 +139,7 @@ variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 variables [add_comm_monoid M₃] [add_comm_monoid M₄]
 variables [module R M] [module R M₁] [module R₂ M₂] [module R₃ M₃] [module R₄ M₄]
 variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₃₄ : R₃ ≃+* R₄}
-variables {σ₁₃ : out_param (R ≃+* R₃)} {σ₂₄ : out_param (R₂ ≃+* R₄)}
-variables {σ₁₄ : out_param (R ≃+* R₄)}
+variables {σ₁₃ : out_param (R ≃+* R₃)} {σ₂₄ : out_param (R₂ ≃+* R₄)} {σ₁₄ : out_param (R ≃+* R₄)}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_equiv_comp_triple σ₂₃ σ₃₄ σ₂₄]
 variables [ring_equiv_comp_triple σ₁₃ σ₃₄ σ₁₄] [ring_equiv_comp_triple σ₁₂ σ₂₄ σ₁₄]
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
@@ -150,9 +149,15 @@ theorem comp_assoc (h : M₃ →ₛₗ[σ₃₄] M₄) :
   ((h.comp g : M₂ →ₛₗ[σ₂₄] M₄).comp f : M →ₛₗ[σ₁₄] M₄)
   = h.comp (g.comp f : M →ₛₗ[σ₁₃] M₃) := rfl
 
-#check @comp_assoc
-
 omit R R₂
+
+theorem comp_assocₗ [module R M₂] [module R M₃] [module R M₄] (f : M →ₗ[R] M₂) (g : M₂ →ₗ[R] M₃) (h : M₃ →ₗ[R] M₄) :
+  ((h.comp g : M₂ →ₗ[R] M₄).comp f : M →ₗ[R] M₄)
+  = h.comp (g.comp f : M →ₗ[R] M₃) := rfl
+
+#check @comp_assocₗ
+
+--theorem comp_assocₗ := @comp_assoc R R R R
 
 /-- The restriction of a linear map `f : M → M₂` to a submodule `p ⊆ M` gives a linear map
 `p → M₂`. -/
