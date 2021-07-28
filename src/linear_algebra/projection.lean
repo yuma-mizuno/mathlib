@@ -131,7 +131,7 @@ end
 /-- Projection to a submodule along its complement. -/
 def linear_proj_of_is_compl (h : is_compl p q) :
   E →ₗ[R] p :=
-(linear_map.fst R p q).comp $ (prod_equiv_of_is_compl p q h).symm
+(linear_map.fst R p q).compₗ $ (prod_equiv_of_is_compl p q h).symm
 
 variables {p q}
 
@@ -188,7 +188,7 @@ open submodule
 the induced linear map over the entire module. -/
 def of_is_compl {p q : submodule R E} (h : is_compl p q)
   (φ : p →ₗ[R] F) (ψ : q →ₗ[R] F) : E →ₗ[R] F :=
-(linear_map.coprod φ ψ).comp (submodule.prod_equiv_of_is_compl _ _ h).symm
+(linear_map.coprod φ ψ).compₗ (submodule.prod_equiv_of_is_compl _ _ h).symm
 
 variables {p q}
 
@@ -241,7 +241,7 @@ def of_is_compl_prod {p q : submodule R₁ E} (h : is_compl p q) :
   ((p →ₗ[R₁] F) × (q →ₗ[R₁] F)) →ₗ[R₁] (E →ₗ[R₁] F) :=
 { to_fun := λ φ, of_is_compl h φ.1 φ.2,
   map_add' := by { intros φ ψ, rw [prod.snd_add, prod.fst_add, of_is_compl_add] },
-  map_smul' := by { intros c φ, rw [prod.smul_snd, prod.smul_fst, of_is_compl_smul] } }
+  map_smul' := by { intros c φ, simp [prod.smul_snd, prod.smul_fst, of_is_compl_smul] } }
 
 @[simp] lemma of_is_compl_prod_apply {p q : submodule R₁ E} (h : is_compl p q)
   (φ : (p →ₗ[R₁] F) × (q →ₗ[R₁] F)) : of_is_compl_prod h φ = of_is_compl h φ.1 φ.2 := rfl
