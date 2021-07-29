@@ -70,7 +70,8 @@ lemma mem_fixed_points_iff_normal (H : subgroup G) :
 by simp only [mem_fixed_points_iff_stabilizer_eq_top,
   stabilizer_eq_normalizer, normal_iff_normalizer_eq_top]
 
-lemma normalizer_smul (g : G) (H : subgroup G) :
-  normalizer (g • H) = g • normalizer H := sorry
+@[simp] lemma normalizer_smul (g : G) (H : subgroup G) :
+  normalizer (g • H) = g • normalizer H :=
+by rw [smul_eq_map_conj, smul_eq_map_conj, map_equiv_normalizer_eq]
 
 end subgroup
