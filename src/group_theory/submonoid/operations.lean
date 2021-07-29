@@ -540,6 +540,10 @@ lemma comap_equiv_eq_map_symm (f : N ≃* M) (K : submonoid M) :
   K.comap f.to_monoid_hom = K.map f.symm.to_monoid_hom :=
 (map_equiv_eq_comap_symm f.symm K).symm
 
+end submonoid
+
+namespace monoid_hom
+
 open submonoid
 
 /-- For many categories (monoids, modules, rings, ...) the set-theoretic image of a morphism `f` is
