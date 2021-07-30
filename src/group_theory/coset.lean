@@ -361,6 +361,38 @@ by haveI := classical.prop_decidable; simp [card_eq_card_quotient_mul_card_subgr
 lemma card_quotient_dvd_card [fintype α] (s : subgroup α) [decidable_pred (λ a, a ∈ s)]
   [fintype s] : fintype.card (quotient s) ∣ fintype.card α :=
 by simp [card_eq_card_quotient_mul_card_subgroup s]
+#where
+
+open fintype
+#print fintype.card_congr
+lemma card_dvd_of_le {H K : subgroup α} [fintype H] [fintype K] (hHK : H ≤ K) :
+  card H ∣ card K :=
+have H ≃ (H.comap K.subtype),
+  from (@set.bij_on.equiv K α ↑(H.comap K.subtype) ↑H K.subtype
+    ⟨λ _, id, λ _ _ _ _, subtype.eq, λ x hx, ⟨⟨x, hHK hx⟩, hx, rfl⟩⟩).symm,
+by haveI : fintype (H.comap K.subtype) := fintype.of_equiv _ this; exact
+calc card H = card (H.comap K.subtype) : fintype.card_congr this
+... ∣ card K : card_subgroup_dvd_card _
+
+variables {H : Type*} [group H]
+
+lemma card_comap_dvd_of_injective (K : subgroup H) [fintype K]
+  (f : α →* H) [fintype (K.comap f)] (hf : function.injective f) :
+  fintype.card (K.comap f) ∣ fintype.card K :=
+by haveI : fintype ((K.comap f).map f) :=
+  fintype.of_equiv _ (equiv_map_of_injective _ _ hf).to_equiv; exact
+calc fintype.card (K.comap f)
+        = fintype.card ((K.comap f).map f) :
+          fintype.card_congr (equiv_map_of_injective _ _ hf).to_equiv
+    ... ∣ _ : card_dvd_of_le (map_comap_le _ _)
+
+lemma card_dvd_of_injective [fintype α] [fintype H] (f : α →* H) (hf : function.injective f) :
+  card α ∣ card H :=
+by classical; exact
+calc card α = card (f.range : subgroup H) :
+  card_congr (equiv.of_injective f hf)
+... ∣ card (⊤ : subgroup H) : card_dvd_of_le le_top
+... = card H : card_congr (equiv.set.univ _)
 
 end subgroup
 
