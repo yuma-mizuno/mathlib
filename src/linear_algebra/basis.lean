@@ -154,7 +154,7 @@ finite-dimensional spaces it is the `ι`th basis vector of the dual space.
 -/
 @[simps]
 def coord (i : ι) : M →ₗ[R] R :=
-(finsupp.lapply i).comp b.repr
+(finsupp.lapply i).compₗ b.repr
 
 lemma forall_coord_eq_zero_iff {x : M} :
   (∀ i, b.coord i x = 0) ↔ x = 0 :=
@@ -209,7 +209,7 @@ begin
   let f_i : M →ₗ[R] R :=
   { to_fun := λ x, f x i,
     map_add' := λ _ _, by rw [hadd, pi.add_apply],
-    map_smul' := λ _ _, by rw [hsmul, pi.smul_apply] },
+    map_smul' := λ _ _, by { dsimp, rw [hsmul, pi.smul_apply] } },
   have : (finsupp.lapply i).comp ↑b.repr = f_i,
   { refine b.ext (λ j, _),
     show b.repr (b j) i = f (b j) i,
@@ -399,7 +399,7 @@ you can recover an `add_equiv` by setting `S := ℕ`.
 See library note [bundled maps over different rings].
 -/
 def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
-{ to_fun := λ f, (finsupp.total M' M' R id).comp $ (finsupp.lmap_domain R R f).comp b.repr,
+{ to_fun := λ f, (finsupp.total M' M' R id).comp $ (finsupp.lmap_domain R R f).compₗ b.repr,
   inv_fun := λ f i, f (b i),
   left_inv := λ f, by { ext, simp },
   right_inv := λ f, by { refine b.ext (λ i, _), simp },
@@ -407,7 +407,7 @@ def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
   map_smul' := λ c f, by { refine b.ext (λ i, _), simp } }
 
 theorem constr_def (f : ι → M') :
-  b.constr S f = (finsupp.total M' M' R id).comp ((finsupp.lmap_domain R R f).comp b.repr) :=
+  b.constr S f = (finsupp.total M' M' R id).compₗ ((finsupp.lmap_domain R R f).compₗ b.repr) :=
 rfl
 
 theorem constr_apply (f : ι → M') (x : M) :
@@ -590,7 +590,7 @@ begin
         map_add' := λ y z, _,
         map_smul' := λ c y, _ }⟩,
     { rw [finsupp.add_apply, add_smul] },
-    { rw [finsupp.smul_apply, smul_assoc] },
+    { rw [finsupp.smul_apply, smul_assoc], simp },
     { refine smul_right_injective _ nz _,
       simp only [finsupp.single_eq_same],
       exact (w (f (default ι) • x)).some_spec },
@@ -961,7 +961,7 @@ variables [field K] [add_comm_group V] [add_comm_group V'] [module K V] [module 
 variables {v : ι → V} {s t : set V} {x y z : V}
 
 lemma linear_map.exists_left_inverse_of_injective (f : V →ₗ[K] V')
-  (hf_inj : f.ker = ⊥) : ∃g:V' →ₗ V, g.comp f = linear_map.id :=
+  (hf_inj : f.ker = ⊥) : ∃g:V' →ₗ[K] V, g.comp f = linear_map.id :=
 begin
   let B := basis.of_vector_space_index K V,
   let hB := basis.of_vector_space K V,
@@ -993,7 +993,7 @@ instance module.submodule.is_complemented : is_complemented (submodule K V) :=
 ⟨submodule.exists_is_compl⟩
 
 lemma linear_map.exists_right_inverse_of_surjective (f : V →ₗ[K] V')
-  (hf_surj : f.range = ⊤) : ∃g:V' →ₗ V, f.comp g = linear_map.id :=
+  (hf_surj : f.range = ⊤) : ∃g:V' →ₗ[K] V, f.comp g = linear_map.id :=
 begin
   let C := basis.of_vector_space_index K V',
   let hC := basis.of_vector_space K V',
