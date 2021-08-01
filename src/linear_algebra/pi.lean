@@ -303,11 +303,6 @@ rfl
 @[simp] lemma pi_ring_symm_apply (f : ι → M) (g : ι → R) :
   (pi_ring R M ι S).symm f g = ∑ i, g i • f i :=
 by simp [pi_ring, linear_map.lsum]
---begin
---  simp [pi_ring, linear_map.lsum],
---  dsimp [linear_map.ring_lmap_equiv_self],
---
---end
 
 /--
 `equiv.sum_arrow_equiv_prod_arrow` as a linear equivalence.
