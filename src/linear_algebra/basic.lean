@@ -155,8 +155,6 @@ theorem comp_assocₗ [module R M₂] [module R M₃] [module R M₄] (f : M →
   ((h.comp g : M₂ →ₗ[R] M₄).comp f : M →ₗ[R] M₄)
   = h.comp (g.comp f : M →ₗ[R] M₃) := rfl
 
-#check @comp_assocₗ
-
 --theorem comp_assocₗ := @comp_assoc R R R R
 
 /-- The restriction of a linear map `f : M → M₂` to a submodule `p ⊆ M` gives a linear map
@@ -675,6 +673,8 @@ variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M']
 variables [module R M] [module R M'] [module R₂ M₂] [module R₃ M₃]
 variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R ≃+* R₃)}
+variables {σ₂₁ : R₂ ≃+* R}
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables (p p' : submodule R M) (q q' : submodule R₂ M₂)
 variables (q₁ q₁' : submodule R M')
@@ -796,6 +796,7 @@ lemma range_map_nonempty (N : submodule R M) :
   (set.range (λ ϕ, submodule.map ϕ N : (M →ₛₗ[σ₁₂] M₂) → submodule R₂ M₂)).nonempty :=
 ⟨_, set.mem_range.mpr ⟨0, rfl⟩⟩
 
+include σ₂₁
 /-- The pushforward of a submodule by an injective linear map is
 linearly equivalent to the original submodule. -/
 @[simps]
@@ -804,6 +805,7 @@ noncomputable def equiv_map_of_injective (f : M →ₛₗ[σ₁₂] M₂) (i : i
 { map_add' := by { intros, simp, refl, },
   map_smul' := by { intros, simp, refl, },
   ..(equiv.set.image f p i) }
+omit σ₂₁
 
 /-- The pullback of a submodule `p ⊆ M₂` along `f : M → M₂` -/
 def comap (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R₂ M₂) : submodule R M :=
@@ -2144,6 +2146,7 @@ variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ 
 section subsingleton
 variables [module R M] [module R₂ M₂] [subsingleton M] [subsingleton M₂]
 
+include σ₂₁
 /-- Between two zero modules, the zero map is an equivalence. -/
 instance : has_zero (M ≃ₛₗ[σ₁₂] M₂) :=
 ⟨{ to_fun := 0,
@@ -2151,12 +2154,12 @@ instance : has_zero (M ≃ₛₗ[σ₁₂] M₂) :=
    right_inv := λ x, subsingleton.elim _ _,
    left_inv := λ x, subsingleton.elim _ _,
    ..(0 : M →ₛₗ[σ₁₂] M₂)}⟩
+omit σ₂₁
 
 -- Even though these are implied by `subsingleton.elim` via the `unique` instance below, they're
 -- nice to have as `rfl`-lemmas for `dsimp`.
 include σ₂₁
 @[simp] lemma zero_symm : (0 : M ≃ₛₗ[σ₁₂] M₂).symm = 0 := rfl
-omit σ₂₁
 @[simp] lemma coe_zero : ⇑(0 : M ≃ₛₗ[σ₁₂] M₂) = 0 := rfl
 lemma zero_apply (x : M) : (0 : M ≃ₛₗ[σ₁₂] M₂) x = 0 := rfl
 
@@ -2164,6 +2167,7 @@ lemma zero_apply (x : M) : (0 : M ≃ₛₗ[σ₁₂] M₂) x = 0 := rfl
 instance : unique (M ≃ₛₗ[σ₁₂] M₂) :=
 { uniq := λ f, to_linear_map_injective (subsingleton.elim _ _),
   default := 0 }
+omit σ₂₁
 
 end subsingleton
 
@@ -2219,6 +2223,8 @@ end uncurry
 section
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables {σ₃₂ : R₃ ≃+* R₂}
+variables [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₃₂ σ₂₃]
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁]
 variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃)
@@ -2327,6 +2333,7 @@ linear_map.ker_comp_of_ker_eq_bot _ e''.ker
 
 variables {f g}
 
+include σ₂₁
 /-- An linear map `f : M →ₗ[R] M₂` with a left-inverse `g : M₂ →ₗ[R] M` defines a linear equivalence
 between `M` and `f.range`.
 
@@ -2340,6 +2347,7 @@ def of_left_inverse {g : M₂ → M} (h : function.left_inverse g f) : M ≃ₛ�
     let ⟨x', hx'⟩ := linear_map.mem_range.mp x.prop in
     show f (g x) = x, by rw [←hx', h x'],
   .. f.range_restrict }
+omit σ₂₁
 
 @[simp] lemma of_left_inverse_apply
   (h : function.left_inverse g f) (x : M) :
@@ -2362,6 +2370,9 @@ variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃] [add_co
 variables [module R M] [module R₂ M₂]
 variables [module R₃ M₃] [module R₄ M₄]
 variables {σ₁₂ : R ≃+* R₂} {σ₃₄ : R₃ ≃+* R₄}
+variables {σ₂₁ : R₂ ≃+* R} {σ₄₃ : R₄ ≃+* R₃}
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
+variables [ring_equiv_inv_pair σ₃₄ σ₄₃] [ring_equiv_inv_pair σ₄₃ σ₃₄]
 variables (e e₁ : M ≃ₛₗ[σ₁₂] M₂) (e₂ : M₃ ≃ₛₗ[σ₃₄] M₄)
 
 @[simp] theorem map_neg (a : M) : e (-a) = -e a := e.to_linear_map.map_neg a
@@ -2391,9 +2402,11 @@ section ring
 
 variables [ring R] [ring R₂] [add_comm_group M] [add_comm_group M₂]
 variables [module R M] [module R₂ M₂]
-variables {σ₁₂ : R ≃+* R₂}
+variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
+variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 variables (f : M →ₛₗ[σ₁₂] M₂) (e : M ≃ₛₗ[σ₁₂] M₂)
 
+include σ₂₁
 /-- An `injective` linear map `f : M →ₗ[R] M₂` defines a linear equivalence
 between `M` and `f.range`. See also `linear_map.of_left_inverse`. -/
 noncomputable def of_injective (h : f.ker = ⊥) : M ≃ₛₗ[σ₁₂] f.range :=

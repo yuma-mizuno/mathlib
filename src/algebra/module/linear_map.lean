@@ -579,6 +579,7 @@ set_option old_structure_cmd true
 /-- A linear equivalence is an invertible linear map. -/
 @[nolint has_inhabited_instance]
 structure linear_equiv {R : Type*} {S : Type*} [semiring R] [semiring S] (σ : R ≃+* S)
+  {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   extends linear_map σ M M₂, M ≃+ M₂
@@ -604,8 +605,10 @@ variables [add_comm_monoid M₃] [add_comm_monoid M₄]
 
 section
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
+variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
 include R
 
+include σ'
 instance : has_coe (M ≃ₛₗ[σ] M₂) (M →ₛₗ[σ] M₂) := ⟨to_linear_map⟩
 --instance linear_map.has_coe_l : has_coe (M ≃ₗ[R] M₃) (M →ₗ[R] M₃) := ⟨to_linear_map⟩
 -- see Note [function coercion]
@@ -637,7 +640,7 @@ end
 
 section
 variables [module R M] [module S M₂] {σ : R ≃+* S}
-variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ']
+variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
 variables (e e' : M ≃ₛₗ[σ] M₂)
 
 lemma to_linear_map_eq_coe : e.to_linear_map = (e : M →ₛₗ[σ] M₂) := rfl
@@ -687,8 +690,11 @@ def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
   .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   .. e.to_equiv.symm }
 
---/-- See Note [custom simps projection] -/
---def simps.symm_apply [module R M] [module S M₂] {σ : R ≃+* S} (e : M ≃ₛₗ[σ] M₂) : M₂ → M := e.symm
+/-- See Note [custom simps projection] -/
+def simps.symm_apply {R : Type*} {S : Type*} [semiring R] [semiring S] {σ : R ≃+* S}
+  {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+  {M : Type*} {M₂ : Type*} [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
+  (e : M ≃ₛₗ[σ] M₂) : M₂ → M := e.symm
 
 initialize_simps_projections linear_equiv (to_fun → apply, inv_fun → symm_apply)
 
@@ -704,17 +710,22 @@ variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
 variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₁₃ σ₃₁]
+variables [ring_equiv_inv_pair σ₂₁ σ₁₂] [ring_equiv_inv_pair σ₃₂ σ₂₃] [ring_equiv_inv_pair σ₃₁ σ₁₃]
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 
+include σ₂₁
 instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂] M₂) :=
 ⟨λ e, {.. e}⟩
+omit σ₂₁
 
+include σ₃₁
 /-- Linear equivalences are transitive. -/
 @[trans]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
+omit σ₃₁
 
 @[trans] abbreviation transₗ [module R M₂] [module R M₃] := @trans R R R M M₂ M₃ _ _ _ _ _ _ _ _ _ (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
@@ -727,18 +738,29 @@ lemma to_add_monoid_hom_commutes :
   e.to_linear_map.to_add_monoid_hom = e.to_add_equiv.to_add_monoid_hom :=
 rfl
 
+include σ₃₁
 @[simp] theorem trans_apply (c : M₁) :
   (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃) c = e₂₃ (e₁₂ c) := rfl
+omit σ₃₁
 
 include σ'
 @[simp] theorem apply_symm_apply (c : M₂) : e (e.symm c) = c := e.right_inv c
 @[simp] theorem symm_apply_apply (b : M) : e.symm (e b) = b := e.left_inv b
 omit σ'
 
+@[simp] theorem apply_symm_applyₗ [module R M₁] [module R M₂] [module R M₃]
+  {e : M₁ ≃ₗ[R] M₂} (c : M₂) : e (e.symm c) = c := e.right_inv c
+@[simp] theorem symm_apply_applyₗ [module R M₁] [module R M₂] [module R M₃]
+  {e : M₁ ≃ₗ[R] M₂} (b : M₁) : e.symm (e b) = b := e.left_inv b
+
 include σ₃₁ σ₂₁ σ₃₂
 @[simp] lemma symm_trans_apply (c : M₃) :
   (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 omit σ₃₁ σ₂₁ σ₃₂
+
+@[simp] lemma symm_trans_applyₗ [module R M₁] [module R M₂] [module R M₃]
+  {e₁₂ : M₁ ≃ₗ[R] M₂} {e₂₃ : M₂ ≃ₗ[R] M₃} (c : M₃) :
+  (e₁₂.trans e₂₃ : M₁ ≃ₗ[R] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 
 @[simp] lemma trans_refl : e.trans (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
 @[simp] lemma refl_trans : (refl R M).trans e = e := to_equiv_injective e.to_equiv.refl_trans
@@ -784,6 +806,9 @@ theorem map_ne_zero_iff {x : M} : e x ≠ 0 ↔ x ≠ 0 :=
 e.to_add_equiv.map_ne_zero_iff
 
 @[simp] theorem symm_symm [ring_equiv_inv_pair σ' σ] (e : M ≃ₛₗ[σ] M₂): e.symm.symm = e :=
+by { cases e, refl }
+
+@[simp] theorem symm_symmₗ [module R M₂] (e : M ≃ₗ[R] M₂): e.symm.symm = e :=
 by { cases e, refl }
 
 lemma symm_bijective [module S M₂] [ring_equiv_inv_pair σ' σ] :
