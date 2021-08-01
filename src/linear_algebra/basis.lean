@@ -209,8 +209,8 @@ begin
   let f_i : M →ₗ[R] R :=
   { to_fun := λ x, f x i,
     map_add' := λ _ _, by rw [hadd, pi.add_apply],
-    map_smul' := λ _ _, by { dsimp, rw [hsmul, pi.smul_apply] } },
-  have : (finsupp.lapply i).comp ↑b.repr = f_i,
+    map_smul' := λ _ _, by { simp [hsmul, pi.smul_apply] } },
+  have : (finsupp.lapply i).compₗ ↑b.repr = f_i,
   { refine b.ext (λ j, _),
     show b.repr (b j) i = f (b j) i,
     rw [b.repr_self, f_eq] },
