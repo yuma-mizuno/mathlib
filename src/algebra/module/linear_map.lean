@@ -29,7 +29,7 @@ open_locale big_operators
 universes u u' v w x y z
 variables {R : Type*} {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
 variables {k : Type*} {S : Type*} {M : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*}
-  {ι : Type*}
+variables {N₁ : Type*} {N₂ : Type*} {N₃ : Type*} {N₄ : Type*} {ι : Type*}
 
 -- SLFIXME: Move this comp triple stuff to another file?
 
@@ -37,6 +37,7 @@ section
 
 variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
 
@@ -203,7 +204,9 @@ namespace linear_map
 
 section add_comm_monoid
 
-variables [semiring R] [semiring S] [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [semiring R] [semiring S]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 
 section
 variables [module R M] [module R M₂] [module S M₃]
@@ -372,10 +375,12 @@ section
 
 variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables [module R₁ N₁] [module R₁ N₂] [module R₁ N₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
+variables (fₗ : N₂ →ₗ[R₁] N₃) (gₗ : N₁ →ₗ[R₁] N₂)
 
-def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
+def compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
   M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
@@ -387,23 +392,30 @@ def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ
 
 -- SLFIXME: figure out the right way to do this
 
-abbreviation compₗ [module R M₁] [module R M₂] [module R M₃] :=
-  @comp R R R M₁ M₂ M₃ _ _ _ _ _ _ _ _ _
+abbreviation comp [module R M₁] [module R M₂] [module R M₃] :=
+  @compₛₗ R R R M₁ M₂ M₃ _ _ _ _ _ _ _ _ _
   (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
 --notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
 
-@[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.comp g x = f (g x) := rfl
+@[simp] lemma compₛₗ_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.compₛₗ g x = f (g x) := rfl
+@[simp] lemma comp_apply (x : N₁) : fₗ.comp gₗ x = fₗ (gₗ x) := rfl
 
-@[simp, norm_cast] lemma coe_comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
-  (f.comp g : M₁ → M₃) = f ∘ g := rfl
+@[simp, norm_cast] lemma coe_compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
+  (f.compₛₗ g : M₁ → M₃) = f ∘ g := rfl
 
-@[simp] theorem comp_id : f.comp id = f :=
+@[simp, norm_cast] lemma coe_comp : (fₗ.comp gₗ : N₁ → N₃) = fₗ ∘ gₗ := rfl
+
+@[simp] theorem compₛₗ_id : f.compₛₗ id = f :=
 linear_map.ext $ λ x, rfl
 
-@[simp] theorem id_comp : id.comp f = f :=
+@[simp] theorem comp_id : fₗ.comp id = fₗ := compₛₗ_id _
+
+@[simp] theorem id_compₛₗ : id.compₛₗ f = f :=
 linear_map.ext $ λ x, rfl
+
+@[simp] theorem id_comp : id.comp fₗ = fₗ := id_compₛₗ _
 
 end
 
@@ -602,6 +614,8 @@ variables {M₄ : Type*}
 variables [semiring R] [semiring S]
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 variables [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂]
+variables [add_comm_monoid N₃] [add_comm_monoid N₄]
 
 section
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
@@ -705,6 +719,7 @@ omit σ'
 --variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
 variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables [module R₁ N₁] [module R₁ N₂] [module R₁ N₃]
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
@@ -712,7 +727,7 @@ variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₁₃ σ₃₁]
 variables [ring_equiv_inv_pair σ₂₁ σ₁₂] [ring_equiv_inv_pair σ₃₂ σ₂₃] [ring_equiv_inv_pair σ₃₁ σ₁₃]
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
-
+variables (e₁₂' : N₁ ≃ₗ[R₁] N₂) (e₂₃' : N₂ ≃ₗ[R₁] N₃)
 
 include σ₂₁
 instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂] M₂) :=
@@ -722,12 +737,12 @@ omit σ₂₁
 include σ₃₁
 /-- Linear equivalences are transitive. -/
 @[trans]
-def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
-{ .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
+def transₛₗ : M₁ ≃ₛₗ[σ₁₃] M₃ :=
+{ .. e₂₃.to_linear_map.compₛₗ e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
 omit σ₃₁
 
-@[trans] abbreviation transₗ [module R M₂] [module R M₃] := @trans R R R M M₂ M₃ _ _ _ _ _ _ _ _ _ (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+@[trans] abbreviation trans [module R M₂] [module R M₃] := @transₛₗ R R R M M₂ M₃ _ _ _ _ _ _ _ _ _ (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
 
 variables {e₁₂} {e₂₃}
 
@@ -739,31 +754,34 @@ lemma to_add_monoid_hom_commutes :
 rfl
 
 include σ₃₁
-@[simp] theorem trans_apply (c : M₁) :
-  (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃) c = e₂₃ (e₁₂ c) := rfl
+@[simp] theorem transₛₗ_apply (c : M₁) :
+  (e₁₂.transₛₗ e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃) c = e₂₃ (e₁₂ c) := rfl
 omit σ₃₁
 
+@[simp] theorem trans_apply (c : N₁) :
+  (e₁₂'.trans e₂₃') c = e₂₃' (e₁₂' c) := rfl
+
 include σ'
-@[simp] theorem apply_symm_apply (c : M₂) : e (e.symm c) = c := e.right_inv c
-@[simp] theorem symm_apply_apply (b : M) : e.symm (e b) = b := e.left_inv b
+@[simp] theorem apply_symm_applyₛₗ (c : M₂) : e (e.symm c) = c := e.right_inv c
+@[simp] theorem symm_apply_applyₛₗ (b : M) : e.symm (e b) = b := e.left_inv b
 omit σ'
 
-@[simp] theorem apply_symm_applyₗ [module R M₁] [module R M₂] [module R M₃]
+@[simp] theorem apply_symm_apply [module R M₁] [module R M₂] [module R M₃]
   {e : M₁ ≃ₗ[R] M₂} (c : M₂) : e (e.symm c) = c := e.right_inv c
-@[simp] theorem symm_apply_applyₗ [module R M₁] [module R M₂] [module R M₃]
+@[simp] theorem symm_apply_apply [module R M₁] [module R M₂] [module R M₃]
   {e : M₁ ≃ₗ[R] M₂} (b : M₁) : e.symm (e b) = b := e.left_inv b
 
 include σ₃₁ σ₂₁ σ₃₂
-@[simp] lemma symm_trans_apply (c : M₃) :
-  (e₁₂.trans e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
+@[simp] lemma symm_transₛₗ_apply (c : M₃) :
+  (e₁₂.transₛₗ e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 omit σ₃₁ σ₂₁ σ₃₂
 
-@[simp] lemma symm_trans_applyₗ [module R M₁] [module R M₂] [module R M₃]
+@[simp] lemma symm_trans_apply [module R M₁] [module R M₂] [module R M₃]
   {e₁₂ : M₁ ≃ₗ[R] M₂} {e₂₃ : M₂ ≃ₗ[R] M₃} (c : M₃) :
   (e₁₂.trans e₂₃ : M₁ ≃ₗ[R] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 
-@[simp] lemma trans_refl : e.trans (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
-@[simp] lemma refl_trans : (refl R M).trans e = e := to_equiv_injective e.to_equiv.refl_trans
+@[simp] lemma transₛₗ_refl : e.transₛₗ (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
+@[simp] lemma refl_transₛₗ : (refl R M).transₛₗ e = e := to_equiv_injective e.to_equiv.refl_trans
 
 include σ'
 lemma symm_apply_eq {x y} : e.symm x = y ↔ x = e y := e.to_equiv.symm_apply_eq
