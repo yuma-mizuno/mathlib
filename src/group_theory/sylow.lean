@@ -378,14 +378,61 @@ let ⟨K, hK⟩ := exists_subgroup_card_pow_prime_le p hdvd ⊥ (by convert card
 
 end sylow
 
-variables (G) [fintype G] (p : ℕ)
+variables {G} [fintype G] (p : ℕ)
+
+def subgroup.is_sylow (P : subgroup G) : Prop :=
+∃ n : ℕ, fintype.card P = p ^ n ∧ ∀ m, p ^ m ∣ fintype.card G → m ≤ n
+
+variable {p}
+
+lemma is_sylow_def {P : subgroup G} :
+  P.is_sylow p ↔ ∃ n : ℕ, fintype.card P = p ^ n ∧ ∀ m, p ^ m ∣ fintype.card G → m ≤ n := iff.rfl
+
+lemma _root_.nat.prime.pow_dvd_of_dvd_mul_right {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
+  (hpb : ¬ p ∣ b) : p ^ n ∣ a :=
+begin
+  induction n with n ih,
+  { simp },
+  { rw [pow_succ'] at *,
+    rcases ih (dvd_trans (dvd_mul_right _ _) h) with ⟨c, rfl⟩,
+    rw [mul_assoc] at h,
+    rcases hp.dvd_mul.1 (nat.dvd_of_mul_dvd_mul_left (pow_pos hp.pos _) h)
+      with ⟨d, rfl⟩|⟨d, rfl⟩,
+    { rw [← mul_assoc],
+      exact dvd_mul_right _ _ },
+    { exact (hpb (dvd_mul_right _ _)).elim } }
+end
+
+lemma _root_.nat.prime.pow_dvd_of_dvd_mul_left {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
+  (hpb : ¬ p ∣ a) : p ^ n ∣ b :=
+by rw [mul_comm] at h; exact hp.pow_dvd_of_dvd_mul_right h hpb
+
+lemma subgroup.is_sylow_iff_not_dvd_card_quotient [fact p.prime] {P : subgroup G} :
+  P.is_sylow p ↔ ¬ p ∣ fintype.card (quotient P) ∧ ∃ n : ℕ, card P = p ^ n :=
+begin
+  split,
+  { intro hP,
+    rcases hP with ⟨n, hnp, hd⟩,
+    refine ⟨_, n, hnp⟩,
+    rintros ⟨x, hx⟩,
+    rw [card_eq_card_quotient_mul_card_subgroup (P : subgroup G), hx, hnp, mul_right_comm,
+      ← pow_succ] at hd,
+    exact not_le_of_gt n.lt_succ_self (hd _ (dvd_mul_right _ _)) },
+  { rintros ⟨hdvd, n, hn⟩,
+    use [n, hn],
+    assume m hm,
+    rw [card_eq_card_quotient_mul_card_subgroup (P : subgroup G), hn] at hm,
+    exact (nat.pow_dvd_pow_iff_le_right (fact.out p.prime).one_lt).1
+      ((fact.out p.prime).pow_dvd_of_dvd_mul_left hm hdvd) }
+end
+
+variables (G) (p)
 
 /-- The type of Sylow-`p` subgroups of a finite group `G`. A Sylow `p` subgroup is a
   subgroup of cardinality `p ^ n`, when `n` is the maximum natural number such that
   `p ^ n` divides the cardinality of `G`. -/
 def sylow_subgroup : Type* :=
-{ H : subgroup G // ∃ n : ℕ, fintype.card H =
-    p ^ n ∧ ∀ m, p ^ m ∣ fintype.card G → m ≤ n }
+{ P : subgroup G // P.is_sylow p }
 
 namespace sylow_subgroup
 
@@ -393,7 +440,8 @@ instance : has_coe (sylow_subgroup G p) (subgroup G) :=
 { coe := subtype.val }
 
 instance : mul_action G (sylow_subgroup G p) :=
-{ smul := λ g P, ⟨g • (P : subgroup G), by simpa [card_smul, set.mem_set_of_eq] using P.2⟩,
+{ smul := λ g P, ⟨g • (P : subgroup G),
+    by simpa [subgroup.is_sylow, card_smul, set.mem_set_of_eq] using P.2⟩,
   one_smul := λ _, subtype.eq (one_smul _ _),
   mul_smul := λ x y P, subtype.eq (mul_smul _ _ P.val)  }
 
@@ -414,6 +462,8 @@ let ⟨H, hH⟩ := sylow.exists_subgroup_card_pow_prime p
 
 open quotient_group
 
+variable {p}
+
 @[simp] lemma coe_smul (x : G) (P : sylow_subgroup G p) :
   (↑(x • P) : subgroup G) = x • P := rfl
 
@@ -432,6 +482,7 @@ have hm : multiplicity.finite p (fintype.card G),
 (multiplicity p (fintype.card G)).get hm
 
 variables {G} {p}
+
 lemma card_eq_pow_exponent [hp : fact p.prime] (P : sylow_subgroup G p) :
   fintype.card (P : subgroup G) = p ^ exponent G p :=
 begin
@@ -442,46 +493,30 @@ begin
   exact ⟨card_subgroup_dvd_card _, λ h, not_le_of_gt n.lt_succ_self (hd (n + 1) h)⟩
 end
 
-lemma not_dvd_card_quotient_sylow (P : sylow_subgroup G p) :
+lemma le_exponent_of_dvd_pow [fact p.prime] {n : ℕ} (h : p ^ n ∣ card G) : n ≤ exponent G p :=
+begin
+  delta exponent,
+  rw [← enat.coe_le_coe, enat.coe_get],
+  exact multiplicity.le_multiplicity_of_pow_dvd h
+end
+
+lemma is_sylow_iff_card_eq_pow_exponent [fact p.prime] {P : subgroup G} :
+  P.is_sylow p ↔ card P = p ^ exponent G p :=
+⟨λ h, card_eq_pow_exponent ⟨_, h⟩,
+  λ h, ⟨exponent G p, h, λ m, le_exponent_of_dvd_pow⟩⟩
+
+lemma not_dvd_card_quotient_sylow [fact p.prime] (P : sylow_subgroup G p) :
   ¬ p ∣ fintype.card (quotient (P : subgroup G)) :=
-begin
-  rintros ⟨x, hx⟩,
-  rcases P.property with ⟨n, hnp, hd⟩,
-  erw [card_eq_card_quotient_mul_card_subgroup (P : subgroup G), hx, hnp, mul_right_comm,
-    ← pow_succ] at hd,
-  exact not_le_of_gt n.lt_succ_self (hd _ (dvd_mul_right _ _))
-end
+(subgroup.is_sylow_iff_not_dvd_card_quotient.1 P.2).1
 
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_right (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ b) : p ^ n ∣ a :=
-begin
-  induction n with n ih,
-  { simp },
-  { rw [pow_succ'] at *,
-    rcases ih (dvd_trans (dvd_mul_right _ _) h) with ⟨c, rfl⟩,
-    rw [mul_assoc] at h,
-    rcases hp.dvd_mul.1 (nat.dvd_of_mul_dvd_mul_left (pow_pos hp.pos _) h)
-      with ⟨d, rfl⟩|⟨d, rfl⟩,
-    { rw [← mul_assoc],
-      exact dvd_mul_right _ _ },
-    { exact (hpb (dvd_mul_right _ _)).elim } }
-end
-
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_left (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ a) : p ^ n ∣ b :=
-by rw [mul_comm] at h; exact hp.pow_dvd_of_dvd_mul_right h hpb
-
-/-- Make a `Sylow_subgroup G p` from a `p`-subgroup, and a proof that `p` does not divide
-  the index of the subgroup. -/
-@[simps] def mk_of_not_dvd_quotient [fact p.prime] (P : subgroup G)
-  (hn : (∃ n : ℕ, card P = p ^ n) ∧ ¬ p ∣ card (quotient P)) :
-    sylow_subgroup G p :=
-⟨P, let ⟨⟨n, hP⟩, h⟩ := hn in ⟨n, hP, λ m hm, begin
-  rw [card_eq_card_quotient_mul_card_subgroup P] at hm,
-  have : p ^ m ∣ card P := (fact.out p.prime).pow_dvd_of_dvd_mul_left hm h,
-  rw [hP] at this,
-  exact (nat.pow_dvd_pow_iff_le_right (fact.out p.prime).one_lt).1 this
-end⟩⟩
+lemma eq_exponent_of_dvd_card_of_succ_not_dvd_card [fact p.prime] {n : ℕ}
+  (h : p ^ n ∣ card G) (h2 : ¬p ^ (n + 1) ∣ card G) : n = exponent G p :=
+le_antisymm (le_exponent_of_dvd_pow h)
+  begin
+    delta exponent,
+    rw [← nat.lt_succ_iff, ← enat.coe_lt_coe, enat.coe_get],
+    exact multiplicity.multiplicity_lt_iff_neg_dvd.2 h2
+  end
 
 lemma card_eq [fact p.prime] (P Q : sylow_subgroup G p) :
   fintype.card (P : subgroup G) = fintype.card (Q : subgroup G) :=
@@ -523,27 +558,27 @@ section comap
 variables {H : Type*} [group H] [fintype H] (h : H) (P Q : sylow_subgroup G p) (f : H →* G)
 
 @[simps] def comap (hfi : injective f) (hf : (P : subgroup G) ≤ f.range) : sylow_subgroup H p :=
-mk_of_not_dvd_quotient ((P : subgroup G).comap f) $
+⟨(P : subgroup G).comap f, subgroup.is_sylow_iff_not_dvd_card_quotient.2 $
   have hcard : card (P : set G) = card (comap f P : set H),
     from fintype.card_congr (@set.bij_on.equiv _ _ (comap f P : set H) (P : set G) f
       ⟨λ _, id, λ _ _ _ _ h, hfi h, λ x hx, let ⟨y, hy⟩ := hf hx in
         ⟨y, mem_comap.2 (hy.symm ▸ hx), hy⟩⟩).symm,
   begin
     erw [← hcard],
-    use [exponent G p, card_eq_pow_exponent _],
+    refine ⟨_, exponent G p, card_eq_pow_exponent _⟩,
     assume h,
     refine not_dvd_card_quotient_sylow P (dvd_trans h _),
     refine nat.dvd_of_mul_dvd_mul_right (show 0 < card (comap f P), from card_pos_iff.2 ⟨1⟩) _,
     erw [← card_eq_card_quotient_mul_card_subgroup, ← hcard,
       ← card_eq_card_quotient_mul_card_subgroup],
     exact card_dvd_of_injective f hfi
-  end
+  end⟩
 
 variables {P Q}
 @[simp] lemma comap_inj_iff {hfi : injective f} {hP : (P : subgroup G) ≤ f.range}
   {hQ : (Q : subgroup G) ≤ f.range} : comap P f hfi hP = comap Q f hfi hQ ↔ P = Q :=
 ⟨λ h, sylow_subgroup.ext $ λ x hxP, begin
-  simp only [← coe_inj, comap, mk_of_not_dvd_quotient, subtype.coe_mk] at h,
+  simp only [← coe_inj, comap, subtype.coe_mk] at h,
   rcases hP hxP with ⟨y, rfl⟩,
   rwa [← mem_comap, ← h, mem_comap]
 end, λ h, by simp [h]⟩
@@ -569,8 +604,7 @@ coe_inj.1 $ (comap_smul _ _ _).symm
 end comap
 
 /-- **Sylow's second theorem**. Any two Sylow subgroups are conjugate -/
-lemma conjugate (P Q : sylow_subgroup G p) :
-  ∃ g : G, g • P = Q :=
+lemma conjugate (P Q : sylow_subgroup G p) : ∃ g : G, g • P = Q :=
 begin
   rcases mul_action.nonempty_fixed_point_of_prime_not_dvd_card (quotient (Q : subgroup G))
     (card_eq_pow_exponent P) (not_dvd_card_quotient_sylow Q) with ⟨g, hg⟩,
