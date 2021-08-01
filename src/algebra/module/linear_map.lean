@@ -268,10 +268,10 @@ variables (f g f' g')
 
 @[simp] lemma map_smul (c : R) (x : M) : f (c • x) = c • f x := f.map_smul' c x
 
-@[simp] lemma map_smul'' (c : R) (x : M) : f' (c • x) = (σ c) • f' x := f'.map_smul' c x
+@[simp] lemma map_smulₛₗ (c : R) (x : M) : f' (c • x) = (σ c) • f' x := f'.map_smul' c x
 
 @[simp] lemma map_zero : f' 0 = 0 :=
-by { rw [←zero_smul R (0 : M), map_smul''], simp }
+by { rw [←zero_smul R (0 : M), map_smulₛₗ], simp }
 
 @[simp] lemma map_eq_zero_iff (h : function.injective f') {x : M} : f' x = 0 ↔ x = 0 :=
 ⟨λ w, by { apply h, simp [w], }, λ w, by { subst w, simp, }⟩
@@ -353,7 +353,7 @@ theorem to_add_monoid_hom_injective :
 
 /-- If two `R`-linear maps from `R` are equal on `1`, then they are equal. -/
 @[ext] theorem ext_ring {f g : R →ₛₗ[σ] M₃} (h : f 1 = g 1) : f = g :=
-ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smul'', g.map_smul'', h]
+ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smulₛₗ, g.map_smulₛₗ, h]
 
 theorem ext_ring_iff {f g : R →ₗ[R] M} : f = g ↔ f 1 = g 1 :=
 ⟨λ h, h ▸ rfl, ext_ring⟩
@@ -795,8 +795,8 @@ rfl
 
 @[simp] theorem map_add (a b : M) : e (a + b) = e a + e b := e.map_add' a b
 @[simp] theorem map_zero : e 0 = 0 := e.to_linear_map.map_zero
-@[simp] theorem map_smul (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
-@[simp] theorem map_smul'' [module R M₁] {e : M ≃ₗ[R] M₁} (c : R) (x : M) :
+@[simp] theorem map_smulₛₗ (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
+@[simp] theorem map_smul [module R M₁] {e : M ≃ₗ[R] M₁} (c : R) (x : M) :
   e (c • x) = c • e x := e.map_smul' c x
 
 @[simp] lemma map_sum {s : finset ι} (u : ι → M) : e (∑ i in s, u i) = ∑ i in s, e (u i) :=

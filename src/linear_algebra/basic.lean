@@ -235,7 +235,7 @@ instance  : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
     to_fun := λ x, n • (f x),
     map_add' := λ x y, by rw [f.map_add, smul_add],
     map_smul' := λ c x, begin
-      rw [f.map_smul''],
+      rw [f.map_smulₛₗ],
       simp [smul_comm n (σ₁₂ c) (f x)],
     end}, -- rw [f.map_smul, smul_comm n c (f x)] },
   nsmul_zero' := λ f, by { ext x, change 0 • f x = 0, simp only [zero_smul] },
@@ -1975,7 +1975,7 @@ def liftq (f : M →ₛₗ[τ₁₂] M₂) (h : p ≤ f.ker) : p.quotient →ₛ
 { to_fun := λ x, _root_.quotient.lift_on' x f $
     λ a b (ab : a - b ∈ p), eq_of_sub_eq_zero $ by simpa using h ab,
   map_add' := by rintro ⟨x⟩ ⟨y⟩; exact f.map_add x y,
-  map_smul' := by rintro a ⟨x⟩; exact f.map_smul'' a x }
+  map_smul' := by rintro a ⟨x⟩; exact f.map_smulₛₗ a x }
 
 @[simp] theorem liftq_apply (f : M →ₛₗ[τ₁₂] M₂) {h} (x : M) :
   p.liftq f h (quotient.mk x) = f x := rfl
