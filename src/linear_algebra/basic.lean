@@ -253,11 +253,17 @@ instance linear_map_apply_is_add_monoid_hom (a : M) :
 { map_add := λ f g, linear_map.add_apply f g a,
   map_zero := rfl }
 
-lemma add_comp (g : M₂ →ₛₗ[σ₂₃] M₃) (h : M₂ →ₛₗ[σ₂₃] M₃) :
+lemma add_compₛₗ (g : M₂ →ₛₗ[σ₂₃] M₃) (h : M₂ →ₛₗ[σ₂₃] M₃) :
   ((h + g).compₛₗ f : M →ₛₗ[σ₁₃] M₃) = h.compₛₗ f + g.compₛₗ f := rfl
 
-lemma comp_add (g : M →ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃) :
+lemma add_comp (gₗ : N₂ →ₗ[R] N₃) (hₗ : N₂ →ₗ[R] N₃) :
+  (hₗ + gₗ).comp fₗ = hₗ.comp fₗ + gₗ.comp fₗ := rfl
+
+lemma comp_addₛₗ (g : M →ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃) :
   (h.compₛₗ (f + g) : M →ₛₗ[σ₁₃] M₃)  = h.compₛₗ f + h.compₛₗ g := by { ext, simp }
+
+lemma comp_add (gₗ : N →ₗ[R] N₂) (hₗ : N₂ →ₗ[R] N₃) :
+  hₗ.comp (fₗ + gₗ)  = hₗ.comp fₗ + hₗ.comp gₗ := by { ext, simp }
 
 lemma sum_apply (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) (b : M) :
   (∑ d in t, f d) b = ∑ d in t, f d b :=
@@ -299,10 +305,14 @@ begin
   exact nontrivial_of_ne 1 0 (λ p, ne (linear_map.congr_fun p m)),
 end
 
-@[simp] theorem comp_zero : (g.compₛₗ (0 : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃) = 0 :=
+@[simp] theorem comp_zeroₛₗ : (g.compₛₗ (0 : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃) = 0 :=
 ext $ assume c, by rw [compₛₗ_apply, zero_apply, zero_apply, g.map_zero]
 
-@[simp] theorem zero_comp : ((0 : M₂ →ₛₗ[σ₂₃] M₃).compₛₗ f : M →ₛₗ[σ₁₃] M₃) = 0 := rfl
+@[simp] theorem comp_zero : gₗ.comp (0 : N →ₗ[R] N₂) = 0 := comp_zeroₛₗ _
+
+@[simp] theorem zero_compₛₗ : ((0 : M₂ →ₛₗ[σ₂₃] M₃).compₛₗ f : M →ₛₗ[σ₁₃] M₃) = 0 := rfl
+
+@[simp] theorem zero_comp : (0 : N₂ →ₗ[R] N₃).comp fₗ = 0 := rfl
 
 @[simp, norm_cast] lemma coe_fn_sum {ι : Type*} (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) :
   ⇑(∑ i in t, f i) = ∑ i in t, (f i : M → M₂) :=
@@ -341,7 +351,7 @@ lemma submodule_pow_eq_zero_of_pow_eq_zero {N : submodule R M}
 begin
   ext m,
   have hg : N.subtype.compₛₗ (g^k) m = 0,
-  { rw [← commute_pow_left_of_commute h, hG, zero_comp, zero_apply], },
+  { rw [← commute_pow_left_of_commute h, hG, zero_compₛₗ, zero_apply], },
   simp only [submodule.subtype_apply, comp_app, submodule.coe_eq_zero, coe_comp] at hg,
   rw [hg, linear_map.zero_apply],
 end
@@ -2088,7 +2098,7 @@ variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 lemma ker_eq_bot_of_cancel {f : M →ₛₗ[τ₁₂] M₂}
   (h : ∀ (u v : f.ker →ₗ[R] M), f.compₛₗ u = f.compₛₗ v → u = v) : f.ker = ⊥ :=
 begin
-  have h₁ : f.compₛₗ (0 : f.ker →ₗ[R] M) = 0 := comp_zero _,
+  have h₁ : f.compₛₗ (0 : f.ker →ₗ[R] M) = 0 := comp_zeroₛₗ _,
   rw [←submodule.range_subtype f.ker, ←h 0 f.ker.subtype (eq.trans h₁ (comp_ker_subtype f).symm)],
   exact range_zero
 end
@@ -2122,7 +2132,7 @@ by rw [←range_le_ker_iff, submodule.ker_mkq, submodule.range_subtype]
 lemma range_eq_top_of_cancel {f : M →ₛₗ[τ₁₂] M₂}
   (h : ∀ (u v : M₂ →ₗ[R₂] f.range.quotient), u.compₛₗ f = v.compₛₗ f → u = v) : f.range = ⊤ :=
 begin
-  have h₁ : (0 : M₂ →ₗ[R₂] f.range.quotient).compₛₗ f = 0 := zero_comp _,
+  have h₁ : (0 : M₂ →ₗ[R₂] f.range.quotient).compₛₗ f = 0 := zero_compₛₗ _,
   rw [←submodule.ker_mkq f.range, ←h 0 f.range.mkq (eq.trans h₁ (range_mkq_comp _).symm)],
   exact ker_zero
 end
