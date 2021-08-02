@@ -135,7 +135,7 @@ lemma pi_ext_iff : f = g ↔ ∀ i x, f (pi.single i x) = g (pi.single i x) :=
 
 /-- This is used as the ext lemma instead of `linear_map.pi_ext` for reasons explained in
 note [partially-applied ext lemmas]. -/
-@[ext] lemma pi_ext' (h : ∀ i, f.compₗ (single i) = g.comp (single i)) : f = g :=
+@[ext] lemma pi_ext' (h : ∀ i, f.comp (single i) = g.comp (single i)) : f = g :=
 begin
   refine pi_ext (λ i x, _),
   convert linear_map.congr_fun (h i) x
@@ -163,8 +163,7 @@ begin
     assume j hjJ,
     have : j ∉ I := assume hjI, hd ⟨hjI, hjJ⟩,
     rw [dif_neg this, zero_apply] },
-  {
-    simp only [pi_comp, comp_assocₗ, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
+  { simp only [pi_comp, comp_assoc, subtype_comp_cod_restrict, proj_pi, dif_pos, subtype.coe_prop],
     ext b ⟨j, hj⟩, refl },
   { ext1 ⟨b, hb⟩,
     apply subtype.ext,

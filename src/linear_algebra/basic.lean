@@ -185,9 +185,12 @@ by refine {to_fun := λc, ⟨f c, h c⟩, ..}; intros; apply set_coe.ext; simp
   ((cod_restrict p g h).compₛₗ f : M →ₛₗ[σ₁₃] p) = cod_restrict p (g.compₛₗ f) (assume b, h _) :=
 ext $ assume b, rfl
 
-@[simp] lemma subtype_comp_cod_restrict (p : submodule R₂ M₂) (h : ∀b, f b ∈ p) :
+@[simp] lemma subtype_comp_cod_restrictₛₗ (p : submodule R₂ M₂) (h : ∀b, f b ∈ p) :
   p.subtype.compₛₗ (cod_restrict p f h) = f :=
 ext $ assume b, rfl
+
+@[simp] lemma subtype_comp_cod_restrict (p : submodule R N₂) (h : ∀b, fₗ b ∈ p) :
+  p.subtype.comp (cod_restrict p fₗ h) = fₗ := subtype_comp_cod_restrictₛₗ _ p h
 
 /-- Restrict domain and codomain of an endomorphism. -/
 def restrict (f : M →ₗ[R] M) {p : submodule R M} (hf : ∀ x ∈ p, f x ∈ p) : p →ₗ[R] p :=
