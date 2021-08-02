@@ -1523,9 +1523,11 @@ section add_comm_monoid
 
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
+variables [module R N] [module R N₂] [module R N₃]
 include R
 open submodule
 
@@ -1680,12 +1682,17 @@ def ker (f : M →ₛₗ[τ₁₂] M₂) : submodule R M := comap f ⊥
 lemma comp_ker_subtype (f : M →ₛₗ[τ₁₂] M₂) : f.compₛₗ f.ker.subtype = 0 :=
 linear_map.ext $ λ x, suffices f x = 0, by simp [this], mem_ker.1 x.2
 
-theorem ker_comp (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+theorem ker_compₛₗ (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   ker (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) = comap f (ker g) := rfl
 
-theorem ker_le_ker_comp (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+theorem ker_comp (f : N →ₗ[R] N₂) (g : N₂ →ₗ[R] N₃) : ker (g.comp f) = comap f (ker g) := rfl
+
+theorem ker_le_ker_compₛₗ (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   ker f ≤ ker (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) :=
-by rw ker_comp; exact comap_mono bot_le
+by rw ker_compₛₗ; exact comap_mono bot_le
+
+theorem ker_le_ker_comp (f : N →ₗ[R] N₂) (g : N₂ →ₗ[R] N₃) : ker f ≤ ker (g.comp f) :=
+ker_le_ker_compₛₗ f g
 
 theorem disjoint_ker {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} :
   disjoint p (ker f) ↔ ∀ x ∈ p, f x = 0 → x = 0 :=
@@ -2027,7 +2034,7 @@ by simp only [map_eq_top_iff p.range_mkq, sup_comm, ker_mkq]
 `f : M → M₂` is linear. -/
 def mapq (f : M →ₛₗ[τ₁₂] M₂) (h : p ≤ comap f q) :
   p.quotient →ₛₗ[τ₁₂] q.quotient :=
-p.liftq (q.mkq.compₛₗ f) $ by simpa [ker_comp] using h
+p.liftq (q.mkq.compₛₗ f) $ by simpa [ker_compₛₗ] using h
 
 @[simp] theorem mapq_apply (f : M →ₛₗ[τ₁₂] M₂) {h} (x : M) :
   mapq p q f h (quotient.mk x) = quotient.mk (f x) := rfl
@@ -2100,7 +2107,9 @@ section semiring
 
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
+variables [module R N] [module R N₂] [module R N₃]
 variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
@@ -2113,13 +2122,20 @@ begin
   exact range_zero
 end
 
-lemma range_comp_of_range_eq_top {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃)
+lemma range_comp_of_range_eq_topₛₗ {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃)
   (hf : range f = ⊤) : range (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) = range g :=
 by rw [range_comp, hf, submodule.map_top]
 
-lemma ker_comp_of_ker_eq_bot (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
+lemma range_comp_of_range_eq_top {f : N →ₗ[R] N₂} (g : N₂ →ₗ[R] N₃)
+  (hf : range f = ⊤) : range (g.comp f) = range g :=
+range_comp_of_range_eq_topₛₗ g hf
+
+lemma ker_comp_of_ker_eq_botₛₗ (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
   (hg : ker g = ⊥) : ker (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) = ker f :=
-by rw [ker_comp, hg, submodule.comap_bot]
+by rw [ker_compₛₗ, hg, submodule.comap_bot]
+
+lemma ker_comp_of_ker_eq_bot (f : N →ₗ[R] N₂) {g : N₂ →ₗ[R] N₃}
+  (hg : ker g = ⊥) : ker (g.comp f) = ker f := ker_comp_of_ker_eq_botₛₗ f hg
 
 end semiring
 
@@ -2252,7 +2268,7 @@ variables [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₃₂ 
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
 variables (fₗ : N →ₗ[R] N₂) (gₗ : N₂ →ₗ[R] N) (eₗ : N ≃ₗ[R] N₂) (hₗ : N₂ →ₗ[R] N₃)
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁]
-variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃)
+variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃) (eₗ'' : N₂ ≃ₗ[R] N₃)
 
 variables (p q : submodule R M)
 
@@ -2359,12 +2375,17 @@ omit σ₂₁
 @[simp] protected theorem ker : (e : M →ₛₗ[σ₁₂] M₂).ker = ⊥ :=
 linear_map.ker_eq_bot_of_injective e.to_equiv.injective
 
-@[simp] theorem range_comp : (h.compₛₗ (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
-linear_map.range_comp_of_range_eq_top _ e.range
+@[simp] theorem range_compₛₗ : (h.compₛₗ (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
+linear_map.range_comp_of_range_eq_topₛₗ _ e.range
 
-@[simp] theorem ker_comp (l : M →ₛₗ[σ₁₂] M₂) :
+@[simp] theorem range_comp : (hₗ.comp (eₗ : N →ₗ[R] N₂)).range = hₗ.range := range_compₛₗ _ _
+
+@[simp] theorem ker_compₛₗ (l : M →ₛₗ[σ₁₂] M₂) :
   (((e'' : M₂ →ₛₗ[σ₂₃] M₃).compₛₗ l : M →ₛₗ[σ₁₃] M₃) : M →ₛₗ[σ₁₃] M₃).ker = l.ker :=
-linear_map.ker_comp_of_ker_eq_bot _ e''.ker
+linear_map.ker_comp_of_ker_eq_botₛₗ _ e''.ker
+
+@[simp] theorem ker_comp (l : N →ₗ[R] N₂) :
+  (((eₗ'' : N₂ →ₗ[R] N₃).comp l)).ker = l.ker := ker_compₛₗ _ l
 
 variables {f g}
 
