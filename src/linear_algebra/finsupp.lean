@@ -583,16 +583,14 @@ linear_equiv.ext $ λ x, rfl
   (finsupp.dom_lcongr e : _ ≃ₗ[R] _) (finsupp.single i m) = finsupp.single (e i) m :=
 by simp [finsupp.dom_lcongr, finsupp.dom_congr, equiv_map_domain_single]
 
-#check @linear_equiv.trans
-
 /-- An equivalence of sets induces a linear equivalence of `finsupp`s supported on those sets. -/
 noncomputable def congr {α' : Type*} (s : set α) (t : set α') (e : s ≃ t) :
   supported M R s ≃ₗ[R] supported M R t :=
 begin
   haveI := classical.dec_pred (λ x, x ∈ s),
   haveI := classical.dec_pred (λ x, x ∈ t),
-  refine linear_equiv.transₗ (finsupp.supported_equiv_finsupp s)
-      (linear_equiv.transₗ _ (finsupp.supported_equiv_finsupp t).symm),
+  refine linear_equiv.trans (finsupp.supported_equiv_finsupp s)
+      (linear_equiv.trans _ (finsupp.supported_equiv_finsupp t).symm),
   exact finsupp.dom_lcongr e
 end
 
