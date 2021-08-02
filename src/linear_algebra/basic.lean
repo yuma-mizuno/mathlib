@@ -161,10 +161,17 @@ theorem comp_assoc (h : N₃ →ₗ[R] N₄) :
 
 /-- The restriction of a linear map `f : M → M₂` to a submodule `p ⊆ M` gives a linear map
 `p → M₂`. -/
-def dom_restrict (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : p →ₛₗ[σ₁₂] M₂ := f.compₛₗ p.subtype
+def dom_restrictₛₗ (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : p →ₛₗ[σ₁₂] M₂ := f.compₛₗ p.subtype
 
-@[simp] lemma dom_restrict_apply (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) (x : p) :
-  f.dom_restrict p x = f x := rfl
+/-- The restriction of a linear map `f : M → M₂` to a submodule `p ⊆ M` gives a linear map
+`p → M₂`. -/
+def dom_restrict (fₗ : N →ₗ[R] N₂) (p : submodule R N) : p →ₗ[R] N₂ := fₗ.comp p.subtype
+
+@[simp] lemma dom_restrictₛₗ_apply (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) (x : p) :
+  f.dom_restrictₛₗ p x = f x := rfl
+
+@[simp] lemma dom_restrict_apply (fₗ : N →ₗ[R] N₂) (p : submodule R N) (x : p) :
+  fₗ.dom_restrict p x = fₗ x := rfl
 
 /-- A linear map `f : M₂ → M` whose values lie in a submodule `p ⊆ M` can be restricted to a
 linear map M₂ → p. -/
@@ -2202,7 +2209,7 @@ def of_submodule (p : submodule R M) : p ≃ₛₗ[σ₁₂] ↥(p.map (e : M �
     simp only [symm_apply_applyₛₗ, submodule.coe_mk, coe_coe, hx], }⟩,
   left_inv  := λ x, by simp,
   right_inv := λ y, by { apply set_coe.ext, simp, },
-  ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrict p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂)) (λ x, ⟨x, by simp⟩) }
+  ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrictₛₗ p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂)) (λ x, ⟨x, by simp⟩) }
 
 include σ₂₁
 @[simp] lemma of_submodule_apply (p : submodule R M) (x : p) :
@@ -2280,7 +2287,7 @@ def of_submodule' [module R M] [module R₂ M₂] (f : M ≃ₛₗ[σ₁₂] M�
 lemma of_submodule'_to_linear_map [module R M] [module R₂ M₂]
   (f : M ≃ₛₗ[σ₁₂] M₂) (U : submodule R₂ M₂) :
   (f.of_submodule' U).to_linear_map =
-  (f.to_linear_map.dom_restrict _).cod_restrict _ subtype.prop :=
+  (f.to_linear_map.dom_restrictₛₗ _).cod_restrict _ subtype.prop :=
 by { ext, refl }
 
 @[simp]
