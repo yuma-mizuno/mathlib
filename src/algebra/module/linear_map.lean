@@ -767,9 +767,9 @@ include σ'
 omit σ'
 
 @[simp] theorem apply_symm_apply [module R M₁] [module R M₂] [module R M₃]
-  {e : M₁ ≃ₗ[R] M₂} (c : M₂) : e (e.symm c) = c := e.right_inv c
+  (e : M₁ ≃ₗ[R] M₂) (c : M₂) : e (e.symm c) = c := e.right_inv c
 @[simp] theorem symm_apply_apply [module R M₁] [module R M₂] [module R M₃]
-  {e : M₁ ≃ₗ[R] M₂} (b : M₁) : e.symm (e b) = b := e.left_inv b
+  (e : M₁ ≃ₗ[R] M₂) (b : M₁) : e.symm (e b) = b := e.left_inv b
 
 include σ₃₁ σ₂₁ σ₃₂
 @[simp] lemma symm_transₛₗ_apply (c : M₃) :
