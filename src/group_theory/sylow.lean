@@ -388,25 +388,6 @@ variable {p}
 lemma is_sylow_def {P : subgroup G} :
   P.is_sylow p ↔ ∃ n : ℕ, fintype.card P = p ^ n ∧ ∀ m, p ^ m ∣ fintype.card G → m ≤ n := iff.rfl
 
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_right {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ b) : p ^ n ∣ a :=
-begin
-  induction n with n ih,
-  { simp },
-  { rw [pow_succ'] at *,
-    rcases ih (dvd_trans (dvd_mul_right _ _) h) with ⟨c, rfl⟩,
-    rw [mul_assoc] at h,
-    rcases hp.dvd_mul.1 (nat.dvd_of_mul_dvd_mul_left (pow_pos hp.pos _) h)
-      with ⟨d, rfl⟩|⟨d, rfl⟩,
-    { rw [← mul_assoc],
-      exact dvd_mul_right _ _ },
-    { exact (hpb (dvd_mul_right _ _)).elim } }
-end
-
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_left {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ a) : p ^ n ∣ b :=
-by rw [mul_comm] at h; exact hp.pow_dvd_of_dvd_mul_right h hpb
-
 lemma subgroup.is_sylow_iff_not_dvd_card_quotient [fact p.prime] {P : subgroup G} :
   P.is_sylow p ↔ ¬ p ∣ fintype.card (quotient P) ∧ ∃ n : ℕ, card P = p ^ n :=
 begin
