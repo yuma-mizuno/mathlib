@@ -8,8 +8,7 @@ import data.matrix.notation
 import data.zmod.quotient
 import linear_algebra.char_poly.coeff
 import linear_algebra.determinant
--- import ring_theory.dedekind_domain
--- import ring_theory.fractional_ideal
+import ring_theory.dedekind_domain
 import ring_theory.localization
 import ring_theory.power_basis
 
@@ -39,6 +38,10 @@ See also `algebra.trace`, which is defined similarly as the trace of
  * https://en.wikipedia.org/wiki/Field_norm
 
 -/
+
+-- Fix timeouts from this coercion firing before `set_like.has_coe_to_sort`
+-- and having to traverse through all coercions ever declared.
+attribute [instance, priority 1] coe_fn_trans coe_sort_trans
 
 universes u v w
 
@@ -285,9 +288,13 @@ end
   (f.restrict_scalars R : M → M') = f :=
 rfl
 
+section
+
 @[simp] lemma coe_restrict_scalars (I : ideal S) :
-  (I.restrict_scalars R : set S) = I :=
+  ((I.restrict_scalars R) : set S) = ↑I :=
 rfl
+
+end
 
 /-- The smallest `S`-submodule that contains all `x ∈ I * y ∈ J`
 is also the smallest `R`-submodule that does so. -/
@@ -816,13 +823,39 @@ calc card_norm ⊤ = fintype.card (submodule.quotient ⊤) : card_norm_apply _
 
 .
 
-/-- `[M : S] [S : T] = [M : T]` -/
-lemma card_quotient_mul_card_quotient (S T : submodule R M)
-  [fintype S.quotient] [fintype ((S ⊓ T).comap S.subtype).quotient] [fintype T.quotient] :
-  fintype.card S.quotient * fintype.card ((S ⊓ T).comap S.subtype).quotient = fintype.card T.quotient :=
-begin
-  rw fintype.card_eq.mpr ⟨(quotient_inf_equiv_sup_quotient S T).to_equiv⟩,
-end
+noncomputable instance [fintype M] (S : submodule R M) [decidable_pred (∈ S)] :
+  fintype S.quotient :=
+quotient.fintype _
+
+/-- A (non-canonical) bijection between a module `M` and the product `(M / S) × S` -/
+noncomputable def module_equiv_quotient_times_submodule (S : submodule R M) :
+  M ≃ quotient S × S :=
+calc M ≃ Σ L : quotient S, {x : M // quotient.mk x = L} :
+  (equiv.sigma_preimage_equiv S.mkq).symm
+    ... ≃ Σ L : quotient S, {x : M // x - quotient.out' L ∈ S} :
+  equiv.sigma_congr_right (λ L, (equiv.refl M).subtype_equiv (λ x,
+    by { conv_lhs { rw ← quotient.out_eq' L },
+      rw [submodule.quotient.mk'_eq_mk, submodule.quotient.eq, equiv.refl_apply] }))
+    ... ≃ Σ L : quotient S, S :
+  equiv.sigma_congr_right (λ L,
+    ⟨λ x, ⟨x.1 - quotient.out' L, x.2⟩,
+     λ x, ⟨x.1 + quotient.out' L, by simp⟩,
+     λ ⟨x, hx⟩, subtype.eq $ by simp,
+     λ ⟨g, hg⟩, subtype.eq $ by simp⟩)
+    ... ≃ quotient S × S :
+  equiv.sigma_equiv_prod _ _
+
+lemma submodule.card_eq_card_quotient_mul_card [fintype M] (S : submodule R M) [decidable_pred (∈ S)]  :
+  fintype.card M = fintype.card S * fintype.card S.quotient :=
+by { rw [mul_comm, ← fintype.card_prod],
+     exact fintype.card_congr (module_equiv_quotient_times_submodule S) }
+
+/-- `[S : T] [M : S] = [M : T]` -/
+lemma card_quotient_mul_card_quotient (S T : submodule R M) (hST : T ≤ S)
+  [fintype S.quotient] [fintype T.quotient] :
+  fintype.card (S.map T.mkq) * fintype.card S.quotient = fintype.card T.quotient :=
+by rw [submodule.card_eq_card_quotient_mul_card (map T.mkq S),
+       fintype.card_eq.mpr ⟨(quotient_quotient_equiv_quotient T S hST).to_equiv⟩]
 
 end
 
@@ -938,7 +971,7 @@ begin
     { rintro ⟨c, rfl⟩ i, exact ⟨c i, this c i⟩ },
     { rintros ha,
       choose c hc using ha, exact ⟨c, b'.ext_elem (λ i, trans (hc i) (this c i).symm)⟩ } },
-  letI : fintype (quotient I) := ideal.fintype_quotient_of_free_of_ne_bot I b hI,
+  letI := ideal.fintype_quotient_of_free_of_ne_bot I b hI,
 
   -- Note that `ideal.norm ℤ I = det f` is equal to `∏ i, a i`,
   letI := classical.dec_eq ι,
@@ -998,28 +1031,273 @@ begin
       fintype.card_prod]
 end
 
-instance : comm_cancel_monoid_with_zero (ideal S) :=
-{ .. (infer_instance : comm_monoid_with_zero (ideal S)) }
+variables [is_dedekind_domain S]
 
-lemma ideal.is_unit_iff {I : ideal S} : is_unit I ↔ I = ⊤ := sorry
+lemma unique_factorization_monoid.pow_eq_pow_iff {M : Type*}
+  [comm_cancel_monoid_with_zero M] [unique_factorization_monoid M]
+  {a : M} (ha0 : a ≠ 0) (ha1 : ¬ is_unit a) {i j : ℕ} : a ^ i = a ^ j ↔ i = j :=
+begin
+  letI := classical.dec_eq M,
+  split,
+  { intros hij,
+    letI : nontrivial M := ⟨⟨a, 0, ha0⟩⟩,
+    letI : normalization_monoid M := unique_factorization_monoid.normalization_monoid,
+    obtain ⟨p', hp', dvd'⟩ := wf_dvd_monoid.exists_irreducible_factor ha1 ha0,
+    obtain ⟨p, mem, _⟩ := unique_factorization_monoid.exists_mem_factors_of_dvd ha0 hp' dvd',
+    have := congr_arg (λ x, multiset.count p (unique_factorization_monoid.factors x)) hij,
+    simp only [unique_factorization_monoid.factors_pow, multiset.count_nsmul] at this,
+    exact mul_right_cancel' (multiset.count_ne_zero.mpr mem) this },
+  { rintros rfl, refl }
+end
 
-/-- If `P` is a prime ideal, then `P^(i + 1) / P^i` is equivalent to `S / P`. -/
-def ideal.pow_succ_quotient_equiv (P : ideal S) [P_prime : P.is_prime] (i : ℕ) :
-  ((P^(i + 1) : submodule _ S).comap (P^i).subtype).quotient ≃ₗ[ℤ] P.quotient :=
-basis.equiv _ (basis.singleton (fin 1) _) (equiv.refl (fin 1))
+lemma ideal.pow_succ_lt_pow {P : ideal S} [P_prime : P.is_prime] (hP : P ≠ ⊥) (i : ℕ) :
+  P ^ (i + 1) < P ^ i :=
+lt_of_le_of_ne (ideal.pow_le_pow (nat.le_succ _))
+  (mt (unique_factorization_monoid.pow_eq_pow_iff hP
+    (mt ideal.is_unit_iff.mp P_prime.ne_top)).mp
+    i.succ_ne_self)
+
+lemma ideal.mem_span_singleton_sup {x y : S} {I : ideal S} :
+  x ∈ ideal.span {y} ⊔ I ↔ ∃ (a : S) (b ∈ I), y * a + b = x :=
+begin
+  rw mem_sup,
+  split,
+  { rintro ⟨ya, hya, b, hb, rfl⟩,
+    obtain ⟨a, ha, rfl⟩ := ideal.mem_span_singleton.mp hya,
+    exact ⟨a, b, hb, rfl⟩ },
+  { rintro ⟨a, b, hb, rfl⟩,
+    exact ⟨y * a, ideal.mem_span_singleton.mpr (dvd_mul_right _ _), b, hb, rfl⟩ }
+end
+
+open unique_factorization_monoid
+
+lemma multiset.nsmul_singleton {α : Type*} (n : ℕ) (x : α) :
+  n • (x ::ₘ 0) = multiset.repeat x n :=
+begin
+  refine multiset.eq_repeat.mpr ⟨by simp, λ y hy, _⟩,
+  cases n with n,
+  { simpa using hy },
+  { exact multiset.mem_singleton.mp ((multiset.mem_nsmul n.succ_ne_zero).mp hy) }
+end
+
+lemma multiset.lt_repeat_succ {α : Type*} {m : multiset α} {x : α} {n : ℕ} :
+  m < multiset.repeat x (n + 1) ↔ m ≤ multiset.repeat x n :=
+begin
+  rw multiset.lt_iff_cons_le,
+  split,
+  { rintros ⟨x', hx'⟩,
+    have := multiset.eq_of_mem_repeat (multiset.mem_of_le hx' (multiset.mem_cons_self _ _)),
+    rwa [this, multiset.repeat_succ, multiset.cons_le_cons_iff] at hx' },
+  { intro h,
+    rw multiset.repeat_succ,
+    exact ⟨x, multiset.cons_le_cons _ h⟩ }
+end
+
+lemma dvd_of_factor {α : Type*} [nontrivial α] [decidable_eq α]
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [normalization_monoid α]
+  {x y : α} (hx : x ∈ factors y) : x ∣ y :=
+have hy : y ≠ 0 := λ hy, by simpa [hy] using hx,
+dvd_trans (multiset.dvd_prod hx) (dvd_of_associated (factors_prod hy))
+
+lemma exists_mem_factors {α : Type*} [nontrivial α] [decidable_eq α]
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [normalization_monoid α]
+  {x : α} (hx : x ≠ 0) (h : ¬ is_unit x) : ∃ p, p ∈ factors x :=
+begin
+  obtain ⟨p', hp', hp'x⟩ := wf_dvd_monoid.exists_irreducible_factor h hx,
+  obtain ⟨p, hp, hpx⟩ := exists_mem_factors_of_dvd hx hp' hp'x,
+  exact ⟨p, hp⟩
+end
+
+@[simp] lemma factors_pos {α : Type*} [nontrivial α] [decidable_eq α]
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [normalization_monoid α]
+  (x : α) (hx : x ≠ 0) : 0 < factors x ↔ ¬ is_unit x :=
+begin
+  split,
+  { intros h hx,
+    obtain ⟨p, hp⟩ := multiset.exists_mem_of_ne_zero h.ne',
+    exact (prime_of_factor _ hp).not_unit (is_unit_of_dvd_unit (dvd_of_factor hp) hx) },
+  { intros h,
+    obtain ⟨p, hp⟩ := exists_mem_factors hx h,
+    exact bot_lt_iff_ne_bot.mpr (mt multiset.eq_zero_iff_forall_not_mem.mp
+      (not_forall.mpr ⟨p, not_not.mpr hp⟩)) },
+end
+
+lemma dvd_not_unit_iff_factors_lt_factors {α : Type*} [nontrivial α] [decidable_eq α]
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [normalization_monoid α]
+  {x y : α} (hx : x ≠ 0) (hy : y ≠ 0) : dvd_not_unit x y ↔ factors x < factors y :=
+begin
+  split,
+  { rintro ⟨_, c, hc, rfl⟩,
+    simp [hx, right_ne_zero_of_mul hy, hc] },
+  { intro h,
+    exact dvd_not_unit_of_dvd_of_not_dvd ((dvd_iff_factors_le_factors hx hy).mpr h.le)
+            (mt (dvd_iff_factors_le_factors hy hx).mp h.not_le) }
+end
+
+
+lemma ideal.eq_prime_pow_of_succ_lt_of_le
+  {P I : ideal S} [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ}
+  (hlt : P ^ (i + 1) < I) (hle : I ≤ P ^ i) : I = P ^ i :=
+begin
+  refine le_antisymm hle _,
+  letI := classical.dec_eq (ideal S),
+  letI : normalization_monoid (ideal S) := unique_factorization_monoid.normalization_monoid,
+  have irr_P : irreducible P := sorry,
+  have : I ≠ ⊥ := (lt_of_le_of_lt bot_le hlt).ne',
+  have := pow_ne_zero i hP,
+  have := pow_ne_zero (i + 1) hP,
+  rw [← ideal.dvd_not_unit_iff_lt, dvd_not_unit_iff_factors_lt_factors, factors_pow,
+      factors_irreducible irr_P, multiset.nsmul_singleton, multiset.lt_repeat_succ] at hlt,
+  rw [← ideal.dvd_iff_le, dvd_iff_factors_le_factors, factors_pow, factors_irreducible irr_P,
+      multiset.nsmul_singleton],
+  all_goals { assumption }
+end
+
+/-- If `a ∈ P^i \ P^(i+1) c ∈ P^i`, then `a * d + e = c` for `e ∈ P^(i+1)`.
+`ideal.mul_add_mem_pow_succ_unique` shows the choice of `d` is unique, up to `P`.
+
+Inspired by [Neukirch], proposition 6.1 -/
+lemma ideal.exists_mul_add_mem_pow_succ
+  (P : ideal S) [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ}
+  (a c : S) (a_mem : a ∈ P ^ i) (a_not_mem : a ∉ P ^ (i + 1)) (c_mem : c ∈ P ^ i) :
+  ∃ (d : S) (e ∈ P ^ (i + 1)), a * d + e = c :=
+begin
+  suffices eq_b : P ^ i = ideal.span {a} ⊔ P ^ (i + 1),
+  { exact ideal.mem_span_singleton_sup.mp (eq_b ▸ c_mem) },
+  refine (ideal.eq_prime_pow_of_succ_lt_of_le hP
+    (lt_of_le_of_ne le_sup_right _)
+    (sup_le (ideal.span_le.mpr (set.singleton_subset_iff.mpr a_mem))
+      (ideal.pow_succ_lt_pow hP i).le)).symm,
+  contrapose! a_not_mem with this,
+  rw this,
+  exact mem_sup.mpr ⟨a, mem_span_singleton_self a, 0, by simp, by simp⟩
+end
+
+lemma ideal.span_singleton_le_iff_mem {a : S} {I : ideal S} :
+  ideal.span {a} ≤ I ↔ a ∈ I :=
+submodule.span_singleton_le_iff_mem _ _
+
+lemma prime_pow_succ_dvd_mul {α : Type*} [comm_cancel_monoid_with_zero α]
+  [unique_factorization_monoid α]
+  {p x y : α} (h : prime p) {i : ℕ} (hxy : p ^ (i + 1) ∣ x * y) :
+  p ^ (i + 1) ∣ x ∨ p ∣ y :=
+begin
+  rw or_iff_not_imp_right,
+  intro hy,
+  induction i with i ih generalizing x,
+  { simp only [zero_add, pow_one] at *,
+    exact (h.div_or_div hxy).resolve_right hy },
+  rw pow_succ at hxy ⊢,
+  obtain ⟨x', rfl⟩ := (h.div_or_div (dvd_of_mul_right_dvd hxy)).resolve_right hy,
+  rw mul_assoc at hxy,
+  exact mul_dvd_mul_left p (ih ((mul_dvd_mul_iff_left h.ne_zero).mp hxy)),
+end
+
+lemma ideal.prime (P : ideal S) [P.is_prime] : prime P :=
+sorry
+
+lemma ideal.mem_prime_of_mul_mem_pow
+  {P : ideal S} [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ}
+  {a b : S} (a_mem : a ∈ P ^ i) (a_not_mem : a ∉ P ^ (i + 1))
+  (ab_mem : a * b ∈ P ^ (i + 1)) : b ∈ P :=
+begin
+  simp only [← ideal.span_singleton_le_iff_mem, ← ideal.dvd_iff_le, pow_succ,
+       ← ideal.span_singleton_mul_span_singleton] at a_mem a_not_mem ab_mem ⊢,
+  exact (prime_pow_succ_dvd_mul P.prime ab_mem).resolve_left a_not_mem
+end
+
+/-- The choice of `d` in `ideal.exists_mul_add_mem_pow_succ` is unique, up to `P`.
+
+Inspired by [Neukirch], proposition 6.1 -/
+lemma ideal.mul_add_mem_pow_succ_unique
+  (P : ideal S) [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ}
+  (a d d' e e' : S) (a_mem : a ∈ P ^ i) (a_not_mem : a ∉ P ^ (i + 1))
+  (e_mem : e ∈ P ^ (i + 1)) (e'_mem : e' ∈ P ^ (i + 1))
+  (h : (a * d + e) - (a * d' + e') ∈ P ^ (i + 1)) : d - d' ∈ P :=
+begin
+  have : e' - e ∈ P ^ (i + 1) := ideal.sub_mem _ e'_mem e_mem,
+  have h' : a * (d - d') ∈ P ^ (i + 1),
+  { convert ideal.add_mem _ h (ideal.sub_mem _ e'_mem e_mem),
+    ring },
+  exact ideal.mem_prime_of_mul_mem_pow hP a_mem a_not_mem h'
+end
+
+/-- If the `d` from `ideal.exists_mul_add_mem_pow_succ` is unique, up to `P`,
+then so are the `c`s, up to `P ^ (i + 1)`.
+
+Inspired by [Neukirch], proposition 6.1 -/
+lemma ideal.mul_add_mem_pow_succ_inj
+  (P : ideal S) [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ}
+  (a d d' e e' : S) (a_mem : a ∈ P ^ i) (a_not_mem : a ∉ P ^ (i + 1))
+  (e_mem : e ∈ P ^ (i + 1)) (e'_mem : e' ∈ P ^ (i + 1))
+  (h : d - d' ∈ P) : (a * d + e) - (a * d' + e') ∈ P ^ (i + 1) :=
+begin
+  have : a * d - a * d' ∈ P ^ (i + 1),
+  { convert ideal.mul_mem_mul a_mem h; simp [mul_sub, pow_succ, mul_comm] },
+  convert ideal.add_mem _ this (ideal.sub_mem _ e_mem e'_mem),
+  ring,
+end
+
+set_option pp.proofs true
 
 /-- Multiplicity of the ideal norm, for powers of prime ideals. -/
-lemma card_norm_pow_of_prime (b : basis ι ℤ S) [unique_factorization_monoid (ideal S)]
-  (P : ideal S) [P_prime : P.is_prime] {i : ℕ} :
+lemma card_norm_pow_of_prime (b : basis ι ℤ S)
+  (P : ideal S) [P_prime : P.is_prime] (hP : P ≠ ⊥) {i : ℕ} :
   card_norm (P ^ i) = card_norm P ^ i :=
 begin
+  letI := classical.dec_eq ι,
   induction i with i ih,
   { simp },
-  { rw [pow_succ (card_norm P), ← ih] }
+letI := ideal.fintype_quotient_of_free_of_ne_bot (P ^ i.succ) b (pow_ne_zero _ hP),
+  letI := ideal.fintype_quotient_of_free_of_ne_bot (P ^ i) b (pow_ne_zero _ hP),
+  letI := ideal.fintype_quotient_of_free_of_ne_bot P b hP,
+  have : P ^ (i + 1) < P ^ i := ideal.pow_succ_lt_pow hP i,
+  suffices hquot : map (P ^ i.succ).mkq (P ^ i) ≃ quotient P,
+  { rw [pow_succ (card_norm P), ← ih, card_norm_apply (P ^ i.succ),
+      ← card_quotient_mul_card_quotient (P ^ i) (P ^ i.succ) this.le,
+      card_norm_apply (P ^ i), card_norm_apply P],
+    congr' 1,
+    rw fintype.card_eq,
+    exact ⟨hquot⟩ },
+  choose a a_mem a_not_mem using set_like.exists_of_lt this,
+  -- TODO: can we do this with less repetition?
+  refine equiv.of_bijective (λ c', quotient.mk' _) ⟨_, _⟩,
+  { cases c' with c' hc',
+    choose c hc eq_c' using submodule.mem_map.mp hc',
+    exact (ideal.exists_mul_add_mem_pow_succ P hP a c a_mem a_not_mem hc).some },
+  { intros c₁' c₂' h,
+    cases c₁' with c₁' hc₁',
+    cases c₂' with c₂' hc₂',
+    rw subtype.mk_eq_mk,
+    replace h := (submodule.quotient.eq _).mp h,
+    simp only [mkq_apply, ideal.quotient.mk_eq_mk, mem_map] at h,
+    obtain ⟨hc₁, eq_c₁'⟩ := classical.some_spec (submodule.mem_map.mp hc₁'),
+    obtain ⟨hc₂, eq_c₂'⟩ := classical.some_spec (submodule.mem_map.mp hc₂'),
+    intro h,
+    rw [← eq_c₁', ← eq_c₂', mkq_apply, mkq_apply, submodule.quotient.eq],
+    obtain ⟨he₁, hd₁⟩ := (ideal.exists_mul_add_mem_pow_succ P hP a _ a_mem a_not_mem hc₁).some_spec.some_spec,
+    obtain ⟨he₂, hd₂⟩ := (ideal.exists_mul_add_mem_pow_succ P hP a _ a_mem a_not_mem hc₂).some_spec.some_spec,
+    rw [← hd₁, ← hd₂],
+    exact ideal.mul_add_mem_pow_succ_inj P hP a _ _ _ _ a_mem a_not_mem he₁ he₂ h },
+  { intros d',
+    refine quotient.induction_on' d' (λ d, _),
+    have hc' := ideal.mul_mem_right d _ a_mem,
+    have hd' := mem_map.mpr ⟨a * d, hc', rfl⟩,
+    refine ⟨⟨_, hd'⟩, _⟩,
+    simp only [mkq_apply, quotient.mk'_eq_mk, submodule.quotient.eq],
+    obtain ⟨he, hd'⟩ := (ideal.exists_mul_add_mem_pow_succ P hP a _ a_mem a_not_mem hc').some_spec.some_spec,
+    refine ideal.mul_add_mem_pow_succ_unique P hP a _ _ 0 _ a_mem a_not_mem _ he _,
+    { exact (P ^ (i + 1)).zero_mem },
+    convert submodule.neg_mem _ (ideal.add_mem _ he he), -- Come on, Lean!
+    rw add_zero,
+    conv_lhs { congr, skip, congr, rw ← hd' },
+    rw [eq_neg_iff_add_eq_zero, add_assoc, ← sub_sub, sub_add_cancel],
+    convert sub_self _,  -- Come on, Lean!!
+    sorry }
 end
 
 /-- Multiplicity of the ideal norm in number rings. -/
-theorem card_norm_mul (b : basis ι ℤ S) [unique_factorization_monoid (ideal S)] (I J : ideal S) :
+theorem card_norm_mul (b : basis ι ℤ S) (I J : ideal S) :
   card_norm (I * J) = card_norm I * card_norm J :=
 unique_factorization_monoid.induction_on_prime I (by simp)
   (λ I hI, by simp [ideal.is_unit_iff.mp hI, ideal.top_mul])
