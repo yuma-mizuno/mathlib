@@ -366,7 +366,8 @@ instance : has_add (fractional_ideal S P) := ⟨(⊔)⟩
 lemma sup_eq_add (I J : fractional_ideal S P) : I ⊔ J = I + J := rfl
 
 @[simp, norm_cast]
-lemma coe_add (I J : fractional_ideal S P) : (↑(I + J) : submodule R P) = I + J := rfl
+lemma coe_add (I J : fractional_ideal S P) : (↑(I + J) : submodule R P) = I + J :=
+rfl
 
 @[simp, norm_cast]
 lemma coe_ideal_sup (I J : ideal R) : ↑(I ⊔ J) = (I + J : fractional_ideal S P) :=

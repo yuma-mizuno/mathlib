@@ -1296,11 +1296,160 @@ letI := ideal.fintype_quotient_of_free_of_ne_bot (P ^ i.succ) b (pow_ne_zero _ h
     sorry }
 end
 
-/-- Multiplicity of the ideal norm in number rings. -/
+/-- If `P` holds units and powers of primes,
+and `P x ∧ P y` for coprime `x, y` implies `P (x * y)`,
+then `P` holds on a product of prime powers. -/
+@[elab_as_eliminator]
+theorem unique_factorization_monoid.induction_on_prime_power {α : Type*}
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α]
+  {P : α → Prop} (s : finset α) (i : α → ℕ)
+  (is_prime : ∀ p ∈ s, prime p) (is_coprime : ∀ p q ∈ s, p ∣ q → p = q)
+  (h1 : ∀ {x}, is_unit x → P x) (hpr : ∀ {p} (i : ℕ), prime p → P (p ^ i))
+  (hcp : ∀ {x y}, (∀ p, p ∣ x → p ∣ y → is_unit p) → P x → P y → P (x * y)) :
+  P (∏ p in s, p ^ (i p)) :=
+begin
+  letI := classical.dec_eq α,
+  induction s using finset.induction_on with p f' hpf' ih,
+  { simpa using h1 is_unit_one },
+  rw finset.prod_insert hpf',
+  have hp := is_prime _ (finset.mem_insert_self _ _),
+  refine hcp _ (hpr (i p) hp) (ih (λ q hq, is_prime _ (finset.mem_insert_of_mem hq))
+    (λ q q' hq hq', is_coprime _ _ (finset.mem_insert_of_mem hq) (finset.mem_insert_of_mem hq'))),
+  refine λ _, no_factors_of_no_prime_factors (pow_ne_zero _ hp.ne_zero) _,
+  intros d hdp hdprod hd,
+  apply hpf',
+  replace hdp := hd.dvd_of_dvd_pow hdp,
+  obtain ⟨q, q_mem', hdq⟩ := exists_mem_multiset_dvd_of_prime hd hdprod,
+  obtain ⟨q, q_mem, rfl⟩ := multiset.mem_map.mp q_mem',
+  replace hdq := hd.dvd_of_dvd_pow hdq,
+  have : p ∣ q := dvd_trans
+    (dvd_symm_of_irreducible (irreducible_of_prime hd) (irreducible_of_prime hp) hdp)
+    hdq,
+  convert q_mem,
+  exact is_coprime _ _ (finset.mem_insert_self p f') (finset.mem_insert_of_mem q_mem) this,
+end
+
+/-- If `P` holds for `0`, units and powers of primes,
+and `P x ∧ P y` for coprime `x, y` implies `P (x * y)`,
+then `P` holds on all `a : α`. -/
+@[elab_as_eliminator]
+theorem unique_factorization_monoid.induction_on_coprime {α : Type*}
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α]
+  {P : α → Prop} (a : α) (h0 : P 0) (h1 : ∀ {x}, is_unit x → P x)
+  (hpr : ∀ {p} (i : ℕ), prime p → P (p ^ i))
+  (hcp : ∀ {x y}, (∀ p, p ∣ x → p ∣ y → is_unit p) → P x → P y → P (x * y)) :
+  P a :=
+begin
+  letI := classical.dec_eq α,
+  have P_of_associated : ∀ {x y}, associated x y → P x → P y,
+  { rintros x y ⟨u, rfl⟩ hx,
+    exact hcp (λ p _ hpx, is_unit_of_dvd_unit hpx u.is_unit) hx (h1 u.is_unit) },
+  by_cases ha0 : a = 0, { rwa ha0 },
+  haveI : nontrivial α := ⟨⟨_, _, ha0⟩⟩,
+  letI : normalization_monoid α := unique_factorization_monoid.normalization_monoid,
+  refine P_of_associated (factors_prod ha0) _,
+  rw [← (factors a).map_id, finset.prod_multiset_map_count],
+  refine unique_factorization_monoid.induction_on_prime_power _ _ _ _ @h1 @hpr @hcp;
+    simp only [multiset.mem_to_finset],
+  { apply prime_of_factor },
+  rintro p q hp hq hdvd,
+  convert normalize_eq_normalize hdvd
+    (dvd_symm_of_irreducible
+      (irreducible_of_prime (prime_of_factor _ hp))
+      (irreducible_of_prime (prime_of_factor _ hq)) hdvd);
+    apply (normalize_factor _ _).symm; assumption
+end
+
+/-- If `f` maps `p ^ i` to `(f p) ^ i` for primes `p`, and `f`
+is multiplicative on coprime elements, then `f` is multiplicative on all products of primes. -/
+@[elab_as_eliminator]
+theorem unique_factorization_monoid.multiplicative_prime_power {α β : Type*}
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [comm_cancel_monoid_with_zero β]
+  {f : α → β} (s : finset α) (i j : α → ℕ)
+  (is_prime : ∀ p ∈ s, prime p) (is_coprime : ∀ p q ∈ s, p ∣ q → p = q)
+  (h1 : ∀ {x y}, is_unit y → f (x * y) = f x * f y)
+  (hpr : ∀ {p} (i : ℕ), prime p → f (p ^ i) = (f p) ^ i)
+  (hcp : ∀ {x y}, (∀ p, p ∣ x → p ∣ y → is_unit p) → f (x * y) = f x * f y) :
+  f (∏ p in s, p ^ (i p + j p)) = f (∏ p in s, p ^ i p) * f (∏ p in s, p ^ j p) :=
+begin
+  letI := classical.dec_eq α,
+  induction s using finset.induction_on with p f' hpf' ih,
+  { simpa using h1 is_unit_one },
+  simp only [finset.prod_insert hpf'],
+  have hp := is_prime _ (finset.mem_insert_self _ _),
+  suffices red : ∀ (i' : α → ℕ) (q : α), q ∣ p ^ i' p → q ∣ ∏ q' in f', q' ^ i' q' → is_unit q,
+  { rw [hcp (red _), hpr (i p + j p) hp, hcp (red _), hpr (i p) hp, hcp (red _), hpr (j p) hp,
+        ih (λ q hq, is_prime _ (finset.mem_insert_of_mem hq))
+          (λ q q' hq hq', is_coprime _ _ (finset.mem_insert_of_mem hq) (finset.mem_insert_of_mem hq')),
+        pow_add, mul_assoc, mul_left_comm (f p ^ j p), mul_assoc] },
+  -- TODO: unify this and the analogous argument for `induction_on_coprime`
+  refine λ i' _, no_factors_of_no_prime_factors (pow_ne_zero _ hp.ne_zero) _,
+  intros d hdp hdprod hd,
+  apply hpf',
+  replace hdp := hd.dvd_of_dvd_pow hdp,
+  obtain ⟨q, q_mem', hdq⟩ := exists_mem_multiset_dvd_of_prime hd hdprod,
+  obtain ⟨q, q_mem, rfl⟩ := multiset.mem_map.mp q_mem',
+  replace hdq := hd.dvd_of_dvd_pow hdq,
+  have : p ∣ q := dvd_trans
+    (dvd_symm_of_irreducible (irreducible_of_prime hd) (irreducible_of_prime hp) hdp)
+    hdq,
+  convert q_mem,
+  exact is_coprime _ _ (finset.mem_insert_self p f') (finset.mem_insert_of_mem q_mem) this,
+end
+
+/-- If `f` maps `p ^ i` to `(f p) ^ i` for primes `p`, and `f`
+is multiplicative on coprime elements, then `f` is multiplicative everywhere. -/
+theorem unique_factorization_monoid.multiplicative_of_coprime {α β : Type*}
+  [comm_cancel_monoid_with_zero α] [unique_factorization_monoid α] [comm_cancel_monoid_with_zero β]
+  (f : α → β) (a b : α) (h0 : f 0 = 0) (h1 : ∀ {x y}, is_unit y → f (x * y) = f x * f y)
+  (hpr : ∀ {p} (i : ℕ), prime p → f (p ^ i) = (f p) ^ i)
+  (hcp : ∀ {x y}, (∀ p, p ∣ x → p ∣ y → is_unit p) → f (x * y) = f x * f y) :
+  f (a * b) = f a * f b :=
+begin
+  by_cases ha0 : a = 0, { rw [ha0, zero_mul, h0, zero_mul] },
+  by_cases hb0 : b = 0, { rw [hb0, mul_zero, h0, mul_zero] },
+  by_cases hf1 : f 1 = 0,
+  { calc f (a * b) = f ((a * b) * 1) : by rw mul_one
+               ... = 0 : by simp only [h1 is_unit_one, hf1, mul_zero]
+               ... = f a * f (b * 1) : by simp only [h1 is_unit_one, hf1, mul_zero]
+               ... = f a * f b : by rw mul_one },
+  have h1' : f 1 = 1 := (mul_left_inj' hf1).mp (by rw [← h1 is_unit_one, one_mul, one_mul]),
+  letI := classical.dec_eq α,
+  haveI : nontrivial α := ⟨⟨_, _, ha0⟩⟩,
+  letI : normalization_monoid α := unique_factorization_monoid.normalization_monoid,
+  obtain ⟨ua, a_eq⟩ := factors_prod ha0,
+  obtain ⟨ub, b_eq⟩ := factors_prod hb0,
+  rw [← a_eq, ← b_eq, mul_right_comm _ ↑ua, h1 ua.is_unit, h1 ub.is_unit, h1 ua.is_unit,
+      ← mul_assoc, h1 ub.is_unit, mul_right_comm _ (f ua), ← mul_assoc],
+  congr,
+  rw [← (factors a).map_id, ← (factors b).map_id,
+      finset.prod_multiset_map_count, finset.prod_multiset_map_count,
+      finset.prod_subset (finset.subset_union_left _ (factors b).to_finset),
+      finset.prod_subset (finset.subset_union_right (factors a).to_finset (factors b).to_finset),
+      ← finset.prod_mul_distrib],
+  simp_rw [id.def, ← pow_add],
+  refine unique_factorization_monoid.multiplicative_prime_power _ _ _ _ _ @h1 @hpr @hcp,
+  all_goals { simp only [multiset.mem_to_finset, finset.mem_union] },
+  { rintros p (hpa | hpb); apply prime_of_factor; assumption },
+  { rintro p q (hp | hp) (hq | hq) hdvd;
+      rw [← normalize_factor _ hp, ← normalize_factor _ hq];
+      exact normalize_eq_normalize hdvd
+        (dvd_symm_of_irreducible
+          (irreducible_of_prime (prime_of_factor _ hp))
+          (irreducible_of_prime (prime_of_factor _ hq)) hdvd) },
+  { intros p hpab hpb,
+    simp [hpb] },
+  { intros p hpab hpa,
+    simp [hpa] }
+end
+
+/-- Multiplicativity of the ideal norm in number rings. -/
 theorem card_norm_mul (b : basis ι ℤ S) (I J : ideal S) :
   card_norm (I * J) = card_norm I * card_norm J :=
-unique_factorization_monoid.induction_on_prime I (by simp)
-  (λ I hI, by simp [ideal.is_unit_iff.mp hI, ideal.top_mul])
-  (λ I P (hI : I ≠ ⊥) hP ih, _)
+unique_factorization_monoid.multiplicative_of_coprime card_norm I J
+  card_norm_bot
+  (λ I J hI, by simp [ideal.is_unit_iff.mp hI, ideal.mul_top])
+  (λ I i hI, have ideal.is_prime I := sorry, by exactI card_norm_pow_of_prime b _ hI.ne_zero)
+  (λ I J hIJ, card_norm_mul_of_coprime b I J sorry)
 
 end int
