@@ -602,7 +602,7 @@ attribute [nolint doc_blame] linear_equiv.to_add_equiv
 
 --infix ` ≃ₗ ` := linear_equiv _
 notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
-notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
+notation M ` ≃ₗ[`:50 R `] ` M₂ := @linear_equiv R R _ _ (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids M M₂ _ _ _ _
 --notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
 --notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
 
