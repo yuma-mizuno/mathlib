@@ -5,6 +5,8 @@ Authors: foo
 -/
 import algebra.group_action_hom
 
+/-! # Fake module docstring -/
+
 variables {R : Type*} [semiring R] {σ : R ≃+* R} {σ' : out_param (R ≃+* R)}
 variables {M : Type*} {N : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*}
 variables [add_comm_monoid M] [add_comm_monoid N] [add_comm_monoid M₁] [add_comm_monoid M₂]
