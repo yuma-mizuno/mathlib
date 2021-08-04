@@ -388,25 +388,6 @@ variable {p}
 lemma is_sylow_def {P : subgroup G} :
   P.is_sylow p ↔ ∃ n : ℕ, fintype.card P = p ^ n ∧ ∀ m, p ^ m ∣ fintype.card G → m ≤ n := iff.rfl
 
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_right {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ b) : p ^ n ∣ a :=
-begin
-  induction n with n ih,
-  { simp },
-  { rw [pow_succ'] at *,
-    rcases ih (dvd_trans (dvd_mul_right _ _) h) with ⟨c, rfl⟩,
-    rw [mul_assoc] at h,
-    rcases hp.dvd_mul.1 (nat.dvd_of_mul_dvd_mul_left (pow_pos hp.pos _) h)
-      with ⟨d, rfl⟩|⟨d, rfl⟩,
-    { rw [← mul_assoc],
-      exact dvd_mul_right _ _ },
-    { exact (hpb (dvd_mul_right _ _)).elim } }
-end
-
-lemma _root_.nat.prime.pow_dvd_of_dvd_mul_left {p : ℕ} (hp : p.prime) {n a b : ℕ} (h : p ^ n ∣ a * b)
-  (hpb : ¬ p ∣ a) : p ^ n ∣ b :=
-by rw [mul_comm] at h; exact hp.pow_dvd_of_dvd_mul_right h hpb
-
 lemma subgroup.is_sylow_iff_not_dvd_card_quotient [fact p.prime] {P : subgroup G} :
   P.is_sylow p ↔ ¬ p ∣ fintype.card (quotient P) ∧ ∃ n : ℕ, card P = p ^ n :=
 begin
@@ -481,6 +462,9 @@ have hm : multiplicity.finite p (fintype.card G),
     exact ⟨1⟩,
 (multiplicity p (fintype.card G)).get hm
 
+lemma pow_exponent_dvd [fact p.prime] : p ^ exponent G p ∣ card G :=
+multiplicity.pow_multiplicity_dvd _
+
 variables {G} {p}
 
 lemma card_eq_pow_exponent [hp : fact p.prime] (P : sylow_subgroup G p) :
@@ -554,6 +538,13 @@ subtype.eq $ smul_self x
 
 variable [fact p.prime]
 
+/-- Every `p`-subgroup is contained in a Sylow subgroup -/
+lemma exists_le_sylow [fact p.prime] {n : ℕ} {H : subgroup G} (hH : card H = p ^ n) :
+  ∃ P : sylow_subgroup G p, H ≤ P :=
+let ⟨P, hP⟩ := sylow.exists_subgroup_card_pow_prime_le p (pow_exponent_dvd G p) H hH
+  (le_exponent_of_dvd_pow (hH ▸ card_subgroup_dvd_card H)) in
+⟨⟨P, is_sylow_iff_card_eq_pow_exponent.2 hP.1⟩, hP.2⟩
+
 section comap
 variables {H : Type*} [group H] [fintype H] (h : H) (P Q : sylow_subgroup G p) (f : H →* G)
 
@@ -575,6 +566,7 @@ variables {H : Type*} [group H] [fintype H] (h : H) (P Q : sylow_subgroup G p) (
   end⟩
 
 variables {P Q}
+
 @[simp] lemma comap_inj_iff {hfi : injective f} {hP : (P : subgroup G) ≤ f.range}
   {hQ : (Q : subgroup G) ≤ f.range} : comap P f hfi hP = comap Q f hfi hQ ↔ P = Q :=
 ⟨λ h, sylow_subgroup.ext $ λ x hxP, begin
