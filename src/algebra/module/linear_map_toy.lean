@@ -96,6 +96,9 @@ example : M₁ →ₗ[R] M₃ := f₂₃.comp e₁₂
 -- Ex. 3, fails, "don't know how to synthesize placeholder `R ≃+* R`"
 example : M₁ →ₗ[R] M₃ := f₂₃.comp ↑e₁₂
 
+-- Ex. 3.5, works
+example : M₁ →ₗ[R] M₃ := f₂₃.comp e₁₂.to_linear_map
+
 -- Ex. 4, works
 example : M₁ →ₗ[R] M₃ := f₂₃.comp (@has_coe.coe _ _ linear_equiv.has_coe e₁₂)
 
