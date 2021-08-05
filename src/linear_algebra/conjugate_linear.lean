@@ -35,8 +35,8 @@ end ring_equiv_inv_pair
 --end ring_equiv_comp_triple
 
 notation M ` →ₗ* ` M₂:0 := linear_map complex.cconj M M₂
-notation M ` ≃ₗ* ` M₂:0 := @linear_equiv ℂ ℂ _ _ complex.cconj complex.cconj
-  ring_equiv_inv_pair.cconj ring_equiv_inv_pair.cconj M M₂ _ _ _ _
+--notation M ` ≃ₗ* ` M₂:0 := @linear_equiv _ _ _ _ complex.cconj complex.cconj _ _ M M₂ _ _ _ _
+notation M ` ≃ₗ* ` M₂:0 := linear_equiv complex.cconj M M₂
 
 notation f ` trans* ` g := @linear_equiv.transₛₗ ℂ ℂ ℂ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ f g
 
@@ -44,6 +44,7 @@ variables {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} --{R : Type*} [semiring R
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [module ℂ M₁] [module ℂ M₂] [module ℂ M₃] --[module R M₁] [module R M₂]
 variables (f : M₁ →ₗ* M₂) (g : M₂ →ₗ* M₃) (f' : M₁ →ₗ[ℂ] M₂) (g' : M₂ →ₗ[ℂ] M₃)
+#check @linear_equiv ℂ ℂ _ _ complex.cconj complex.cconj _ _ M₁ M₂ _ _ _ _
 variables (e₁ : M₁ ≃ₗ* M₂) (e₂ : M₂ ≃ₗ* M₃) (e₁' : M₁ ≃ₗ[ℂ] M₂) (e₂' : M₂ ≃ₗ[ℂ] M₃)
 
 #check g.compₛₗ f
@@ -57,5 +58,14 @@ variables (e₁ : M₁ ≃ₗ* M₂) (e₂ : M₂ ≃ₗ* M₃) (e₁' : M₁ �
 #check g'.compₛₗ (e₁' : M₁ →ₗ[ℂ] M₂)
 #check g'.compₛₗ (e₁ : M₁ →ₗ* M₂)
 #check g'.compₛₗ (e₁ : M₁ →ₗ* M₂)
+
+#check e₁.symm
+#check e₁'.symm
+#check e₁'.symm.transₛₗ e₁
+#check e₁.symm.transₛₗ e₁'
+#check e₁.transₛₗ e₁.symm
+#check e₁.transₛₗ e₁'.symm
+#check e₁'.transₛₗ e₁'.symm
+#check e₁'.transₛₗ e₁.symm
 
 example (h : M₁ →ₗ[ℂ] M₃) : g.compₛₗ f = h := sorry
