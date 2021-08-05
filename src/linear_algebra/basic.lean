@@ -1615,12 +1615,20 @@ theorem mem_range_self (f : M →ₛₗ[τ₁₂] M₂) (x : M) : f x ∈ f.rang
 @[simp] theorem range_id : range (linear_map.id : M →ₗ[R] M) = ⊤ :=
 set_like.coe_injective set.range_id
 
-theorem range_comp (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+theorem range_compₛₗ (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) = map g (range f) :=
 set_like.coe_injective (set.range_comp g f)
 
-theorem range_comp_le_range (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+theorem range_comp (f : N →ₗ[R] N₂) (g : N₂ →ₗ[R] N₃) :
+  range (g.comp f) = map g (range f) :=
+set_like.coe_injective (set.range_comp g f)
+
+theorem range_compₛₗ_le_range (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) ≤ range g :=
+set_like.coe_mono (set.range_comp_subset_range f g)
+
+theorem range_comp_le_range (f : N →ₗ[R] N₂) (g : N₂ →ₗ[R] N₃) :
+  range (g.comp f) ≤ range g :=
 set_like.coe_mono (set.range_comp_subset_range f g)
 
 theorem range_eq_top {f : M →ₛₗ[τ₁₂] M₂} : range f = ⊤ ↔ surjective f :=
@@ -1702,8 +1710,8 @@ theorem ker_eq_bot' {f : M →ₛₗ[τ₁₂] M₂} :
   ker f = ⊥ ↔ (∀ m, f m = 0 → m = 0) :=
 by simpa [disjoint] using @disjoint_ker _ _ _ _ _ _ _ _ _ _ _ f ⊤
 
-theorem ker_eq_bot_of_inverse {f : M →ₛₗ[τ₁₂] M₂} {g : M₂ →ₛₗ[τ₁₂.symm] M}
-  (h : (g.compₛₗ f : M →ₗ[R] M) = id) :
+theorem ker_eq_bot_of_inverse {τ₂₁ : R₂ ≃+* R} [ring_equiv_inv_pair τ₁₂ τ₂₁]
+  {f : M →ₛₗ[τ₁₂] M₂} {g : M₂ →ₛₗ[τ₂₁] M} (h : (g.compₛₗ f : M →ₗ[R] M) = id) :
   ker f = ⊥ :=
 ker_eq_bot'.2 $ λ m hm, by rw [← id_apply m, ← h, compₛₗ_apply, hm, g.map_zero]
 
@@ -2124,7 +2132,7 @@ end
 
 lemma range_comp_of_range_eq_topₛₗ {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃)
   (hf : range f = ⊤) : range (g.compₛₗ f : M →ₛₗ[τ₁₃] M₃) = range g :=
-by rw [range_comp, hf, submodule.map_top]
+by rw [range_compₛₗ, hf, submodule.map_top]
 
 lemma range_comp_of_range_eq_top {f : N →ₗ[R] N₂} (g : N₂ →ₗ[R] N₃)
   (hf : range f = ⊤) : range (g.comp f) = range g :=
