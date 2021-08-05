@@ -591,7 +591,7 @@ set_option old_structure_cmd true
 /-- A linear equivalence is an invertible linear map. -/
 @[nolint has_inhabited_instance]
 structure linear_equiv {R : Type*} {S : Type*} [semiring R] [semiring S] (σ : R ≃+* S)
-  {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+  {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   extends linear_map σ M M₂, M ≃+ M₂
