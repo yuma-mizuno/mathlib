@@ -721,6 +721,6 @@ set.eq_singleton_iff_unique_mem.2
 lemma card_sylow_modeq_one : card (sylow_subgroup G p) ≡ 1 [MOD p] :=
 have P : sylow_subgroup G p := classical.arbitrary _,
 nat.modeq.trans (mul_action.card_modeq_card_fixed_points _ (card_eq_pow_exponent P)) $
-  by { erw [fixed_points_sylow P], simp }
+  by { erw [fixed_points_sylow P, card_unique] }
 
 end sylow_subgroup
