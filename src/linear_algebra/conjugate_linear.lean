@@ -24,8 +24,6 @@ end complex
 namespace ring_equiv_inv_pair
 
 instance cconj : ring_equiv_inv_pair complex.cconj complex.cconj := ⟨ring_equiv.ext $ λ x, by simp⟩
-instance complex_refl : ring_equiv_inv_pair (ring_equiv.refl ℂ) (ring_equiv.refl ℂ) :=
-ring_equiv_inv_pair.ids
 
 end ring_equiv_inv_pair
 
@@ -53,7 +51,11 @@ variables (e₁ : M₁ ≃ₗ* M₂) (e₂ : M₂ ≃ₗ* M₃) (e₁' : M₁ �
 #check g.compₛₗ f'
 #check g'.compₛₗ f'
 #check e₁.transₛₗ e₂
---#check e₁ trans* e₂
-#check g.compₛₗ e₁
+--#check g.compₛₗ e₁  -- fails
+#check g.compₛₗ (e₁ : M₁ →ₗ* M₂)
+#check g.compₛₗ (e₁' : M₁ →ₗ[ℂ] M₂)
+#check g'.compₛₗ (e₁' : M₁ →ₗ[ℂ] M₂)
+#check g'.compₛₗ (e₁ : M₁ →ₗ* M₂)
+#check g'.compₛₗ (e₁ : M₁ →ₗ* M₂)
 
 example (h : M₁ →ₗ[ℂ] M₃) : g.compₛₗ f = h := sorry
