@@ -52,8 +52,8 @@ variables (e₁ : M₁ ≃ₗ* M₂) (e₂ : M₂ ≃ₗ* M₃) (e₁' : M₁ �
 #check g'.compₛₗ f
 #check g.compₛₗ f'
 #check g'.compₛₗ f'
---#check @linear_equiv.transₛₗ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ complex.cconj complex.cconj _ _
 #check e₁.transₛₗ e₂
 --#check e₁ trans* e₂
+#check g.compₛₗ e₁
 
 example (h : M₁ →ₗ[ℂ] M₃) : g.compₛₗ f = h := sorry

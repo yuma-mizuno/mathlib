@@ -61,7 +61,7 @@ instance right_inv_ids : ring_equiv_comp_triple σ₁₂.symm σ₁₂ (ring_equ
 
 end ring_equiv_comp_triple
 
-variables (σ : out_param (R₁ ≃+* R₂)) (σ' : out_param (R₂ ≃+* R₁))
+variables (σ : R₁ ≃+* R₂) (σ' : out_param (R₂ ≃+* R₁))
 
 class ring_equiv_inv_pair : Prop :=
   (is_inv_pair : σ'.symm = σ)
@@ -74,7 +74,7 @@ namespace ring_equiv_inv_pair
   t.is_inv_pair
 
 @[simp] lemma symm_apply [t : ring_equiv_inv_pair σ σ'] {x : R₁} : σ'.symm x = σ x :=
-by rw [symm_eq]
+by rw [t.is_inv_pair]
 
 variables (σ) (σ')
 lemma symm_eq₂ [ring_equiv_inv_pair σ σ'] : σ.symm = σ' :=
