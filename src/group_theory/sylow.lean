@@ -350,24 +350,26 @@ begin
   simpa using hy
 end⟩
 
+local attribute [instance, priority 1] subgroup.fintype set_fintype subtype.fintype
+--set_option pp.notation false
 /-- If `H` is a subgroup of `G` of cardinality `p ^ n`,
   then `H` is contained in a subgroup of cardinality `p ^ m`
   if `n ≤ m` and `p ^ m` divides the cardinality of `G` -/
 theorem exists_subgroup_card_pow_prime_le [fintype G] (p : ℕ) : ∀ {n m : ℕ} [hp : fact p.prime]
-  (hdvd : p ^ m ∣ card G) (H : subgroup G) (hH : card H = p ^ n) (hnm : n ≤ m),
-  ∃ K : subgroup G, card K = p ^ m ∧ H ≤ K
-| n m := λ hp hdvd H hH hnm,
+  (hdvd : p ^ m ∣ card G) (H : subgroup G) [fH : fintype H] (hH : @fintype.card H fH = p ^ n)
+  (hnm : n ≤ m), ∃ K : subgroup G, card K = p ^ m ∧ H ≤ K
+| n m := λ hp hdvd H fH hH hnm, by letI := fH; exact
   (lt_or_eq_of_le hnm).elim
     (λ hnm : n < m,
       have h0m : 0 < m, from (lt_of_le_of_lt n.zero_le hnm),
       have wf : m - 1 < m,  from nat.sub_lt h0m zero_lt_one,
       have hnm1 : n ≤ m - 1, from nat.le_sub_right_of_add_le hnm,
       let ⟨K, hK⟩ := @exists_subgroup_card_pow_prime_le n (m - 1) hp
-        (nat.pow_dvd_of_le_of_pow_dvd (nat.sub_le_self _ _) hdvd) H hH hnm1 in
+        (nat.pow_dvd_of_le_of_pow_dvd (nat.sub_le_self _ _) hdvd) H _ hH hnm1 in
       have hdvd' : p ^ ((m - 1) + 1) ∣ card G, by rwa [nat.sub_add_cancel h0m],
       let ⟨K', hK'⟩ := @exists_subgroup_card_pow_succ _ _ _ _ _ hp hdvd' K hK.1 in
       ⟨K', by rw [hK'.1, nat.sub_add_cancel h0m], le_trans hK.2 hK'.2⟩)
-    (λ hnm : n = m, ⟨H, by simp [hH, hnm]⟩)
+    (λ hnm : n = m, ⟨H, by simp [← hH, ← hnm]; congr, le_refl _⟩)
 
 /-- A generalisation of **Sylow's first theorem**. If `p ^ n` divides
   the cardinality of `G`, then there is a subgroup of cardinality `p ^ n` -/
@@ -539,11 +541,34 @@ subtype.eq $ smul_self x
 variable [fact p.prime]
 
 /-- Every `p`-subgroup is contained in a Sylow subgroup -/
-lemma exists_le_sylow [fact p.prime] {n : ℕ} {H : subgroup G} (hH : card H = p ^ n) :
+lemma exists_le_sylow [fact p.prime] {n : ℕ} (H : subgroup G) [fintype H] (hH : card H = p ^ n) :
   ∃ P : sylow_subgroup G p, H ≤ P :=
-let ⟨P, hP⟩ := sylow.exists_subgroup_card_pow_prime_le p (pow_exponent_dvd G p) H hH
+let ⟨P, hP⟩ := sylow.exists_subgroup_card_pow_prime_le
+  p (pow_exponent_dvd G p) H hH
   (le_exponent_of_dvd_pow (hH ▸ card_subgroup_dvd_card H)) in
 ⟨⟨P, is_sylow_iff_card_eq_pow_exponent.2 hP.1⟩, hP.2⟩
+
+lemma exists_mem_sylow_of_pow_prime_pow_eq_one [fact p.prime] {n : ℕ} {g : G}
+  (hg : g ^ p ^ n = 1) : ∃ P : sylow_subgroup G p, g ∈ (P : subgroup G) :=
+let ⟨m, hmn⟩ := (nat.dvd_prime_pow (fact.out p.prime)).1 (order_of_dvd_of_pow_eq_one hg) in
+let ⟨P, hP⟩ := exists_le_sylow _
+  (show card (gpowers g) = p ^ m, from order_eq_card_gpowers.symm.trans hmn.snd) in
+⟨P, hP (mem_gpowers g)⟩
+
+lemma exists_pow_prime_eq_one_iff_mem_of_card_sylow_eq_one [fact p.prime] {g : G}
+  (P : sylow_subgroup G p) (hcard : card (sylow_subgroup G p) = 1) :
+  (∃ n : ℕ, g ^ p ^ n = 1) ↔ g ∈ (P : subgroup G) :=
+begin
+  split,
+  { rintros ⟨n, hg⟩,
+    cases exists_mem_sylow_of_pow_prime_pow_eq_one hg with Q hQ,
+    cases card_eq_one_iff.1 hcard with R hR,
+    rwa [hR P, ← hR Q] },
+  { assume hg,
+    use exponent G p,
+    erw [← card_eq_pow_exponent P, ← subtype.coe_mk g hg, ← subgroup.coe_pow,
+      pow_card_eq_one, subgroup.coe_one] }
+end
 
 section comap
 variables {H : Type*} [group H] [fintype H] (h : H) (P Q : sylow_subgroup G p) (f : H →* G)
