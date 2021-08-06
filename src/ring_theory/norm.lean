@@ -425,22 +425,6 @@ begin
       normalize.map_one]
 end
 
-/-- Multiplicity of the norm -/
-theorem norm_mul (I J : ideal S) : (I * J).norm R = I.norm R * J.norm R :=
-begin
-  by_cases hI : I = ⊥,
-  { simp [hI] },
-  by_cases hJ : J = ⊥,
-  { simp [hJ] },
-  have hIJ : I * J ≠ ⊥ := mt ideal.mul_eq_bot.mp (not_or hI hJ),
-  unfold ideal.norm,
-  rw [dif_neg hI, dif_neg hJ, dif_neg hIJ],
-  split_ifs with hS,
-  swap, { simp }, -- Handle the non-free-finite case first.
-  letI : fintype hS.some := hS.some_spec.some_spec.some,
-  sorry
-end
-
 lemma algebra_map_norm_mem (b : basis ι R S) (I : ideal S) :
   algebra_map R S (I.norm R) ∈ I :=
 sorry -- TODO: via Lagrange's theorem?
@@ -539,45 +523,6 @@ end pid
 lemma normalize_prod {ι : Type*} (a : ι → ℤ) (s : finset ι) :
   normalize (∏ i in s, a i) = ∏ i in s, normalize (a i) :=
 monoid_hom.map_prod (normalize.to_monoid_hom : ℤ →* ℤ) a s
-
-/-
-/-- If `P` is a submodule of `M`, and `f : M →ₗ N` has a kernel that contains `P`,
-lift it to the quotient by `P`. -/
-def submodule.quotient.lift {M N : Type*}
-  [add_comm_group M] [module R M] [add_comm_group N] [module R N]
-  (P : submodule R M) (f : M →ₗ[R] N) (hf : ∀ x ∈ P, f x = 0) :
-  P.quotient →ₗ[R] N :=
-{ to_fun := λ x, quotient.lift_on' x f $ λ a b h, eq_of_sub_eq_zero $ by rw [← f.map_sub, hf _ h],
-  map_add' := λ a₁ a₂, quotient.induction_on₂' a₁ a₂ f.map_add,
-  map_smul' := λ c a, quotient.induction_on' a (f.map_smul c) }
-
-@[simp] def submodule.quotient.lift_mk {M N : Type*}
-  [add_comm_group M] [module R M] [add_comm_group N] [module R N]
-  (P : submodule R M) (f : M →ₗ[R] N) (hf : ∀ x ∈ P, f x = 0) (x : M) :
-  submodule.quotient.lift P f hf (submodule.quotient.mk x) = f x :=
-rfl
-
-def submodule.quotient.mk_hom {M : Type*} [add_comm_group M] [module R M]
-  {P : submodule R M} : M →ₗ[R] P.quotient :=
-{ to_fun := submodule.quotient.mk,
-  map_add' := λ x y, submodule.quotient.mk_add _,
-  map_smul' := λ c x, submodule.quotient.mk_smul _ }
-
-/-- If `P` is a submodule of `M` and `Q` a submodule of `N`, and `f : M →ₗ N` maps `P` to a
-subset of `Q`, then lift `f` to a map `P.quotient →ₗ Q.quotient`. -/
-def submodule.quotient.map {M N : Type*}
-  [add_comm_group M] [module R M] [add_comm_group N] [module R N]
-  (P : submodule R M) (Q : submodule R N) (f : M →ₗ[R] N) (hf : ∀ x ∈ P, f x ∈ Q) :
-  P.quotient →ₗ[R] Q.quotient :=
-submodule.quotient.lift P (submodule.quotient.mk_hom.comp f)
-  (λ x hx, (submodule.quotient.mk_eq_zero _).mpr (hf _ hx))
-
-@[simp] def submodule.quotient.map_mk {M N : Type*}
-  [add_comm_group M] [module R M] [add_comm_group N] [module R N]
-  (P : submodule R M) (Q : submodule R N) (f : M →ₗ[R] N) (hf : ∀ x ∈ P, f x ∈ Q)
-  (x : M) : submodule.quotient.map P Q f hf (submodule.quotient.mk x) = submodule.quotient.mk (f x) :=
-rfl
--/
 
 /-- If `P` is a submodule of `M` and `Q` a submodule of `N`,
 and `f : M ≃ₗ N` maps `P` to `Q`, then `M.quotient` is equivalent to `N.quotient`. -/
