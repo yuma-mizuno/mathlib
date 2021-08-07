@@ -742,7 +742,11 @@ def transₛₗ : M₁ ≃ₛₗ[σ₁₃] M₃ :=
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
 omit σ₃₁
 
-@[trans] abbreviation trans [module R M₂] [module R M₃] := @transₛₗ R R R M M₂ M₃ _ _ _ _ _ _ _ _ _ (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+@[trans] abbreviation trans [module R M₂] [module R M₃] := @transₛₗ R R R M M₂ M₃ _ _ _ _ _ _ _ _ _
+  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
+  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
 
 variables {e₁₂} {e₂₃}
 
