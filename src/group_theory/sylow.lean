@@ -350,32 +350,30 @@ begin
   simpa using hy
 end⟩
 
-local attribute [instance, priority 1] subgroup.fintype set_fintype subtype.fintype
---set_option pp.notation false
 /-- If `H` is a subgroup of `G` of cardinality `p ^ n`,
   then `H` is contained in a subgroup of cardinality `p ^ m`
   if `n ≤ m` and `p ^ m` divides the cardinality of `G` -/
 theorem exists_subgroup_card_pow_prime_le [fintype G] (p : ℕ) : ∀ {n m : ℕ} [hp : fact p.prime]
-  (hdvd : p ^ m ∣ card G) (H : subgroup G) [fH : fintype H] (hH : @fintype.card H fH = p ^ n)
-  (hnm : n ≤ m), ∃ K : subgroup G, card K = p ^ m ∧ H ≤ K
-| n m := λ hp hdvd H fH hH hnm, by letI := fH; exact
+  (hdvd : p ^ m ∣ card G) (H : subgroup G) (hH : card H = p ^ n) (hnm : n ≤ m),
+  ∃ K : subgroup G, card K = p ^ m ∧ H ≤ K
+| n m := λ hp hdvd H hH hnm,
   (lt_or_eq_of_le hnm).elim
     (λ hnm : n < m,
       have h0m : 0 < m, from (lt_of_le_of_lt n.zero_le hnm),
       have wf : m - 1 < m,  from nat.sub_lt h0m zero_lt_one,
       have hnm1 : n ≤ m - 1, from nat.le_sub_right_of_add_le hnm,
       let ⟨K, hK⟩ := @exists_subgroup_card_pow_prime_le n (m - 1) hp
-        (nat.pow_dvd_of_le_of_pow_dvd (nat.sub_le_self _ _) hdvd) H _ hH hnm1 in
+        (nat.pow_dvd_of_le_of_pow_dvd (nat.sub_le_self _ _) hdvd) H hH hnm1 in
       have hdvd' : p ^ ((m - 1) + 1) ∣ card G, by rwa [nat.sub_add_cancel h0m],
       let ⟨K', hK'⟩ := @exists_subgroup_card_pow_succ _ _ _ _ _ hp hdvd' K hK.1 in
       ⟨K', by rw [hK'.1, nat.sub_add_cancel h0m], le_trans hK.2 hK'.2⟩)
-    (λ hnm : n = m, ⟨H, by simp [← hH, ← hnm]; congr, le_refl _⟩)
+    (λ hnm : n = m, ⟨H, by simp [hH, hnm]⟩)
 
 /-- A generalisation of **Sylow's first theorem**. If `p ^ n` divides
   the cardinality of `G`, then there is a subgroup of cardinality `p ^ n` -/
 theorem exists_subgroup_card_pow_prime [fintype G] (p : ℕ) {n : ℕ} [fact p.prime]
   (hdvd : p ^ n ∣ card G) : ∃ K : subgroup G, fintype.card K = p ^ n :=
-let ⟨K, hK⟩ := exists_subgroup_card_pow_prime_le p hdvd ⊥ (by convert card_bot) n.zero_le in
+let ⟨K, hK⟩ := exists_subgroup_card_pow_prime_le p hdvd ⊥ (by simp) n.zero_le in
 ⟨K, hK.1⟩
 
 end sylow
