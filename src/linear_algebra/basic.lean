@@ -345,7 +345,7 @@ lemma pow_map_zero_of_le
   {f : module.End R M} {m : M} {k l : ℕ} (hk : k ≤ l) (hm : (f^k) m = 0) : (f^l) m = 0 :=
 by rw [← nat.sub_add_cancel hk, pow_add, mul_apply, hm, map_zero]
 
-lemma commute_pow_left_of_commute
+lemma commute_pow_left_of_commuteₛₗ
   {f : M →ₛₗ[σ₁₂] M₂} {g : module.End R M} {g₂ : module.End R₂ M₂} (h : g₂.compₛₗ f = f.compₛₗ g) (k : ℕ) :
   (g₂^k).compₛₗ f = f.compₛₗ (g^k) :=
 begin
@@ -355,13 +355,17 @@ begin
       ← linear_map.compₛₗ_assoc, h, linear_map.compₛₗ_assoc, linear_map.mul_eq_comp], },
 end
 
+lemma commute_pow_left_of_commute [module R M₂]
+  {f : M →ₗ[R] M₂} {g : module.End R M} {g₂ : module.End R M₂} (h : g₂.comp f = f.comp g) (k : ℕ) :
+  (g₂^k).comp f = f.comp (g^k) := commute_pow_left_of_commuteₛₗ h k
+
 lemma submodule_pow_eq_zero_of_pow_eq_zero {N : submodule R M}
   {g : module.End R N} {G : module.End R M} (h : G.compₛₗ N.subtype = N.subtype.compₛₗ g)
   {k : ℕ} (hG : G^k = 0) : g^k = 0 :=
 begin
   ext m,
   have hg : N.subtype.compₛₗ (g^k) m = 0,
-  { rw [← commute_pow_left_of_commute h, hG, zero_compₛₗ, zero_apply], },
+  { rw [← commute_pow_left_of_commuteₛₗ h, hG, zero_compₛₗ, zero_apply], },
   simp only [submodule.subtype_apply, comp_app, submodule.coe_eq_zero, coe_comp] at hg,
   rw [hg, linear_map.zero_apply],
 end
@@ -2411,7 +2415,6 @@ include module_M
 linear_map.ker_comp_of_ker_eq_botₛₗ _ e''.ker
 omit module_M
 
-#check @ker_compₛₗ
 include module_N
 @[simp] theorem ker_comp (l : N →ₗ[R] N₂) :
   (((eₗ'' : N₂ →ₗ[R] N₃).comp l)).ker = l.ker := ker_compₛₗ _ l
