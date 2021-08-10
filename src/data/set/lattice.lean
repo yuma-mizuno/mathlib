@@ -123,14 +123,14 @@ begin
 end
 
 theorem set_of_exists (p : ι → β → Prop) : {x | ∃ i, p i x} = ⋃ i, {x | p i x} :=
-ext $ λ i, mem_Union.symm
+set.ext $ λ i, by { rw mem_Union, refl }
 
 @[simp] theorem mem_Inter {x : β} {s : ι → set β} : x ∈ Inter s ↔ ∀ i, x ∈ s i :=
 ⟨assume (h : ∀a ∈ {a : set β | ∃i, s i = a}, x ∈ a) a, h (s a) ⟨a, rfl⟩,
   assume h t ⟨a, (eq : s a = t)⟩, eq ▸ h a⟩
 
 theorem set_of_forall (p : ι → β → Prop) : {x | ∀ i, p i x} = ⋂ i, {x | p i x} :=
-ext $ λ i, mem_Inter.symm
+set.ext $ λ i, by { rw mem_Inter, refl }
 
 theorem Union_subset {s : ι → set β} {t : set β} (h : ∀ i, s i ⊆ t) : (⋃ i, s i) ⊆ t :=
 -- TODO: should be simpler when sets' order is based on lattices
@@ -188,11 +188,11 @@ theorem Inter_const [nonempty ι] (s : set β) : (⋂ i:ι, s) = s := infi_const
 
 @[simp] -- complete_boolean_algebra
 theorem compl_Union (s : ι → set β) : (⋃ i, s i)ᶜ = (⋂ i, (s i)ᶜ) :=
-ext (by simp)
+set.ext (by simp)
 
 -- classical -- complete_boolean_algebra
 theorem compl_Inter (s : ι → set β) : (⋂ i, s i)ᶜ = (⋃ i, (s i)ᶜ) :=
-ext (λ x, by simp [not_forall])
+set.ext (λ x, by simp [not_forall])
 
 -- classical -- complete_boolean_algebra
 theorem Union_eq_comp_Inter_comp (s : ι → set β) : (⋃ i, s i) = (⋂ i, (s i)ᶜ)ᶜ :=
@@ -204,19 +204,19 @@ by simp [compl_compl]
 
 theorem inter_Union (s : set β) (t : ι → set β) :
   s ∩ (⋃ i, t i) = ⋃ i, s ∩ t i :=
-ext $ by simp
+set.ext $ by simp
 
 theorem Union_inter (s : set β) (t : ι → set β) :
   (⋃ i, t i) ∩ s = ⋃ i, t i ∩ s :=
-ext $ by simp
+set.ext $ by simp
 
 theorem Union_union_distrib (s : ι → set β) (t : ι → set β) :
   (⋃ i, s i ∪ t i) = (⋃ i, s i) ∪ (⋃ i, t i) :=
-ext $ by simp [exists_or_distrib]
+set.ext $ by simp [exists_or_distrib]
 
 theorem Inter_inter_distrib (s : ι → set β) (t : ι → set β) :
   (⋂ i, s i ∩ t i) = (⋂ i, s i) ∩ (⋂ i, t i) :=
-ext $ by simp [forall_and_distrib]
+set.ext $ by simp [forall_and_distrib]
 
 theorem union_Union [nonempty ι] (s : set β) (t : ι → set β) :
   s ∪ (⋃ i, t i) = ⋃ i, s ∪ t i :=
@@ -237,11 +237,11 @@ by rw [Inter_inter_distrib, Inter_const]
 -- classical
 theorem union_Inter (s : set β) (t : ι → set β) :
   s ∪ (⋂ i, t i) = ⋂ i, s ∪ t i :=
-ext $ assume x, by simp [forall_or_distrib_left]
+set.ext $ assume x, by simp [forall_or_distrib_left]
 
 theorem Union_diff (s : set β) (t : ι → set β) :
   (⋃ i, t i) \ s = ⋃ i, t i \ s :=
-Union_inter _ _
+by simp [diff_eq, Union_inter]
 
 theorem diff_Union [nonempty ι] (s : set β) (t : ι → set β) :
   s \ (⋃ i, t i) = ⋂ i, s \ t i :=
@@ -287,31 +287,31 @@ theorem mem_bUnion_iff {s : set α} {t : α → set β} {y : β} :
 
 lemma mem_bUnion_iff' {p : α → Prop} {t : α → set β} {y : β} :
   y ∈ (⋃ i (h : p i), t i) ↔ ∃ i (h : p i), y ∈ t i :=
-mem_bUnion_iff
+by simp
 
 theorem mem_bInter_iff {s : set α} {t : α → set β} {y : β} :
   y ∈ (⋂ x ∈ s, t x) ↔ ∀ x ∈ s, y ∈ t x := by simp
 
-theorem mem_bUnion {s : set α} {t : α → set β} {x : α} {y : β} (xs : x ∈ s) (ytx : y ∈ t x) :
-  y ∈ ⋃ x ∈ s, t x :=
+theorem mem_bUnion {s : α → Prop} {t : α → set β} {x : α} {y : β} (xs : s x) (ytx : y ∈ t x) :
+  y ∈ ⋃ x, ⋃ H : s x, t x :=
 by simp; exact ⟨x, ⟨xs, ytx⟩⟩
 
-theorem mem_bInter {s : set α} {t : α → set β} {y : β} (h : ∀ x ∈ s, y ∈ t x) :
-  y ∈ ⋂ x ∈ s, t x :=
+theorem mem_bInter {s : α → Prop} {t : α → set β} {y : β} (h : ∀ x, s x → y ∈ t x) :
+  y ∈ ⋂ x, ⋂ H : s x, t x :=
 by simp; assumption
 
-theorem bUnion_subset {s : set α} {t : set β} {u : α → set β} (h : ∀ x ∈ s, u x ⊆ t) :
-  (⋃ x ∈ s, u x) ⊆ t :=
-show (⨆ x ∈ s, u x) ≤ t, -- TODO: should not be necessary when sets' order is based on lattices
+theorem bUnion_subset {s : α → Prop} {t : set β} {u : α → set β} (h : ∀ x, s x → u x ⊆ t) :
+  (⋃ x, ⋃ _ : s x, u x) ⊆ t :=
+show (⨆ x, ⨆ _ : s x, u x) ≤ t, -- TODO: should not be necessary when sets' order is based on lattices
   from supr_le $ assume x, supr_le (h x)
 
 theorem subset_bInter {s : set α} {t : set β} {u : α → set β} (h : ∀ x ∈ s, t ⊆ u x) :
   t ⊆ (⋂ x ∈ s, u x) :=
 subset_Inter $ assume x, subset_Inter $ h x
 
-theorem subset_bUnion_of_mem {s : set α} {u : α → set β} {x : α} (xs : x ∈ s) :
-  u x ⊆ (⋃ x ∈ s, u x) :=
-show u x ≤ (⨆ x ∈ s, u x),
+theorem subset_bUnion_of_mem {s : α → Prop} {u : α → set β} {x : α} (xs : s x) :
+  u x ⊆ (⋃ x, ⋃ _ : s x, u x) :=
+show u x ≤ (⨆ x, ⨆ _ : s x, u x),
   from le_supr_of_le x $ le_supr _ xs
 
 theorem bInter_subset_of_mem {s : set α} {t : α → set β} {x : α} (xs : x ∈ s) :
@@ -327,17 +327,17 @@ theorem bInter_subset_bInter_left {s s' : set α} {t : α → set β}
   (h : s' ⊆ s) : (⋂ x ∈ s, t x) ⊆ (⋂ x ∈ s', t x) :=
 subset_bInter (λ x xs, bInter_subset_of_mem (h xs))
 
-theorem bUnion_subset_bUnion_right {s : set α} {t1 t2 : α → set β}
-  (h : ∀ x ∈ s, t1 x ⊆ t2 x) : (⋃ x ∈ s, t1 x) ⊆ (⋃ x ∈ s, t2 x) :=
+theorem bUnion_subset_bUnion_right {s : α → Prop} {t1 t2 : α → set β}
+  (h : ∀ x, s x → t1 x ⊆ t2 x) : (⋃ x, ⋃ _ : s x, t1 x) ⊆ (⋃ x, ⋃ _: s x, t2 x) :=
 bUnion_subset (λ x xs, subset.trans (h x xs) (subset_bUnion_of_mem xs))
 
 theorem bInter_subset_bInter_right {s : set α} {t1 t2 : α → set β}
   (h : ∀ x ∈ s, t1 x ⊆ t2 x) : (⋂ x ∈ s, t1 x) ⊆ (⋂ x ∈ s, t2 x) :=
 subset_bInter (λ x xs, subset.trans (bInter_subset_of_mem xs) (h x xs))
 
-theorem bUnion_subset_bUnion {γ : Type*} {s : set α} {t : α → set β} {s' : set γ} {t' : γ → set β}
-  (h : ∀ x ∈ s, ∃ y ∈ s', t x ⊆ t' y) :
-  (⋃ x ∈ s, t x) ⊆ (⋃ y ∈ s', t' y) :=
+theorem bUnion_subset_bUnion {γ : Type*} {s : α → Prop} {t : α → set β} {s' : γ → Prop} {t' : γ → set β}
+  (h : ∀ x, s x → ∃ y, ∃ H : s' y, t x ⊆ t' y) :
+  (⋃ x, ⋃ H : s x, t x) ⊆ (⋃ y, ⋃ H : s' y, t' y) :=
 begin
   intros x,
   simp only [mem_Union],
@@ -424,7 +424,7 @@ supr_univ
 supr_singleton
 
 @[simp] theorem bUnion_of_singleton (s : set α) : (⋃ x ∈ s, {x}) = s :=
-ext $ by simp
+set.ext $ by simp
 
 theorem bUnion_union (s t : set α) (u : α → set β) :
   (⋃ x ∈ s ∪ t, u x) = (⋃ x ∈ s, u x) ∪ (⋃ x ∈ t, u x) :=
@@ -446,11 +446,11 @@ by simp [union_comm]
 
 @[simp] -- complete_boolean_algebra
 theorem compl_bUnion (s : set α) (t : α → set β) : (⋃ i ∈ s, t i)ᶜ = (⋂ i ∈ s, (t i)ᶜ) :=
-ext (λ x, by simp)
+set.ext (λ x, by simp)
 
 -- classical -- complete_boolean_algebra
 theorem compl_bInter (s : set α) (t : α → set β) : (⋂ i ∈ s, t i)ᶜ = (⋃ i ∈ s, (t i)ᶜ) :=
-ext (λ x, by simp [not_forall])
+set.ext (λ x, by simp [not_forall])
 
 theorem inter_bUnion (s : set α) (t : α → set β) (u : set β) :
   u ∩ (⋃ i ∈ s, t i) = ⋃ i ∈ s, u ∩ t i :=
@@ -572,7 +572,7 @@ by simp only [eq_univ_iff_forall, mem_sUnion]
 
 theorem compl_sUnion (S : set (set α)) :
   (⋃₀ S)ᶜ = ⋂₀ (compl '' S) :=
-ext $ λ x, by simp
+set.ext $ λ x, by simp
 
 -- classical
 theorem sUnion_eq_compl_sInter_compl (S : set (set α)) :
@@ -626,14 +626,14 @@ lemma Union_subset_Union_const {s : set α} (h : ι → ι₂) : (⋃ i:ι, s) �
 @supr_le_supr_const (set α) ι ι₂ _ s h
 
 @[simp] lemma Union_of_singleton (α : Type*) : (⋃(x : α), {x}) = @set.univ α :=
-ext $ λ x, ⟨λ h, ⟨⟩, λ h, ⟨{x}, ⟨⟨x, rfl⟩, mem_singleton x⟩⟩⟩
+set.ext $ λ x, ⟨λ h, ⟨⟩, λ h, ⟨{x}, ⟨⟨x, rfl⟩, mem_singleton x⟩⟩⟩
 
 @[simp] lemma Union_of_singleton_coe (s : set α) :
   (⋃ (i : s), {i} : set α) = s :=
-ext $ by simp
+set.ext $ by simp
 
-theorem bUnion_subset_Union (s : set α) (t : α → set β) :
-  (⋃ x ∈ s, t x) ⊆ (⋃ x, t x) :=
+theorem bUnion_subset_Union (s : α → Prop) (t : α → set β) :
+  (⋃ x, ⋃ _ : s x, t x) ⊆ (⋃ x, t x) :=
 Union_subset_Union $ λ i, Union_subset $ λ h, by refl
 
 lemma sUnion_eq_bUnion {s : set (set α)} : (⋃₀ s) = (⋃ (i : set α) (h : i ∈ s), i) :=
@@ -1160,7 +1160,7 @@ instance : is_lawful_monad set :=
        exact exists_swap,
   id_map                := assume α, id_map,
   bind_pure_comp_eq_map := assume α β f s, set.ext $ by simp [set.image, eq_comm],
-  bind_map_eq_seq       := assume α β s t, by simp [seq_def] }
+  bind_map_eq_seq       := assume α β s t, by simp [(<*>), seq_def] }
 
 instance : is_comm_applicative (set : Type u → Type u) :=
 ⟨ assume α β s t, prod_image_seq_comm s t ⟩

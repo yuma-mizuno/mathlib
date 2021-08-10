@@ -87,10 +87,10 @@ lemma disjoint_disjointed' :
 lemma disjointed_subset : disjointed f n ⊆ f n := inter_subset_left _ _
 
 lemma Union_lt_succ : (⋃ i < nat.succ n, f i) = f n ∪ (⋃ i < n, f i) :=
-ext $ λ a, by simp [nat.lt_succ_iff_lt_or_eq, or_and_distrib_right, exists_or_distrib, or_comm]
+set.ext $ λ a, by simp [nat.lt_succ_iff_lt_or_eq, or_and_distrib_right, exists_or_distrib, or_comm]
 
 lemma Inter_lt_succ : (⋂ i < nat.succ n, f i) = f n ∩ (⋂ i < n, f i) :=
-ext $ λ a, by simp [nat.lt_succ_iff_lt_or_eq, or_imp_distrib, forall_and_distrib, and_comm]
+set.ext $ λ a, by simp [nat.lt_succ_iff_lt_or_eq, or_imp_distrib, forall_and_distrib, and_comm]
 
 lemma disjointed_induct {p : set α → Prop} (h₁ : p (f n)) (h₂ : ∀ t i, p t → p (t \ f i)) :
   p (disjointed f n) :=

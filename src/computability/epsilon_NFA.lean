@@ -35,11 +35,20 @@ namespace ε_NFA
 
 instance : inhabited (ε_NFA α σ) := ⟨ ε_NFA.mk (λ _ _, ∅) ∅ ∅ ⟩
 
+/-- Use `ε_closure` instead. -/
+inductive ε_closure_pred : set σ → σ → Prop
+| base : ∀ S (s ∈ S), ε_closure_pred S s
+| step : ∀ S s (t ∈ M.step s none), ε_closure_pred S s → ε_closure_pred S t
+
 /-- The `ε_closure` of a set is the set of states which can be reached by taking a finite string of
   ε-transitions from an element of the the set -/
-inductive ε_closure : set σ → set σ
-| base : ∀ S (s ∈ S), ε_closure S s
-| step : ∀ S s (t ∈ M.step s none), ε_closure S s → ε_closure S t
+def ε_closure (S : set σ) : set σ := { s | ε_closure_pred M S s }
+
+lemma ε_closure.base {S} (s ∈ S) : s ∈ ε_closure M S :=
+ε_closure_pred.base _ _ H
+
+lemma ε_closure.step {S s} (t ∈ M.step s none) : s ∈ ε_closure M S → t ∈ ε_closure M S :=
+ε_closure_pred.step _ _ _ H
 
 /-- `M.step_set S a` is the union of the ε-closure of `M.step s a` for all `s ∈ S`. -/
 def step_set : set σ → α → set σ :=
@@ -56,7 +65,7 @@ def eval := M.eval_from M.start
 
 /-- `M.accepts` is the language of `x` such that there is an accept state in `M.eval x`. -/
 def accepts : language α :=
-λ x, ∃ S ∈ M.accept, S ∈ M.eval x
+{ x | ∃ S ∈ M.accept, S ∈ M.eval x }
 
 /-- `M.to_NFA` is an `NFA` constructed from an `ε_NFA` `M`. -/
 def to_NFA : NFA α σ :=

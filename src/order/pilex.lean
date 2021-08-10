@@ -83,7 +83,7 @@ protected noncomputable def pilex.linear_order [linear_order ι]
 { le_total := λ x y, by classical; exact
     or_iff_not_imp_left.2 (λ hxy, begin
       have := not_or_distrib.1 hxy,
-      let i : ι := well_founded.min wf _ (not_forall.1 (this.2 ∘ funext)),
+      let i : ι := well_founded.min wf { i | x i ≠ y i } (not_forall.1 (this.2 ∘ funext)),
       have hjiyx : ∀ j < i, y j = x j,
       { assume j,
         rw [eq_comm, ← not_imp_not],

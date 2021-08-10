@@ -35,13 +35,13 @@ isomorphic to an object in the image of the function `F.obj`. In other words, th
 under isomorphism of the function `F.obj`.
 This is the "non-evil" way of describing the image of a functor.
 -/
-def ess_image (F : C ⥤ D) : set D := λ Y, ∃ (X : C), nonempty (F.obj X ≅ Y)
+def ess_image (F : C ⥤ D) : set D := { Y | ∃ (X : C), nonempty (F.obj X ≅ Y) }
 
 /-- Get the witnessing object that `Y` is in the subcategory given by `F`. -/
 def ess_image.witness {Y : D} (h : Y ∈ F.ess_image) : C := h.some
 
 /-- Extract the isomorphism between `F.obj h.witness` and `Y` itself. -/
-def ess_image.get_iso {Y : D} (h : Y ∈ F.ess_image) : F.obj h.witness ≅ Y :=
+def ess_image.get_iso {Y : D} (h : Y ∈ F.ess_image) : F.obj (ess_image.witness h) ≅ Y :=
 classical.choice h.some_spec
 
 /-- Being in the essential image is a "hygenic" property: it is preserved under isomorphism. -/
@@ -102,17 +102,19 @@ class ess_surj (F : C ⥤ D) : Prop :=
 (mem_ess_image [] (Y : D) : Y ∈ F.ess_image)
 
 instance : ess_surj F.to_ess_image :=
-{ mem_ess_image := λ ⟨Y, hY⟩, ⟨_, ⟨⟨_, _, hY.get_iso.hom_inv_id, hY.get_iso.inv_hom_id⟩⟩⟩ }
+{ mem_ess_image := λ ⟨Y, hY⟩,
+  ⟨_, ⟨⟨_, _, (functor.ess_image.get_iso hY).hom_inv_id,
+    (functor.ess_image.get_iso hY).inv_hom_id⟩⟩⟩ }
 
 variables (F) [ess_surj F]
 
 /-- Given an essentially surjective functor, we can find a preimage for every object `Y` in the
     codomain. Applying the functor to this preimage will yield an object isomorphic to `Y`, see
     `obj_obj_preimage_iso`. -/
-def functor.obj_preimage (Y : D) : C := (ess_surj.mem_ess_image F Y).witness
+def functor.obj_preimage (Y : D) : C := functor.ess_image.witness (ess_surj.mem_ess_image F Y)
 /-- Applying an essentially surjective functor to a preimage of `Y` yields an object that is
     isomorphic to `Y`. -/
 def functor.obj_obj_preimage_iso (Y : D) : F.obj (F.obj_preimage Y) ≅ Y :=
-(ess_surj.mem_ess_image F Y).get_iso
+functor.ess_image.get_iso (ess_surj.mem_ess_image F Y)
 
 end category_theory

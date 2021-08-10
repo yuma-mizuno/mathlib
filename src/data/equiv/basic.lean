@@ -1315,7 +1315,7 @@ subtype_equiv (equiv.refl α) (assume a, h ▸ iff.rfl)
 /-- The subtypes corresponding to equal sets are equivalent. -/
 @[simps apply]
 def set_congr {α : Type*} {s t : set α} (h : s = t) : s ≃ t :=
-subtype_equiv_prop h
+subtype_equiv (equiv.refl α) (by simp [h])
 
 /-- A subtype of a subtype is equivalent to the subtype of elements satisfying both predicates. This
 version allows the “inner” predicate to depend on `h : p a`. -/
@@ -1697,7 +1697,7 @@ protected def compl {α : Type u} {β : Type v} {s : set α} {t : set β} [decid
 /-- The set product of two sets is equivalent to the type product of their coercions to types. -/
 protected def prod {α β} (s : set α) (t : set β) :
   s.prod t ≃ s × t :=
-@subtype_prod_equiv_prod α β s t
+@subtype_prod_equiv_prod α β (∈ s) (∈ t)
 
 /-- If a function `f` is injective on a set `s`, then `s` is equivalent to `f '' s`. -/
 protected noncomputable def image_of_inj_on {α β} (f : α → β) (s : set α) (H : inj_on f s) :
@@ -1729,7 +1729,7 @@ protected def congr {α β : Type*} (e : α ≃ β) : set α ≃ set β :=
 /-- The set `{x ∈ s | t x}` is equivalent to the set of `x : s` such that `t x`. -/
 protected def sep {α : Type u} (s : set α) (t : α → Prop) :
   ({ x ∈ s | t x } : set α) ≃ { x : s | t x } :=
-(equiv.subtype_subtype_equiv_subtype_inter s t).symm
+(equiv.subtype_subtype_equiv_subtype_inter _ _).symm
 
 /-- The set `𝒫 S := {x | x ⊆ S}` is equivalent to the type `set S`. -/
 protected def powerset {α} (S : set α) : 𝒫 S ≃ set S :=

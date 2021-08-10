@@ -171,14 +171,14 @@ and_congr (injective.of_comp_iff hf.injective _) (surjective.of_comp_iff' hf _)
 /-- Cantor's diagonal argument implies that there are no surjective functions from `α`
 to `set α`. -/
 theorem cantor_surjective {α} (f : α → set α) : ¬ function.surjective f | h :=
-let ⟨D, e⟩ := h (λ a, ¬ f a a) in
-(iff_not_self (f D D)).1 $ iff_of_eq (congr_fun e D)
+let ⟨D, e⟩ := h { a | a ∉ f a } in
+(iff_not_self (D ∈ f D)).1 $ by { transitivity, rw e, refl }
 
 /-- Cantor's diagonal argument implies that there are no injective functions from `set α` to `α`. -/
 theorem cantor_injective {α : Type*} (f : (set α) → α) :
   ¬ function.injective f | i :=
-cantor_surjective (λ a b, ∀ U, a = f U → U b) $
-right_inverse.surjective (λ U, funext $ λ a, propext ⟨λ h, h U rfl, λ h' U' e, i e ▸ h'⟩)
+cantor_surjective (λ a, { b | ∀ U, a = f U → b ∈ U }) $
+right_inverse.surjective (λ U, set.ext $ λ a, ⟨λ h, h U rfl, λ h' U' e, i e ▸ h'⟩)
 
 /-- `g` is a partial inverse to `f` (an injective but not necessarily
   surjective function) if `g y = some x` implies `f x = y`, and `g y = none`

@@ -95,7 +95,7 @@ if h : ∃y, r x y then wf.min { y | r x y } h else x
 
 protected lemma lt_succ {α} {r : α → α → Prop} (wf : well_founded r) {x : α} (h : ∃y, r x y) :
   r x (wf.succ x) :=
-by { rw [well_founded.succ, dif_pos h], apply min_mem }
+by { rw [well_founded.succ, dif_pos h], apply min_mem wf {y | r x y} }
 end
 
 protected lemma lt_succ_iff {α} {r : α → α → Prop} [wo : is_well_order α r] {x : α} (h : ∃y, r x y)
@@ -104,7 +104,7 @@ begin
   split,
   { intro h', have : ¬r x y,
     { intro hy, rw [well_founded.succ, dif_pos] at h',
-      exact wo.wf.not_lt_min _ h hy h' },
+      exact wo.wf.not_lt_min { y | r x y } h hy h' },
     rcases trichotomous_of r x y with hy | hy | hy,
     exfalso, exact this hy,
     right, exact hy.symm,

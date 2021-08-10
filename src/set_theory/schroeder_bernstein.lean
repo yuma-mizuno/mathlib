@@ -129,9 +129,9 @@ let ⟨i, e⟩ := show ∃ i, ∀ y, ∃ x ∈ s, (x : ∀ i, β i) i = y, from
   let ⟨f, hf⟩ := axiom_of_choice h in
   have f ∈ s, from
     have insert f s ∈ sets := λ x hx y hy, begin
-      cases hx; cases hy, {simp [hx, hy]},
-      { subst x, exact λ i e, (hf i y hy e.symm).elim },
-      { subst y, exact λ i e, (hf i x hx e).elim },
+      cases hx; cases hy, { cases hx, cases hy, cc, },
+      { cases hx, exact λ i e, (hf i y hy e.symm).elim },
+      { cases hy, exact λ i e, (hf i x hx e).elim },
       { exact hs x hx y hy }
     end, ms _ this (subset_insert f s) ▸ mem_insert _ _,
   let ⟨i⟩ := I in hf i f this rfl in

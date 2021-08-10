@@ -147,15 +147,23 @@ if h : ∃ c', chain c ∧ super_chain c c' then
   this.right.left
 else by simp [succ_chain, dif_neg, h, subset.refl]
 
+/-- Implementation detail; use `chain_closure` instead. -/
+inductive chain_closure_pred : set α → Prop
+| succ : ∀ {s}, chain_closure_pred s → chain_closure_pred (succ_chain s)
+| union : ∀ {s}, (∀ a ∈ s, chain_closure_pred a) → chain_closure_pred (⋃₀ s)
+
 /-- Set of sets reachable from `∅` using `succ_chain` and `⋃₀`. -/
-inductive chain_closure : set (set α)
-| succ : ∀ {s}, chain_closure s → chain_closure (succ_chain s)
-| union : ∀ {s}, (∀ a ∈ s, chain_closure a) → chain_closure (⋃₀ s)
+def chain_closure : set (set α) := set.of chain_closure_pred
+
+lemma chain_closure.succ {s} : s ∈ chain_closure → succ_chain s ∈ chain_closure :=
+chain_closure_pred.succ
+
+lemma chain_closure.union {s} : (∀ a ∈ s, a ∈ chain_closure) → ⋃₀ s ∈ chain_closure :=
+chain_closure_pred.union
 
 lemma chain_closure_empty :
   ∅ ∈ chain_closure :=
-have chain_closure (⋃₀ ∅),
-  from chain_closure.union $ λ a h, h.rec _,
+have ⋃₀ ∅ ∈ chain_closure, from chain_closure.union $ λ a h, h.rec _,
 by simp at this; assumption
 
 lemma chain_closure_closure :

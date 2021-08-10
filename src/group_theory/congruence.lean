@@ -646,8 +646,8 @@ lemma mk'_surjective : surjective c.mk' :=
     those in the preimage of `f(x)` under `f`. -/
 @[to_additive "The elements related to `x ∈ M`, `M` an `add_monoid`, by the kernel of
 an `add_monoid` homomorphism are those in the preimage of `f(x)` under `f`. "]
-lemma ker_apply_eq_preimage {f : M →* P} (x) : (ker f) x = f ⁻¹' {f x} :=
-set.ext $ λ x,
+lemma ker_apply_eq_preimage {f : M →* P} (x) : ker f x = (∈ f ⁻¹' {f x}) :=
+by ext x; exact
   ⟨λ h, set.mem_preimage.2 $ set.mem_singleton_iff.2 h.symm,
    λ h, (set.mem_singleton_iff.1 $ set.mem_preimage.1 h).symm⟩
 

@@ -400,10 +400,10 @@ theorem dom_eq (f : α →. β) : dom f = {x | ∃ y, y ∈ f x} :=
 set.ext (mem_dom f)
 
 /-- Evaluate a partial function -/
-def fn (f : α →. β) (x) (h : dom f x) : β := (f x).get h
+def fn (f : α →. β) (x) (h : x ∈ dom f) : β := (f x).get h
 
 /-- Evaluate a partial function to return an `option` -/
-def eval_opt (f : α →. β) [D : decidable_pred (dom f)] (x : α) : option β :=
+def eval_opt (f : α →. β) [D : decidable_pred (∈ dom f)] (x : α) : option β :=
 @roption.to_option _ _ (D x)
 
 /-- Partial function extensionality -/
@@ -502,7 +502,7 @@ theorem pure_defined (p : set α) (x : β) : p ⊆ (@pfun.pure α _ x).dom := se
 
 theorem bind_defined {α β γ} (p : set α) {f : α →. β} {g : β → α →. γ}
   (H1 : p ⊆ f.dom) (H2 : ∀x, p ⊆ (g x).dom) : p ⊆ (f >>= g).dom :=
-λa ha, (⟨H1 ha, H2 _ ha⟩ : (f >>= g).dom a)
+λa ha, (⟨H1 ha, H2 _ ha⟩ : a ∈ (f >>= g).dom)
 
 def fix (f : α →. β ⊕ α) : α →. β := λ a,
 roption.assert (acc (λ x y, sum.inr x ∈ f y) a) $ λ h,

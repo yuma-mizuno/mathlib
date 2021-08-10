@@ -295,7 +295,7 @@ begin
       tauto } }
 end
 
-instance (P : regular_expression α) : decidable_pred P.matches :=
+instance matches.decidable_pred (P : regular_expression α) : decidable_pred (∈ P.matches) :=
 begin
   intro x,
   change decidable (x ∈ P.matches),

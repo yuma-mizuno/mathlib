@@ -484,7 +484,7 @@ mem_Inf
 lemma subset_closure : s ⊆ closure L s := (closure L).le_closure s
 
 @[simp]
-lemma closed (S : L.substructure M) : (closure L).closed (S : set M) :=
+lemma closed (S : L.substructure M) : (S : set M) ∈ ((closure L).closed : set (set M)) :=
 congr rfl ((closure L).eq_of_le set.subset.rfl (λ x xS, mem_closure.2 (λ T hT, hT xS)))
 
 open set
@@ -507,15 +507,15 @@ variable (S)
 is preserved under function symbols, then `p` holds for all elements of the closure of `s`. -/
 @[elab_as_eliminator] lemma closure_induction {p : M → Prop} {x} (h : x ∈ closure L s)
   (Hs : ∀ x ∈ s, p x)
-  (Hfun : ∀ {n : ℕ} (f : L.functions n), closed_under f (set_of p)) : p x :=
-(@closure_le L M _ ⟨set_of p, λ n, Hfun⟩ _).2 Hs h
+  (Hfun : ∀ {n : ℕ} (f : L.functions n), closed_under f (set.of p)) : p x :=
+(@closure_le L M _ ⟨set.of p, λ n, Hfun⟩ _).2 Hs h
 
 /-- If `s` is a dense set in a structure `M`, `substructure.closure L s = ⊤`, then in order to prove
 that some predicate `p` holds for all `x : M` it suffices to verify `p x` for `x ∈ s`, and verify
 that `p` is preserved under function symbols. -/
 @[elab_as_eliminator] lemma dense_induction {p : M → Prop} (x : M) {s : set M}
   (hs : closure L s = ⊤) (Hs : ∀ x ∈ s, p x)
-  (Hfun : ∀ {n : ℕ} (f : L.functions n), closed_under f (set_of p)) : p x :=
+  (Hfun : ∀ {n : ℕ} (f : L.functions n), closed_under f (set.of p)) : p x :=
 have ∀ x ∈ closure L s, p x, from λ x hx, closure_induction hx Hs (λ n, Hfun),
 by simpa [hs] using this x
 

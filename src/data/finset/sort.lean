@@ -106,8 +106,9 @@ the cardinality of `s` is `k`. We use this instead of an iso `fin s.card ≃o s`
 casting issues in further uses of this function. -/
 def order_iso_of_fin (s : finset α) {k : ℕ} (h : s.card = k) : fin k ≃o s :=
 order_iso.trans (fin.cast ((length_sort (≤)).trans h).symm) $
-  (s.sort_sorted_lt.nth_le_iso _).trans $ order_iso.set_congr _ _ $
-    set.ext $ λ x, mem_sort _
+  (s.sort_sorted_lt.nth_le_iso _).trans $
+    show { x | x ∈ finset.sort (≤) s } ≃o { x | x ∈ s }, from
+      order_iso.set_congr _ _ $ set.ext $ λ x, mem_sort _
 
 /-- Given a finset `s` of cardinality `k` in a linear order `α`, the map `order_emb_of_fin s h` is
 the increasing bijection between `fin k` and `s` as an order embedding into `α`. Here, `h` is a

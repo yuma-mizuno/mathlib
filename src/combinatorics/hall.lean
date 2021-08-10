@@ -211,8 +211,9 @@ begin
   { apply nat.le_of_lt_succ,
     rw ←hn,
     convert (card_compl_lt_iff_nonempty _).mpr hs,
-    convert fintype.card_coe (sᶜ),
-    exact (finset.coe_compl s).symm },
+    rw ← fintype.card_coe sᶜ,
+    congr' 1,
+    show subtype _ = subtype _, simp },
   rcases ih t'' card_ι''_le (hall_cond_of_compl hus ht) with ⟨f'', hf'', hsf''⟩,
   /- Put them together -/
   have f'_mem_bUnion : ∀ {x'} (hx' : x' ∈ s), f' ⟨x', hx'⟩ ∈ s.bUnion t,

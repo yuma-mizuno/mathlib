@@ -344,8 +344,8 @@ end order_properties
 theorem cantor : ∀(a : cardinal.{u}), a < 2 ^ a :=
 by rw ← prop_eq_two; rintros ⟨a⟩; exact ⟨
   ⟨⟨λ a b, ⟨a = b⟩, λ a b h, cast (ulift.up.inj (@congr_fun _ _ _ _ h b)).symm rfl⟩⟩,
-  λ ⟨⟨f, hf⟩⟩, cantor_injective (λ s, f (λ a, ⟨s a⟩)) $
-    λ s t h, by funext a; injection congr_fun (hf h) a⟩
+  λ ⟨⟨f, hf⟩⟩, cantor_injective (λ s, f (λ a, ⟨a ∈ s⟩)) $
+    λ s t h, by { ext x, injection congr_fun (hf h) x with this, rw this } ⟩
 
 instance : no_top_order cardinal.{u} :=
 { no_top := λ a, ⟨_, cantor a⟩, ..cardinal.linear_order }
@@ -976,10 +976,16 @@ quotient.sound ⟨equiv.bool_equiv_punit_sum_punit⟩
 @[simp] theorem mk_Prop : mk Prop = 2 :=
 (quotient.sound ⟨equiv.Prop_equiv_bool⟩ : mk Prop = mk bool).trans mk_bool
 
+@[simps]
+def set_equiv_pred {α : Type u} : set α ≃ (α → Prop) :=
+{ to_fun := λ s x, x ∈ s, inv_fun := set.of,
+  left_inv := λ ⟨_⟩, rfl, right_inv := λ _, rfl }
+
 @[simp] theorem mk_set {α : Type u} : mk (set α) = 2 ^ mk α :=
 begin
   rw [← prop_eq_two, cardinal.power_def (ulift Prop) α, cardinal.eq],
-  exact ⟨equiv.arrow_congr (equiv.refl _) equiv.ulift.symm⟩,
+  refine ⟨set_equiv_pred.trans _⟩,
+  exact equiv.arrow_congr (equiv.refl _) equiv.ulift.symm,
 end
 
 @[simp] theorem mk_option {α : Type u} : mk (option α) = mk α + 1 :=
@@ -1120,7 +1126,7 @@ lemma mk_subtype_mono {p q : α → Prop} (h : ∀x, p x → q x) : mk {x // p x
 ⟨embedding_of_subset _ _ h⟩
 
 lemma mk_set_le (s : set α) : mk s ≤ mk α :=
-mk_subtype_le s
+mk_subtype_le (∈ s)
 
 lemma mk_image_eq_lift {α : Type u} {β : Type v} (f : α → β) (s : set α) (h : injective f) :
   lift.{v u} (mk (f '' s)) = lift.{u v} (mk s) :=

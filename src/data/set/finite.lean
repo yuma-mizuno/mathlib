@@ -178,8 +178,8 @@ match s.to_finset, @mem_to_finset _ s _ with
       exact H0 },
     { rw ← show insert a {x | x ∈ l} = s, from set.ext (by simpa using al),
       cases multiset.nodup_cons.1 nd with m nd',
-      refine H1 _ ⟨finset.subtype.fintype ⟨l, nd'⟩⟩ (IH nd' (λ _, iff.rfl)),
-      exact m }
+      refine H1 _ ⟨finset_coe.fintype ⟨l, nd'⟩⟩ (IH nd' (λ _, _)),
+      exact m, refl }
   end
 end
 
@@ -274,7 +274,7 @@ instance fintype_sep (s : set α) (p : α → Prop) [fintype s] [decidable_pred 
 fintype.of_finset (s.to_finset.filter p) $ by simp
 
 instance fintype_inter (s t : set α) [fintype s] [decidable_pred (∈ t)] : fintype (s ∩ t : set α) :=
-set.fintype_sep s t
+set.fintype_sep s (∈ t)
 
 /-- A `fintype` structure on a set defines a `fintype` structure on its subset. -/
 def fintype_subset (s : set α) {t : set α} [fintype s] [decidable_pred (∈ t)] (h : t ⊆ s) :
@@ -282,7 +282,7 @@ def fintype_subset (s : set α) {t : set α} [fintype s] [decidable_pred (∈ t)
 by rw ← inter_eq_self_of_subset_right h; apply_instance
 
 theorem finite.subset {s : set α} : finite s → ∀ {t : set α}, t ⊆ s → finite t
-| ⟨hs⟩ t h := ⟨@set.fintype_subset _ _ _ hs (classical.dec_pred t) h⟩
+| ⟨hs⟩ t h := ⟨@set.fintype_subset _ _ _ hs (classical.dec_pred (∈ t)) h⟩
 
 lemma finite.union_iff {s t : set α} : finite (s ∪ t) ↔ finite s ∧ finite t :=
 ⟨λ h, ⟨h.subset (subset_union_left _ _), h.subset (subset_union_right _ _)⟩,
@@ -799,8 +799,9 @@ variables [fintype α] {p q : α → Prop} [decidable_pred p] [decidable_pred q]
 lemma card_subtype_compl : fintype.card {x // ¬ p x} = fintype.card α - fintype.card {x // p x} :=
 begin
   classical,
-  rw [fintype.card_of_subtype (set.to_finset pᶜ), set.to_finset_compl p, finset.card_compl,
-      fintype.card_of_subtype (set.to_finset p)];
+  rw [fintype.card_of_subtype (set.to_finset (set.of p)ᶜ),
+      set.to_finset_compl (set.of p), finset.card_compl,
+      fintype.card_of_subtype (set.to_finset (set.of p))];
     intros; simp; refl
 end
 

@@ -962,7 +962,7 @@ subtype.fintype (λ x, x ∈ s)
 
 lemma set_fintype_card_le_univ {α : Type*} [fintype α] (s : set α) [fintype ↥s] :
   fintype.card ↥s ≤ fintype.card α :=
-fintype.card_le_of_embedding (function.embedding.subtype s)
+fintype.card_le_of_embedding (function.embedding.subtype (∈ s))
 
 namespace function.embedding
 
@@ -1133,8 +1133,8 @@ if h : ∃ a, β a then ⟨{⟨h.fst, h.snd⟩}, λ ⟨_, _⟩, by simp⟩ else 
 
 instance set.fintype [fintype α] : fintype (set α) :=
 ⟨(@finset.univ α _).powerset.map ⟨coe, coe_injective⟩, λ s, begin
-  classical, refine mem_map.2 ⟨finset.univ.filter s, mem_powerset.2 (subset_univ _), _⟩,
-  apply (coe_filter _ _).trans, rw [coe_univ, set.sep_univ], refl
+  classical, refine mem_map.2 ⟨finset.univ.filter (∈ s), mem_powerset.2 (subset_univ _), _⟩,
+  apply (coe_filter _ _).trans, rw [coe_univ, set.sep_univ], cases s, refl
 end⟩
 
 instance pfun_fintype (p : Prop) [decidable p] (α : p → Type*)

@@ -141,7 +141,7 @@ lemma le_closure_iff (x y : α) : x ≤ c y ↔ c x ≤ c y :=
 ⟨λ h, c.idempotent y ▸ c.monotone h, λ h, (c.le_closure x).trans h⟩
 
 /-- An element `x` is closed for the closure operator `c` if it is a fixed point for it. -/
-def closed : set α := λ x, c x = x
+def closed : set α := { x | c x = x }
 
 lemma mem_closed_iff (x : α) : x ∈ c.closed ↔ c x = x := iff.rfl
 
@@ -159,13 +159,13 @@ set.ext $ λ x, ⟨λ h, ⟨x, h⟩, by { rintro ⟨y, rfl⟩, apply c.idempoten
 /-- Send an `x` to an element of the set of closed elements (by taking the closure). -/
 def to_closed (x : α) : c.closed := ⟨c x, c.closure_is_closed x⟩
 
-@[simp] lemma closure_le_closed_iff_le (x : α) {y : α} (hy : c.closed y) : c x ≤ y ↔ x ≤ y :=
+@[simp] lemma closure_le_closed_iff_le (x : α) {y : α} (hy : y ∈ c.closed) : c x ≤ y ↔ x ≤ y :=
 by rw [←c.closure_eq_self_of_mem_closed hy, ←le_closure_iff]
 
 /-- A closure operator is equal to the closure operator obtained by feeding `c.closed` into the
 `mk₃` constructor. -/
 lemma eq_mk₃_closed (c : closure_operator α) :
-  c = mk₃ c c.closed c.le_closure c.closure_is_closed
+  c = mk₃ c (∈ c.closed) c.le_closure c.closure_is_closed
   (λ x y hxy hy, (c.closure_le_closed_iff_le x hy).2 hxy) :=
 by { ext, refl }
 
@@ -305,7 +305,7 @@ section preorder
 variables [preorder α] [preorder β] {u : β → α} (l : lower_adjoint u)
 
 /-- An element `x` is closed for `l : lower_adjoint u` if it is a fixed point: `u (l x) = x` -/
-def closed : set α := λ x, u (l x) = x
+def closed : set α := { x | u (l x) = x }
 
 lemma mem_closed_iff (x : α) : x ∈ l.closed ↔ u (l x) = x := iff.rfl
 
@@ -328,7 +328,7 @@ l.closure_operator.closed_eq_range_close
 /-- Send an `x` to an element of the set of closed elements (by taking the closure). -/
 def to_closed (x : α) : l.closed := ⟨u (l x), l.closure_is_closed x⟩
 
-@[simp] lemma closure_le_closed_iff_le (x : α) {y : α} (hy : l.closed y) : u (l x) ≤ y ↔ x ≤ y :=
+@[simp] lemma closure_le_closed_iff_le (x : α) {y : α} (hy : y ∈ l.closed) : u (l x) ≤ y ↔ x ≤ y :=
 l.closure_operator.closure_le_closed_iff_le x hy
 
 end partial_order

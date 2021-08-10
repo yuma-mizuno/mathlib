@@ -225,7 +225,7 @@ Symmetric relations define a set on `sym2 α` by taking all those pairs
 of elements that are related.
 -/
 def from_rel (sym : symmetric r) : set (sym2 α) :=
-quotient.lift (uncurry r) (by { rintros _ _ ⟨_, _⟩, tidy })
+set.of $ quotient.lift (uncurry r) (by { rintros _ _ ⟨_, _⟩, tidy })
 
 @[simp]
 lemma from_rel_proj_prop {sym : symmetric r} {z : α × α} :
@@ -246,7 +246,7 @@ lemma mem_from_rel_irrefl_other_ne {sym : symmetric r} (irrefl : irreflexive r)
 mem_other_ne (from_rel_irreflexive.mp irrefl hz) h
 
 instance from_rel.decidable_pred (sym : symmetric r) [h : decidable_rel r] :
-  decidable_pred (sym2.from_rel sym) :=
+  decidable_pred (∈ sym2.from_rel sym) :=
 λ z, quotient.rec_on_subsingleton z (λ x, h _ _)
 
 end relations

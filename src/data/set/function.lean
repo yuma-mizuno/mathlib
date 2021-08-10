@@ -91,7 +91,7 @@ theorem eq_on.image_eq (heq : eq_on f₁ f₂ s) : f₁ '' s = f₂ '' s :=
 image_congr heq
 
 theorem eq_on.inter_preimage_eq (heq : eq_on f₁ f₂ s) (t : set β) : s ∩ f₁ ⁻¹' t = s ∩ f₂ ⁻¹' t :=
-ext $ λ x, and.congr_right_iff.2 $ λ hx, by rw [mem_preimage, mem_preimage, heq hx]
+set.ext $ λ x, and.congr_right_iff.2 $ λ hx, by rw [mem_preimage, mem_preimage, heq hx]
 
 lemma eq_on.mono (hs : s₁ ⊆ s₂) (hf : eq_on f₁ f₂ s₂) : eq_on f₁ f₂ s₁ :=
 λ x hx, hf (hs hx)
@@ -121,7 +121,8 @@ lemma maps_to_iff_exists_map_subtype : maps_to f s t ↔ ∃ g : s → t, ∀ x 
 theorem maps_to' : maps_to f s t ↔ f '' s ⊆ t :=
 image_subset_iff.symm
 
-theorem maps_to_empty (f : α → β) (t : set β) : maps_to f ∅ t := empty_subset _
+theorem maps_to_empty (f : α → β) (t : set β) : maps_to f ∅ t :=
+by simp [maps_to]
 
 theorem maps_to.image_subset (h : maps_to f s t) : f '' s ⊆ t :=
 maps_to'.1 h
@@ -274,7 +275,7 @@ lemma inj_on.mem_image_iff {x} (hf : inj_on f s) (hs : s₁ ⊆ s) (hx : x ∈ s
 
 lemma inj_on.preimage_image_inter (hf : inj_on f s) (hs : s₁ ⊆ s) :
   f ⁻¹' (f '' s₁) ∩ s = s₁ :=
-ext $ λ x, ⟨λ ⟨h₁, h₂⟩, hf.mem_of_mem_image hs h₂ h₁, λ h, ⟨mem_image_of_mem _ h, hs h⟩⟩
+set.ext $ λ x, ⟨λ ⟨h₁, h₂⟩, hf.mem_of_mem_image hs h₂ h₁, λ h, ⟨mem_image_of_mem _ h, hs h⟩⟩
 
 /-! ### Surjectivity on a set -/
 
@@ -724,7 +725,7 @@ theorem eq_on.piecewise_ite {f f' g : α → β} {t t'} (h : eq_on f g t)
 
 lemma piecewise_preimage (f g : α → β) (t) :
   s.piecewise f g ⁻¹' t = s.ite (f ⁻¹' t) (g ⁻¹' t) :=
-ext $ λ x, by by_cases x ∈ s; simp [*, set.ite]
+set.ext $ λ x, by by_cases x ∈ s; simp [*, set.ite]
 
 lemma apply_piecewise {δ' : α → Sort*} (h : Π i, δ i → δ' i) {x : α} :
   h x (s.piecewise f g x) = s.piecewise (λ x, h x (f x)) (λ x, h x (g x)) x :=

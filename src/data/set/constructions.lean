@@ -34,11 +34,32 @@ namespace has_finite_inter
 instance : inhabited (has_finite_inter ({set.univ} : set (set α))) :=
 ⟨⟨by tauto, λ _ _ h1 h2, by finish⟩⟩
 
+/-- Implementation detail; use `has_finite_inter.finite_inter_closure` instead. -/
+inductive finite_inter_closure_pred : set α → Prop
+| basic {s} : s ∈ S → finite_inter_closure_pred s
+| univ : finite_inter_closure_pred set.univ
+| inter {s t} : finite_inter_closure_pred s → finite_inter_closure_pred t →
+  finite_inter_closure_pred (s ∩ t)
+
 /-- The smallest set of sets containing `S` which is closed under finite intersections. -/
-inductive finite_inter_closure : set (set α)
-| basic {s} : s ∈ S → finite_inter_closure s
-| univ : finite_inter_closure set.univ
-| inter {s t} : finite_inter_closure s → finite_inter_closure t → finite_inter_closure (s ∩ t)
+def finite_inter_closure : set (set α) :=
+{ s | finite_inter_closure_pred S s }
+
+variables {S}
+
+lemma finite_inter_closure.basic {s} : s ∈ S → s ∈ finite_inter_closure S :=
+finite_inter_closure_pred.basic
+
+lemma finite_inter_closure.univ : set.univ ∈ finite_inter_closure S :=
+finite_inter_closure_pred.univ
+
+lemma finite_inter_closure.inter {s t} :
+  s ∈ finite_inter_closure S →
+  t ∈ finite_inter_closure S →
+  s ∩ t ∈ finite_inter_closure S :=
+finite_inter_closure_pred.inter
+
+variables S
 
 /-- Defines `has_finite_inter` for `finite_inter_closure S`. -/
 def finite_inter_closure_has_finite_inter : has_finite_inter (finite_inter_closure S) :=

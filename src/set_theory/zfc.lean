@@ -121,7 +121,11 @@ def to_set (u : pSet.{u}) : set pSet.{u} := {x | x ∈ u}
 
 /-- Two pre-sets are equivalent iff they have the same members. -/
 theorem equiv.eq {x y : pSet} : equiv x y ↔ to_set x = to_set y :=
-equiv_iff_mem.trans set.ext_iff.symm
+begin
+  refine trans equiv_iff_mem _,
+  refine trans _ set.ext_iff.symm,
+  refl
+end
 
 instance : has_coe pSet (set pSet) := ⟨to_set⟩
 
@@ -153,14 +157,14 @@ def of_nat : ℕ → pSet
 def omega : pSet := ⟨ulift ℕ, λn, of_nat n.down⟩
 
 /-- The separation operation `{x ∈ a | p x}` -/
-protected def sep (p : set pSet) : pSet → pSet
+protected def sep (p : pSet → Prop) : pSet → pSet
 | ⟨α, A⟩ := ⟨{a // p (A a)}, λx, A x.1⟩
 
 instance : has_sep pSet pSet := ⟨pSet.sep⟩
 
 /-- The powerset operator -/
 def powerset : pSet → pSet
-| ⟨α, A⟩ := ⟨set α, λp, ⟨{a // p a}, λx, A x.1⟩⟩
+| ⟨α, A⟩ := ⟨set α, λ p, ⟨{a // a ∈ p}, λx, A x.1⟩⟩
 
 theorem mem_powerset : Π {x y : pSet}, y ∈ powerset x ↔ y ⊆ x
 | ⟨α, A⟩ ⟨β, B⟩ := ⟨λ⟨p, e⟩, (subset.congr_left e).2 $ λ⟨a, pa⟩, ⟨a, equiv.refl (A a)⟩,
@@ -406,10 +410,10 @@ quotient.induction_on₂ x y (λ⟨α, A⟩ y,
 /-- The powerset operation, the collection of subsets of a set -/
 def powerset : Set → Set :=
 resp.eval 1 ⟨powerset, λ⟨α, A⟩ ⟨β, B⟩ ⟨αβ, βα⟩,
-  ⟨λp, ⟨{b | ∃a, p a ∧ equiv (A a) (B b)},
+  ⟨λp, ⟨{b | ∃a, a ∈ p ∧ equiv (A a) (B b)},
     λ⟨a, pa⟩, let ⟨b, ab⟩ := αβ a in ⟨⟨b, a, pa, ab⟩, ab⟩,
     λ⟨b, a, pa, ab⟩, ⟨⟨a, pa⟩, ab⟩⟩,
-   λq, ⟨{a | ∃b, q b ∧ equiv (A a) (B b)},
+   λq, ⟨{a | ∃b, b ∈ q ∧ equiv (A a) (B b)},
     λ⟨a, b, qb, ab⟩, ⟨⟨b, qb⟩, ab⟩,
     λ⟨b, qb⟩, let ⟨a, ab⟩ := βα b in ⟨⟨a, b, qb, ab⟩, ab⟩⟩⟩⟩
 
@@ -605,19 +609,14 @@ theorem map_unique {f : Set.{u} → Set.{u}} [H : definable 1 f] {x z : Set.{u}}
 
 end Set
 
+@[derive [has_subset, has_emptyc, inhabited, has_union, has_inter, has_sdiff]]
 def Class := set Set
 
 namespace Class
 
-instance : has_subset Class     := ⟨set.subset⟩
-instance : has_sep Set Class    := ⟨set.sep⟩
-instance : has_emptyc Class     := ⟨λ a, false⟩
-instance : inhabited Class      := ⟨∅⟩
-instance : has_insert Set Class := ⟨set.insert⟩
-instance : has_union Class      := ⟨set.union⟩
-instance : has_inter Class      := ⟨set.inter⟩
+instance : has_sep Set Class    := set.has_sep
+instance : has_insert Set Class := ⟨@insert Set (set Set) _⟩
 instance : has_neg Class        := ⟨set.compl⟩
-instance : has_sdiff Class      := ⟨set.diff⟩
 
 /-- Coerce a set into a class -/
 def of_Set (x : Set.{u}) : Class.{u} := {y | y ∈ x}
@@ -630,7 +629,7 @@ def univ : Class := set.univ
 def to_Set (p : Set.{u} → Prop) (A : Class.{u}) : Prop := ∃x, ↑x = A ∧ p x
 
 /-- `A ∈ B` if `A` is a set which is a member of `B` -/
-protected def mem (A B : Class.{u}) : Prop := to_Set.{u} B A
+protected def mem (A B : Class.{u}) : Prop := to_Set.{u} B.contains A
 instance : has_mem Class Class := ⟨Class.mem⟩
 
 theorem mem_univ {A : Class.{u}} : A ∈ univ.{u} ↔ ∃ x : Set.{u}, ↑x = A :=
@@ -650,15 +649,15 @@ def Union (x : Class) : Class := set.sUnion (Class_to_Cong x)
 notation `⋃` := Union
 
 theorem of_Set.inj {x y : Set.{u}} (h : (x : Class.{u}) = y) : x = y :=
-Set.ext $ λz, by change (x : Class.{u}) z ↔ (y : Class.{u}) z; simp [*]
+Set.ext $ λz, by change (x : Class.{u}).contains z ↔ (y : Class.{u}).contains z; simp [*]
 
 @[simp] theorem to_Set_of_Set (p : Set.{u} → Prop) (x : Set.{u}) : to_Set p x ↔ p x :=
 ⟨λ⟨y, yx, py⟩, by rwa of_Set.inj yx at py, λpx, ⟨x, rfl, px⟩⟩
 
-@[simp] theorem mem_hom_left (x : Set.{u}) (A : Class.{u}) : (x : Class.{u}) ∈ A ↔ A x :=
+@[simp] theorem mem_hom_left (x : Set.{u}) (A : Class.{u}) : (x : Class.{u}) ∈ A ↔ A.contains x :=
 to_Set_of_Set _ _
 
-@[simp] theorem mem_hom_right (x y : Set.{u}) : (y : Class.{u}) x ↔ x ∈ y := iff.rfl
+@[simp] theorem mem_hom_right (x y : Set.{u}) : (y : Class.{u}).contains x ↔ x ∈ y := iff.rfl
 
 @[simp] theorem subset_hom (x y : Set.{u}) : (x : Class.{u}) ⊆ y ↔ x ⊆ y := iff.rfl
 
@@ -705,7 +704,7 @@ mem_univ.2 $ or.elim (classical.em $ ∃x, ∀y, p y ↔ y = x)
  (λhn, ⟨∅, by simp; exact set.ext (λz, ⟨false.rec _, λ⟨._, ⟨x, rfl, H⟩, zA⟩, hn ⟨x, H⟩⟩)⟩)
 
 /-- Function value -/
-def fval (F A : Class.{u}) : Class.{u} := iota (λy, to_Set (λx, F (Set.pair x y)) A)
+def fval (F A : Class.{u}) : Class.{u} := iota (λy, to_Set (λx, F.contains (Set.pair x y)) A)
 infixl `′`:100 := fval
 
 theorem fval_ex (F A : Class.{u}) : F ′ A ∈ univ.{u} := iota_ex _

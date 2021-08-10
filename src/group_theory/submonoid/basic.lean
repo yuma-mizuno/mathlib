@@ -266,7 +266,7 @@ of the additive closure of `s`."]
 lemma closure_induction {p : M → Prop} {x} (h : x ∈ closure s)
   (Hs : ∀ x ∈ s, p x) (H1 : p 1)
   (Hmul : ∀ x y, p x → p y → p (x * y)) : p x :=
-(@closure_le _ _ _ ⟨p, H1, Hmul⟩).2 Hs h
+(@closure_le _ _ _ ⟨set.of p, H1, Hmul⟩).2 Hs h
 
 attribute [elab_as_eliminator] submonoid.closure_induction add_submonoid.closure_induction
 
@@ -361,14 +361,14 @@ section is_unit
 
 /-- The submonoid consisting of the units of a monoid -/
 def is_unit.submonoid (M : Type*) [monoid M] : submonoid M :=
-{ carrier := set_of is_unit,
+{ carrier := set.of is_unit,
   one_mem' := by simp only [is_unit_one, set.mem_set_of_eq],
   mul_mem' := by { intros a b ha hb, rw set.mem_set_of_eq at *, exact is_unit.mul ha hb } }
 
 lemma is_unit.mem_submonoid_iff {M : Type*} [monoid M] (a : M) :
   a ∈ is_unit.submonoid M ↔ is_unit a :=
 begin
-  change a ∈ set_of is_unit ↔ is_unit a,
+  change a ∈ set.of is_unit ↔ is_unit a,
   rw set.mem_set_of_eq
 end
 

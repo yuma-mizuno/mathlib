@@ -36,7 +36,7 @@ instance : has_one (language α) := ⟨{[]}⟩
 instance : inhabited (language α) := ⟨0⟩
 
 /-- The sum of two languages is the union of  -/
-instance : has_add (language α) := ⟨set.union⟩
+instance : has_add (language α) := ⟨(∪)⟩
 instance : has_mul (language α) := ⟨set.image2 (++)⟩
 
 lemma zero_def : (0 : language α) = (∅ : set _) := rfl

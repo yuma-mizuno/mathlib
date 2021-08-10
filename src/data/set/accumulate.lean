@@ -20,13 +20,13 @@ def accumulate [has_le α] (s : α → set β) (x : α) : set β := ⋃ y ≤ x,
 variable {s}
 lemma accumulate_def [has_le α] {x : α} : accumulate s x = ⋃ y ≤ x, s y := rfl
 @[simp] lemma mem_accumulate [has_le α] {x : α} {z : β} : z ∈ accumulate s x ↔ ∃ y ≤ x, z ∈ s y :=
-mem_bUnion_iff
+mem_bUnion_iff'
 
 lemma subset_accumulate [preorder α] {x : α} : s x ⊆ accumulate s x :=
 λ z, mem_bUnion le_rfl
 
 lemma monotone_accumulate [preorder α] : monotone (accumulate s) :=
-λ x y hxy, bUnion_subset_bUnion_left $ λ z hz, le_trans hz hxy
+λ x y hxy, bUnion_subset_bUnion $ λ z hz, ⟨_, trans hz hxy, rfl.subset⟩
 
 lemma bUnion_accumulate [preorder α] (x : α) : (⋃ y ≤ x, accumulate s y) = ⋃ y ≤ x, s y :=
 begin

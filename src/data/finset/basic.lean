@@ -281,19 +281,19 @@ lemma ssubset_iff_subset_ne {s t : finset α} : s ⊂ t ↔ s ⊆ t ∧ s ≠ t 
 @lt_iff_le_and_ne _ _ s t
 
 theorem ssubset_iff_of_subset {s₁ s₂ : finset α} (h : s₁ ⊆ s₂) : s₁ ⊂ s₂ ↔ ∃ x ∈ s₂, x ∉ s₁ :=
-set.ssubset_iff_of_subset h
+@set.ssubset_iff_of_subset α s₁ s₂ h
 
 lemma ssubset_of_ssubset_of_subset {s₁ s₂ s₃ : finset α} (hs₁s₂ : s₁ ⊂ s₂) (hs₂s₃ : s₂ ⊆ s₃) :
   s₁ ⊂ s₃ :=
-set.ssubset_of_ssubset_of_subset hs₁s₂ hs₂s₃
+@set.ssubset_of_ssubset_of_subset α s₁ s₂ s₃ hs₁s₂ hs₂s₃
 
 lemma ssubset_of_subset_of_ssubset {s₁ s₂ s₃ : finset α} (hs₁s₂ : s₁ ⊆ s₂) (hs₂s₃ : s₂ ⊂ s₃) :
   s₁ ⊂ s₃ :=
-set.ssubset_of_subset_of_ssubset hs₁s₂ hs₂s₃
+@set.ssubset_of_subset_of_ssubset α s₁ s₂ s₃ hs₁s₂ hs₂s₃
 
 lemma exists_of_ssubset {s₁ s₂ : finset α} (h : s₁ ⊂ s₂) :
   ∃ x ∈ s₂, x ∉ s₁ :=
-set.exists_of_ssubset h
+@set.exists_of_ssubset α s₁ s₂ h
 
 /-! ### Nonempty -/
 
@@ -307,7 +307,7 @@ protected def nonempty (s : finset α) : Prop := ∃ x:α, x ∈ s
 lemma nonempty.bex {s : finset α} (h : s.nonempty) : ∃ x:α, x ∈ s := h
 
 lemma nonempty.mono {s t : finset α} (hst : s ⊆ t) (hs : s.nonempty) : t.nonempty :=
-set.nonempty.mono hst hs
+@set.nonempty.mono α s t hst hs
 
 lemma nonempty.forall_const {s : finset α} (h : s.nonempty) {p : Prop} : (∀ x ∈ s, p) ↔ p :=
 let ⟨x, hx⟩ := h in ⟨λ h, h x hx, λ h x hx, h⟩
@@ -428,7 +428,7 @@ by rw [coe_singleton, set.singleton_subset_iff]
 
 @[simp] lemma singleton_subset_iff {s : finset α} {a : α} :
   {a} ⊆ s ↔ a ∈ s :=
-singleton_subset_set_iff
+@singleton_subset_set_iff α s a
 
 @[simp] lemma subset_singleton_iff {s : finset α} {a : α} : s ⊆ {a} ↔ s = ∅ ∨ s = {a} :=
 begin
@@ -780,8 +780,7 @@ begin
     use [a, hac],
     simp },
   { intros b t hbt htc hbtc,
-    obtain ⟨i : ι , hic : i ∈ c, hti : (t : set α) ⊆ f i⟩ :=
-      htc (set.subset.trans (t.subset_insert b) hbtc),
+    obtain ⟨i : ι , hic : i ∈ c, hti : (t : set α) ⊆ f i⟩ := htc (trans (by simp) hbtc),
     obtain ⟨j, hjc, hbj⟩ : ∃ j ∈ c, b ∈ f j,
       by simpa [set.mem_bUnion_iff] using hbtc (t.mem_insert_self b),
     rcases hc j hjc i hic with ⟨k, hkc, hk, hk'⟩,
@@ -1211,7 +1210,7 @@ variable [∀j, decidable (j ∈ s)]
 
 @[norm_cast] lemma piecewise_coe [∀j, decidable (j ∈ (s : set α))] :
   (s : set α).piecewise f g = s.piecewise f g :=
-by { ext, congr }
+by { ext, simp [piecewise, set.piecewise] }
 
 @[simp, priority 980]
 lemma piecewise_eq_of_mem {i : α} (hi : i ∈ s) : s.piecewise f g i = f i :=
@@ -1360,7 +1359,8 @@ variable {p}
 @[simp] theorem mem_filter {s : finset α} {a : α} : a ∈ s.filter p ↔ a ∈ s ∧ p a := mem_filter
 
 theorem filter_ssubset {s : finset α} : s.filter p ⊂ s ↔ ∃ x ∈ s, ¬ p x :=
-⟨λ h, let ⟨x, hs, hp⟩ := set.exists_of_ssubset h in ⟨x, hs, mt (λ hp, mem_filter.2 ⟨hs, hp⟩) hp⟩,
+⟨λ h, let ⟨x, hs, hp⟩ := @set.exists_of_ssubset α (filter p s) s h in
+    ⟨x, hs, mt (λ hp, mem_filter.2 ⟨hs, hp⟩) hp⟩,
   λ ⟨x, hs, hp⟩, ⟨s.filter_subset _, λ h, hp (mem_filter.1 (h hs)).2⟩⟩
 
 variable (p)
@@ -1443,10 +1443,10 @@ theorem sdiff_eq_self (s₁ s₂ : finset α) :
   s₁ \ s₂ = s₁ ↔ s₁ ∩ s₂ ⊆ ∅ :=
 by { simp [subset.antisymm_iff],
      split; intro h,
-     { transitivity' ((s₁ \ s₂) ∩ s₂), mono, simp },
+     { transitivity' ((s₁ \ s₂) ∩ s₂), mono, exact subset.refl s₂, simp },
      { calc  s₁ \ s₂
            ⊇ s₁ \ (s₁ ∩ s₂) : by simp [(⊇)]
-       ... ⊇ s₁ \ ∅         : by mono using [(⊇)]
+       ... ⊇ s₁ \ ∅         : by { mono using [(⊇)], exact subset.refl _ }
        ... ⊇ s₁             : by simp [(⊇)] } }
 
 theorem filter_union_filter_neg_eq [decidable_pred (λ a, ¬ p a)]
@@ -1788,7 +1788,7 @@ lemma apply_coe_mem_map (f : α ↪ β) (s : finset α) (x : s) : f x ∈ s.map 
 mem_map_of_mem f x.prop
 
 @[simp, norm_cast] theorem coe_map (f : α ↪ β) (s : finset α) : (s.map f : set β) = f '' s :=
-set.ext $ λ x, mem_map.trans set.mem_image_iff_bex.symm
+set.ext $ λ x, mem_map.trans (by simp)
 
 theorem coe_map_subset_range (f : α ↪ β) (s : finset α) : (s.map f : set β) ⊆ set.range f :=
 calc ↑(s.map f) = f '' s      : coe_map f s
@@ -1889,7 +1889,7 @@ lemma fiber_nonempty_iff_mem_image (f : α → β) (s : finset α) (y : β) :
 by simp [finset.nonempty]
 
 @[simp, norm_cast] lemma coe_image {f : α → β} : ↑(s.image f) = f '' ↑s :=
-set.ext $ λ _, mem_image.trans set.mem_image_iff_bex.symm
+set.ext $ λ _, mem_image.trans (by simp)
 
 lemma nonempty.image (h : s.nonempty) (f : α → β) : (s.image f).nonempty :=
 let ⟨a, ha⟩ := h in ⟨f a, mem_image_of_mem f ha⟩

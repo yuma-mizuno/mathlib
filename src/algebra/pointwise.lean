@@ -333,7 +333,7 @@ image_prod _
 
 theorem range_smul_range [has_scalar α β] {ι κ : Type*} (b : ι → α) (c : κ → β) :
   range b • range c = range (λ p : ι × κ, b p.1 • c p.2) :=
-ext $ λ x, ⟨λ hx, let ⟨p, q, ⟨i, hi⟩, ⟨j, hj⟩, hpq⟩ := set.mem_smul.1 hx in
+set.ext $ λ x, ⟨λ hx, let ⟨p, q, ⟨i, hi⟩, ⟨j, hj⟩, hpq⟩ := set.mem_smul.1 hx in
   ⟨(i, j), hpq ▸ hi ▸ hj ▸ rfl⟩,
 λ ⟨⟨i, j⟩, h⟩, set.mem_smul.2 ⟨b i, c j, ⟨i, rfl⟩, ⟨j, rfl⟩, h⟩⟩
 
@@ -498,7 +498,7 @@ begin
     simpa only [true_and, true_or, eq_self_iff_true, finset.mem_insert], },
   { suffices g : (s : set M) ⊆ insert x T * insert y T', { norm_cast at g, assumption, },
     transitivity ↑(T * T'),
-    apply h,
+    exact coe_subset.2 h,
     rw finset.coe_mul,
     apply set.mul_subset_mul (set.subset_insert x T) (set.subset_insert y T'), },
 end

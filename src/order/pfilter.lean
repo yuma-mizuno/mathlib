@@ -105,7 +105,7 @@ variables [order_top P] {F : pfilter P}
 
 /-- A specific witness of `pfilter.nonempty` when `P` has a top element. -/
 @[simp] lemma top_mem : ⊤ ∈ F :=
-ideal.bot_mem
+@ideal.bot_mem _ _ F.dual
 
 /-- There is a bottom filter when `P` has a top element. -/
 instance : order_bot (pfilter P) :=
@@ -126,10 +126,10 @@ variables [semilattice_inf P] {x y : P} {F : pfilter P}
 
 /-- A specific witness of `pfilter.directed` when `P` has meets. -/
 lemma inf_mem (x y ∈ F) : x ⊓ y ∈ F :=
-ideal.sup_mem x y ‹x ∈ F› ‹y ∈ F›
+@ideal.sup_mem _ _ F.dual x y ‹x ∈ F› ‹y ∈ F›
 
 @[simp] lemma inf_mem_iff : x ⊓ y ∈ F ↔ x ∈ F ∧ y ∈ F :=
-ideal.sup_mem_iff
+@ideal.sup_mem_iff _ _ _ _ F.dual
 
 end semilattice_inf
 

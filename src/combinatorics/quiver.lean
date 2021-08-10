@@ -155,7 +155,7 @@ def wide_subquiver_equiv_set_total {V} [quiver V] :
   wide_subquiver V ≃ set (total V) :=
 { to_fun := λ H, { e | e.hom ∈ H e.left e.right },
   inv_fun := λ S a b, { e | total.mk a b e ∈ S },
-  left_inv := λ H, rfl,
+  left_inv := by { intro, ext, refl },
   right_inv := by { intro S, ext, cases x, refl } }
 
 /-- `G.path a b` is the type of paths from `a` to `b` through the arrows of `G`. -/

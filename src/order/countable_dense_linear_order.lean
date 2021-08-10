@@ -124,7 +124,7 @@ variable (β)
     partial isomorphism can be extended to one defined at `a`. -/
 def defined_at_left [densely_ordered β] [no_bot_order β] [no_top_order β] [nonempty β]
   (a : α) : cofinal (partial_iso α β) :=
-{ carrier := λ f, ∃ b : β, (a, b) ∈ f.val,
+{ carrier := { f | ∃ b : β, (a, b) ∈ f.val },
   mem_gt :=
   begin
     intro f,
@@ -145,7 +145,7 @@ variables (α) {β}
     partial isomorphism can be extended to include `b`. We prove this by symmetry. -/
 def defined_at_right [densely_ordered α] [no_bot_order α] [no_top_order α] [nonempty α]
   (b : β) : cofinal (partial_iso α β) :=
-{ carrier := λ f, ∃ a, (a, b) ∈ f.val,
+{ carrier := { f | ∃ a, (a, b) ∈ f.val },
   mem_gt :=
   begin
     intro f,

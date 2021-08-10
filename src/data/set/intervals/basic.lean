@@ -355,25 +355,25 @@ variables {α : Type u} [partial_order α] {a b : α}
 set.ext $ by simp [Icc, le_antisymm_iff, and_comm]
 
 @[simp] lemma Icc_diff_left : Icc a b \ {a} = Ioc a b :=
-ext $ λ x, by simp [lt_iff_le_and_ne, eq_comm, and.right_comm]
+set.ext $ λ x, by simp [lt_iff_le_and_ne, eq_comm, and.right_comm]
 
 @[simp] lemma Icc_diff_right : Icc a b \ {b} = Ico a b :=
-ext $ λ x, by simp [lt_iff_le_and_ne, and_assoc]
+set.ext $ λ x, by simp [lt_iff_le_and_ne, and_assoc]
 
 @[simp] lemma Ico_diff_left : Ico a b \ {a} = Ioo a b :=
-ext $ λ x, by simp [and.right_comm, ← lt_iff_le_and_ne, eq_comm]
+set.ext $ λ x, by simp [and.right_comm, ← lt_iff_le_and_ne, eq_comm]
 
 @[simp] lemma Ioc_diff_right : Ioc a b \ {b} = Ioo a b :=
-ext $ λ x, by simp [and_assoc, ← lt_iff_le_and_ne]
+set.ext $ λ x, by simp [and_assoc, ← lt_iff_le_and_ne]
 
 @[simp] lemma Icc_diff_both : Icc a b \ {a, b} = Ioo a b :=
 by rw [insert_eq, ← diff_diff, Icc_diff_left, Ioc_diff_right]
 
 @[simp] lemma Ici_diff_left : Ici a \ {a} = Ioi a :=
-ext $ λ x, by simp [lt_iff_le_and_ne, eq_comm]
+set.ext $ λ x, by simp [lt_iff_le_and_ne, eq_comm]
 
 @[simp] lemma Iic_diff_right : Iic a \ {a} = Iio a :=
-ext $ λ x, by simp [lt_iff_le_and_ne]
+set.ext $ λ x, by simp [lt_iff_le_and_ne]
 
 @[simp] lemma Ico_diff_Ioo_same (h : a < b) : Ico a b \ Ioo a b = {a} :=
 by rw [← Ico_diff_left, diff_diff_cancel_left (singleton_subset_iff.2 $ left_mem_Ico.2 h)]
@@ -396,9 +396,9 @@ by rw [← Ici_diff_left, diff_diff_cancel_left (singleton_subset_iff.2 left_mem
 @[simp] lemma Iic_diff_Iio_same : Iic a \ Iio a = {a} :=
 by rw [← Iic_diff_right, diff_diff_cancel_left (singleton_subset_iff.2 right_mem_Iic)]
 
-@[simp] lemma Ioi_union_left : Ioi a ∪ {a} = Ici a := ext $ λ x, by simp [eq_comm, le_iff_eq_or_lt]
+@[simp] lemma Ioi_union_left : Ioi a ∪ {a} = Ici a := set.ext $ λ x, by simp [eq_comm, le_iff_eq_or_lt]
 
-@[simp] lemma Iio_union_right : Iio a ∪ {a} = Iic a := ext $ λ x, le_iff_lt_or_eq.symm
+@[simp] lemma Iio_union_right : Iio a ∪ {a} = Iic a := set.ext $ λ x, le_iff_lt_or_eq.symm
 
 lemma Ioo_union_left (hab : a < b) : Ioo a b ∪ {a} = Ico a b :=
 by rw [← Ico_diff_left, diff_union_self,
@@ -540,10 +540,10 @@ not_mem_subset Ioo_subset_Ioi_self $ not_mem_Ioi.mpr ha
 lemma not_mem_Ioo_of_ge (hb : b ≤ c) : c ∉ Ioo a b :=
 not_mem_subset Ioo_subset_Iio_self $ not_mem_Iio.mpr hb
 
-@[simp] lemma compl_Iic : (Iic a)ᶜ = Ioi a := ext $ λ _, not_le
-@[simp] lemma compl_Ici : (Ici a)ᶜ = Iio a := ext $ λ _, not_le
-@[simp] lemma compl_Iio : (Iio a)ᶜ = Ici a := ext $ λ _, not_lt
-@[simp] lemma compl_Ioi : (Ioi a)ᶜ = Iic a := ext $ λ _, not_lt
+@[simp] lemma compl_Iic : (Iic a)ᶜ = Ioi a := set.ext $ λ _, not_le
+@[simp] lemma compl_Ici : (Ici a)ᶜ = Iio a := set.ext $ λ _, not_le
+@[simp] lemma compl_Iio : (Iio a)ᶜ = Ici a := set.ext $ λ _, not_lt
+@[simp] lemma compl_Ioi : (Ioi a)ᶜ = Iic a := set.ext $ λ _, not_lt
 
 @[simp] lemma Ici_diff_Ici : Ici a \ Ici b = Ico a b :=
 by rw [diff_eq, compl_Ici, Ici_inter_Iio]
@@ -1146,11 +1146,11 @@ section linear_order
 variables {α : Type u} [linear_order α] {a a₁ a₂ b b₁ b₂ c d : α}
 
 lemma Ioc_inter_Ioo_of_left_lt (h : b₁ < b₂) : Ioc a₁ b₁ ∩ Ioo a₂ b₂ = Ioc (max a₁ a₂) b₁ :=
-ext $ λ x, by simp [and_assoc, @and.left_comm (x ≤ _),
+set.ext $ λ x, by simp [and_assoc, @and.left_comm (x ≤ _),
   and_iff_left_iff_imp.2 (λ h', lt_of_le_of_lt h' h)]
 
 lemma Ioc_inter_Ioo_of_right_le (h : b₂ ≤ b₁) : Ioc a₁ b₁ ∩ Ioo a₂ b₂ = Ioo (max a₁ a₂) b₂ :=
-ext $ λ x, by simp [and_assoc, @and.left_comm (x ≤ _),
+set.ext $ λ x, by simp [and_assoc, @and.left_comm (x ≤ _),
   and_iff_right_iff_imp.2 (λ h', ((le_of_lt h').trans h))]
 
 lemma Ioo_inter_Ioc_of_left_le (h : b₁ ≤ b₂) : Ioo a₁ b₁ ∩ Ioc a₂ b₂ = Ioo (max a₁ a₂) b₁ :=
@@ -1160,13 +1160,13 @@ lemma Ioo_inter_Ioc_of_right_lt (h : b₂ < b₁) : Ioo a₁ b₁ ∩ Ioc a₂ b
 by rw [inter_comm, Ioc_inter_Ioo_of_left_lt h, max_comm]
 
 lemma Iic_inter_Ioc_of_le (h : a₂ ≤ a) : Iic a₂ ∩ Ioc a₁ a = Ioc a₁ a₂ :=
-ext $ λ x, ⟨λ H, ⟨H.2.1, H.1⟩, λ H, ⟨H.2, H.1, H.2.trans h⟩⟩
+set.ext $ λ x, ⟨λ H, ⟨H.2.1, H.1⟩, λ H, ⟨H.2, H.1, H.2.trans h⟩⟩
 
 @[simp] lemma Ico_diff_Iio : Ico a b \ Iio c = Ico (max a c) b :=
-ext $ by simp [Ico, Iio, iff_def, max_le_iff] {contextual:=tt}
+set.ext $ by simp [Ico, Iio, iff_def, max_le_iff] {contextual:=tt}
 
 @[simp] lemma Ico_inter_Iio : Ico a b ∩ Iio c = Ico a (min b c) :=
-ext $ by simp [Ico, Iio, iff_def, lt_min_iff] {contextual:=tt}
+set.ext $ by simp [Ico, Iio, iff_def, lt_min_iff] {contextual:=tt}
 
 @[simp] lemma Ioc_union_Ioc_right : Ioc a b ∪ Ioc a c = Ioc a (max b c) :=
 by rw [Ioc_union_Ioc, min_self]; exact (min_le_left _ _).trans (le_max_left _ _)

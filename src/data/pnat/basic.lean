@@ -78,7 +78,7 @@ subtype.linear_order _
 
 theorem eq {m n : ℕ+} : (m : ℕ) = n → m = n := subtype.eq
 
-@[simp] lemma coe_inj {m n : ℕ+} : (m : ℕ) = n ↔ m = n := set_coe.ext_iff
+@[simp] lemma coe_inj {m n : ℕ+} : (m : ℕ) = n ↔ m = n := subtype.ext_iff.symm
 
 lemma coe_injective : function.injective (coe : ℕ+ → ℕ) := subtype.coe_injective
 

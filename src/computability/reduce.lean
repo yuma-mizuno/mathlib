@@ -112,7 +112,7 @@ theorem computable_of_many_one_reducible
   (h₁ : p ≤₀ q) (h₂ : computable_pred q) : computable_pred p :=
 begin
   rcases h₁ with ⟨f, c, hf⟩,
-  rw [show p = λ a, q (f a), from set.ext hf],
+  rw [show p = λ a, q (f a), by ext; rw hf],
   rcases computable_iff.1 h₂ with ⟨g, hg, rfl⟩,
   exact ⟨by apply_instance, by simpa using hg.comp c⟩
 end
@@ -271,37 +271,37 @@ variables {γ : Type w} [primcodable γ] [inhabited γ]
 /--
 Computable and injective mapping of predicates to sets of natural numbers.
 -/
-def to_nat (p : set α) : set ℕ :=
-{ n | p ((encodable.decode α n).get_or_else (default α)) }
+def to_nat (p : α → Prop) : ℕ → Prop :=
+λ n, p ((encodable.decode α n).get_or_else (default α))
 
 @[simp]
-lemma to_nat_many_one_reducible {p : set α} : to_nat p ≤₀ p :=
+lemma to_nat_many_one_reducible {p : α → Prop} : to_nat p ≤₀ p :=
 ⟨λ n, (encodable.decode α n).get_or_else (default α),
  computable.option_get_or_else computable.decode (computable.const _),
  λ _, iff.rfl⟩
 
 @[simp]
-lemma many_one_reducible_to_nat {p : set α} : p ≤₀ to_nat p :=
-⟨encodable.encode, computable.encode, by simp [to_nat, set_of]⟩
+lemma many_one_reducible_to_nat {p : α → Prop} : p ≤₀ to_nat p :=
+⟨encodable.encode, computable.encode, by simp [to_nat]⟩
 
 @[simp]
-lemma many_one_reducible_to_nat_to_nat {p : set α} {q : set β} :
+lemma many_one_reducible_to_nat_to_nat {p : α → Prop} {q : β → Prop} :
   to_nat p ≤₀ to_nat q ↔ p ≤₀ q :=
 ⟨λ h, many_one_reducible_to_nat.trans (h.trans to_nat_many_one_reducible),
  λ h, to_nat_many_one_reducible.trans (h.trans many_one_reducible_to_nat)⟩
 
 @[simp]
-lemma to_nat_many_one_equiv {p : set α} : many_one_equiv (to_nat p) p :=
+lemma to_nat_many_one_equiv {p : α → Prop} : many_one_equiv (to_nat p) p :=
 by simp [many_one_equiv]
 
 @[simp]
-lemma many_one_equiv_to_nat (p : set α) (q : set β) :
+lemma many_one_equiv_to_nat (p : α → Prop) (q : β → Prop) :
   many_one_equiv (to_nat p) (to_nat q) ↔ many_one_equiv p q :=
 by simp [many_one_equiv]
 
 /-- A many-one degree is an equivalence class of sets up to many-one equivalence. -/
 def many_one_degree : Type :=
-quotient (⟨many_one_equiv, equivalence_of_many_one_equiv⟩ : setoid (set ℕ))
+quotient (⟨many_one_equiv, equivalence_of_many_one_equiv⟩ : setoid (ℕ → Prop))
 
 namespace many_one_degree
 
@@ -311,19 +311,19 @@ quotient.mk' (to_nat p)
 
 @[elab_as_eliminator]
 protected lemma ind_on {C : many_one_degree → Prop} (d : many_one_degree)
-  (h : ∀ p : set ℕ, C (of p)) : C d :=
+  (h : ∀ p : ℕ → Prop, C (of p)) : C d :=
 quotient.induction_on' d h
 
 /--
 Lifts a function on sets of natural numbers to many-one degrees.
 -/
 @[elab_as_eliminator, reducible]
-protected def lift_on {φ} (d : many_one_degree) (f : set ℕ → φ)
+protected def lift_on {φ} (d : many_one_degree) (f : (ℕ → Prop) → φ)
   (h : ∀ p q, many_one_equiv p q → f p = f q) : φ :=
 quotient.lift_on' d f h
 
 @[simp]
-protected lemma lift_on_eq {φ} (p : set ℕ) (f : set ℕ → φ)
+protected lemma lift_on_eq {φ} (p : ℕ → Prop) (f : (ℕ → Prop) → φ)
     (h : ∀ p q, many_one_equiv p q → f p = f q) :
   (of p).lift_on f h = f p :=
 rfl
@@ -332,7 +332,7 @@ rfl
 Lifts a binary function on sets of natural numbers to many-one degrees.
 -/
 @[elab_as_eliminator, reducible, simp]
-protected def lift_on₂ {φ} (d₁ d₂ : many_one_degree) (f : set ℕ → set ℕ → φ)
+protected def lift_on₂ {φ} (d₁ d₂ : many_one_degree) (f : (ℕ → Prop) → (ℕ → Prop) → φ)
     (h : ∀ p₁ p₂ q₁ q₂, many_one_equiv p₁ p₂ → many_one_equiv q₁ q₂ → f p₁ q₁ = f p₂ q₂) :
   φ :=
 d₁.lift_on (λ p, d₂.lift_on (f p) (λ q₁ q₂ hq, h _ _ _ _ (by refl) hq))
@@ -345,7 +345,7 @@ begin
 end
 
 @[simp]
-protected lemma lift_on₂_eq {φ} (p q : set ℕ) (f : set ℕ → set ℕ → φ)
+protected lemma lift_on₂_eq {φ} (p q : ℕ → Prop) (f : (ℕ → Prop) → (ℕ → Prop) → φ)
     (h : ∀ p₁ p₂ q₁ q₂, many_one_equiv p₁ p₂ → many_one_equiv q₁ q₂ → f p₁ q₁ = f p₂ q₂) :
   (of p).lift_on₂ (of q) f h = f p q :=
 rfl
@@ -353,7 +353,7 @@ rfl
 @[simp] lemma of_eq_of {p : α → Prop} {q : β → Prop} : of p = of q ↔ many_one_equiv p q :=
 by simp [of, quotient.eq']
 
-instance : inhabited many_one_degree := ⟨of (∅ : set ℕ)⟩
+instance : inhabited many_one_degree := ⟨of (λ n : ℕ, false)⟩
 
 /--
 For many-one degrees `d₁` and `d₂`, `d₁ ≤ d₂` if the sets in `d₁` are many-one reducible to the
@@ -406,7 +406,7 @@ instance : has_add many_one_degree :=
         (hr₂.trans one_one_reducible.disjoin_right.to_many_one)⟩
   end⟩
 
-@[simp] lemma add_of (p : set α) (q : set β) : of (p ⊕' q) = of p + of q :=
+@[simp] lemma add_of (p : α → Prop) (q : β → Prop) : of (p ⊕' q) = of p + of q :=
 of_eq_of.mpr
   ⟨disjoin_many_one_reducible
     (many_one_reducible_to_nat.trans one_one_reducible.disjoin_left.to_many_one)

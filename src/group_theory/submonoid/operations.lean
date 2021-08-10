@@ -81,8 +81,8 @@ def submonoid.to_add_submonoid : submonoid M ≃o add_submonoid (additive M) :=
   { carrier := additive.of_mul ⁻¹' S,
     one_mem' := S.zero_mem',
     mul_mem' := S.add_mem' },
-  left_inv := λ x, by cases x; refl,
-  right_inv := λ x, by cases x; refl,
+  left_inv := λ x, by { cases x, cases x_carrier, refl },
+  right_inv := λ x, by { cases x, cases x_carrier, refl },
   map_rel_iff' := λ a b, iff.rfl, }
 
 /-- Additive submonoids of an additive monoid `additive M` are isomorphic to submonoids of `M`. -/
@@ -121,8 +121,8 @@ def add_submonoid.to_submonoid : add_submonoid A ≃o submonoid (multiplicative 
   { carrier := multiplicative.of_add ⁻¹' S,
     zero_mem' := S.one_mem',
     add_mem' := S.mul_mem' },
-  left_inv := λ x, by cases x; refl,
-  right_inv := λ x, by cases x; refl,
+  left_inv := λ x, by { cases x, cases x_carrier, refl },
+  right_inv := λ x, by { cases x, cases x_carrier, refl },
   map_rel_iff' := λ a b, iff.rfl, }
 
 /-- Submonoids of a monoid `multiplicative A` are isomorphic to additive submonoids of `A`. -/

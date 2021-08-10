@@ -432,15 +432,15 @@ end option
 /-- A set `S ⊆ ℕ^α` is Diophantine if there exists a polynomial on
   `α ⊕ β` such that `v ∈ S` iff there exists `t : ℕ^β` with `p (v, t) = 0`. -/
 def dioph {α : Type u} (S : set (α → ℕ)) : Prop :=
-∃ {β : Type u} (p : poly (α ⊕ β)), ∀ (v : α → ℕ), S v ↔ ∃t, p (v ⊗ t) = 0
+∃ {β : Type u} (p : poly (α ⊕ β)), ∀ (v : α → ℕ), v ∈ S ↔ ∃t, p (v ⊗ t) = 0
 
 namespace dioph
 section
 variables {α β γ : Type u}
-theorem ext {S S' : set (α → ℕ)} (d : dioph S) (H : ∀v, S v ↔ S' v) : dioph S' :=
+theorem ext {S S' : set (α → ℕ)} (d : dioph S) (H : ∀ v, v ∈ S ↔ v ∈ S') : dioph S' :=
 eq.rec d $ show S = S', from set.ext H
 
-theorem of_no_dummies (S : set (α → ℕ)) (p : poly α) (h : ∀ (v : α → ℕ), S v ↔ p v = 0) :
+theorem of_no_dummies (S : set (α → ℕ)) (p : poly α) (h : ∀ (v : α → ℕ), v ∈ S ↔ p v = 0) :
   dioph S :=
 ⟨ulift empty, p.remap inl, λv, (h v).trans
   ⟨λh, ⟨λt, empty.rec _ t.down, by simp; rw [
@@ -461,19 +461,19 @@ begin
 end
 
 theorem inject_dummies {S : set (α → ℕ)} (f : β → γ) (g : γ → option β)
-  (inv : ∀ x, g (f x) = some x) (p : poly (α ⊕ β)) (h : ∀ (v : α → ℕ), S v ↔ ∃t, p (v ⊗ t) = 0) :
-  ∃ q : poly (α ⊕ γ), ∀ (v : α → ℕ), S v ↔ ∃t, q (v ⊗ t) = 0 :=
+  (inv : ∀ x, g (f x) = some x) (p : poly (α ⊕ β)) (h : ∀ (v : α → ℕ), v ∈ S ↔ ∃t, p (v ⊗ t) = 0) :
+  ∃ q : poly (α ⊕ γ), ∀ (v : α → ℕ), v ∈ S ↔ ∃t, q (v ⊗ t) = 0 :=
 ⟨p.remap (inl ⊗ (inr ∘ f)), λv, (h v).trans $ inject_dummies_lem f g inv _ _⟩
 
-theorem reindex_dioph {S : set (α → ℕ)} : Π (d : dioph S) (f : α → β), dioph (λv, S (v ∘ f))
+theorem reindex_dioph {S : set (α → ℕ)} : Π (d : dioph S) (f : α → β), dioph { v | (v ∘ f) ∈ S }
 | ⟨γ, p, pe⟩ f := ⟨γ, p.remap ((inl ∘ f) ⊗ inr), λv, (pe _).trans $ exists_congr $ λt,
   suffices v ∘ f ⊗ t = (v ⊗ t) ∘ (inl ∘ f ⊗ inr), by simp [this],
   funext $ λs, by cases s with a b; refl⟩
 
 theorem dioph_list_all (l) (d : list_all dioph l) :
-  dioph (λv, list_all (λS : set (α → ℕ), S v) l) :=
+  dioph { v | list_all (λS : set (α → ℕ), v ∈ S) l } :=
 suffices ∃ β (pl : list (poly (α ⊕ β))), ∀ v,
-  list_all (λS : set _, S v) l ↔ ∃t, list_all (λp : poly (α ⊕ β), p (v ⊗ t) = 0) pl,
+  list_all (λS : set _, v ∈ S) l ↔ ∃t, list_all (λp : poly (α ⊕ β), p (v ⊗ t) = 0) pl,
 from let ⟨β, pl, h⟩ := this
   in ⟨β, poly.sumsq pl, λv, (h v).trans $ exists_congr $ λt, (poly.sumsq_eq_zero _ _).symm⟩,
 begin
@@ -500,10 +500,10 @@ begin
              from funext $ λs, by cases s with a b; refl] at hq }⟩⟩⟩⟩
 end
 
-theorem and_dioph {S S' : set (α → ℕ)} (d : dioph S) (d' : dioph S') : dioph (λv, S v ∧ S' v) :=
+theorem and_dioph {S S' : set (α → ℕ)} (d : dioph S) (d' : dioph S') : dioph (S ∩ S') :=
 dioph_list_all [S, S'] ⟨d, d'⟩
 
-theorem or_dioph {S S' : set (α → ℕ)} : ∀ (d : dioph S) (d' : dioph S'), dioph (λv, S v ∨ S' v)
+theorem or_dioph {S S' : set (α → ℕ)} : ∀ (d : dioph S) (d' : dioph S'), dioph (S ∪ S')
 | ⟨β, p, pe⟩ ⟨γ, q, qe⟩ := ⟨β ⊕ γ, p.remap (inl ⊗ inr ∘ inl) * q.remap (inl ⊗ inr ∘ inr), λv,
   begin
     refine iff.trans (or_congr ((pe v).trans _) ((qe v).trans _))
@@ -515,16 +515,16 @@ theorem or_dioph {S S' : set (α → ℕ)} : ∀ (d : dioph S) (d' : dioph S'), 
   end⟩
 
 /-- A partial function is Diophantine if its graph is Diophantine. -/
-def dioph_pfun (f : (α → ℕ) →. ℕ) := dioph (λv : option α → ℕ, f.graph (v ∘ some, v none))
+def dioph_pfun (f : (α → ℕ) →. ℕ) := dioph { v : option α → ℕ | (v ∘ some, v none) ∈ f.graph }
 
 /-- A function is Diophantine if its graph is Diophantine. -/
-def dioph_fn (f : (α → ℕ) → ℕ) := dioph (λv : option α → ℕ, f (v ∘ some) = v none)
+def dioph_fn (f : (α → ℕ) → ℕ) := dioph { v : option α → ℕ | f (v ∘ some) = v none }
 
 theorem reindex_dioph_fn {f : (α → ℕ) → ℕ} (d : dioph_fn f) (g : α → β) :
   dioph_fn (λv, f (v ∘ g)) :=
 reindex_dioph d (functor.map g)
 
-theorem ex_dioph {S : set (α ⊕ β → ℕ)} : dioph S → dioph (λv, ∃x, S (v ⊗ x))
+theorem ex_dioph {S : set (α ⊕ β → ℕ)} : dioph S → dioph { v | ∃ x, v ⊗ x ∈ S }
 | ⟨γ, p, pe⟩ := ⟨β ⊕ γ, p.remap ((inl ⊗ inr ∘ inl) ⊗ inr ∘ inr), λv,
   ⟨λ⟨x, hx⟩, let ⟨t, ht⟩ := (pe _).1 hx in ⟨x ⊗ t, by simp; rw [
     show (v ⊗ x ⊗ t) ∘ ((inl ⊗ inr ∘ inl) ⊗ inr ∘ inr) = (v ⊗ x) ⊗ t,
@@ -533,7 +533,7 @@ theorem ex_dioph {S : set (α ⊕ β → ℕ)} : dioph S → dioph (λv, ∃x, S
     show (v ⊗ t) ∘ ((inl ⊗ inr ∘ inl) ⊗ inr ∘ inr) = (v ⊗ t ∘ inl) ⊗ t ∘ inr,
     from funext $ λs, by cases s with a b; try {cases a}; refl] at ht⟩⟩⟩⟩
 
-theorem ex1_dioph {S : set (option α → ℕ)} : dioph S → dioph (λv, ∃x, S (x :: v))
+theorem ex1_dioph {S : set (option α → ℕ)} : dioph S → dioph { v : α → ℕ | ∃ x, x :: v ∈ S }
 | ⟨β, p, pe⟩ := ⟨option β, p.remap (inr none :: inl ⊗ inr ∘ some), λv,
   ⟨λ⟨x, hx⟩, let ⟨t, ht⟩ := (pe _).1 hx in ⟨x :: t, by simp; rw [
     show (v ⊗ x :: t) ∘ (inr none :: inl ⊗ inr ∘ some) = x :: v ⊗ t,
@@ -543,7 +543,14 @@ theorem ex1_dioph {S : set (option α → ℕ)} : dioph S → dioph (λv, ∃x, 
     from funext $ λs, by cases s with a b; try {cases a}; refl] at ht⟩⟩⟩⟩
 
 theorem dom_dioph {f : (α → ℕ) →. ℕ} (d : dioph_pfun f) : dioph f.dom :=
-cast (congr_arg dioph $ set.ext $ λv, (pfun.dom_iff_graph _ _).symm) (ex1_dioph d)
+begin
+  unfold dioph_pfun at d,
+  have := ex1_dioph d,
+  simp at *,
+  -- rw pfun.dom_iff_graph,
+end
+-- cast (by exact congr_arg dioph (set.ext $ λ v, by rw pfun.dom_iff_graph; simp)) --$ λv, (pfun.dom_iff_graph _ _).symm)
+-- (ex1_dioph d)
 
 theorem dioph_fn_iff_pfun (f : (α → ℕ) → ℕ) : dioph_fn f = @dioph_pfun α f :=
 by refine congr_arg dioph (set.ext $ λv, _); exact pfun.lift_graph.symm
@@ -556,7 +563,7 @@ theorem proj_dioph (i : α) : dioph_fn (λv, v i) :=
 abs_poly_dioph (poly.proj i)
 
 theorem dioph_pfun_comp1 {S : set (option α → ℕ)} (d : dioph S) {f} (df : dioph_pfun f) :
-  dioph (λv : α → ℕ, ∃ h : f.dom v, S (f.fn v h :: v)) :=
+  dioph { v : α → ℕ | ∃ h : v ∈ f.dom, (f.fn v h :: v) ∈ S } :=
 ext (ex1_dioph (and_dioph d df)) $ λv,
 ⟨λ⟨x, hS, (h: Exists _)⟩, by
   rw [show (x :: v) ∘ some = v, from funext $ λs, rfl] at h;
@@ -565,7 +572,7 @@ ext (ex1_dioph (and_dioph d df)) $ λv,
   by rw [show (f.fn v x :: v) ∘ some = v, from funext $ λs, rfl]; exact ⟨x, rfl⟩⟩⟩
 
 theorem dioph_fn_comp1 {S : set (option α → ℕ)} (d : dioph S) {f : (α → ℕ) → ℕ} (df : dioph_fn f) :
-  dioph (λv : α → ℕ, S (f v :: v)) :=
+  dioph { v : α → ℕ | (f v :: v) ∈ S } :=
 ext (dioph_pfun_comp1 d (cast (dioph_fn_iff_pfun f) df)) $ λv,
 ⟨λ⟨_, h⟩, h, λh, ⟨trivial, h⟩⟩
 
@@ -577,28 +584,28 @@ open vector3
 open_locale vector3
 theorem dioph_fn_vec_comp1 {n} {S : set (vector3 ℕ (succ n))} (d : dioph S) {f : (vector3 ℕ n) → ℕ}
   (df : dioph_fn f) :
-  dioph (λv : vector3 ℕ n, S (cons (f v) v)) :=
+  dioph { v : vector3 ℕ n | cons (f v) v ∈ S } :=
 ext (dioph_fn_comp1 (reindex_dioph d (none :: some)) df) $ λv, by rw [
   show option.cons (f v) v ∘ (cons none some) = f v :: v,
   from funext $ λs, by cases s with a b; refl]
 
 theorem vec_ex1_dioph (n) {S : set (vector3 ℕ (succ n))} (d : dioph S) :
-  dioph (λv : vector3 ℕ n, ∃x, S (x :: v)) :=
+  dioph { v : vector3 ℕ n | ∃ x : ℕ, vector3.cons x v ∈ S } :=
 ext (ex1_dioph $ reindex_dioph d (none :: some)) $ λv, exists_congr $ λx, by rw [
   show (option.cons x v) ∘ (cons none some) = x :: v,
   from funext $ λs, by cases s with a b; refl]
 
 theorem dioph_fn_vec {n} (f : vector3 ℕ n → ℕ) :
-  dioph_fn f ↔ dioph (λv : vector3 ℕ (succ n), f (v ∘ fs) = v fz) :=
+  dioph_fn f ↔ dioph { v : vector3 ℕ (succ n) | f (v ∘ fs) = v fz } :=
 ⟨λh, reindex_dioph h (fz :: fs), λh, reindex_dioph h (none :: some)⟩
 
 theorem dioph_pfun_vec {n} (f : vector3 ℕ n →. ℕ) :
-  dioph_pfun f ↔ dioph (λv : vector3 ℕ (succ n), f.graph (v ∘ fs, v fz)) :=
+  dioph_pfun f ↔ dioph { v : vector3 ℕ (succ n) | (v ∘ fs, v fz) ∈ f.graph } :=
 ⟨λh, reindex_dioph h (fz :: fs), λh, reindex_dioph h (none :: some)⟩
 
 theorem dioph_fn_compn {α : Type} : ∀ {n} {S : set (α ⊕ fin2 n → ℕ)} (d : dioph S)
   {f : vector3 ((α → ℕ) → ℕ) n} (df : vector_allp dioph_fn f),
-  dioph (λv : α → ℕ, S (v ⊗ λi, f i v))
+  dioph { v : α → ℕ | (v ⊗ λi, f i v) ∈ S }
 | 0 S d f := λdf, ext (reindex_dioph d (id ⊗ fin2.elim0)) $ λv,
   by refine eq.to_iff (congr_arg S $ funext $ λs, _); {cases s with a b, refl, cases b}
 | (succ n) S d f := f.cons_elim $ λf fl, by simp; exact λ df dfl,

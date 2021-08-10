@@ -41,7 +41,7 @@ def equiv.as_embedding {α β : Sort*} {p : β → Prop} (e : α ≃ subtype p) 
 
 @[simp]
 lemma equiv.as_embedding_range {α β : Sort*} {p : β → Prop} (e : α ≃ subtype p) :
-  set.range e.as_embedding = set_of p :=
+  set.range e.as_embedding = set.of p :=
 set.ext $ λ x, ⟨λ ⟨y, h⟩, h ▸ subtype.coe_prop (e y), λ hs, ⟨e.symm ⟨x, hs⟩, by simp⟩⟩
 
 namespace function

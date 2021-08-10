@@ -2467,7 +2467,9 @@ lemma length_le_sum_of_one_le (L : list ℕ) (h : ∀ i ∈ L, 1 ≤ i) : L.leng
 begin
   induction L with j L IH h, { simp },
   rw [sum_cons, length, add_comm],
-  exact add_le_add (h _ (set.mem_insert _ _)) (IH (λ i hi, h i (set.mem_union_right _ hi)))
+  refine add_le_add _ _,
+  { exact h _ (mem_cons_self j L) },
+  { exact IH (λ i hi, h _ (mem_cons_of_mem j hi)), }
 end
 
 -- Now we tie those lemmas back to their multiplicative versions.
@@ -3440,8 +3442,11 @@ eq_of_sublist_of_length_eq (le_count_iff_repeat_sublist.mp (le_refl (count a l))
 
 @[simp] theorem count_filter {p} [decidable_pred p]
   {a} {l : list α} (h : p a) : count a (filter p l) = count a l :=
-by simp only [count, countp_filter]; congr; exact
-set.ext (λ b, and_iff_left_of_imp (λ e, e ▸ h))
+begin
+  simp only [count, countp_filter],
+  congr, ext,
+  exact and_iff_left_of_imp (by cc)
+end
 
 end count
 

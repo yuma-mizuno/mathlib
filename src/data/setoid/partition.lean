@@ -329,7 +329,7 @@ quotient.induction_on' x $ λ x, (setoid.ker_apply_mk_out' x).trans (hs.index_so
 @[simp] lemma proj_out (x : hs.quotient) : hs.proj (hs.out x) = x :=
 quotient.induction_on' x $ λ x, quotient.sound' $ hs.some_index x
 
-lemma class_of {x : α} : set_of (hs.setoid.rel x) = s (hs.index x) :=
+lemma class_of {x : α} : set.of (hs.setoid.rel x) = s (hs.index x) :=
 set.ext $ λ y, eq_comm.trans hs.mem_iff_index_eq.symm
 
 lemma proj_fiber (x : hs.quotient) : hs.proj ⁻¹' {x} = s (hs.equiv_quotient.symm x) :=

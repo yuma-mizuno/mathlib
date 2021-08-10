@@ -42,7 +42,7 @@ def eval := M.eval_from M.start
 
 /-- `M.accepts` is the language of `x` such that `M.eval x` is an accept state. -/
 def accepts : language α :=
-λ x, M.eval x ∈ M.accept
+{ x | M.eval x ∈ M.accept }
 
 lemma mem_accepts (x : list α) : x ∈ M.accepts ↔ M.eval_from M.start x ∈ M.accept := by refl
 

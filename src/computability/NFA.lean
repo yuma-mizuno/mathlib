@@ -53,7 +53,7 @@ def eval := M.eval_from M.start
 
 /-- `M.accepts` is the language of `x` such that there is an accept state in `M.eval x`. -/
 def accepts : language α :=
-λ x, ∃ S ∈ M.accept, S ∈ M.eval x
+{ x | ∃ S ∈ M.accept, S ∈ M.eval x }
 
 /-- `M.to_DFA` is an `DFA` constructed from a `NFA` `M` using the subset construction. The
   states is the type of `set`s of `M.state` and the step function is `M.step_set`. -/
