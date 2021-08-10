@@ -2184,14 +2184,15 @@ by simp [f.range_cod_restrict _]
 namespace linear_equiv
 
 section add_comm_monoid
+
+section subsingleton
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
-variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : out_param (R₂ ≃+* R)}
+variables [module R M] [module R₂ M₂]
+variables [subsingleton M] [subsingleton M₂]
+variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
-
-section subsingleton
-variables [module R M] [module R₂ M₂] [subsingleton M] [subsingleton M₂]
 
 include σ₂₁
 /-- Between two zero modules, the zero map is an equivalence. -/
@@ -2219,7 +2220,12 @@ omit σ₂₁
 end subsingleton
 
 section
+variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
+variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂}
+variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
+variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables (e e' : M ≃ₛₗ[σ₁₂] M₂)
 
 lemma map_eq_comap {p : submodule R M} :
@@ -2250,6 +2256,9 @@ omit σ₂₁
 end
 
 section uncurry
+variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
+variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 
 variables (V V₂ R)
 
@@ -2268,14 +2277,18 @@ protected def curry :
 end uncurry
 
 section
-variables [module R M] [module R₂ M₂] [module R₃ M₃]
-variables [module R N] [module R N₂] [module R N₃]
+variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
+variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
+variables {module_M : module R M} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
+variables {module_N : module R N} {module_N₂ : module R N₂} {module_N₃ : module R N₃}
+variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
 variables {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₃₂ : R₃ ≃+* R₂}
-variables [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₃₂ σ₂₃]
+variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
+variables {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂} {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃}
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
 variables (fₗ : N →ₗ[R] N₂) (gₗ : N₂ →ₗ[R] N) (eₗ : N ≃ₗ[R] N₂) (hₗ : N₂ →ₗ[R] N₃)
-variables [ring_equiv_inv_pair σ₁₂ σ₂₁]
 variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃) (eₗ'' : N₂ ≃ₗ[R] N₃)
 
 variables (p q : submodule R M)
@@ -2303,6 +2316,7 @@ def of_submodules (p : submodule R M) (q : submodule R₂ M₂) (h : p.map (e : 
 @[simp] lemma of_submodules_symm_apply {p : submodule R M} {q : submodule R₂ M₂}
   (h : p.map ↑e = q) (x : q) : ↑((e.of_submodules p q h).symm x) = e.symm x := rfl
 
+include re₁₂ re₂₁
 /-- A linear equivalence of two modules restricts to a linear equivalence from the preimage of any
 submodule to that submodule.
 
@@ -2329,7 +2343,8 @@ lemma of_submodule'_symm_apply [module R M] [module R₂ M₂]
 
 variable (p)
 
-omit σ₂₁
+omit σ₂₁ re₁₂ re₂₁
+
 /-- The top submodule of `M` is linearly equivalent to `M`. -/
 def of_top (h : p = ⊤) : p ≃ₗ[R] M :=
 { inv_fun   := λ x, ⟨x, h.symm ▸ trivial⟩,
@@ -2343,14 +2358,14 @@ def of_top (h : p = ⊤) : p ≃ₗ[R] M :=
 
 theorem of_top_symm_apply {h} (x : M) : (of_top p h).symm x = ⟨x, h.symm ▸ trivial⟩ := rfl
 
+include σ₂₁ re₁₂ re₂₁
 /-- If a linear map has an inverse, it is a linear equivalence. -/
--- SLFIXME: Here g is defined over σ₁₂.symm, but not f. Do we need another version the other way
--- around?
 def of_linearₛₗ (h₁ : f.compₛₗ g = linear_map.id) (h₂ : g.compₛₗ f = linear_map.id) : M ≃ₛₗ[σ₁₂] M₂ :=
 { inv_fun   := g,
   left_inv  := linear_map.ext_iff.1 h₂,
   right_inv := linear_map.ext_iff.1 h₁,
   ..f }
+omit σ₂₁ re₁₂ re₂₁
 
 def of_linear (h₁ : fₗ.comp gₗ = linear_map.id) (h₂ : gₗ.comp fₗ = linear_map.id) : N ≃ₗ[R] N₂ :=
 { inv_fun   := gₗ,
@@ -2358,27 +2373,29 @@ def of_linear (h₁ : fₗ.comp gₗ = linear_map.id) (h₂ : gₗ.comp fₗ = l
   right_inv := linear_map.ext_iff.1 h₁,
   ..fₗ }
 
+include σ₂₁ re₁₂ re₂₁
 @[simp] theorem of_linearₛₗ_apply {h₁ h₂} (x : M) : of_linearₛₗ f g h₁ h₂ x = f x := rfl
+omit σ₂₁ re₁₂ re₂₁
 
 @[simp] theorem of_linear_apply {h₁ h₂} (x : N) : of_linear fₗ gₗ h₁ h₂ x = fₗ x := rfl
 
-include σ₂₁
+include σ₂₁ re₁₂ re₂₁
 @[simp] theorem of_linearₛₗ_symm_apply {h₁ h₂} (x : M₂) : (of_linearₛₗ f g h₁ h₂).symm x = g x := rfl
-omit σ₂₁
+omit σ₂₁ re₁₂ re₂₁
 
 @[simp] theorem of_linear_symm_apply {h₁ h₂} (x : N₂) : (of_linear fₗ gₗ h₁ h₂).symm x = gₗ x := rfl
 
 @[simp] protected theorem range : (e : M →ₛₗ[σ₁₂] M₂).range = ⊤ :=
 linear_map.range_eq_top.2 e.to_equiv.surjective
 
-include σ₂₁
+include σ₂₁ re₁₂ re₂₁
 lemma eq_bot_of_equiv [module R₂ M₂] (e : p ≃ₛₗ[σ₁₂] (⊥ : submodule R₂ M₂)) : p = ⊥ :=
 begin
   refine bot_unique (set_like.le_def.2 $ assume b hb, (submodule.mem_bot R).2 _),
   rw [← p.mk_eq_zero hb, ← e.map_eq_zero_iff],
   apply submodule.eq_zero_of_bot_submodule
 end
-omit σ₂₁
+omit σ₂₁ re₁₂ re₂₁
 
 @[simp] protected theorem ker : (e : M →ₛₗ[σ₁₂] M₂).ker = ⊥ :=
 linear_map.ker_eq_bot_of_injective e.to_equiv.injective
@@ -2388,12 +2405,17 @@ linear_map.range_comp_of_range_eq_topₛₗ _ e.range
 
 @[simp] theorem range_comp : (hₗ.comp (eₗ : N →ₗ[R] N₂)).range = hₗ.range := range_compₛₗ _ _
 
+include module_M
 @[simp] theorem ker_compₛₗ (l : M →ₛₗ[σ₁₂] M₂) :
   (((e'' : M₂ →ₛₗ[σ₂₃] M₃).compₛₗ l : M →ₛₗ[σ₁₃] M₃) : M →ₛₗ[σ₁₃] M₃).ker = l.ker :=
 linear_map.ker_comp_of_ker_eq_botₛₗ _ e''.ker
+omit module_M
 
+#check @ker_compₛₗ
+include module_N
 @[simp] theorem ker_comp (l : N →ₗ[R] N₂) :
   (((eₗ'' : N₂ →ₗ[R] N₃).comp l)).ker = l.ker := ker_compₛₗ _ l
+omit module_N
 
 variables {f g}
 
@@ -2403,7 +2425,8 @@ between `M` and `f.range`.
 
 This is a computable alternative to `linear_equiv.of_injective`, and a bidirectional version of
 `linear_map.range_restrict`. -/
-def of_left_inverse {g : M₂ → M} (h : function.left_inverse g f) : M ≃ₛₗ[σ₁₂] f.range :=
+def of_left_inverse [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
+  {g : M₂ → M} (h : function.left_inverse g f) : M ≃ₛₗ[σ₁₂] f.range :=
 { to_fun := f.range_restrict,
   inv_fun := g ∘ f.range.subtype,
   left_inv := h,
@@ -2413,13 +2436,13 @@ def of_left_inverse {g : M₂ → M} (h : function.left_inverse g f) : M ≃ₛ�
   .. f.range_restrict }
 omit σ₂₁
 
-@[simp] lemma of_left_inverse_apply
+@[simp] lemma of_left_inverse_apply [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
   (h : function.left_inverse g f) (x : M) :
   ↑(of_left_inverse h x) = f x := rfl
 
 include σ₂₁
-@[simp] lemma of_left_inverse_symm_apply
-  (h : function.left_inverse g f) (x : f.range) :
+@[simp] lemma of_left_inverse_symm_apply [ring_equiv_inv_pair σ₁₂ σ₂₁]
+  [ring_equiv_inv_pair σ₂₁ σ₁₂] (h : function.left_inverse g f) (x : f.range) :
   (of_left_inverse h).symm x = g x := rfl
 omit σ₂₁
 
@@ -2431,12 +2454,12 @@ section add_comm_group
 
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃] [add_comm_group M₄]
-variables [module R M] [module R₂ M₂]
-variables [module R₃ M₃] [module R₄ M₄]
+variables {module_M : module R M} {module_M₂ : module R₂ M₂}
+variables {module_M₃ : module R₃ M₃} {module_M₄ : module R₄ M₄}
 variables {σ₁₂ : R ≃+* R₂} {σ₃₄ : R₃ ≃+* R₄}
 variables {σ₂₁ : R₂ ≃+* R} {σ₄₃ : R₄ ≃+* R₃}
-variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
-variables [ring_equiv_inv_pair σ₃₄ σ₄₃] [ring_equiv_inv_pair σ₄₃ σ₃₄]
+variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
+variables {re₃₄ : ring_equiv_inv_pair σ₃₄ σ₄₃} {re₄₃ : ring_equiv_inv_pair σ₄₃ σ₃₄}
 variables (e e₁ : M ≃ₛₗ[σ₁₂] M₂) (e₂ : M₃ ≃ₛₗ[σ₃₄] M₄)
 
 @[simp] theorem map_neg (a : M) : e (-a) = -e a := e.to_linear_map.map_neg a
@@ -2465,7 +2488,7 @@ end neg
 section ring
 
 variables [ring R] [ring R₂] [add_comm_group M] [add_comm_group M₂]
-variables [module R M] [module R₂ M₂]
+variables {module_M : module R M} {module_M₂ : module R₂ M₂}
 variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 variables (f : M →ₛₗ[σ₁₂] M₂) (e : M ≃ₛₗ[σ₁₂] M₂)
@@ -2548,8 +2571,6 @@ rfl
 and `M` into `M₃` are linearly isomorphic. -/
 def congr_right (f : M₂ ≃ₗ[R] M₃) : (M →ₗ[R] M₂) ≃ₗ[R] (M →ₗ[R] M₃) :=
 arrow_congr (linear_equiv.refl R M) f
-
-variables [semiring R₂] {σ₁₂ : R ≃+* R₂}
 
 /-- If `M` and `M₂` are linearly isomorphic then the two spaces of linear maps from `M` and `M₂` to
 themselves are linearly isomorphic. -/
