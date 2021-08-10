@@ -52,7 +52,10 @@ variables (e₁ : M₁ ≃ₗ* M₂) (e₂ : M₂ ≃ₗ* M₃) (e₁' : M₁ �
 #check g.compₛₗ f'
 #check g'.compₛₗ f'
 #check e₁.transₛₗ e₂
---#check g.compₛₗ e₁  -- fails
+--#check g.compₛₗ e₁  -- fails, but also fails in std mathlib
+#check g'.comp (e₁' : M₁ →ₗ[ℂ] M₂)
+#check g'.comp ↑e₁'
+#check g'.compₛₗ ↑e₁'
 #check g.compₛₗ (e₁ : M₁ →ₗ* M₂)
 #check g.compₛₗ (e₁' : M₁ →ₗ[ℂ] M₂)
 #check g'.compₛₗ (e₁' : M₁ →ₗ[ℂ] M₂)

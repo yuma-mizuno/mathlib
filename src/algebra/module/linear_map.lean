@@ -743,10 +743,10 @@ variables {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂} {re₃₂ : ring_eq
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 variables (e₁₂' : N₁ ≃ₗ[R₁] N₂) (e₂₃' : N₂ ≃ₗ[R₁] N₃)
 
-include module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
-instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂] M₂) :=
-⟨λ e, {.. e}⟩
-omit module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
+--include module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
+--instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂] M₂) :=
+--⟨λ e, {.. e}⟩
+--omit module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
 
 include σ₃₁ re₁₃ re₃₁
 /-- Linear equivalences are transitive. -/
