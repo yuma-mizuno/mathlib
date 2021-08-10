@@ -65,6 +65,31 @@ open subgroup
 
 variables {G : Type*} [group G] (H : subgroup G) [normal H]
 
+open quotient_group
+
+def UCS_step' : subgroup G := subgroup.copy
+  (subgroup.comap (mk' H) (center (quotient H)))
+  {x : G | ∀ y : G, x * y * x⁻¹ * y⁻¹ ∈ H}
+begin
+  ext,
+  change _ ↔ x ∈ comap (mk' H) (center (quotient H)),
+  rw [mem_comap, mem_center_iff],
+  change (∀ y, x * y * x⁻¹ * y⁻¹ ∈ H) ↔ _,
+  split,
+  { intros h q,
+    apply induction_on q,
+    intro y,
+    change ((y * x : G) : quotient H) = (x * y : G),
+    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv],
+    convert h y using 1, group,
+  },
+  { intros h y,
+    specialize h y,
+    change ((y * x : G) : quotient H) = (x * y : G) at h,
+    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv] at h,
+    convert h using 1, group },
+end
+
 /-- If `H` is a normal subgroup of `G`, then the set `{x : G | ∀ y : G, x*y*x⁻¹*y⁻¹ ∈ H}`
 is a subgroup of `G` (because it is the preimage in `G` of the centre of the
 quotient group `G/H`.)
@@ -82,7 +107,8 @@ def upper_central_series_step : subgroup G :=
     exact subgroup.normal.mem_comm infer_instance hx,
   end }
 
-open quotient_group
+#check subgroup.copy
+
 
 /-- The proof that `upper_central_series_step H` is the preimage of the centre of `G/H` under
 the canonical surjection. -/
@@ -288,3 +314,36 @@ begin
   { intro h,
     use [lower_central_series G, lower_central_series_is_descending_central_series, h] },
 end
+
+-- try the following exercises. First, read the module docstring, and make sure you understand
+-- the definitions. Then read the statements of the theorems in the file.
+-- Then for a statement below which takes your fancy, try and find a maths proof
+-- and then try and find a Lean proof.
+
+example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G := sorry
+
+example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
+  is_nilpotent G :=
+sorry
+
+example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
+  is_nilpotent G :=
+sorry
+
+example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
+begin
+  sorry
+end
+
+example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
+sorry
+
+universe u
+example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
+  is_nilpotent (Π i, f i) := sorry
+
+example (G : Type*) [group G] (N : subgroup G) [N.normal] (hG : is_nilpotent G) :
+  is_nilpotent (quotient_group.quotient N) := sorry
+
+example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) : is_nilpotent H :=
+sorry
