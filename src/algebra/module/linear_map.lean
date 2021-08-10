@@ -35,10 +35,7 @@ variables {N₁ : Type*} {N₂ : Type*} {N₃ : Type*} {N₄ : Type*} {ι : Type
 
 section
 
-variables [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
-variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
-variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
-variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
+variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
 
 class ring_equiv_comp_triple : Prop :=
@@ -108,23 +105,23 @@ end ring_equiv_inv_pair
 --variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
 --variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃)) (σ : R₁ →+* R₂)
 
-def ring_equiv.self (σ₁₂ : R₁ ≃+* R₂): R₁ ≃+* R₂ :=
-{ inv_fun := σ₁₂.inv_fun,
-  left_inv := σ₁₂.left_inv,
-  right_inv := σ₁₂.right_inv,
-  .. σ₁₂.to_ring_hom }
-
-lemma ring_equiv.eq_self : σ₁₂.self = σ₁₂ := by { cases σ₁₂, refl }
-
-@[simp] lemma ring_equiv.coe_self_apply : ⇑(σ₁₂.self) = (σ₁₂ : R₁ → R₂) := rfl
-
-instance ring_equiv_comp_triple_self₁ [_i : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]  :
-  ring_equiv_comp_triple σ₁₂.self σ₂₃ σ₁₃.self :=
-⟨ by { simp only [ring_equiv.eq_self], exact _i.is_comp_triple } ⟩
-
-instance ring_equiv_comp_triple_self₂ [_i : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
-  ring_equiv_comp_triple σ₁₂ σ₂₃.self σ₁₃.self :=
-⟨ by { simp only [ring_equiv.eq_self], exact _i.is_comp_triple } ⟩
+--def ring_equiv.self (σ₁₂ : R₁ ≃+* R₂): R₁ ≃+* R₂ :=
+--{ inv_fun := σ₁₂.inv_fun,
+--  left_inv := σ₁₂.left_inv,
+--  right_inv := σ₁₂.right_inv,
+--  .. σ₁₂.to_ring_hom }
+--
+--lemma ring_equiv.eq_self : σ₁₂.self = σ₁₂ := by { cases σ₁₂, refl }
+--
+--@[simp] lemma ring_equiv.coe_self_apply : ⇑(σ₁₂.self) = (σ₁₂ : R₁ → R₂) := rfl
+--
+--instance ring_equiv_comp_triple_self₁ [_i : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]  :
+--  ring_equiv_comp_triple σ₁₂.self σ₂₃ σ₁₃.self :=
+--⟨ by { simp only [ring_equiv.eq_self], exact _i.is_comp_triple } ⟩
+--
+--instance ring_equiv_comp_triple_self₂ [_i : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
+--  ring_equiv_comp_triple σ₁₂ σ₂₃.self σ₁₃.self :=
+--⟨ by { simp only [ring_equiv.eq_self], exact _i.is_comp_triple } ⟩
 
 --instance ring_equiv_inv_pair.ids_self :
 --  ring_equiv_inv_pair (ring_equiv.refl R₁).self (ring_equiv.refl R₁).self := ⟨rfl⟩
@@ -205,10 +202,10 @@ namespace linear_map
 section add_comm_monoid
 
 variables [semiring R] [semiring S]
-variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
-variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 
 section
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R M₂] [module S M₃]
 
 def to_mul_action_hom (f : M →ₗ[R] M₂) : mul_action_hom R M M₂ := {..f}
@@ -238,7 +235,10 @@ by { ext x, refl }
 end
 
 section
-variables [module R M] [module R M₂] [module S M₃] (σ : R ≃+* S)
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
+variables [module R M] [module R M₂] [module S M₃]
+variables (σ : R ≃+* S)
 variables (f g : M →ₗ[R] M₂) (f' g' : M →ₛₗ[σ] M₃)
 
 @[simp] lemma to_fun_eq_coe : f'.to_fun = ⇑f' := rfl
@@ -247,7 +247,7 @@ theorem is_linear : is_linear_map R f := ⟨f.map_add', f.map_smul'⟩
 
 variables {f g f' g' σ}
 
-theorem coe_injective : @injective (M →ₛₗ[σ] M₃) (M → M₃) coe_fn :=
+theorem coe_injective [module R M] [module S M₃] : @injective (M →ₛₗ[σ] M₃) (M → M₃) coe_fn :=
 by rintro ⟨f', _⟩ ⟨g', _⟩ ⟨h⟩; congr
 
 @[ext] theorem ext (H : ∀ x, f' x = g' x) : f' = g' :=
@@ -374,12 +374,15 @@ section
 --{ to_fun := f ∘ g, .. f.to_distrib_mul_action_hom.comp g.to_distrib_mul_action_hom }
 
 variables [semiring R₁] [semiring R₂] [semiring R₃]
-variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables [module R₁ N₁] [module R₁ N₂] [module R₁ N₃]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
+variables {module_M₁ : module R₁ M₁} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
+variables {module_N₁ : module R₁ N₁} {module_N₂ : module R₁ N₂} {module_N₃ : module R₁ N₃}
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R₁ ≃+* R₃)}
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
 variables (fₗ : N₂ →ₗ[R₁] N₃) (gₗ : N₁ →ₗ[R₁] N₂)
 
+include module_M₁ module_M₂ module_M₃
 def compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
   M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
@@ -389,12 +392,13 @@ def compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →
     simp,
     rw [ring_equiv_comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
   end }
+omit module_M₁ module_M₂ module_M₃
 
 -- SLFIXME: figure out the right way to do this
 
-abbreviation comp [module R M₁] [module R M₂] [module R M₃] :=
-  @compₛₗ R R R M₁ M₂ M₃ _ _ _ _ _ _ _ _ _
-  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+abbreviation comp :=
+  @compₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
+  (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
 
 --notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
@@ -418,6 +422,9 @@ linear_map.ext $ λ x, rfl
 @[simp] theorem id_comp : id.comp fₗ = fₗ := id_compₛₗ _
 
 end
+
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 
 /-- If a function `g` is a left and right inverse of a linear map `f`, then `g` is linear itself. -/
 def inverse [module R M] [module S M₂] {σ : R ≃+* S} {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ']
@@ -612,12 +619,12 @@ section add_comm_monoid
 
 variables {M₄ : Type*}
 variables [semiring R] [semiring S]
+
+section
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 variables [add_comm_monoid M₃] [add_comm_monoid M₄]
 variables [add_comm_monoid N₁] [add_comm_monoid N₂]
 variables [add_comm_monoid N₃] [add_comm_monoid N₄]
-
-section
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
 variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
 include R
@@ -653,8 +660,14 @@ to_linear_map_injective.eq_iff
 end
 
 section
-variables [module R M] [module S M₂] {σ : R ≃+* S}
-variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+variables [semiring R₁] [semiring R₂] [semiring R₃]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
+variables [add_comm_monoid M₃] [add_comm_monoid M₄]
+variables [add_comm_monoid N₁] [add_comm_monoid N₂]
+variables [add_comm_monoid N₃] [add_comm_monoid N₄]
+variables {module_M : module R M} {module_S_M₂ : module S M₂} {σ : R ≃+* S}
+variables {σ' : out_param (S ≃+* R)}
+variables {re₁ : ring_equiv_inv_pair σ σ'} {re₂ : ring_equiv_inv_pair σ' σ}
 variables (e e' : M ≃ₛₗ[σ] M₂)
 
 lemma to_linear_map_eq_coe : e.to_linear_map = (e : M →ₛₗ[σ] M₂) := rfl
@@ -693,6 +706,7 @@ end
 
 @[simp] lemma refl_apply [module R M] (x : M) : refl R M x = x := rfl
 
+include module_M module_S_M₂ re₁ re₂
 /-- Linear equivalences are symmetric. -/
 @[symm]
 def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
@@ -703,6 +717,7 @@ def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
   map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_equiv_inv_pair.symm_eq₂])],
   .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   .. e.to_equiv.symm }
+omit module_M module_S_M₂ re₁ re₂
 
 /-- See Note [custom simps projection] -/
 def simps.symm_apply {R : Type*} {S : Type*} [semiring R] [semiring S] {σ : R ≃+* S}
@@ -717,34 +732,33 @@ include σ'
 omit σ'
 
 --variables {R₁ R₂ R₃ M₁ : Type*} [semiring R₁] [semiring R₂] [semiring R₃] [add_comm_monoid M₁]
-variables [semiring R₁] [semiring R₂] [semiring R₃]
-variables [module R₁ M₁] [module R₂ M₂] [module R₃ M₃]
-variables [module R₁ N₁] [module R₁ N₂] [module R₁ N₃]
+variables {module_M₁ : module R₁ M₁} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
+variables {module_N₁ : module R₁ N₁} {module_N₂ : module R₁ N₂} {module_N₃ : module R₁ N₃}
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
 variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
-variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₃ σ₃₂] [ring_equiv_inv_pair σ₁₃ σ₃₁]
-variables [ring_equiv_inv_pair σ₂₁ σ₁₂] [ring_equiv_inv_pair σ₃₂ σ₂₃] [ring_equiv_inv_pair σ₃₁ σ₁₃]
+variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂} {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁}
+variables {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂} {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 variables (e₁₂' : N₁ ≃ₗ[R₁] N₂) (e₂₃' : N₂ ≃ₗ[R₁] N₃)
 
-include σ₂₁
+include module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
 instance coe_to_linear_map' : has_coe (M₁ ≃ₛₗ[σ₁₂] M₂) (M₁ →ₛₗ[σ₁₂] M₂) :=
 ⟨λ e, {.. e}⟩
-omit σ₂₁
+omit module_M₁ module_M₂ re₁₂ re₂₁ σ₂₁
 
-include σ₃₁
+include σ₃₁ re₁₃ re₃₁
 /-- Linear equivalences are transitive. -/
 @[trans]
 def transₛₗ : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.compₛₗ e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
-omit σ₃₁
+omit σ₃₁ re₁₃ re₃₁
 
-@[trans] abbreviation trans [module R M₂] [module R M₃] := @transₛₗ R R R M M₂ M₃ _ _ _ _ _ _ _ _ _
-  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
-  (ring_equiv.refl R) (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_comp_triple.ids
+@[trans] abbreviation trans := @transₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
+  (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
+  (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
   ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
   ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
 
@@ -757,10 +771,10 @@ lemma to_add_monoid_hom_commutes :
   e.to_linear_map.to_add_monoid_hom = e.to_add_equiv.to_add_monoid_hom :=
 rfl
 
-include σ₃₁
+include σ₃₁ re₁₃ re₃₁
 @[simp] theorem transₛₗ_apply (c : M₁) :
   (e₁₂.transₛₗ e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃) c = e₂₃ (e₁₂ c) := rfl
-omit σ₃₁
+omit σ₃₁ re₁₃ re₃₁
 
 @[simp] theorem trans_apply (c : N₁) :
   (e₁₂'.trans e₂₃') c = e₂₃' (e₁₂' c) := rfl
@@ -776,13 +790,15 @@ omit σ'
   (e : M₁ ≃ₗ[R] M₂) (b : M₁) : e.symm (e b) = b := e.left_inv b
 
 include σ₃₁ σ₂₁ σ₃₂
-@[simp] lemma symm_transₛₗ_apply (c : M₃) :
-  (e₁₂.transₛₗ e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
+@[simp] lemma symm_transₛₗ_apply [ring_equiv_inv_pair σ₁₃ σ₃₁] [ring_equiv_inv_pair σ₃₁ σ₁₃]
+  (c : M₃) : (e₁₂.transₛₗ e₂₃ : M₁ ≃ₛₗ[σ₁₃] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
 omit σ₃₁ σ₂₁ σ₃₂
 
-@[simp] lemma symm_trans_apply [module R M₁] [module R M₂] [module R M₃]
-  {e₁₂ : M₁ ≃ₗ[R] M₂} {e₂₃ : M₂ ≃ₗ[R] M₃} (c : M₃) :
-  (e₁₂.trans e₂₃ : M₁ ≃ₗ[R] M₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
+include module_N₁ module_N₂ module_N₃
+@[simp] lemma symm_trans_apply
+  {e₁₂ : N₁ ≃ₗ[R₁] N₂} {e₂₃ : N₂ ≃ₗ[R₁] N₃} (c : N₃) :
+  (e₁₂.trans e₂₃ : N₁ ≃ₗ[R₁] N₃).symm c = e₁₂.symm (e₂₃.symm c) := rfl
+omit module_N₁ module_N₂ module_N₃
 
 @[simp] lemma transₛₗ_refl : e.transₛₗ (refl S M₂) = e := to_equiv_injective e.to_equiv.trans_refl
 @[simp] lemma refl_transₛₗ : (refl R M).transₛₗ e = e := to_equiv_injective e.to_equiv.refl_trans
@@ -793,22 +809,22 @@ lemma symm_apply_eq {x y} : e.symm x = y ↔ x = e y := e.to_equiv.symm_apply_eq
 lemma eq_symm_apply {x y} : y = e.symm x ↔ e y = x := e.to_equiv.eq_symm_apply
 omit σ'
 
-@[simp] lemma refl_symm : (refl R M).symm = linear_equiv.refl R M := rfl
+@[simp] lemma refl_symm [module R M] : (refl R M).symm = linear_equiv.refl R M := rfl
 
-@[simp] lemma trans_symm [module R M₂] (f : M ≃ₗ[R] M₂) :
+@[simp] lemma trans_symm [module R M] [module R M₂] (f : M ≃ₗ[R] M₂) :
   f.trans f.symm = linear_equiv.refl R M :=
 by { ext x, simp }
 
-@[simp] lemma symm_trans [module R M₂] (f : M ≃ₗ[R] M₂) :
+@[simp] lemma symm_trans [module R M] [module R M₂] (f : M ≃ₗ[R] M₂) :
   f.symm.trans f = linear_equiv.refl R M₂ :=
 by { ext x, simp }
 
-@[simp, norm_cast] lemma refl_to_linear_map :
+@[simp, norm_cast] lemma refl_to_linear_map [module R M] :
   (linear_equiv.refl R M : M →ₗ[R] M) = linear_map.id :=
 rfl
 
 @[simp, norm_cast]
-lemma comp_coe [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M₂)
+lemma comp_coe [module R M] [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M₂)
   (f' :  M₂ ≃ₗ[R] M₃) : (f' : M₂ →ₗ[R] M₃).comp (f : M →ₗ[R] M₂) = (f.trans f' : M →ₗ[R] M₃) :=
 rfl
 
@@ -818,8 +834,13 @@ rfl
 @[simp] theorem map_add (a b : M) : e (a + b) = e a + e b := e.map_add' a b
 @[simp] theorem map_zero : e 0 = 0 := e.to_linear_map.map_zero
 @[simp] theorem map_smulₛₗ (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
-@[simp] theorem map_smul [module R M₁] (e : M ≃ₗ[R] M₁) (c : R) (x : M) :
-  e (c • x) = c • e x := e.map_smul' c x
+
+include module_N₁ module_N₂
+@[simp] theorem map_smul (e : N₁ ≃ₗ[R₁] N₂) (c : R₁) (x : N₁) :
+  e (c • x) = c • e x := map_smulₛₗ _ _ _
+omit module_N₁ module_N₂
+
+#check @map_smulₛₗ
 
 @[simp] lemma map_sum {s : finset ι} (u : ι → M) : e (∑ i in s, u i) = ∑ i in s, e (u i) :=
 e.to_linear_map.map_sum
@@ -829,23 +850,19 @@ e.to_add_equiv.map_eq_zero_iff
 theorem map_ne_zero_iff {x : M} : e x ≠ 0 ↔ x ≠ 0 :=
 e.to_add_equiv.map_ne_zero_iff
 
-@[simp] theorem symm_symm [ring_equiv_inv_pair σ' σ] (e : M ≃ₛₗ[σ] M₂): e.symm.symm = e :=
+include module_M module_S_M₂ re₁ re₂
+@[simp] theorem symm_symm (e : M ≃ₛₗ[σ] M₂): e.symm.symm = e :=
 by { cases e, refl }
+omit module_M module_S_M₂ re₁ re₂
 
-@[simp] theorem symm_symmₗ [module R M₂] (e : M ≃ₗ[R] M₂): e.symm.symm = e :=
-by { cases e, refl }
+--@[simp] theorem symm_symmₗ [module R M₂] (e : M ≃ₗ[R] M₂): e.symm.symm = e :=
+--by { cases e, refl }
 
-lemma symm_bijective [module S M₂] [ring_equiv_inv_pair σ' σ] :
+lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ] [ring_equiv_inv_pair σ σ'] :
   function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
---equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
-begin -- SLFIXME : ugliness, golfing fails for some weird reason
-  refine equiv.bijective ⟨symm, symm,_,_⟩,
-  exact (λ e, symm_symm _),
-  exact (λ e, symm_symm _),
-end
+equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
 
-@[simp] lemma mk_coe' [ring_equiv_inv_pair σ' σ] (f h₁ h₂ h₃ h₄) :
-  (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ'] M) = e.symm :=
+@[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) : (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ'] M) = e.symm :=
 symm_bijective.injective $ ext $ λ x, rfl
 
 include σ'
@@ -865,6 +882,9 @@ e.to_equiv.image_eq_preimage s
 omit σ'
 
 end
+
+variables [semiring R₁] [semiring R₂] [semiring R₃]
+variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 
 /-- An involutive linear map is a linear equivalence. -/
 def of_involutive [module R M] (f : M →ₗ[R] M) (hf : involutive f) : M ≃ₗ[R] M :=
