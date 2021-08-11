@@ -322,14 +322,23 @@ end
 
 example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
-  rw nilpotent_iff_lower_central_series,
-  exact ⟨0, subsingleton.elim ⊤ ⊥⟩,
+  exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
-  sorry,
+  rw nilpotent_iff_lower_central_series at *,
+  rcases hG with ⟨n, hG⟩,
+  use n + 1,
+  ext x,
+  split,
+  {
+    sorry,
+  },
+  { intro h,
+    rw mem_bot at h,
+    simp [h, one_mem] },
 end
 
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
@@ -338,6 +347,8 @@ sorry
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
+  intro hG,
+  change ∃ n : ℕ, upper_central_series G n = ⊤ at hG,
   sorry
 end
 
