@@ -6,6 +6,20 @@ Authors: Frédéric Dupuis
 import linear_algebra.basic
 import data.complex.is_R_or_C
 
+/-!
+# Test file for conjugate linear maps
+
+This file contains a few tests.
+
+## Notations
+
+It adds some notation.
+
+## Tags
+
+Conjugate linear maps, semilinear maps
+-/
+
 namespace is_R_or_C
 
 variables (𝕜 : Type*) [is_R_or_C 𝕜]
@@ -19,6 +33,7 @@ def cconj : 𝕜 ≃+* 𝕜 :=
   ..conj }
 
 @[simp] lemma cconj_apply (x : 𝕜) : cconj 𝕜 x = conj x := rfl
+
 @[simp] lemma cconj_symm_apply (x : 𝕜) : (cconj 𝕜).symm x = conj x := rfl
 
 end is_R_or_C
@@ -26,6 +41,8 @@ end is_R_or_C
 namespace ring_equiv_inv_pair
 
 variables {𝕜 : Type*} [is_R_or_C 𝕜]
+
+/-- Docstring in case the linter complains -/
 instance cconj : ring_equiv_inv_pair (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) :=
 ⟨ring_equiv.ext $ λ x, by simp⟩
 
