@@ -177,8 +177,8 @@ set_option old_structure_cmd true
 
 /-- A map `f` between modules over a semiring is linear if it satisfies the two properties
 `f (x + y) = f x + f y` and `f (c • x) = c • f x`. Elements of `linear_map R M M₂` (available under
-the notation `M →ₗ[R] M₂`) are bundled versions of such maps. An unbundled version is available with
-the predicate `is_linear_map`, but it should be avoided most of the time. -/
+the notation `M →ₗ[R] M₂`) are bundled versions of such maps. An unbundled version is available
+with the predicate `is_linear_map`, but it should be avoided most of the time. -/
 structure linear_map {R : Type*} {S : Type*} [semiring R] [semiring S]  (σ : R ≃+* S)
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
@@ -390,7 +390,7 @@ def compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →
   map_smul' := λ r x,
   begin
     simp,
-    rw [ring_equiv_comp_triple.comp_apply], -- SLFIXME: simp doesn't work here, I feel like it should
+    rw [ring_equiv_comp_triple.comp_apply], -- SLFIXME:simp doesn't work here, I feel like it should
   end }
 omit module_M₁ module_M₂ module_M₃
 
@@ -403,7 +403,8 @@ abbreviation comp :=
 --notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
 
-@[simp] lemma compₛₗ_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) : f.compₛₗ g x = f (g x) := rfl
+@[simp] lemma compₛₗ_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) :
+  f.compₛₗ g x = f (g x) := rfl
 @[simp] lemma comp_apply (x : N₁) : fₗ.comp gₗ x = fₗ (gₗ x) := rfl
 
 @[simp, norm_cast] lemma coe_compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
@@ -608,8 +609,6 @@ attribute [nolint doc_blame] linear_equiv.to_linear_map
 attribute [nolint doc_blame] linear_equiv.to_add_equiv
 
 --infix ` ≃ₗ ` := linear_equiv _
---notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
---notation M ` ≃ₗ[`:50 R `] ` M₂ := @linear_equiv R R _ _ (ring_equiv.refl R) (ring_equiv.refl R) ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids M M₂ _ _ _ _
 notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
 notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
 
@@ -738,8 +737,9 @@ variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : 
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
 variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
-variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂} {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁}
-variables {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂} {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
+variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂}
+variables {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
+variables {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 variables (e₁₂' : N₁ ≃ₗ[R₁] N₂) (e₂₃' : N₂ ≃ₗ[R₁] N₃)
 
@@ -858,11 +858,13 @@ omit module_M module_S_M₂ re₁ re₂
 --@[simp] theorem symm_symmₗ [module R M₂] (e : M ≃ₗ[R] M₂): e.symm.symm = e :=
 --by { cases e, refl }
 
-lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ] [ring_equiv_inv_pair σ σ'] :
-  function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
-equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
+lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ]
+  [ring_equiv_inv_pair σ σ'] : function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
+equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) →
+  (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
 
-@[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) : (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ : M₂ ≃ₛₗ[σ'] M) = e.symm :=
+@[simp] lemma mk_coe' (f h₁ h₂ h₃ h₄) : (linear_equiv.mk f h₁ h₂ ⇑e h₃ h₄ :
+  M₂ ≃ₛₗ[σ'] M) = e.symm :=
 symm_bijective.injective $ ext $ λ x, rfl
 
 include σ'

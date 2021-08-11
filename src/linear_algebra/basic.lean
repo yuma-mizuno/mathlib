@@ -346,8 +346,8 @@ lemma pow_map_zero_of_le
 by rw [← nat.sub_add_cancel hk, pow_add, mul_apply, hm, map_zero]
 
 lemma commute_pow_left_of_commuteₛₗ
-  {f : M →ₛₗ[σ₁₂] M₂} {g : module.End R M} {g₂ : module.End R₂ M₂} (h : g₂.compₛₗ f = f.compₛₗ g) (k : ℕ) :
-  (g₂^k).compₛₗ f = f.compₛₗ (g^k) :=
+  {f : M →ₛₗ[σ₁₂] M₂} {g : module.End R M} {g₂ : module.End R₂ M₂}
+  (h : g₂.compₛₗ f = f.compₛₗ g) (k : ℕ) : (g₂^k).compₛₗ f = f.compₛₗ (g^k) :=
 begin
   induction k with k ih,
   { simpa only [pow_zero], },
@@ -664,7 +664,8 @@ end comm_ring
 end linear_map
 
 /--
-The `ℕ`-linear equivalence between additive morphisms `A →+ B` and `ℕ`-linear morphisms `A →ₗ[ℕ] B`.
+The `ℕ`-linear equivalence between additive morphisms `A →+ B` and `ℕ`-linear morphisms
+`A →ₗ[ℕ] B`.
 -/
 @[simps]
 def add_monoid_hom_lequiv_nat {A B : Type*} [add_comm_monoid A] [add_comm_monoid B] :
@@ -677,7 +678,8 @@ def add_monoid_hom_lequiv_nat {A B : Type*} [add_comm_monoid A] [add_comm_monoid
   right_inv := by { intros f, ext, refl } }
 
 /--
-The `ℤ`-linear equivalence between additive morphisms `A →+ B` and `ℤ`-linear morphisms `A →ₗ[ℤ] B`.
+The `ℤ`-linear equivalence between additive morphisms `A →+ B` and `ℤ`-linear morphisms
+`A →ₗ[ℤ] B`.
 -/
 @[simps]
 def add_monoid_hom_lequiv_int {A B : Type*} [add_comm_group A] [add_comm_group B] :
@@ -1097,7 +1099,8 @@ lemma coe_scott_continuous : omega_complete_partial_order.continuous'
   (coe : submodule R M → set M) :=
 ⟨set_like.coe_mono, coe_supr_of_chain⟩
 
-@[simp] lemma mem_supr_of_chain (a : ℕ →ₘ submodule R M) (m : M) : m ∈ (⨆ k, a k) ↔ ∃ k, m ∈ a k :=
+@[simp] lemma mem_supr_of_chain (a : ℕ →ₘ submodule R M) (m : M) :
+  m ∈ (⨆ k, a k) ↔ ∃ k, m ∈ a k :=
 mem_supr_of_directed a a.monotone.directed_le
 
 section
@@ -1602,7 +1605,8 @@ theorem comap_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) 
   submodule.comap (cod_restrict p f hf) p' = submodule.comap f (map p.subtype p') :=
 submodule.ext $ λ x, ⟨λ h, ⟨⟨_, hf x⟩, h, rfl⟩, by rintro ⟨⟨_, _⟩, h, ⟨⟩⟩; exact h⟩
 
-/-- The range of a linear map `f : M → M₂` is a submodule of `M₂`. See Note [range copy pattern]. -/
+/-- The range of a linear map `f : M → M₂` is a submodule of `M₂`.
+See Note [range copy pattern]. -/
 def range (f : M →ₛₗ[τ₁₂] M₂) : submodule R₂ M₂ :=
 (map f ⊤).copy (set.range f) set.image_univ.symm
 
@@ -2010,8 +2014,8 @@ def mkq : M →ₗ[R] p.quotient :=
 
 @[simp] theorem mkq_apply (x : M) : p.mkq x = quotient.mk x := rfl
 
-/-- The map from the quotient of `M` by a submodule `p` to `M₂` induced by a linear map `f : M → M₂`
-vanishing on `p`, as a linear map. -/
+/-- The map from the quotient of `M` by a submodule `p` to `M₂` induced by a linear map
+`f : M → M₂` vanishing on `p`, as a linear map. -/
 def liftq (f : M →ₛₗ[τ₁₂] M₂) (h : p ≤ f.ker) : p.quotient →ₛₗ[τ₁₂] M₂ :=
 { to_fun := λ x, _root_.quotient.lift_on' x f $
     λ a b (ab : a - b ∈ p), eq_of_sub_eq_zero $ by simpa using h ab,
@@ -2246,14 +2250,16 @@ def of_submodule (p : submodule R M) : p ≃ₛₗ[σ₁₂] ↥(p.map (e : M �
     simp only [symm_apply_applyₛₗ, submodule.coe_mk, coe_coe, hx], }⟩,
   left_inv  := λ x, by simp,
   right_inv := λ y, by { apply set_coe.ext, simp, },
-  ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrictₛₗ p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂)) (λ x, ⟨x, by simp⟩) }
+  ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrictₛₗ p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂))
+  (λ x, ⟨x, by simp⟩) }
 
 include σ₂₁
 @[simp] lemma of_submodule_apply (p : submodule R M) (x : p) :
   ↑(e.of_submodule p x) = e x := rfl
 
-@[simp] lemma of_submodule_symm_apply (p : submodule R M) (x : (p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂)) :
-  ↑((e.of_submodule p).symm x) = e.symm x := rfl
+@[simp] lemma of_submodule_symm_apply (p : submodule R M)
+  (x : (p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂)) : ↑((e.of_submodule p).symm x) = e.symm x :=
+rfl
 
 omit σ₂₁
 
@@ -2310,8 +2316,8 @@ variables {p q}
 include σ₂₁
 /-- A linear equivalence which maps a submodule of one module onto another, restricts to a linear
 equivalence of the two submodules. -/
-def of_submodules (p : submodule R M) (q : submodule R₂ M₂) (h : p.map (e : M →ₛₗ[σ₁₂] M₂) = q) : p ≃ₛₗ[σ₁₂] q :=
-(e.of_submodule p).transₛₗ (linear_equiv.of_eq _ _ h)
+def of_submodules (p : submodule R M) (q : submodule R₂ M₂) (h : p.map (e : M →ₛₗ[σ₁₂] M₂) = q) :
+p ≃ₛₗ[σ₁₂] q := (e.of_submodule p).transₛₗ (linear_equiv.of_eq _ _ h)
 
 
 @[simp] lemma of_submodules_apply {p : submodule R M} {q : submodule R₂ M₂}
@@ -2364,7 +2370,8 @@ theorem of_top_symm_apply {h} (x : M) : (of_top p h).symm x = ⟨x, h.symm ▸ t
 
 include σ₂₁ re₁₂ re₂₁
 /-- If a linear map has an inverse, it is a linear equivalence. -/
-def of_linearₛₗ (h₁ : f.compₛₗ g = linear_map.id) (h₂ : g.compₛₗ f = linear_map.id) : M ≃ₛₗ[σ₁₂] M₂ :=
+def of_linearₛₗ (h₁ : f.compₛₗ g = linear_map.id) (h₂ : g.compₛₗ f = linear_map.id) :
+  M ≃ₛₗ[σ₁₂] M₂ :=
 { inv_fun   := g,
   left_inv  := linear_map.ext_iff.1 h₂,
   right_inv := linear_map.ext_iff.1 h₁,
@@ -2384,10 +2391,12 @@ omit σ₂₁ re₁₂ re₂₁
 @[simp] theorem of_linear_apply {h₁ h₂} (x : N) : of_linear fₗ gₗ h₁ h₂ x = fₗ x := rfl
 
 include σ₂₁ re₁₂ re₂₁
-@[simp] theorem of_linearₛₗ_symm_apply {h₁ h₂} (x : M₂) : (of_linearₛₗ f g h₁ h₂).symm x = g x := rfl
+@[simp] theorem of_linearₛₗ_symm_apply {h₁ h₂} (x : M₂) : (of_linearₛₗ f g h₁ h₂).symm x = g x :=
+rfl
 omit σ₂₁ re₁₂ re₂₁
 
-@[simp] theorem of_linear_symm_apply {h₁ h₂} (x : N₂) : (of_linear fₗ gₗ h₁ h₂).symm x = gₗ x := rfl
+@[simp] theorem of_linear_symm_apply {h₁ h₂} (x : N₂) : (of_linear fₗ gₗ h₁ h₂).symm x = gₗ x :=
+rfl
 
 @[simp] protected theorem range : (e : M →ₛₗ[σ₁₂] M₂).range = ⊤ :=
 linear_map.range_eq_top.2 e.to_equiv.surjective
@@ -2423,8 +2432,8 @@ omit module_N
 variables {f g}
 
 include σ₂₁
-/-- An linear map `f : M →ₗ[R] M₂` with a left-inverse `g : M₂ →ₗ[R] M` defines a linear equivalence
-between `M` and `f.range`.
+/-- An linear map `f : M →ₗ[R] M₂` with a left-inverse `g : M₂ →ₗ[R] M` defines a linear
+equivalence between `M` and `f.range`.
 
 This is a computable alternative to `linear_equiv.of_injective`, and a bidirectional version of
 `linear_map.range_restrict`. -/
@@ -2740,7 +2749,8 @@ namespace submodule
 variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [module R M] [module R M₂]
 variables (p : submodule R M) (q : submodule R M₂)
 
-@[simp] lemma mem_map_equiv {e : M ≃ₗ[R] M₂} {x : M₂} : x ∈ p.map (e : M →ₗ[R] M₂) ↔ e.symm x ∈ p :=
+@[simp] lemma mem_map_equiv {e : M ≃ₗ[R] M₂} {x : M₂} : x ∈ p.map (e : M →ₗ[R] M₂) ↔
+  e.symm x ∈ p :=
 begin
   rw submodule.mem_map, split,
   { rintros ⟨y, hy, hx⟩, simp [←hx, hy], },
@@ -2767,8 +2777,8 @@ begin
   apply q.add_mem h.1 h.2,
 end
 
-/-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`, the
-set of maps $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \}$ is a submodule of `Hom(M, M₂)`. -/
+/-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`,
+the set of maps $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \}$ is a submodule of `Hom(M, M₂)`. -/
 def compatible_maps : submodule R (M →ₗ[R] M₂) :=
 { carrier   := {f | p ≤ comap f q},
   zero_mem' := by { change p ≤ comap 0 q, rw comap_zero, refine le_top, },
@@ -2776,8 +2786,8 @@ def compatible_maps : submodule R (M →ₗ[R] M₂) :=
                                  exact ⟨h₁, h₂⟩, },
   smul_mem' := λ c f h, le_trans h (comap_le_comap_smul q f c), }
 
-/-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`, the
-natural map $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \} \to Hom(M/p, M₂/q)$ is linear. -/
+/-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`,
+the natural map $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \} \to Hom(M/p, M₂/q)$ is linear. -/
 def mapq_linear : compatible_maps p q →ₗ[R] p.quotient →ₗ[R] q.quotient :=
 { to_fun    := λ f, mapq _ _ f.val f.property,
   map_add'  := λ x y, by { ext m', apply quotient.induction_on' m', intros m, refl, },
