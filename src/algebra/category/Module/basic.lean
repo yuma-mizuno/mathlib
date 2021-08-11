@@ -73,14 +73,19 @@ namespace Module
 instance : has_coe_to_sort (Module.{v} R) :=
 { S := Type v, coe := Module.carrier }
 
+
+-- set_option trace.class_instances true
 instance Module_category : category (Module.{v} R) :=
 { hom   := λ M N, M →ₗ[R] N,
   id    := λ M, 1,
   comp  := λ A B C f g, g.comp f,
   id_comp' := λ X Y f, linear_map.id_comp _,
-  comp_id' := λ X Y f, linear_map.comp_id _,
+  comp_id' := by {intros,
+  try_for 10000 {apply tensor_product.mk_compr₂_inj}
+  -- this line repeats the same `comm_semiring R` search again and again
+  },
   assoc' := λ W X Y Z f g h, linear_map.comp_assoc _ _ _ }
-
+#exit
 instance Module_concrete_category : concrete_category.{v} (Module.{v} R) :=
 { forget := { obj := λ R, R, map := λ R S f, (f : R → S) },
   forget_faithful := { } }
