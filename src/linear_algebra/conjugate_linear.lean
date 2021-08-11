@@ -26,7 +26,8 @@ end is_R_or_C
 namespace ring_equiv_inv_pair
 
 variables {𝕜 : Type*} [is_R_or_C 𝕜]
-instance cconj : ring_equiv_inv_pair (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) := ⟨ring_equiv.ext $ λ x, by simp⟩
+instance cconj : ring_equiv_inv_pair (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) :=
+⟨ring_equiv.ext $ λ x, by simp⟩
 
 end ring_equiv_inv_pair
 
@@ -45,31 +46,29 @@ variables {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} --{R : Type*} [semiring R
 variables [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [module 𝕜 M₁] [module 𝕜 M₂] [module 𝕜 M₃] --[module R M₁] [module R M₂]
 variables (f : M₁ →ₗ*[𝕜] M₂) (g : M₂ →ₗ*[𝕜] M₃) (f' : M₁ →ₗ[𝕜] M₂) (g' : M₂ →ₗ[𝕜] M₃)
-#check @linear_equiv 𝕜 𝕜 _ _ (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) _ _ M₁ M₂ _ _ _ _
+--#check @linear_equiv 𝕜 𝕜 _ _ (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) _ _ M₁ M₂ _ _ _ _
 variables (e₁ : M₁ ≃ₗ*[𝕜] M₂) (e₂ : M₂ ≃ₗ*[𝕜] M₃) (e₁' : M₁ ≃ₗ[𝕜] M₂) (e₂' : M₂ ≃ₗ[𝕜] M₃)
 
-#check g.compₛₗ f
-#check g'.compₛₗ f
-#check g.compₛₗ f'
-#check g'.compₛₗ f'
-#check e₁.transₛₗ e₂
---#check g.compₛₗ e₁  -- fails, but also fails in std mathlib
-#check g'.comp (e₁' : M₁ →ₗ[𝕜] M₂)
-#check g'.comp ↑e₁'
-#check g'.compₛₗ ↑e₁'
-#check g.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
-#check g.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
-#check g'.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
-#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
-#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
-
-#check e₁.symm
-#check e₁'.symm
-#check e₁'.symm.transₛₗ e₁
-#check e₁.symm.transₛₗ e₁'
-#check e₁.transₛₗ e₁.symm
-#check e₁.transₛₗ e₁'.symm
-#check e₁'.transₛₗ e₁'.symm
-#check e₁'.transₛₗ e₁.symm
-
-example (h : M₁ →ₗ[𝕜] M₃) : g.compₛₗ f = h := sorry
+--#check g.compₛₗ f
+--#check g'.compₛₗ f
+--#check g.compₛₗ f'
+--#check g'.compₛₗ f'
+--#check e₁.transₛₗ e₂
+----#check g.compₛₗ e₁  -- fails, but also fails in std mathlib
+--#check g'.comp (e₁' : M₁ →ₗ[𝕜] M₂)
+--#check g'.comp ↑e₁'
+--#check g'.compₛₗ ↑e₁'
+--#check g.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
+--#check g.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
+--#check g'.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
+--#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
+--#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
+--
+--#check e₁.symm
+--#check e₁'.symm
+--#check e₁'.symm.transₛₗ e₁
+--#check e₁.symm.transₛₗ e₁'
+--#check e₁.transₛₗ e₁.symm
+--#check e₁.transₛₗ e₁'.symm
+--#check e₁'.transₛₗ e₁'.symm
+--#check e₁'.transₛₗ e₁.symm
