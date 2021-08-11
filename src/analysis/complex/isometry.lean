@@ -122,6 +122,7 @@ begin
         rw mul_add },
       map_smul' := by {
         intros m x,
+        dsimp,
         rw linear_isometry.map_smul,
         rw algebra.mul_smul_comm },
       norm_map' := by {
