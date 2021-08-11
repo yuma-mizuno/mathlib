@@ -103,7 +103,7 @@ def fdifferential_map (f : C^∞⟮I, M; I', M'⟯) (x : M) (v : point_derivatio
   (point_derivation I' (f x)) :=
 { to_fun := λ g, v (g.comp f),
   map_add' := λ g h, by rw [smooth_map.add_comp, derivation.map_add],
-  map_smul' := λ k g, by rw [smooth_map.smul_comp, derivation.map_smul],
+  map_smul' := λ k g, by simp [smooth_map.smul_comp, derivation.map_smul],
   leibniz' := λ g h, by { simp only [derivation.leibniz, smooth_map.mul_comp], refl} }
 
 /-- The differential is a linear map. -/
