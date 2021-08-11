@@ -320,11 +320,17 @@ end
 -- Then for a statement below which takes your fancy, try and find a maths proof
 -- and then try and find a Lean proof.
 
-example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G := sorry
+example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
+begin
+  rw nilpotent_iff_lower_central_series,
+  exact ⟨0, subsingleton.elim ⊤ ⊥⟩,
+end
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
-sorry
+begin
+  sorry,
+end
 
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
