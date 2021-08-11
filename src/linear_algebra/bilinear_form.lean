@@ -250,8 +250,11 @@ def to_lin_hom_aux₁ (A : bilin_form R M) (x : M) : M →ₗ[R] R :=
 
 def to_lin_hom_aux₂ (A : bilin_form R M) : M →ₗ[R₂] M →ₗ[R] R :=
 { to_fun := to_lin_hom_aux₁ A,
-    map_add' := λ x₁ x₂, linear_map.ext $ λ x, by simp only [to_lin_hom_aux₁, linear_map.coe_mk, linear_map.add_apply, add_left],
-    map_smul' := λ c x, linear_map.ext $ by { dsimp [to_lin_hom_aux₁], intros, simp only [← algebra_map_smul R c x, algebra.smul_def, linear_map.coe_mk, linear_map.smul_apply, smul_left] } }
+    map_add' := λ x₁ x₂, linear_map.ext $ λ x, by simp only [to_lin_hom_aux₁, linear_map.coe_mk,
+      linear_map.add_apply, add_left],
+    map_smul' := λ c x, linear_map.ext $ by { dsimp [to_lin_hom_aux₁], intros,
+      simp only [← algebra_map_smul R c x, algebra.smul_def, linear_map.coe_mk,
+      linear_map.smul_apply, smul_left] } }
 
 variables (R₂)
 
@@ -268,7 +271,8 @@ def to_lin_hom : bilin_form R M →ₗ[R₂] M →ₗ[R₂] M →ₗ[R] R :=
     dsimp only [to_lin_hom_aux₁, to_lin_hom_aux₂],
     apply linear_map.ext,
     intros y,
-    simp only [to_lin_hom_aux₂, to_lin_hom_aux₁, linear_map.coe_mk, linear_map.add_apply, add_apply],
+    simp only [to_lin_hom_aux₂, to_lin_hom_aux₁, linear_map.coe_mk,
+      linear_map.add_apply, add_apply],
   end ,
   map_smul' := λ c A,
   begin
@@ -277,7 +281,8 @@ def to_lin_hom : bilin_form R M →ₗ[R₂] M →ₗ[R₂] M →ₗ[R] R :=
     intros x,
     apply linear_map.ext,
     intros y,
-    simp only [to_lin_hom_aux₂, to_lin_hom_aux₁, linear_map.coe_mk, linear_map.smul_apply, smul_apply],
+    simp only [to_lin_hom_aux₂, to_lin_hom_aux₁,
+      linear_map.coe_mk, linear_map.smul_apply, smul_apply],
   end }
 
 variables {R₂}
@@ -744,12 +749,12 @@ begin
   { intros, simp only [zero_smul, finsupp.sum_zero] }
 end
 
-lemma bilin_form.to_matrix'_comp_left (B : bilin_form R₃ (n → R₃)) (f : (n → R₃) →ₗ[R₃] (n → R₃)) :
-  (B.comp_left f).to_matrix' = f.to_matrix'ᵀ ⬝ B.to_matrix' :=
+lemma bilin_form.to_matrix'_comp_left (B : bilin_form R₃ (n → R₃))
+  (f : (n → R₃) →ₗ[R₃] (n → R₃)) : (B.comp_left f).to_matrix' = f.to_matrix'ᵀ ⬝ B.to_matrix' :=
 by simp only [bilin_form.comp_left, bilin_form.to_matrix'_comp, to_matrix'_id, matrix.mul_one]
 
-lemma bilin_form.to_matrix'_comp_right (B : bilin_form R₃ (n → R₃)) (f : (n → R₃) →ₗ[R₃] (n → R₃)) :
-  (B.comp_right f).to_matrix' = B.to_matrix' ⬝ f.to_matrix' :=
+lemma bilin_form.to_matrix'_comp_right (B : bilin_form R₃ (n → R₃))
+  (f : (n → R₃) →ₗ[R₃] (n → R₃)) : (B.comp_right f).to_matrix' = B.to_matrix' ⬝ f.to_matrix' :=
 by simp only [bilin_form.comp_right, bilin_form.to_matrix'_comp, to_matrix'_id,
               transpose_one, matrix.one_mul]
 
@@ -1188,7 +1193,8 @@ variables [decidable_eq n]
 given matrices `J`, `J₂`. -/
 def pair_self_adjoint_matrices_submodule : submodule R₃ (matrix n n R₃) :=
 (bilin_form.is_pair_self_adjoint_submodule (matrix.to_bilin' J) (matrix.to_bilin' J₃)).map
-  ((linear_map.to_matrix' : ((n → R₃) →ₗ[R₃] (n → R₃)) ≃ₗ[R₃] matrix n n R₃) : ((n → R₃) →ₗ[R₃] (n → R₃)) →ₗ[R₃] matrix n n R₃)
+  ((linear_map.to_matrix' : ((n → R₃) →ₗ[R₃] (n → R₃)) ≃ₗ[R₃] matrix n n R₃) :
+  ((n → R₃) →ₗ[R₃] (n → R₃)) →ₗ[R₃] matrix n n R₃)
 
 @[simp] lemma mem_pair_self_adjoint_matrices_submodule :
   A ∈ (pair_self_adjoint_matrices_submodule J J₃) ↔ matrix.is_adjoint_pair J J₃ A A :=
