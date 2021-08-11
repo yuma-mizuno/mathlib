@@ -72,14 +72,9 @@ section
 
 local attribute [instance] smul_comm_class.symm
 
---set_option trace.class_instances true
---#check N →ₗ[S] P
---example : add_comm_monoid (N →ₗ[S] P) := @linear_map.add_comm_monoid S N P S _ _ _ _ _ _ (ring_equiv.refl S).self _
---#check M →ₗ[R] (N →ₗ[S] P)
---#check M →ₗ[R] N →ₗ[S] P
-
-/-- Given a linear map from `M` to linear maps from `N` to `P`, i.e., a bilinear map from `M × N` to
-`P`, change the order of variables and get a linear map from `N` to linear maps from `M` to `P`. -/
+/-- Given a linear map from `M` to linear maps from `N` to `P`, i.e., a bilinear map from `M × N`
+to `P`, change the order of variables and get a linear map from `N` to linear maps from
+`M` to `P`. -/
 def flip (f : M →ₗ[R] N →ₗ[S] P) : N →ₗ[S] M →ₗ[R] P :=
 mk₂' S R (λ n m, f m n)
   (λ n₁ n₂ m, (f m).map_add _ _)
