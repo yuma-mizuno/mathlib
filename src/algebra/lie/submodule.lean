@@ -510,8 +510,8 @@ def comap : lie_ideal R L :=
   (map f I : submodule R L') = (I : submodule R L).map (f : L →ₗ[R] L') :=
 by { rw [set_like.ext'_iff, lie_submodule.coe_to_submodule, h, submodule.map_coe], refl, }
 
-@[simp] lemma comap_coe_submodule : (comap f J : submodule R L) = (J : submodule R L').comap (f : L →ₗ[R] L') :=
-rfl
+@[simp] lemma comap_coe_submodule :
+  (comap f J : submodule R L) = (J : submodule R L').comap (f : L →ₗ[R] L') := rfl
 
 lemma map_le : map f I ≤ J ↔ f '' I ⊆ J := lie_submodule.lie_span_le
 
