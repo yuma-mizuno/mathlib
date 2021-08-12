@@ -331,6 +331,15 @@ begin
  sorry,
 end
 
+example (G : Type*) [group G] (x : G) : x * x⁻¹ = 1 :=
+begin
+  refine mul_inv_self x,
+end
+
+example (G : Type*) [group G] (h : nonempty G) : nonempty G :=
+begin
+  refine has_one.nonempty,
+end
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
@@ -342,15 +351,22 @@ begin
   split,
   {
     intro hx,
-    rw mem_bot,
     unfold lower_central_series at hx,
     rw general_commutator_def at hx,
-    have h0 : ∀ (g : G), g ∈ lower_central_series G n → g ∈ center G, {
+    simp at hx,
+    have h0 : ∀ g ∈ lower_central_series G n, lower_central_series (quotient.mk g) n = ⊥, {
       sorry,
     },
-    have h1 : ∀ (g : G), g ∈ lower_central_series G n → ∀ (x : G), g * x * g⁻¹ * x⁻¹ = (1 : G), {
+    have h1 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
+      intros g hg,
+      unfold center,
       sorry,
     },
+
+    -- rw ← mul_inv_self (has_one.nonempty G).elim,
+    -- unfold lower_central_series at hx,
+    -- rw general_commutator_def at hx,
+
     -- simp at hx,
     sorry,
   },
@@ -383,7 +399,12 @@ begin
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
-sorry
+begin
+  have h : ∀ n : ℕ, upper_central_series (G × H) n = (upper_central_series G n, upper_central_series H n), {
+    sorry,
+  },
+  sorry,
+end
 
 universe u
 example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
