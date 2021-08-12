@@ -325,6 +325,13 @@ begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
+lemma h {g x : G} {n : ℕ} (hG: g ∈ (lower_central_series G n)) (hh : g * x * g⁻¹ * x⁻¹ = (1 : G)) :
+ lower_central_series G (n + 1) = ⊥ :=
+begin
+ sorry,
+end
+
+
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -334,6 +341,17 @@ begin
   ext x,
   split,
   {
+    intro hx,
+    rw mem_bot,
+    unfold lower_central_series at hx,
+    rw general_commutator_def at hx,
+    have h0 : ∀ (g : G), g ∈ lower_central_series G n → g ∈ center G, {
+      sorry,
+    },
+    have h1 : ∀ (g : G), g ∈ lower_central_series G n → ∀ (x : G), g * x * g⁻¹ * x⁻¹ = (1 : G), {
+      sorry,
+    },
+    -- simp at hx,
     sorry,
   },
   { intro h,
@@ -343,13 +361,25 @@ end
 
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
-sorry
+begin
+  sorry,
+end
+
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
   intro hG,
-  change ∃ n : ℕ, upper_central_series G n = ⊤ at hG,
-  sorry
+  rw nilpotent_iff_lower_central_series at *,
+  -- have g : ∀ i : ℕ, (lower_central_series H i) ≤ lower_central_series G i, {
+  --   sorry,
+  -- },
+  have h : ∀ i : ℕ, lower_central_series G i = ⊥ → ∃ n : ℕ, lower_central_series H n = ⊥, {
+    intros x hx,
+    use x,
+    -- apply eq_bot_mono _ hx,
+    sorry,
+  },
+  exact exists.elim hG h,
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
