@@ -331,16 +331,48 @@ begin
  sorry,
 end
 
-example (G : Type*) [group G] (x : G) : x * x⁻¹ = 1 :=
+-- example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f)
+-- (x : H) : x ∈ (subgroup.map f G) ↔ ∃ y ∈ G, f y = x :=
+-- begin
+--   sorry,
+--   -- refine set_like.le_def.mp h,
+-- end
+
+-- example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f)
+-- (x :
+
+-- upper_central_series is functorial with respect to surjections
+example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f) (n : ℕ)
+: subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
 begin
-  refine mul_inv_self x,
+  induction n,
+  { simp [upper_central_series_zero_def] },
+  {
+    -- rw set_like.le_def,
+    intros x hx,
+    -- rw mem_upper_central_series_succ_iff,
+    -- intro y,
+    -- apply set_like.le_def.mp n_ih,
+    -- rw mem_map,
+    -- simp only [exists_prop],
+    specialize h x,
+    apply exists.elim h,
+    rw mem_upper_central_series_succ_iff,
+    rintro a rfl y,
+    apply set_like.le_def.mp n_ih,
+    simp only [exists_prop, mem_map],
+
+    -- use preimage of x under f
+
+
+    -- rw mem_upper_central_series_succ_iff at hx,
+    sorry,
+  }
 end
 
-example (G : Type*) [group G] (h : nonempty G) : nonempty G :=
-begin
-  refine has_one.nonempty,
-end
 
+#check subgroup.map quotient.mk
+#check subgroup.map
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -350,16 +382,21 @@ begin
   ext x,
   split,
   {
-    intro hx,
-    unfold lower_central_series at hx,
-    rw general_commutator_def at hx,
-    simp at hx,
-    have h0 : ∀ g ∈ lower_central_series G n, lower_central_series (quotient.mk g) n = ⊥, {
+    -- intro hx,
+    -- unfold lower_central_series at hx,
+    -- rw general_commutator_def at hx,
+    -- simp at hx,
+    have h0 : ∀ i : ℕ, quotient (lower_central_series G i)
+    = lower_central_series (quotient (center G)) i,
+    { sorry, },
+    have h1 : subgroup.map (quotient.mk) (lower_central_series G n) = (⊥ : subgroup (quotient G)), {
       sorry,
     },
-    have h1 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      intros g hg,
-      unfold center,
+    have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
+      intros x hx,
+      rw mem_center_iff,
+      intro g,
+      -- group tactic can make this equiv to proving g * x * g⁻¹ * x⁻¹
       sorry,
     },
 
