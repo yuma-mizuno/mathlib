@@ -841,8 +841,6 @@ include module_N₁ module_N₂
   e (c • x) = c • e x := map_smulₛₗ _ _ _
 omit module_N₁ module_N₂
 
-#check @map_smulₛₗ
-
 @[simp] lemma map_sum {s : finset ι} (u : ι → M) : e (∑ i in s, u i) = ∑ i in s, e (u i) :=
 e.to_linear_map.map_sum
 
