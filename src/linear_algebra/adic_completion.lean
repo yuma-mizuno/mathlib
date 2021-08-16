@@ -76,7 +76,8 @@ def adic_completion : submodule R (Π n : ℕ, (I ^ n • ⊤ : submodule R M).q
   zero_mem' := λ m n hmn, by rw [pi.zero_apply, pi.zero_apply, linear_map.map_zero],
   add_mem' := λ f g hf hg m n hmn, by rw [pi.add_apply, pi.add_apply,
     linear_map.map_add, hf hmn, hg hmn],
-  smul_mem' := λ c f hf m n hmn, by rw [pi.smul_apply, pi.smul_apply, linear_map.map_smul, hf hmn] }
+  smul_mem' := λ c f hf m n hmn, by rw [pi.smul_apply, pi.smul_apply, linear_map.map_smul,
+    ring_equiv.refl_apply, hf hmn] }
 
 namespace is_Hausdorff
 
