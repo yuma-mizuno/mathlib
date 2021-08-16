@@ -270,12 +270,13 @@ variables (f g f' g')
 
 @[simp] lemma map_add (x y : M) : f' (x + y) = f' x + f' y := f'.map_add' x y
 
-@[simp] lemma map_smul (c : R) (x : M) : f (c • x) = c • f x := f.map_smul' c x
+@[simp] lemma map_smul (c : R) (x : M) : f' (c • x) = (σ c) • f' x := f'.map_smul' c x
 
-@[simp] lemma map_smulₛₗ (c : R) (x : M) : f' (c • x) = (σ c) • f' x := f'.map_smul' c x
+lemma map_smul_inv {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] (c : S) (x : M) :
+  c • f' x = f' (σ' c • x) := by simp
 
 @[simp] lemma map_zero : f' 0 = 0 :=
-by { rw [←zero_smul R (0 : M), map_smulₛₗ], simp }
+by { rw [←zero_smul R (0 : M), map_smul], simp }
 
 @[simp] lemma map_eq_zero_iff (h : function.injective f') {x : M} : f' x = 0 ↔ x = 0 :=
 ⟨λ w, by { apply h, simp [w], }, λ w, by { subst w, simp, }⟩
@@ -298,7 +299,7 @@ instance is_scalar_tower.compatible_smul
   {R S : Type*} [semiring S] [has_scalar R S]
   [has_scalar R M] [module S M] [is_scalar_tower R S M]
   [has_scalar R M₂] [module S M₂] [is_scalar_tower R S M₂] : compatible_smul M M₂ R S :=
-⟨λ f c x, by rw [← smul_one_smul S c x, ← smul_one_smul S c (f x), map_smul]⟩
+⟨λ f c x, by rw [← smul_one_smul S c (f x), map_smul_inv, ring_equiv.refl_apply, smul_one_smul] ⟩
 
 @[simp, priority 900]
 lemma map_smul_of_tower {R S : Type*} [semiring S] [has_scalar R M]
@@ -357,7 +358,7 @@ theorem to_add_monoid_hom_injective :
 
 /-- If two `R`-linear maps from `R` are equal on `1`, then they are equal. -/
 @[ext] theorem ext_ring {f g : R →ₛₗ[σ] M₃} (h : f 1 = g 1) : f = g :=
-ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smulₛₗ, g.map_smulₛₗ, h]
+ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smul, g.map_smul, h]
 
 theorem ext_ring_iff {f g : R →ₗ[R] M} : f = g ↔ f 1 = g 1 :=
 ⟨λ h, h ▸ rfl, ext_ring⟩
@@ -834,12 +835,9 @@ rfl
 
 @[simp] theorem map_add (a b : M) : e (a + b) = e a + e b := e.map_add' a b
 @[simp] theorem map_zero : e 0 = 0 := e.to_linear_map.map_zero
-@[simp] theorem map_smulₛₗ (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
+@[simp] theorem map_smul (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
 
-include module_N₁ module_N₂
-@[simp] theorem map_smul (e : N₁ ≃ₗ[R₁] N₂) (c : R₁) (x : N₁) :
-  e (c • x) = c • e x := map_smulₛₗ _ _ _
-omit module_N₁ module_N₂
+lemma map_smul_inv (c : S) (x : M) : c • e x = e (σ' c • x) := by simp
 
 @[simp] lemma map_sum {s : finset ι} (u : ι → M) : e (∑ i in s, u i) = ∑ i in s, e (u i) :=
 e.to_linear_map.map_sum

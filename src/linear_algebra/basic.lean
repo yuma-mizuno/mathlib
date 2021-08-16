@@ -85,7 +85,7 @@ lemma sum_smul_index_linear_map' {α : Type*} {R : Type*} {M : Type*} {M₂ : Ty
   (c • v).sum (λ a, h a) = c • (v.sum (λ a, h a)) :=
 begin
   rw [finsupp.sum_smul_index', finsupp.smul_sum],
-  { simp only [linear_map.map_smul], },
+  { simp [linear_map.map_smul] },
   { intro i, exact (h i).map_zero },
 end
 
@@ -247,7 +247,7 @@ instance  : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
     to_fun := λ x, n • (f x),
     map_add' := λ x y, by rw [f.map_add, smul_add],
     map_smul' := λ c x, begin
-      rw [f.map_smulₛₗ],
+      rw [f.map_smul],
       simp [smul_comm n (σ₁₂ c) (f x)],
     end}, -- rw [f.map_smul, smul_comm n c (f x)] },
   nsmul_zero' := λ f, by { ext x, change 0 • f x = 0, simp only [zero_smul] },
@@ -287,7 +287,7 @@ variables {S : Type*} [semiring S] [module R S] [module S M] [is_scalar_tower R 
 def smul_right (f : M₁ →ₗ[R] S) (x : M) : M₁ →ₗ[R] M :=
 { to_fun := λb, f b • x,
   map_add' := λ x y, by rw [f.map_add, add_smul],
-  map_smul' := λ b y, by dsimp; rw [f.map_smul, smul_assoc] }
+  map_smul' := λ b y, by dsimp; rw [f.map_smul, smul_assoc, ring_equiv.refl_apply] }
 
 @[simp] theorem coe_smul_right (f : M₁ →ₗ[R] S) (x : M) :
   (smul_right f x : M₁ → M) = λ c, f c • x := rfl
@@ -412,7 +412,7 @@ lemma pi_apply_eq_sum_univ [fintype ι] (f : (ι → R) →ₗ[R] M) (x : ι →
 begin
   conv_lhs { rw [pi_eq_sum_univ x, f.map_sum] },
   apply finset.sum_congr rfl (λl hl, _),
-  rw f.map_smul
+  rw [f.map_smul, ring_equiv.refl_apply]
 end
 
 end
@@ -460,11 +460,11 @@ by refine
   nsmul := λ n f, {
     to_fun := λ x, n • (f x),
     map_add' := λ x y, by rw [f.map_add, smul_add],
-    map_smul' := λ c x, by dsimp; rw [f.map_smul, smul_comm n c (f x)] },
+    map_smul' := λ c x, by dsimp; rw [f.map_smul, ring_equiv.refl_apply, smul_comm n c (f x)] },
   gsmul := λ n f, {
     to_fun := λ x, n • (f x),
     map_add' := λ x y, by rw [f.map_add, smul_add],
-    map_smul' := λ c x, by dsimp; rw [f.map_smul, smul_comm n c (f x)] },
+    map_smul' := λ c x, by dsimp; rw [f.map_smul, ring_equiv.refl_apply, smul_comm n c (f x)] },
   gsmul_zero' := _,
   gsmul_succ' := _,
   gsmul_neg' := _,
@@ -1900,8 +1900,8 @@ lemma span_singleton_sup_ker_eq_top (f : V →ₗ[K] K) {x : V} (hx : f x ≠ 0)
 eq_top_iff.2 (λ y hy, submodule.mem_sup.2 ⟨(f y * (f x)⁻¹) • x,
   submodule.mem_span_singleton.2 ⟨f y * (f x)⁻¹, rfl⟩,
     ⟨y - (f y * (f x)⁻¹) • x,
-      by rw [linear_map.mem_ker, f.map_sub, f.map_smul, smul_eq_mul, mul_assoc,
-             inv_mul_cancel hx, mul_one, sub_self],
+      by rw [linear_map.mem_ker, f.map_sub, f.map_smul, ring_equiv.refl_apply, smul_eq_mul,
+             mul_assoc, inv_mul_cancel hx, mul_one, sub_self],
       by simp only [add_sub_cancel'_right]⟩⟩)
 
 end field
@@ -2020,7 +2020,7 @@ def liftq (f : M →ₛₗ[τ₁₂] M₂) (h : p ≤ f.ker) : p.quotient →ₛ
 { to_fun := λ x, _root_.quotient.lift_on' x f $
     λ a b (ab : a - b ∈ p), eq_of_sub_eq_zero $ by simpa using h ab,
   map_add' := by rintro ⟨x⟩ ⟨y⟩; exact f.map_add x y,
-  map_smul' := by rintro a ⟨x⟩; exact f.map_smulₛₗ a x }
+  map_smul' := by rintro a ⟨x⟩; exact f.map_smul a x }
 
 @[simp] theorem liftq_apply (f : M →ₛₗ[τ₁₂] M₂) {h} (x : M) :
   p.liftq f h (quotient.mk x) = f x := rfl

@@ -416,7 +416,7 @@ variables (e₁ : M ≃ₗ[R] M₂) (e₂ : M₃ ≃ₗ[R] M₄)
 protected def prod :
   (M × M₃) ≃ₗ[R] (M₂ × M₄) :=
 { map_add'  := λ x y, prod.ext (e₁.map_add _ _) (e₂.map_add _ _),
-  map_smul' := λ c x, prod.ext (e₁.map_smulₛₗ c _) (e₂.map_smulₛₗ c _),
+  map_smul' := λ c x, prod.ext (e₁.map_smul c _) (e₂.map_smul c _),
   .. equiv.prod_congr e₁.to_equiv e₂.to_equiv }
 
 lemma prod_symm : (e₁.prod e₂).symm = e₁.symm.prod e₂.symm := rfl
