@@ -321,9 +321,13 @@ end
 
 lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
 
+-- for some reason doesn't let me use ⁅lower_central_series n, ⊤⁆ directly
 lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
   x ∈ lower_central_series G (n + 1) ↔
-  ∀ y : G, x * y * x⁻¹ * y⁻¹ ∈ lower_central_series G n := iff.rfl
+  x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
+:= begin
+  refl,
+end
 
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
@@ -337,12 +341,6 @@ end
 example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
-end
-
-example (G : Type*) [group G] (H : subgroup G) (x y : G) (h : x * y = y * x ) : normal H :=
-begin
-
-  sorry,
 end
 
 -- upper_central_series is functorial with respect to surjections
