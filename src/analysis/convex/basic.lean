@@ -1062,11 +1062,13 @@ lemma concave_on_iff_convex_hypograph {γ : Type*} [ordered_add_comm_group γ]
 
 /- A linear map is convex. -/
 lemma linear_map.convex_on (f : E →ₗ[ℝ] β) {s : set E} (hs : convex s) : convex_on s f :=
-⟨hs, λ _ _ _ _ _ _ _ _ _, by rw [f.map_add, f.map_smul, f.map_smul]⟩
+⟨hs, λ _ _ _ _ _ _ _ _ _, by rw [f.map_add, f.map_smul, f.map_smul, ring_equiv.refl_apply,
+  ring_equiv.refl_apply]⟩
 
 /- A linear map is concave. -/
 lemma linear_map.concave_on (f : E →ₗ[ℝ] β) {s : set E} (hs : convex s) : concave_on s f :=
-⟨hs, λ _ _ _ _ _ _ _ _ _, by rw [f.map_add, f.map_smul, f.map_smul]⟩
+⟨hs, λ _ _ _ _ _ _ _ _ _, by rw [f.map_add, f.map_smul, f.map_smul, ring_equiv.refl_apply,
+  ring_equiv.refl_apply]⟩
 
 /-- If a function is convex on `s`, it remains convex when precomposed by an affine map. -/
 lemma convex_on.comp_affine_map {f : F → β} (g : E →ᵃ[ℝ] F) {s : set F}
