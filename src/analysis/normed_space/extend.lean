@@ -52,7 +52,8 @@ begin
   { assume c x,
     rw [← of_real_mul],
     congr' 1,
-    rw [is_R_or_C.of_real_alg, smul_assoc, fr.map_smul, algebra.id.smul_eq_mul, one_smul] },
+    rw [is_R_or_C.of_real_alg, smul_assoc, fr.map_smul, ring_equiv.refl_apply,
+      algebra.id.smul_eq_mul, one_smul] },
   have smul_ℝ : ∀ (c : ℝ) (x : F), fc ((c : 𝕜) • x) = (c : 𝕜) * fc x,
   { assume c x,
     simp only [fc, A],
@@ -103,14 +104,14 @@ begin
       refl },
     { symmetry,
       calc im (lm (t • x))
-          = im (t * lm x) : by rw [lm.map_smul, smul_eq_mul]
+          = im (t * lm x) : by rw [lm.map_smul, ring_equiv.refl_apply, smul_eq_mul]
       ... = im ((lm x)⁻¹ / (abs𝕜 (lm x)⁻¹) * lm x) : rfl
       ... = im (1 / (abs𝕜 (lm x)⁻¹ : 𝕜)) : by rw [div_mul_eq_mul_div, inv_mul_cancel h]
       ... = 0 : by rw [← of_real_one, ← of_real_div, of_real_im]
       ... = im (fr (t • x) : 𝕜) : by rw [of_real_im] } },
   calc ∥lm x∥ = abs𝕜 t * ∥lm x∥ : by rw [ht, one_mul]
   ... = ∥t * lm x∥ : by rw [← norm_eq_abs, normed_field.norm_mul]
-  ... = ∥lm (t • x)∥ : by rw [←smul_eq_mul, lm.map_smul]
+  ... = ∥lm (t • x)∥ : by rw [←smul_eq_mul, lm.map_smul, ring_equiv.refl_apply]
   ... = ∥(fr (t • x) : 𝕜)∥ : by rw h1
   ... = ∥fr (t • x)∥ : by rw [norm_eq_abs, abs_of_real, norm_eq_abs, abs_to_real]
   ... ≤ ∥fr∥ * ∥t • x∥ : continuous_linear_map.le_op_norm _ _
