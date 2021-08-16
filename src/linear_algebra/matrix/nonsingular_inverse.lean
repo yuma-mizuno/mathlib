@@ -187,9 +187,9 @@ end
 lemma mul_adjugate_apply (A : matrix n n α) (i j k) :
   A i k * adjugate A k j = cramer Aᵀ (λ j, if k = j then A i k else 0) j :=
 begin
-  erw [←smul_eq_mul, ←pi.smul_apply, ←linear_map.map_smul],
+  erw [←smul_eq_mul, ←pi.smul_apply, linear_map.map_smul_inv],
   congr' with l,
-  rw [pi.smul_apply, smul_eq_mul, mul_boole],
+  rw [pi.smul_apply, smul_eq_mul, mul_boole, ring_equiv.refl_apply],
 end
 
 lemma mul_adjugate (A : matrix n n α) : A ⬝ adjugate A = A.det • 1 :=
