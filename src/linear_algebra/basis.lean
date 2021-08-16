@@ -114,7 +114,7 @@ lemma repr_symm_single_one : b.repr.symm (finsupp.single i 1) = b i := rfl
 lemma repr_symm_single : b.repr.symm (finsupp.single i c) = c • b i :=
 calc b.repr.symm (finsupp.single i c)
     = b.repr.symm (c • finsupp.single i 1) : by rw [finsupp.smul_single', mul_one]
-... = c • b i : by rw [linear_equiv.map_smul, repr_symm_single_one]
+... = c • b i : by rw [linear_equiv.map_smul, ring_equiv.refl_apply, repr_symm_single_one]
 
 @[simp] lemma repr_self : b.repr (b i) = finsupp.single i 1 :=
 linear_equiv.apply_symm_apply _ _
@@ -321,7 +321,7 @@ begin
     simp only [pi.add_apply, linear_equiv.map_add, finsupp.coe_add] },
   { intros c x,
     ext i,
-    simp only [pi.smul_apply, linear_equiv.map_smul, finsupp.coe_smul] },
+    simp only [pi.smul_apply, linear_equiv.map_smul, ring_equiv.refl_apply, finsupp.coe_smul] },
   { intros i,
     ext j,
     simp only [reindex_range_repr_self],
@@ -539,7 +539,7 @@ section no_zero_smul_divisors
 protected lemma no_zero_smul_divisors [no_zero_divisors R] (b : basis ι R M) :
   no_zero_smul_divisors R M :=
 ⟨λ c x hcx, or_iff_not_imp_right.mpr (λ hx, begin
-  rw [← b.total_repr x, ← linear_map.map_smul] at hcx,
+  rw [← b.total_repr x, linear_map.map_smul_inv, ring_equiv.refl_apply] at hcx,
   have := linear_independent_iff.mp b.linear_independent (c • b.repr x) hcx,
   rw smul_eq_zero at this,
   exact this.resolve_right (λ hr, hx (b.repr.map_eq_zero_iff.mp hr))
@@ -730,7 +730,7 @@ lemma sum_repr_mul_repr {ι'} [fintype ι'] (b' : basis ι' R M) (x : M) (i : ι
   ∑ (j : ι'), b.repr (b' j) i * b'.repr x j = b.repr x i :=
 begin
   conv_rhs { rw [← b'.sum_repr x] },
-  simp_rw [linear_equiv.map_sum, linear_equiv.map_smul, finset.sum_apply'],
+  simp_rw [linear_equiv.map_sum, linear_equiv.map_smul, ring_equiv.refl_apply, finset.sum_apply'],
   refine finset.sum_congr rfl (λ j _, _),
   rw [finsupp.smul_apply, smul_eq_mul, mul_comm]
 end
