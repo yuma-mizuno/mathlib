@@ -154,7 +154,7 @@ finite-dimensional spaces it is the `ι`th basis vector of the dual space.
 -/
 @[simps]
 def coord (i : ι) : M →ₗ[R] R :=
-(finsupp.lapply i).comp b.repr
+(finsupp.lapply i).comp (b.repr : M →ₗ[R] ι →₀ R)
 
 lemma forall_coord_eq_zero_iff {x : M} :
   (∀ i, b.coord i x = 0) ↔ x = 0 :=
@@ -212,8 +212,9 @@ begin
     map_smul' := λ _ _, by { simp [hsmul, pi.smul_apply] } },
   have : (finsupp.lapply i).comp ↑b.repr = f_i,
   { refine b.ext (λ j, _),
-    show b.repr (b j) i = f (b j) i,
-    rw [b.repr_self, f_eq] },
+    show (b.repr : M →ₗ[R] ι →₀ R) (b j) i = f (b j) i,
+    rw [linear_equiv.coe_coe, b.repr_self, f_eq],
+    apply_instance },
   calc b.repr x i = f_i x : by { rw ← this, refl }
               ... = f x i : rfl
 end
@@ -399,7 +400,8 @@ you can recover an `add_equiv` by setting `S := ℕ`.
 See library note [bundled maps over different rings].
 -/
 def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
-{ to_fun := λ f, (finsupp.total M' M' R id).comp $ (finsupp.lmap_domain R R f).comp b.repr,
+{ to_fun := λ f, (finsupp.total M' M' R id).comp
+    $ (finsupp.lmap_domain R R f).comp (b.repr : M →ₗ[R] ι→₀ R),
   inv_fun := λ f i, f (b i),
   left_inv := λ f, by { ext, simp },
   right_inv := λ f, by { refine b.ext (λ i, _), simp },
@@ -407,7 +409,8 @@ def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
   map_smul' := λ c f, by { refine b.ext (λ i, _), simp } }
 
 theorem constr_def (f : ι → M') :
-  b.constr S f = (finsupp.total M' M' R id).comp ((finsupp.lmap_domain R R f).comp b.repr) :=
+  b.constr S f = (finsupp.total M' M' R id).comp
+    ((finsupp.lmap_domain R R f).comp (b.repr : M →ₗ[R] ι→₀ R)) :=
 rfl
 
 theorem constr_apply (f : ι → M') (x : M) :

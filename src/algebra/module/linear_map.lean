@@ -384,7 +384,7 @@ variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂
 variables (fₗ : N₂ →ₗ[R₁] N₃) (gₗ : N₁ →ₗ[R₁] N₂)
 
 include module_M₁ module_M₂ module_M₃
-def compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
+def comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂) :
   M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
@@ -397,31 +397,31 @@ omit module_M₁ module_M₂ module_M₃
 
 -- SLFIXME: figure out the right way to do this
 
-abbreviation comp :=
-  @compₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
-  (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
+-- abbreviation comp :=
+--   @compₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
+--   (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
 
 --notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
 
-@[simp] lemma compₛₗ_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) :
-  f.compₛₗ g x = f (g x) := rfl
-@[simp] lemma comp_apply (x : N₁) : fₗ.comp gₗ x = fₗ (gₗ x) := rfl
+@[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) :
+  f.comp g x = f (g x) := rfl
+-- @[simp] lemma comp_apply (x : N₁) : fₗ.comp gₗ x = fₗ (gₗ x) := rfl
 
-@[simp, norm_cast] lemma coe_compₛₗ [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
-  (f.compₛₗ g : M₁ → M₃) = f ∘ g := rfl
+@[simp, norm_cast] lemma coe_comp [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] :
+  (f.comp g : M₁ → M₃) = f ∘ g := rfl
 
-@[simp, norm_cast] lemma coe_comp : (fₗ.comp gₗ : N₁ → N₃) = fₗ ∘ gₗ := rfl
+-- @[simp, norm_cast] lemma coe_comp : (fₗ.comp gₗ : N₁ → N₃) = fₗ ∘ gₗ := rfl
 
-@[simp] theorem compₛₗ_id : f.compₛₗ id = f :=
+@[simp] theorem comp_id : f.comp id = f :=
 linear_map.ext $ λ x, rfl
 
-@[simp] theorem comp_id : fₗ.comp id = fₗ := compₛₗ_id _
+-- @[simp] theorem comp_id : fₗ.comp id = fₗ := compₛₗ_id _
 
-@[simp] theorem id_compₛₗ : id.compₛₗ f = f :=
+@[simp] theorem id_comp : id.comp f = f :=
 linear_map.ext $ λ x, rfl
 
-@[simp] theorem id_comp : id.comp fₗ = fₗ := id_compₛₗ _
+-- @[simp] theorem id_comp : id.comp fₗ = fₗ := id_compₛₗ _
 
 end
 
@@ -753,7 +753,7 @@ include σ₃₁ re₁₃ re₃₁
 /-- Linear equivalences are transitive. -/
 @[trans]
 def transₛₗ : M₁ ≃ₛₗ[σ₁₃] M₃ :=
-{ .. e₂₃.to_linear_map.compₛₗ e₁₂.to_linear_map,
+{ .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
 omit σ₃₁ re₁₃ re₃₁
 
