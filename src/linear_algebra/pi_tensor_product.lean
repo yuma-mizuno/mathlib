@@ -440,7 +440,7 @@ def pempty_equiv : ⨂[R] i : pempty, M ≃ₗ[R] R :=
       intros x y hx hy,
       simp [add_smul, hx, hy] }},
   right_inv := λ t, by simp only [mul_one, algebra.id.smul_eq_mul, multilinear_map.coe_mk,
-    linear_map.map_smul, pi_tensor_product.lift.tprod],
+    linear_map.map_smul, ring_equiv.refl_apply, pi_tensor_product.lift.tprod],
   map_add' := linear_map.map_add _,
   map_smul' := linear_map.map_smul _, }
 
