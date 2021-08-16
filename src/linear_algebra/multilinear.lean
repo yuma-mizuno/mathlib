@@ -889,7 +889,7 @@ def linear_map.uncurry_left
     by_cases h : i = 0,
     { subst i,
       rw [update_same, update_same, tail_update_zero, tail_update_zero,
-          ← smul_apply, f.map_smul] },
+          ← smul_apply, f.map_smul, ring_equiv.refl_apply] },
     { rw [update_noteq (ne.symm h), update_noteq (ne.symm h)],
       revert x,
       rw ← succ_pred i h,
@@ -987,7 +987,7 @@ def multilinear_map.uncurry_right
       rw eq_last_of_not_lt h,
       assume x,
       rw [update_same, update_same, init_update_last, init_update_last,
-          linear_map.map_smul] }
+          linear_map.map_smul, ring_equiv.refl_apply] }
   end }
 
 @[simp] lemma multilinear_map.uncurry_right_apply
