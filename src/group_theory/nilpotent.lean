@@ -322,6 +322,7 @@ end
 lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
 
 -- for some reason doesn't let me use ⁅lower_central_series n, ⊤⁆ directly
+-- why doesn't by refl work??? something dodgy going on here
 lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
   x ∈ lower_central_series G (n + 1) ↔
   x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
@@ -329,13 +330,13 @@ lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) 
   refl,
 end
 
+-- why can't i put n_ih and subgroup.top_normal in the apply directly?
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
   induction n,
   { simp [lower_central_series_zero_def, subgroup.top_normal] },
-  { apply general_commutator_normal _ _,
-    exact n_ih,
-    exact subgroup.top_normal },
+  { haveI := n_ih,
+    exact general_commutator_normal (lower_central_series G n_n) ⊤ },
 end
 
 example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
@@ -344,6 +345,7 @@ begin
 end
 
 -- upper_central_series is functorial with respect to surjections
+#check general_commutator_containment
 example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f) (n : ℕ)
 : subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
 begin
@@ -361,7 +363,8 @@ begin
     split,
     {
       rw ← hx2 at hx,
-      have h : a ∈ upper_central_series G n_n.succ, {
+      have h1 : a ∈ upper_central_series G n_n.succ, {
+        rw mem_upper_central_series_succ_iff,
         sorry,
       },
       rw mem_upper_central_series_succ_iff at h,
