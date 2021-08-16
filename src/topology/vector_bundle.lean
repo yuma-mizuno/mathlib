@@ -343,7 +343,7 @@ def local_triv (i : ι) : topological_vector_bundle.trivialization R F Z.fiber :
       topological_fiber_bundle_core.local_triv_apply, linear_map.map_add, coe_cord_change],
   map_smul := λ r v, by simp only [topological_fiber_bundle_core.local_triv_ext, coe_fst,
     local_homeomorph.to_fun_eq_coe, topological_fiber_bundle_core.local_triv_apply, coe_cord_change,
-    coe_snd_map_smul, linear_map.map_smul] },
+    coe_snd_map_smul, linear_map.map_smul, ring_equiv.refl_apply] },
   ..topological_fiber_bundle_core.local_triv_ext ↑Z i }
 
 @[simp, mfld_simps] lemma mem_local_triv_source (i : ι) (p : total_space Z.fiber) :
