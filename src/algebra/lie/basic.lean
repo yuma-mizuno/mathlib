@@ -170,7 +170,7 @@ instance : lie_module R L (M →ₗ[R] N) :=
 { smul_lie := λ t x f, by
     { ext n,
       simp only [smul_sub, smul_lie, linear_map.smul_apply, lie_hom.lie_apply,
-        linear_map.map_smul], },
+        linear_map.map_smul, ring_equiv.refl_apply], },
   lie_smul := λ t x f, by
     { ext n, simp only [smul_sub, linear_map.smul_apply, lie_hom.lie_apply, lie_smul], }, }
 

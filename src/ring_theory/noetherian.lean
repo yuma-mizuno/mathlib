@@ -231,7 +231,7 @@ begin
     rw sub_eq_zero,
     refine finset.sum_congr rfl (λ y hy, _),
     unfold id,
-    rw [f.map_smul, (hg y (hl1 hy)).2],
+    rw [f.map_smul, ring_equiv.refl_apply, (hg y (hl1 hy)).2],
     { exact zero_smul _ }, { exact λ _ _ _, add_smul _ _ _ } }
 end
 
