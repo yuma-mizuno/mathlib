@@ -158,7 +158,7 @@ def _root_.linear_map.comp_der : derivation R A M →ₗ[R] derivation R A N :=
 { to_fun    := λ D,
   { leibniz'  := λ a b, by simp only [coe_fn_coe, function.comp_app, linear_map.coe_comp,
                       linear_map.map_add, leibniz, linear_map.coe_coe_is_scalar_tower,
-                      linear_map.map_smul, linear_map.to_fun_eq_coe],
+                      linear_map.map_smul, ring_equiv.refl_apply, linear_map.to_fun_eq_coe],
     .. (f : M →ₗ[R] N).comp (D : A →ₗ[R] M), },
   map_add'  := λ D₁ D₂, by { ext, exact linear_map.map_add _ _ _, },
   map_smul' := λ r D, by { ext, exact linear_map.map_smul _ _ _, }, }
