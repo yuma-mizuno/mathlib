@@ -142,8 +142,8 @@ variables [add_comm_monoid N] [add_comm_monoid N₁] [add_comm_monoid N₂]
 variables [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables [module R M] [module R M₁] [module R₂ M₂] [module R₃ M₃] [module R₄ M₄]
 variables [module R N] [module R N₁] [module R N₂] [module R N₃] [module R N₄]
-variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₃₄ : R₃ ≃+* R₄}
-variables {σ₁₃ : out_param (R ≃+* R₃)} {σ₂₄ : out_param (R₂ ≃+* R₄)} {σ₁₄ : out_param (R ≃+* R₄)}
+variables {σ₁₂ : R →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₃₄ : R₃ →+* R₄}
+variables {σ₁₃ : out_param (R →+* R₃)} {σ₂₄ : out_param (R₂ →+* R₄)} {σ₁₄ : out_param (R →+* R₄)}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_equiv_comp_triple σ₂₃ σ₃₄ σ₂₄]
 variables [ring_equiv_comp_triple σ₁₃ σ₃₄ σ₁₄] [ring_equiv_comp_triple σ₁₂ σ₂₄ σ₁₄]
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
@@ -700,8 +700,8 @@ section add_comm_monoid
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M']
 variables [module R M] [module R M'] [module R₂ M₂] [module R₃ M₃]
-variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : out_param (R ≃+* R₃)}
-variables {σ₂₁ : R₂ ≃+* R}
+variables {σ₁₂ : R →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : out_param (R →+* R₃)}
+variables {σ₂₁ : R₂ →+* R}
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables (p p' : submodule R M) (q q' : submodule R₂ M₂)
@@ -779,6 +779,7 @@ theorem mem_left_iff_eq_zero_of_disjoint {p p' : submodule R M} (h : disjoint p 
   (x:M) ∈ p ↔ x = 0 :=
 ⟨λ hx, coe_eq_zero.1 $ disjoint_def.1 h x hx x.2, λ h, h.symm ▸ p.zero_mem⟩
 
+include σ₂₁
 /-- The pushforward of a submodule `p ⊆ M` by `f : M → M₂` -/
 def map (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : submodule R₂ M₂ :=
 --{ carrier   := f '' p,
@@ -788,8 +789,8 @@ def map (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : submodule R₂ M�
   smul_mem' :=
   begin
     rintro c x ⟨b, hb, rfl⟩,
-    refine ⟨_, p.smul_mem (σ₁₂.symm c) hb, _⟩,
-    have h : σ₁₂ (σ₁₂.symm c) = c := by { change σ₁₂ (σ₁₂.symm c) = c, simp },
+    refine ⟨_, p.smul_mem (σ₂₁ c) hb, _⟩,
+    have h : σ₁₂ (σ₂₁ c) = c := by simp,
     simp [h],
   end,
   .. p.to_add_submonoid.map f.to_add_monoid_hom }
@@ -805,10 +806,13 @@ theorem mem_map_of_mem {f : M →ₛₗ[σ₁₂] M₂} {p : submodule R M} {r} 
 
 lemma apply_coe_mem_map (f : M →ₛₗ[σ₁₂] M₂) {p : submodule R M} (r : p) :
   f r ∈ map f p := mem_map_of_mem r.prop
+omit σ₂₁
 
 @[simp] lemma map_id : map linear_map.id p = p :=
 submodule.ext $ λ a, by simp
 
+-- just being lazy on the following lemma, it will compile if `σ₃₂`, `σ₃₁` are defined
+include σ₂₁
 lemma map_comp (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
   (p : submodule R M) : map (g.compₛₗ f : M →ₛₗ[σ₁₃] M₃) p = map g (map f p) :=
 set_like.coe_injective $ by simp [map_coe]; rw ← image_comp
@@ -824,7 +828,6 @@ lemma range_map_nonempty (N : submodule R M) :
   (set.range (λ ϕ, submodule.map ϕ N : (M →ₛₗ[σ₁₂] M₂) → submodule R₂ M₂)).nonempty :=
 ⟨_, set.mem_range.mpr ⟨0, rfl⟩⟩
 
-include σ₂₁
 /-- The pushforward of a submodule by an injective linear map is
 linearly equivalent to the original submodule. -/
 @[simps]
@@ -857,6 +860,7 @@ rfl
 lemma comap_mono {f : M →ₛₗ[σ₁₂] M₂} {q q' : submodule R₂ M₂} :
   q ≤ q' → comap f q ≤ comap f q' := preimage_mono
 
+include σ₂₁
 lemma map_le_iff_le_comap {f : M →ₛₗ[σ₁₂] M₂} {p : submodule R M} {q : submodule R₂ M₂} :
   map f p ≤ q ↔ p ≤ comap f q := image_subset_iff
 
@@ -872,18 +876,22 @@ lemma gc_map_comap (f : M →ₛₗ[σ₁₂] M₂) : galois_connection (map f) 
 @[simp] lemma map_supr {ι : Sort*} (f : M →ₛₗ[σ₁₂] M₂) (p : ι → submodule R M) :
   map f (⨆i, p i) = (⨆i, map f (p i)) :=
 (gc_map_comap f).l_supr
+omit σ₂₁
 
 @[simp] lemma comap_top (f : M →ₛₗ[σ₁₂] M₂) : comap f ⊤ = ⊤ := rfl
 
 @[simp] lemma comap_inf (f : M →ₛₗ[σ₁₂] M₂) : comap f (q ⊓ q') = comap f q ⊓ comap f q' := rfl
 
+include σ₂₁
 @[simp] lemma comap_infi {ι : Sort*} (f : M →ₛₗ[σ₁₂] M₂) (p : ι → submodule R₂ M₂) :
   comap f (⨅i, p i) = (⨅i, comap f (p i)) :=
 (gc_map_comap f).u_infi
+omit σ₂₁
 
 @[simp] lemma comap_zero : comap (0 : M →ₛₗ[σ₁₂] M₂) q = ⊤ :=
 ext $ by simp
 
+include σ₂₁
 lemma map_comap_le (f : M →ₛₗ[σ₁₂] M₂) (q : submodule R₂ M₂) : map f (comap f q) ≤ q :=
 (gc_map_comap f).l_u_le _
 
@@ -938,6 +946,7 @@ le_antisymm
 
 lemma map_comap_subtype : map p.subtype (comap p.subtype p') = p ⊓ p' :=
 ext $ λ x, ⟨by rintro ⟨⟨_, h₁⟩, h₂, rfl⟩; exact ⟨h₁, h₂⟩, λ ⟨h₁, h₂⟩, ⟨⟨_, h₁⟩, h₂, rfl⟩⟩
+omit σ₂₁
 
 lemma eq_zero_of_bot_submodule : ∀(b : (⊥ : submodule R M)), b = 0
 | ⟨b', hb⟩ := subtype.eq $ show b' = 0, from (mem_bot R).1 hb
@@ -968,10 +977,12 @@ le_antisymm (span_le.2 h₁) h₂
 @[simp] lemma span_eq : span R (p : set M) = p :=
 span_eq_of_le _ (subset.refl _) subset_span
 
+include σ₂₁
 lemma map_span (f : M →ₛₗ[σ₁₂] M₂) (s : set M) :
   (span R s).map f = span R₂ (f '' s) :=
 eq.symm $ span_eq_of_le _ (set.image_subset f subset_span) $
 map_le_iff_le_comap.2 $ span_le.2 $ λ x hx, subset_span ⟨x, hx, rfl⟩
+omit σ₂₁
 
 alias submodule.map_span ← linear_map.map_span
 
@@ -1227,6 +1238,7 @@ span_eq_bot.trans $ by simp
 
 @[simp] lemma span_zero : span R (0 : set M) = ⊥ := by rw [←singleton_zero, span_singleton_eq_bot]
 
+include σ₂₁
 @[simp] lemma span_image (f : M →ₛₗ[σ₁₂] M₂) : span R₂ (f '' s) = map f (span R s) :=
 span_eq_of_le _ (image_subset _ subset_span) $ map_le_iff_le_comap.2 $
 span_le.2 $ image_subset_iff.1 subset_span
@@ -1244,6 +1256,7 @@ lemma not_mem_span_of_apply_not_mem_span_image
    (f : M →ₛₗ[σ₁₂] M₂) {x : M} {s : set M} (h : f x ∉ submodule.span R₂ (f '' s)) :
    x ∉ submodule.span R s :=
 not.imp h (apply_mem_span_image_of_mem_span f)
+omit σ₂₁
 
 lemma supr_eq_span {ι : Sort*} (p : ι → submodule R M) :
   (⨆ (i : ι), p i) = submodule.span R (⋃ (i : ι), ↑(p i)) :=
@@ -1381,7 +1394,7 @@ ext $ λ y, ⟨λ ⟨x, hx, hy⟩, hy ▸ ⟨-x, neg_mem _ hx, f.map_neg x⟩,
 @[simp] lemma span_neg (s : set M) : span R (-s) = span R s :=
 calc span R (-s) = span R ((-linear_map.id : M →ₗ[R] M) '' s) : by simp
  ... = map (-linear_map.id) (span R s) : ((-linear_map.id).map_span _).symm
-... = span R s : by simp
+... = span R s : by { simp [submodule.map_id] }
 
 lemma mem_span_insert' {y} {s : set M} : x ∈ span R (insert y s) ↔ ∃(a:R), x + a • y ∈ span R s :=
 begin
@@ -1531,7 +1544,7 @@ section add_comm_monoid
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃]
-variables {σ₁₂ : R ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃}
+variables {σ₁₂ : R →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : R →+* R₃}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables [module R N] [module R N₂] [module R N₃]
@@ -1593,9 +1606,8 @@ lemma coe_dfinsupp_sum (t : Π₀ i, γ i) (g : Π i, γ i → M →ₛₗ[σ₁
 
 end dfinsupp
 
-variables {σ₂₁ : R₂ ≃+* R} {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : out_param (R ≃+* R₃)}
+variables {σ₂₁ : R₂ →+* R} {τ₁₂ : R →+* R₂} {τ₂₃ : R₂ →+* R₃} {τ₁₃ : out_param (R →+* R₃)}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
-
 
 theorem map_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) (h p') :
   submodule.map (cod_restrict p f h) p' = comap p.subtype (p'.map f) :=
@@ -1718,7 +1730,7 @@ theorem ker_eq_bot' {f : M →ₛₗ[τ₁₂] M₂} :
   ker f = ⊥ ↔ (∀ m, f m = 0 → m = 0) :=
 by simpa [disjoint] using @disjoint_ker _ _ _ _ _ _ _ _ _ _ _ f ⊤
 
-theorem ker_eq_bot_of_inverse {τ₂₁ : R₂ ≃+* R} [ring_equiv_inv_pair τ₁₂ τ₂₁]
+theorem ker_eq_bot_of_inverse {τ₂₁ : R₂ →+* R} [ring_equiv_inv_pair τ₁₂ τ₂₁]
   {f : M →ₛₗ[τ₁₂] M₂} {g : M₂ →ₛₗ[τ₂₁] M} (h : (g.compₛₗ f : M →ₗ[R] M) = id) :
   ker f = ⊥ :=
 ker_eq_bot'.2 $ λ m hm, by rw [← id_apply m, ← h, compₛₗ_apply, hm, g.map_zero]
@@ -1726,11 +1738,11 @@ ker_eq_bot'.2 $ λ m hm, by rw [← id_apply m, ← h, compₛₗ_apply, hm, g.m
 lemma le_ker_iff_map {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} : p ≤ ker f ↔ map f p = ⊥ :=
 by rw [ker, eq_bot_iff, map_le_iff_le_comap]
 
-lemma ker_cod_restrict {τ₂₁ : R₂ ≃+* R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
+lemma ker_cod_restrict {τ₂₁ : R₂ →+* R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
   ker (cod_restrict p f hf) = ker f :=
 by rw [ker, comap_cod_restrict, map_bot]; refl
 
-lemma range_cod_restrict {τ₂₁ : R₂ ≃+* R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
+lemma range_cod_restrict {τ₂₁ : R₂ →+* R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
   range (cod_restrict p f hf) = comap p.subtype f.range :=
 by simpa only [range_eq_map] using map_cod_restrict _ _ _ _
 
@@ -1800,7 +1812,7 @@ section add_comm_group
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
-variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
+variables {τ₁₂ : R →+* R₂} {τ₂₃ : R₂ →+* R₃} {τ₁₃ : R →+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 include R
 open submodule
@@ -1839,7 +1851,7 @@ section ring
 variables [ring R] [ring R₂] [ring R₃]
 variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
-variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
+variables {τ₁₂ : R →+* R₂} {τ₂₃ : R₂ →+* R₃} {τ₁₃ : R →+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 variables {f : M →ₛₗ[τ₁₂] M₂}
 include R
@@ -1940,7 +1952,7 @@ section add_comm_monoid
 variables [semiring R] [semiring R₂] [add_comm_monoid M] [add_comm_monoid M₂]
 variables [module R M] [module R₂ M₂]
 variables (p p' : submodule R M) (q : submodule R₂ M₂)
-variables {τ₁₂ : R ≃+* R₂}
+variables {τ₁₂ : R →+* R₂}
 --include T
 open linear_map
 
@@ -1981,7 +1993,7 @@ section ring
 
 variables [ring R] [ring R₂] [add_comm_group M] [add_comm_group M₂] [module R M] [module R₂ M₂]
 variables (p p' : submodule R M) (q : submodule R₂ M₂)
-variables {τ₁₂ : R ≃+* R₂}
+variables {τ₁₂ : R →+* R₂}
 
 open linear_map
 
@@ -2126,7 +2138,7 @@ variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables [module R N] [module R N₂] [module R N₃]
-variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
+variables {τ₁₂ : R →+* R₂} {τ₂₃ : R₂ →+* R₃} {τ₁₃ : R →+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
 /-- A monomorphism is injective. -/
@@ -2160,7 +2172,7 @@ section ring
 variables [ring R] [ring R₂] [ring R₃]
 variables [add_comm_monoid M] [add_comm_group M₂] [add_comm_monoid M₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
-variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
+variables {τ₁₂ : R →+* R₂} {τ₂₃ : R₂ →+* R₃} {τ₁₃ : R →+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
 lemma range_mkq_comp (f : M →ₛₗ[τ₁₂] M₂) : f.range.mkq.compₛₗ f = 0 :=
@@ -2199,7 +2211,7 @@ variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables [module R M] [module R₂ M₂]
 variables [subsingleton M] [subsingleton M₂]
-variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
+variables {σ₁₂ : R →+* R₂} {σ₂₁ : R₂ →+* R}
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 
 include σ₂₁
@@ -2232,7 +2244,7 @@ variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂}
-variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
+variables {σ₁₂ : R →+* R₂} {σ₂₁ : R₂ →+* R}
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables (e e' : M ≃ₛₗ[σ₁₂] M₂)
 
@@ -2292,9 +2304,9 @@ variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add
 variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
 variables {module_N : module R N} {module_N₂ : module R N₂} {module_N₃ : module R N₃}
-variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
-variables {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
-variables {σ₃₂ : R₃ ≃+* R₂}
+variables {σ₁₂ : R →+* R₂} {σ₂₁ : R₂ →+* R}
+variables {σ₂₃ : R₂ →+* R₃} {σ₁₃ : R →+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables {σ₃₂ : R₃ →+* R₂}
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂} {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃}
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
@@ -2468,8 +2480,8 @@ variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃] [add_comm_group M₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂}
 variables {module_M₃ : module R₃ M₃} {module_M₄ : module R₄ M₄}
-variables {σ₁₂ : R ≃+* R₂} {σ₃₄ : R₃ ≃+* R₄}
-variables {σ₂₁ : R₂ ≃+* R} {σ₄₃ : R₄ ≃+* R₃}
+variables {σ₁₂ : R →+* R₂} {σ₃₄ : R₃ →+* R₄}
+variables {σ₂₁ : R₂ →+* R} {σ₄₃ : R₄ →+* R₃}
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables {re₃₄ : ring_equiv_inv_pair σ₃₄ σ₄₃} {re₄₃ : ring_equiv_inv_pair σ₄₃ σ₃₄}
 variables (e e₁ : M ≃ₛₗ[σ₁₂] M₂) (e₂ : M₃ ≃ₛₗ[σ₃₄] M₄)
@@ -2501,7 +2513,7 @@ section ring
 
 variables [ring R] [ring R₂] [add_comm_group M] [add_comm_group M₂]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂}
-variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
+variables {σ₁₂ : R →+* R₂} {σ₂₁ : R₂ →+* R}
 variables [ring_equiv_inv_pair σ₁₂ σ₂₁] [ring_equiv_inv_pair σ₂₁ σ₁₂]
 variables (f : M →ₛₗ[σ₁₂] M₂) (e : M ≃ₛₗ[σ₁₂] M₂)
 
@@ -2527,7 +2539,7 @@ end ring
 section comm_ring
 variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module R M] [module R M₂] [module R M₃]
---variables {σ₁₂ : R ≃+* R₂} {σ₁ : R ≃+* R}
+--variables {σ₁₂ : R →+* R₂} {σ₁ : R →+* R}
 open linear_map
 
 /-- Multiplying by a unit `a` of the ring `R` is a linear equivalence. -/
