@@ -82,7 +82,8 @@ include h
 lemma conjugate_i (g : G) (v : V) : (conjugate π g) (i v) = v :=
 begin
   dsimp [conjugate],
-  simp only [←i.map_smul, h, ←mul_smul, single_mul_single, mul_one, mul_left_inv],
+  simp only [i.map_smul_inv, ring_equiv.refl_apply, h, ←mul_smul, single_mul_single, mul_one,
+    mul_left_inv],
   change (1 : monoid_algebra k G) • v = v,
   simp,
 end
