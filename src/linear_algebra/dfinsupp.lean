@@ -121,7 +121,7 @@ def lsum [semiring S] [module S N] [smul_comm_class R S N] :
       { intros a b f ha hb hf,
         rw [smul_add, add_monoid_hom.map_add, add_monoid_hom.map_add, smul_add, hf, ←single_smul,
           sum_add_hom_single, sum_add_hom_single, linear_map.to_add_monoid_hom_coe,
-          linear_map.map_smul], } } },
+          linear_map.map_smul, ring_equiv.refl_apply], } } },
   inv_fun := λ F i, F.comp (lsingle i),
   left_inv := λ F, by { ext x y, simp },
   right_inv := λ F, by { ext x y, simp },
