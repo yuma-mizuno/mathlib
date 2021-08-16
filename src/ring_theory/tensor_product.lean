@@ -111,7 +111,7 @@ the given bilinear map `M →[A] N →[R] P`. -/
       (lsmul R _ c).comp (lift (f.restrict_scalars R)) x,
     from ext_iff.1 $ tensor_product.ext $ λ x y,
     by simp only [comp_apply, algebra.lsmul_coe, smul_tmul', lift.tmul, coe_restrict_scalars_eq_coe,
-        f.map_smul, smul_apply],
+        f.map_smul, smul_apply, ring_equiv.refl_apply],
   .. lift (f.restrict_scalars R) }
 
 @[simp] lemma lift_tmul (f : M →ₗ[A] (N →ₗ[R] P)) (x : M) (y : N) :
