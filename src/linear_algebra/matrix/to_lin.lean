@@ -535,7 +535,7 @@ lemma smul_left_mul_matrix (x) (ik jk) :
     left_mul_matrix b (left_mul_matrix c x ik.2 jk.2) ik.1 jk.1 :=
 by simp only [left_mul_matrix_apply, linear_map.to_matrix_apply, mul_comm, basis.smul_apply,
               basis.smul_repr, finsupp.smul_apply, algebra.lmul_apply, id.smul_eq_mul,
-              linear_equiv.map_smul, mul_smul_comm]
+              linear_equiv.map_smul, ring_equiv.refl_apply, mul_smul_comm]
 
 lemma smul_left_mul_matrix_algebra_map (x : S) :
   left_mul_matrix (b.smul c) (algebra_map _ _ x) = block_diagonal (λ k, left_mul_matrix b x) :=
@@ -607,7 +607,7 @@ def linear_equiv.alg_conj {R : Type v} [comm_ring R] {M₁ M₂ : Type*}
 { map_mul'  := λ f g, by apply e.arrow_congr_comp,
   map_add'  := e.conj.map_add,
   commutes' := λ r, by { change e.conj (r • linear_map.id) = r • linear_map.id,
-                         rw [linear_equiv.map_smul, linear_equiv.conj_id], },
+                         rw [linear_equiv.map_smul, ring_equiv.refl_apply, linear_equiv.conj_id] },
   ..e.conj }
 
 /-- A basis of a module induces an equivalence of algebras from the endomorphisms of the module to

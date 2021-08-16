@@ -341,7 +341,8 @@ This is an auxiliary definition for the full linear equivalence `linear_map.to_b
 def linear_map.to_bilin_aux (f : M₂ →ₗ[R₂] M₂ →ₗ[R₂] R₂) : bilin_form R₂ M₂ :=
 { bilin := λ x y, f x y,
   bilin_add_left := λ x y z, (linear_map.map_add f x y).symm ▸ linear_map.add_apply (f x) (f y) z,
-  bilin_smul_left := λ a x y, by rw [linear_map.map_smul, linear_map.smul_apply, smul_eq_mul],
+  bilin_smul_left := λ a x y, by rw [linear_map.map_smul, ring_equiv.refl_apply,
+    linear_map.smul_apply, smul_eq_mul],
   bilin_add_right := λ x y z, linear_map.map_add (f x) y z,
   bilin_smul_right := λ a x y, linear_map.map_smul (f x) a y }
 
@@ -382,9 +383,9 @@ variables {M' : Type w} [add_comm_monoid M'] [module R M']
 def comp (B : bilin_form R M') (l r : M →ₗ[R] M') : bilin_form R M :=
 { bilin := λ x y, B (l x) (r y),
   bilin_add_left := λ x y z, by rw [linear_map.map_add, add_left],
-  bilin_smul_left := λ x y z, by rw [linear_map.map_smul, smul_left],
+  bilin_smul_left := λ x y z, by rw [linear_map.map_smul, ring_equiv.refl_apply, smul_left],
   bilin_add_right := λ x y z, by rw [linear_map.map_add, add_right],
-  bilin_smul_right := λ x y z, by rw [linear_map.map_smul, smul_right] }
+  bilin_smul_right := λ x y z, by rw [linear_map.map_smul, ring_equiv.refl_apply, smul_right] }
 
 /-- Apply a linear map to the left argument of a bilinear form. -/
 def comp_left (B : bilin_form R M) (f : M →ₗ[R] M) : bilin_form R M :=
@@ -473,9 +474,11 @@ section lin_mul_lin
 def lin_mul_lin (f g : M₂ →ₗ[R₂] R₂) : bilin_form R₂ M₂ :=
 { bilin := λ x y, f x * g y,
   bilin_add_left := λ x y z, by rw [linear_map.map_add, add_mul],
-  bilin_smul_left := λ x y z, by rw [linear_map.map_smul, smul_eq_mul, mul_assoc],
+  bilin_smul_left := λ x y z, by rw [linear_map.map_smul, ring_equiv.refl_apply, smul_eq_mul,
+    mul_assoc],
   bilin_add_right := λ x y z, by rw [linear_map.map_add, mul_add],
-  bilin_smul_right := λ x y z, by rw [linear_map.map_smul, smul_eq_mul, mul_left_comm] }
+  bilin_smul_right := λ x y z, by rw [linear_map.map_smul, ring_equiv.refl_apply, smul_eq_mul,
+    mul_left_comm] }
 
 variables {f g : M₂ →ₗ[R₂] R₂}
 
