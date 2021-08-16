@@ -42,7 +42,8 @@ def sections_submodule (F : J ⥤ Module R) :
 { carrier := (F ⋙ forget (Module R)).sections,
   smul_mem' := λ r s sh j j' f,
   begin
-    simp only [forget_map_eq_coe, functor.comp_map, pi.smul_apply, linear_map.map_smul],
+    simp only [forget_map_eq_coe, functor.comp_map, pi.smul_apply, linear_map.map_smul,
+      ring_equiv.refl_apply],
     dsimp [functor.sections] at sh,
     rw sh f,
   end,
