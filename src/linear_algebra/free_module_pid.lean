@@ -330,7 +330,8 @@ begin
       refine ⟨⟨x - b • _, _⟩, bN'.mem_span _, rfl⟩,
       refine submodule.mem_inf.mpr ⟨linear_map.mem_ker.mpr _, N.sub_mem x.2 (N.smul_mem _ y_mem)⟩,
       dsimp only,
-      rw [linear_map.map_sub, linear_map.map_smul, hb, ϕy_eq, smul_eq_mul, mul_comm, sub_self] },
+      rw [linear_map.map_sub, linear_map.map_smul, ring_equiv.refl_apply, hb, ϕy_eq, smul_eq_mul,
+        mul_comm, sub_self] },
     { ext, simp only [ϕy_eq, add_sub_cancel'_right] } },
 end
 
