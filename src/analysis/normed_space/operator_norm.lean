@@ -73,7 +73,8 @@ is generalized to the case of any finite dimensional domain
 in `linear_map.to_continuous_linear_map`. -/
 def linear_map.to_continuous_linear_map₁ (f : 𝕜 →ₗ[𝕜] E) : 𝕜 →L[𝕜] E :=
 f.mk_continuous (∥f 1∥) $ λ x, le_of_eq $
-by { conv_lhs { rw ← mul_one x }, rw [← smul_eq_mul, f.map_smul, norm_smul, mul_comm] }
+by { conv_lhs { rw ← mul_one x }, rw [← smul_eq_mul, f.map_smul, ring_equiv.refl_apply, norm_smul,
+  mul_comm] }
 
 /-- Construct a continuous linear map from a linear map and the existence of a bound on this linear
 map. If you have an explicit bound, use `linear_map.mk_continuous` instead, as a norm estimate will
@@ -119,8 +120,8 @@ lemma linear_map.bound_of_shell_semi_normed (f : E →ₗ[𝕜] F) {ε C : ℝ} 
   ∥f x∥ ≤ C * ∥x∥ :=
 begin
   rcases rescale_to_shell_semi_normed hc ε_pos hx with ⟨δ, hδ, δxle, leδx, δinv⟩,
-  simpa only [f.map_smul, norm_smul, mul_left_comm C, mul_le_mul_left (norm_pos_iff.2 hδ)]
-    using hf (δ • x) leδx δxle
+  simpa only [f.map_smul, ring_equiv.refl_apply, norm_smul, mul_left_comm C,
+    mul_le_mul_left (norm_pos_iff.2 hδ)] using hf (δ • x) leδx δxle
 end
 
 /-- If `∥x∥ = 0` and `f` is continuous then `∥f x∥ = 0`. -/
