@@ -408,7 +408,7 @@ begin
   have : ⇑f = (λ x, x + f 0) ∘ λ x, x * (f 1 - f 0),
   { ext x,
     change f x = x • (f 1 -ᵥ f 0) +ᵥ f 0,
-    rw [← f.linear_map_vsub, ← f.linear.map_smul, ← f.map_vadd],
+    rw [← f.linear_map_vsub, f.linear.map_smul_inv, ring_equiv.refl_apply, ← f.map_vadd],
     simp only [vsub_eq_sub, add_zero, mul_one, vadd_eq_add, sub_zero, smul_eq_mul] },
   rw [this, set.image_comp],
   simp only [set.image_add_const_interval, set.image_mul_const_interval]
