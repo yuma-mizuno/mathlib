@@ -57,7 +57,7 @@ instance (A : Mon_ (Module.{u} R)) : algebra R A.X :=
   map_mul' := λ x y,
   begin
     have h := linear_map.congr_fun A.one_mul.symm (x ⊗ₜ (A.one y)),
-    rwa [monoidal_category.left_unitor_hom_apply, ←A.one.map_smul] at h,
+    rwa [monoidal_category.left_unitor_hom_apply, A.one.map_smul_inv] at h,
   end,
   commutes' := λ r a,
   begin dsimp,
