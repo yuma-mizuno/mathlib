@@ -561,7 +561,7 @@ add_con.add_con_gen_le $ λ x y hxy, match x, y, hxy with
 | _, _, (eqv.of_add_right m n₁ n₂) := (add_con.ker_rel _).2 $
     by simp_rw [add_monoid_hom.map_add, free_add_monoid.lift_eval_of, (f m).map_add]
 | _, _, (eqv.of_smul r m n)        := (add_con.ker_rel _).2 $
-    by simp_rw [free_add_monoid.lift_eval_of, f.map_smul₂, (f m).map_smul]
+    by simp_rw [free_add_monoid.lift_eval_of, f.map_smul₂, (f m).map_smul, ring_equiv.refl_apply]
 | _, _, (eqv.add_comm x y)         := (add_con.ker_rel _).2 $
     by simp_rw [add_monoid_hom.map_add, add_comm]
 end
@@ -573,7 +573,7 @@ variable {f}
 
 @[simp] lemma lift_aux.smul (r : R) (x) : lift_aux f (r • x) = r • lift_aux f x :=
 tensor_product.induction_on x (smul_zero _).symm
-  (λ p q, by rw [← tmul_smul, lift_aux_tmul, lift_aux_tmul, (f p).map_smul])
+  (λ p q, by rw [← tmul_smul, lift_aux_tmul, lift_aux_tmul, (f p).map_smul, ring_equiv.refl_apply])
   (λ p q ih1 ih2, by rw [smul_add, (lift_aux f).map_add, ih1, ih2, (lift_aux f).map_add, smul_add])
 
 variable (f)
