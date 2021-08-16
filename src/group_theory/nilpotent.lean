@@ -107,7 +107,6 @@ def upper_central_series_step : subgroup G :=
     exact subgroup.normal.mem_comm infer_instance hx,
   end }
 
-#check subgroup.copy
 
 
 /-- The proof that `upper_central_series_step H` is the preimage of the centre of `G/H` under
@@ -320,26 +319,31 @@ end
 -- Then for a statement below which takes your fancy, try and find a maths proof
 -- and then try and find a Lean proof.
 
+lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
+
+lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
+  x ∈ lower_central_series G (n + 1) ↔
+  ∀ y : G, x * y * x⁻¹ * y⁻¹ ∈ lower_central_series G n := iff.rfl
+
+instance (n : ℕ) : normal (lower_central_series G n) :=
+begin
+  induction n,
+  { simp [lower_central_series_zero_def, subgroup.top_normal] },
+  { apply general_commutator_normal _ _,
+    exact n_ih,
+    exact subgroup.top_normal },
+end
+
 example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
-lemma h {g x : G} {n : ℕ} (hG: g ∈ (lower_central_series G n)) (hh : g * x * g⁻¹ * x⁻¹ = (1 : G)) :
- lower_central_series G (n + 1) = ⊥ :=
+example (G : Type*) [group G] (H : subgroup G) (x y : G) (h : x * y = y * x ) : normal H :=
 begin
- sorry,
+
+  sorry,
 end
-
--- example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f)
--- (x : H) : x ∈ (subgroup.map f G) ↔ ∃ y ∈ G, f y = x :=
--- begin
---   sorry,
---   -- refine set_like.le_def.mp h,
--- end
-
--- example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f)
--- (x :
 
 -- upper_central_series is functorial with respect to surjections
 example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f) (n : ℕ)
@@ -348,31 +352,39 @@ begin
   induction n,
   { simp [upper_central_series_zero_def] },
   {
-    -- rw set_like.le_def,
     intros x hx,
-    -- rw mem_upper_central_series_succ_iff,
-    -- intro y,
-    -- apply set_like.le_def.mp n_ih,
-    -- rw mem_map,
-    -- simp only [exists_prop],
     specialize h x,
     apply exists.elim h,
     rw mem_upper_central_series_succ_iff,
-    rintro a rfl y,
+    rintro a hx2 y,
     apply set_like.le_def.mp n_ih,
     simp only [exists_prop, mem_map],
+    use a,
+    split,
+    {
+      rw ← hx2 at hx,
+      have h : a ∈ upper_central_series G n_n.succ, {
+        sorry,
+      },
+      rw mem_upper_central_series_succ_iff at h,
+      have h2 : upper_central_series G n_n ≤ upper_central_series G n_n.succ, {
+        sorry,
+        -- bc ascending central series
+      },
+      rw mem_map at hx,
+      sorry,
+    },
+    {
+      sorry,
+    }
 
     -- use preimage of x under f
 
 
     -- rw mem_upper_central_series_succ_iff at hx,
-    sorry,
   }
 end
 
-
-#check subgroup.map quotient.mk
-#check subgroup.map
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -389,7 +401,8 @@ begin
     have h0 : ∀ i : ℕ, quotient (lower_central_series G i)
     = lower_central_series (quotient (center G)) i,
     { sorry, },
-    have h1 : subgroup.map (quotient.mk) (lower_central_series G n) = (⊥ : subgroup (quotient G)), {
+    have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n)
+      = (⊥ : subgroup (quotient G)), {
       sorry,
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
@@ -437,18 +450,26 @@ end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
 begin
-  have h : ∀ n : ℕ, upper_central_series (G × H) n = (upper_central_series G n, upper_central_series H n), {
-    sorry,
-  },
   sorry,
 end
+
+
+#check subgroup.map (quotient_group.mk' (center G)) (center G)
+
 
 universe u
 example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
   is_nilpotent (Π i, f i) := sorry
 
 example (G : Type*) [group G] (N : subgroup G) [N.normal] (hG : is_nilpotent G) :
-  is_nilpotent (quotient_group.quotient N) := sorry
+  is_nilpotent (quotient_group.quotient N) :=
+begin
+  -- type of subgroup.map (quotient_group.mk' (center G)) (center G) is subgroup (quotient (center G))
+  -- have h : subgroup.map (quotient_group.mk' (center G)) (center G) ≤ quotient_group.quotient (center G), {
+  --   sorry,
+  -- },
+  sorry,
+end
 
 example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) : is_nilpotent H :=
 sorry
