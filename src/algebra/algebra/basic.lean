@@ -1,4 +1,4 @@
-/-
+  /-
 Copyright (c) 2018 Kenny Lau. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Yury Kudryashov
@@ -599,7 +599,8 @@ def of_linear_map (f : A →ₗ[R] B) (map_one : f 1 = 1) (map_mul : ∀ x y, f 
 { to_fun := f,
   map_one' := map_one,
   map_mul' := map_mul,
-  commutes' := λ c, by simp only [algebra.algebra_map_eq_smul_one, f.map_smul, map_one],
+  commutes' := λ c, by simp only [algebra.algebra_map_eq_smul_one, f.map_smul,
+    ring_equiv.refl_apply, map_one],
   .. f.to_add_monoid_hom }
 
 @[simp] lemma of_linear_map_to_linear_map (map_one) (map_mul) :
