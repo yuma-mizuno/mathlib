@@ -773,7 +773,8 @@ variables [semiring R] [add_comm_monoid M] [module R M] [add_comm_monoid N] [mod
 lemma linear_map.map_finsupp_total
   (f : M →ₗ[R] N) {ι : Type*} {g : ι → M} (l : ι →₀ R) :
   f (finsupp.total ι M R g l) = finsupp.total ι N R (f ∘ g) l :=
-by simp only [finsupp.total_apply, finsupp.total_apply, finsupp.sum, f.map_sum, f.map_smul]
+by simp only [finsupp.total_apply, finsupp.total_apply, finsupp.sum, f.map_sum, f.map_smul,
+  ring_equiv.refl_apply]
 
 lemma submodule.exists_finset_of_mem_supr
   {ι : Sort*} (p : ι → submodule R M) {m : M} (hm : m ∈ ⨆ i, p i) :
