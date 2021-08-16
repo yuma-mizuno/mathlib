@@ -53,9 +53,9 @@ by { change (σ₁₂.trans σ₂₃) x = σ₁₃ x, rw [comp_eq] }
 
 instance ids : ring_equiv_comp_triple (ring_equiv.refl R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
 instance right_ids : ring_equiv_comp_triple σ₁₂ (ring_equiv.refl R₂) σ₁₂ := ⟨by { ext, simp }⟩
-instance inv_ids : ring_equiv_comp_triple σ₁₂ σ₁₂.symm (ring_equiv.refl R₁) := ⟨by {ext, simp}⟩
-instance right_inv_ids : ring_equiv_comp_triple σ₁₂.symm σ₁₂ (ring_equiv.refl R₂) :=
-⟨by {ext, simp}⟩
+-- instance inv_ids : ring_equiv_comp_triple σ₁₂ σ₁₂.symm (ring_equiv.refl R₁) := ⟨by {ext, simp}⟩
+-- instance right_inv_ids : ring_equiv_comp_triple σ₁₂.symm σ₁₂ (ring_equiv.refl R₂) :=
+-- ⟨by {ext, simp}⟩
 
 end ring_equiv_comp_triple
 
