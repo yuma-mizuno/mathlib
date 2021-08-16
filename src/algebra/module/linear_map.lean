@@ -299,7 +299,8 @@ instance is_scalar_tower.compatible_smul
   {R S : Type*} [semiring S] [has_scalar R S]
   [has_scalar R M] [module S M] [is_scalar_tower R S M]
   [has_scalar R M₂] [module S M₂] [is_scalar_tower R S M₂] : compatible_smul M M₂ R S :=
-⟨λ f c x, by rw [← smul_one_smul S c (f x), map_smul_inv, ring_equiv.refl_apply, smul_one_smul] ⟩
+⟨λ f c x, by rw [← smul_one_smul S c x, ← smul_one_smul S c (f x), map_smul,
+  ring_equiv.refl_apply] ⟩
 
 @[simp, priority 900]
 lemma map_smul_of_tower {R S : Type*} [semiring S] [has_scalar R M]

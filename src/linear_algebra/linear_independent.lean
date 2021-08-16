@@ -209,7 +209,7 @@ lemma linear_independent.of_comp (f : M →ₗ[R] M') (hfv : linear_independent 
   linear_independent R v :=
 linear_independent_iff'.2 $ λ s g hg i his,
 have ∑ (i : ι) in s, g i • f (v i) = 0,
-  by simp_rw [← f.map_smul, ← f.map_sum, hg, f.map_zero],
+  by simp_rw [f.map_smul_inv, ring_equiv.refl_apply, ← f.map_sum, hg, f.map_zero],
 linear_independent_iff'.1 hfv s g this i his
 
 /-- If `f` is an injective linear map, then the family `f ∘ v` is linearly independent
