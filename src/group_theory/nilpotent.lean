@@ -318,6 +318,9 @@ begin
     (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
 end
 
+lemma lower_central_series_succ_le (G : Type*) [group G] (n : ℕ) :
+  lower_central_series G n.succ ≤ lower_central_series G n := sorry
+
 lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
@@ -345,12 +348,7 @@ begin
     rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     rw mem_lower_central_series_succ_iff,
     simp only [exists_prop, mem_top, exists_true_left, true_and],
-
-
-
     sorry,
-    -- rcases (h y') with ⟨y, rfl⟩,
-    -- simpa using hd (mem_map_of_mem f (hx y)) }
   }
 end
 
