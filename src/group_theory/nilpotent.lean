@@ -319,17 +319,17 @@ end
 -- Then for a statement below which takes your fancy, try and find a maths proof
 -- and then try and find a Lean proof.
 
-lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
+@[simp] lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
 
 -- for some reason doesn't let me use ⁅lower_central_series n, ⊤⁆ directly
 -- why doesn't by refl work??? something dodgy going on here
 -- TODO: MAKE THIS SOMETHING MORE HELPFUL!
--- lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
---   x ∈ lower_central_series G (n + 1) ↔
---   x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
--- := begin
---   refl,
--- end
+lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
+  x ∈ lower_central_series G (n + 1) ↔
+  x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
+:= begin
+  refl,
+end
 
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
@@ -365,10 +365,25 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
-example (G : Type*) [group G] (x y z : G) : y * x⁻¹ = z ↔ y = z * x :=
+lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
+(h : function.surjective f) (n : ℕ)
+: subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
 begin
-  refine mul_inv_eq_iff_eq_mul,
+  induction n with d hd,
+  { simp [nat.nat_zero_eq_zero] },
+  {
+    rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
+    rw mem_lower_central_series_succ_iff,
+    simp only [exists_prop, mem_top, exists_true_left, true_and],
+
+
+
+    sorry,
+    -- rcases (h y') with ⟨y, rfl⟩,
+    -- simpa using hd (mem_map_of_mem f (hx y)) }
+  }
 end
+
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
@@ -387,7 +402,7 @@ begin
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
       intros x hx g,
-      -- doesn't this immediately follow from normal lcs?
+      -- follows from functorial of lcs
       sorry,
     },
     have h4 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
@@ -396,15 +411,12 @@ begin
       exact (h2 g hg x).symm,
     },
     intro hx,
-    unfold lower_central_series at hx,
-    rw general_commutator_def at hx,
+    rw mem_lower_central_series_succ_iff at hx,
     convert hx,
     symmetry,
     rw closure_eq_bot_iff,
     rintro x ⟨p, hp, q, -, rfl⟩,
-    simp only [set.mem_singleton_iff],
-    apply h4,
-    assumption,
+    exact set.mem_singleton_iff.mpr (h4 _ _ hp),
   },
   { intro h,
     rw mem_bot at h,
