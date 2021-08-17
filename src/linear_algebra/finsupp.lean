@@ -590,8 +590,8 @@ begin
   haveI := classical.dec_pred (λ x, x ∈ s),
   haveI := classical.dec_pred (λ x, x ∈ t),
   refine linear_equiv.trans (finsupp.supported_equiv_finsupp s)
-      (linear_equiv.trans _ (finsupp.supported_equiv_finsupp t).symm),
-  exact finsupp.dom_lcongr e
+    ((finsupp.dom_lcongr e : _ ≃ₗ[R] _).trans (finsupp.supported_equiv_finsupp t).symm);
+  apply_instance
 end
 
 /-- `finsupp.map_range` as a `linear_map`. -/
