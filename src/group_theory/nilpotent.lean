@@ -65,31 +65,6 @@ open subgroup
 
 variables {G : Type*} [group G] (H : subgroup G) [normal H]
 
-open quotient_group
-
-def UCS_step' : subgroup G := subgroup.copy
-  (subgroup.comap (mk' H) (center (quotient H)))
-  {x : G | ∀ y : G, x * y * x⁻¹ * y⁻¹ ∈ H}
-begin
-  ext,
-  change _ ↔ x ∈ comap (mk' H) (center (quotient H)),
-  rw [mem_comap, mem_center_iff],
-  change (∀ y, x * y * x⁻¹ * y⁻¹ ∈ H) ↔ _,
-  split,
-  { intros h q,
-    apply induction_on q,
-    intro y,
-    change ((y * x : G) : quotient H) = (x * y : G),
-    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv],
-    convert h y using 1, group,
-  },
-  { intros h y,
-    specialize h y,
-    change ((y * x : G) : quotient H) = (x * y : G) at h,
-    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv] at h,
-    convert h using 1, group },
-end
-
 /-- If `H` is a normal subgroup of `G`, then the set `{x : G | ∀ y : G, x*y*x⁻¹*y⁻¹ ∈ H}`
 is a subgroup of `G` (because it is the preimage in `G` of the centre of the
 quotient group `G/H`.)
@@ -107,34 +82,29 @@ def upper_central_series_step : subgroup G :=
     exact subgroup.normal.mem_comm infer_instance hx,
   end }
 
+lemma mem_upper_central_series_step (x : G) :
+  x ∈ upper_central_series_step H ↔ ∀ y, x * y * x⁻¹ * y⁻¹ ∈ H := iff.rfl
 
+open quotient_group
 
 /-- The proof that `upper_central_series_step H` is the preimage of the centre of `G/H` under
 the canonical surjection. -/
-lemma upper_central_series_step_eq_comap_centre :
+lemma upper_central_series_step_eq_comap_center :
   upper_central_series_step H = subgroup.comap (mk' H) (center (quotient H)) :=
 begin
   ext,
-  rw [mem_comap, mem_center_iff],
-  change (∀ y, x * y * x⁻¹ * y⁻¹ ∈ H) ↔ _,
-  split,
-  { intros h q,
-    apply induction_on q,
-    intro y,
-    change ((y * x : G) : quotient H) = (x * y : G),
-    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv],
-    convert h y using 1, group,
-  },
-  { intros h y,
-    specialize h y,
-    change ((y * x : G) : quotient H) = (x * y : G) at h,
-    rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv] at h,
-    convert h using 1, group },
+  rw [mem_comap, mem_center_iff, forall_coe],
+  apply forall_congr,
+  intro y,
+  change x * y * x⁻¹ * y⁻¹ ∈ H ↔ ((y * x : G) : quotient H) = (x * y : G),
+  rw [eq_comm, eq_iff_div_mem, div_eq_mul_inv],
+  congr' 2,
+  group,
 end
 
 instance : normal (upper_central_series_step H) :=
 begin
-  rw upper_central_series_step_eq_comap_centre,
+  rw upper_central_series_step_eq_comap_center,
   apply_instance,
 end
 
@@ -182,8 +152,8 @@ variable {G}
 
 /-- A sequence of subgroups of `G` is an ascending central series if `H 0` is trivial and
   `⁅H (n + 1), G⁆ ⊆ H n` for all `n`. Note that we do not require that `H n = G` for some `n`. -/
-def is_ascending_central_series (H : ℕ → subgroup G) := H 0 = ⊥ ∧
-  ∀ (x : G) (n : ℕ), x ∈ H (n + 1) → ∀ g, x * g * x⁻¹ * g⁻¹ ∈ H n
+def is_ascending_central_series (H : ℕ → subgroup G) : Prop :=
+  H 0 = ⊥ ∧ ∀ (x : G) (n : ℕ), x ∈ H (n + 1) → ∀ g, x * g * x⁻¹ * g⁻¹ ∈ H n
 
 /-- A sequence of subgroups of `G` is a descending central series if `H 0` is `G` and
   `⁅H n, G⁆ ⊆ H (n + 1)` for all `n`. Note that we do not requre that `H n = {1}` for some `n`. -/
