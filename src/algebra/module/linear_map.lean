@@ -198,19 +198,6 @@ add_decl_doc linear_map.to_add_hom
 notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ M M₂
 notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_equiv.refl R) M M₂
 
-section
-set_option old_structure_cmd true
-
-/-- An auxiliary structure used to define plain linear maps directly using the structure.
-    This is only meant to be used to construct `linear_map` objects and has no API
-    of its own. -/
-structure plain_linear_map (R : Type u) (M : Type v) (M₂ : Type w)
-  [semiring R] [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module R M₂]
-  extends add_hom M M₂ :=
-(map_smul' : ∀ (r : R) (x : M), to_fun (r • x) = r • to_fun x)
-
-end
-
 namespace linear_map
 
 section add_comm_monoid
@@ -221,15 +208,6 @@ section
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R M₂] [module S M₃]
-
-variables (R M M₂)
-/-- Convert a plain linear map into a linear map. -/
-abbreviation from_plain_linear_map (f : plain_linear_map R M M₂) : M →ₗ[R] M₂ :=
-{ to_fun := f.to_fun,
-  map_add' := f.map_add',
-  map_smul' := λ r x, by simp [f.map_smul'] }
-
-variables {R M M₂}
 
 def to_mul_action_hom (f : M →ₗ[R] M₂) : mul_action_hom R M M₂ := {..f}
 
@@ -635,18 +613,6 @@ attribute [nolint doc_blame] linear_equiv.to_add_equiv
 notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
 notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
 
-section
-set_option old_structure_cmd true
-
-/-- An auxiliary structure used to define plain linear equivs directly using the structure.
-    This is only meant to be used to construct `linear_equiv` objects and has no API
-    of its own. -/
-@[nolint has_inhabited_instance]
-structure plain_linear_equiv (R : Type u) (M : Type v) (M₂ : Type w)
-  [semiring R] [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module R M₂]
-  extends M →ₗ[R] M₂, M ≃+ M₂
-end
-
 namespace linear_equiv
 
 section add_comm_monoid
@@ -661,15 +627,6 @@ variables [add_comm_monoid N₁] [add_comm_monoid N₂]
 variables [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
 variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
-
-variables (R M M₃)
-/-- Convert a plain linear equiv into a linear equiv. -/
-abbreviation from_plain_linear_equiv (e : plain_linear_equiv R M M₃) : M ≃ₗ[R] M₃ :=
-{ to_fun := e.to_fun,
-  map_smul' := λ r x, by simp [e.map_smul'],
-  ..e }
-
-variables {R M M₃}
 
 include R
 

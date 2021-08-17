@@ -626,11 +626,11 @@ variables [fintype ι] (b : basis ι R M)
 /-- A module over `R` with a finite basis is linearly equivalent to functions from its basis to `R`.
 -/
 def basis.equiv_fun : M ≃ₗ[R] (ι → R) :=
-linear_equiv.trans b.repr linear_equiv.from_plain_linear_equiv R (ι →₀ R) (ι → R)$
-   { to_fun := coe_fn,
+linear_equiv.trans b.repr
+  ({ to_fun := coe_fn,
       map_add' := finsupp.coe_add,
       map_smul' := finsupp.coe_smul,
-      ..finsupp.equiv_fun_on_fintype }
+      ..finsupp.equiv_fun_on_fintype } : (ι →₀ R) ≃ₗ[R] (ι → R))
 
 /-- A module over a finite ring that admits a finite basis is finite. -/
 def module.fintype_of_fintype [fintype R] : fintype M :=
