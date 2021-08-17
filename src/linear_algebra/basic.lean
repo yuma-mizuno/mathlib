@@ -2247,7 +2247,7 @@ This is `linear_equiv.of_submodule'` but with `map` on the right instead of `com
 def of_submodule (p : submodule R M) : p ≃ₛₗ[σ₁₂] ↥(p.map (e : M →ₛₗ[σ₁₂] M₂) : submodule R₂ M₂) :=
 { inv_fun   := λ y, ⟨(e.symm : M₂ →ₛₗ[σ₂₁] M) y, by {
     rcases y with ⟨y', hy⟩, rw submodule.mem_map at hy, rcases hy with ⟨x, hx, hxy⟩, subst hxy,
-    simp only [symm_apply_applyₛₗ, submodule.coe_mk, coe_coe, hx], }⟩,
+    simp only [symm_apply_apply, submodule.coe_mk, coe_coe, hx], }⟩,
   left_inv  := λ x, by simp,
   right_inv := λ y, by { apply set_coe.ext, simp, },
   ..((e : M →ₛₗ[σ₁₂] M₂).dom_restrict p).cod_restrict (p.map (e : M →ₛₗ[σ₁₂] M₂))
@@ -2317,7 +2317,7 @@ include σ₂₁
 /-- A linear equivalence which maps a submodule of one module onto another, restricts to a linear
 equivalence of the two submodules. -/
 def of_submodules (p : submodule R M) (q : submodule R₂ M₂) (h : p.map (e : M →ₛₗ[σ₁₂] M₂) = q) :
-p ≃ₛₗ[σ₁₂] q := (e.of_submodule p).transₛₗ (linear_equiv.of_eq _ _ h)
+p ≃ₛₗ[σ₁₂] q := (e.of_submodule p).trans (linear_equiv.of_eq _ _ h)
 
 
 @[simp] lemma of_submodules_apply {p : submodule R M} {q : submodule R₂ M₂}
@@ -2517,7 +2517,7 @@ of_left_inverse $ classical.some_spec (linear_map.ker_eq_bot.1 h).has_left_inver
 /-- A bijective linear map is a linear equivalence. Here, bijectivity is described by saying that
 the kernel of `f` is `{0}` and the range is the universal set. -/
 noncomputable def of_bijective (hf₁ : f.ker = ⊥) (hf₂ : f.range = ⊤) : M ≃ₛₗ[σ₁₂] M₂ :=
-(of_injective f hf₁).transₛₗ (of_top _ hf₂)
+(of_injective f hf₁).trans (of_top _ hf₂)
 
 @[simp] theorem of_bijective_apply {hf₁ hf₂} (x : M) :
   of_bijective f hf₁ hf₂ x = f x := rfl
@@ -2569,7 +2569,7 @@ lemma arrow_congr_comp {N N₂ N₃ : Sort*}
   [module R N] [module R N₂] [module R N₃]
   (e₁ : M ≃ₗ[R] N) (e₂ : M₂ ≃ₗ[R] N₂) (e₃ : M₃ ≃ₗ[R] N₃) (f : M →ₗ[R] M₂) (g : M₂ →ₗ[R] M₃) :
   arrow_congr e₁ e₃ (g.comp f) = (arrow_congr e₂ e₃ g).comp (arrow_congr e₁ e₂ f) :=
-by { ext, simp only [symm_apply_applyₛₗ, arrow_congr_apply, linear_map.comp_apply], }
+by { ext, simp only [symm_apply_apply, arrow_congr_apply, linear_map.comp_apply], }
 
 lemma arrow_congr_trans {M₁ M₂ M₃ N₁ N₂ N₃ : Sort*}
   [add_comm_group M₁] [module R M₁] [add_comm_group M₂] [module R M₂]
@@ -2659,7 +2659,7 @@ abbreviation coord (x : M) (h : x ≠ 0) : (K ∙ x) ≃ₗ[K] K :=
 
 lemma coord_self (x : M) (h : x ≠ 0) :
   (coord K M x h) (⟨x, submodule.mem_span_singleton_self x⟩ : K ∙ x) = 1 :=
-by rw [← to_span_nonzero_singleton_one K M x h, symm_apply_applyₛₗ]
+by rw [← to_span_nonzero_singleton_one K M x h, symm_apply_apply]
 
 end
 
@@ -2850,7 +2850,7 @@ rfl
 
 @[simp] lemma quot_ker_equiv_range_symm_apply_image (x : M) (h : f x ∈ f.range) :
   f.quot_ker_equiv_range.symm ⟨f x, h⟩ = f.ker.mkq x :=
-f.quot_ker_equiv_range.symm_apply_applyₛₗ (f.ker.mkq x)
+f.quot_ker_equiv_range.symm_apply_apply (f.ker.mkq x)
 
 /--
 Canonical linear map from the quotient `p/(p ∩ p')` to `(p+p')/p'`, mapping `x + (p ∩ p')`
@@ -3021,8 +3021,8 @@ def to_linear_equiv (f : general_linear_group R M) : (M ≃ₗ[R] M) :=
 def of_linear_equiv (f : (M ≃ₗ[R] M)) : general_linear_group R M :=
 { val := f,
   inv := (f.symm : M →ₗ[R] M),
-  val_inv := linear_map.ext $ λ _, f.apply_symm_applyₛₗ _,
-  inv_val := linear_map.ext $ λ _, f.symm_apply_applyₛₗ _ }
+  val_inv := linear_map.ext $ λ _, f.apply_symm_apply _,
+  inv_val := linear_map.ext $ λ _, f.symm_apply_apply _ }
 
 variables (R M)
 
