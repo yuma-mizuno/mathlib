@@ -401,8 +401,8 @@ omit module_M₁ module_M₂ module_M₃
 --   @compₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
 --   (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
 
-notation f ` ∘ₗ ` g := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids f g
+infixr ` ∘ₗ `:80 := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids
 
 @[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] (x : M₁) :
   f.comp g x = f (g x) := rfl

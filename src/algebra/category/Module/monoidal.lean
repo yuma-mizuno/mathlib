@@ -69,7 +69,7 @@ private lemma associator_naturality_aux
   [add_comm_monoid Y₁] [add_comm_monoid Y₂] [add_comm_monoid Y₃]
   [module R Y₁] [module R Y₂] [module R Y₃]
   (f₁ : X₁ →ₗ[R] Y₁) (f₂ : X₂ →ₗ[R] Y₂) (f₃ : X₃ →ₗ[R] Y₃) :
-  ↑(assoc R Y₁ Y₂ Y₃) ∘ₗ (map (map f₁ f₂) f₃) = (map f₁ (map f₂ f₃)) ∘ₗ ↑(assoc R X₁ X₂ X₃) :=
+  (↑(assoc R Y₁ Y₂ Y₃) ∘ₗ (map (map f₁ f₂) f₃)) = ((map f₁ (map f₂ f₃)) ∘ₗ ↑(assoc R X₁ X₂ X₃)) :=
 begin
   apply tensor_product.ext_threefold,
   intros x y z,
