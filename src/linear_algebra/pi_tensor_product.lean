@@ -397,7 +397,7 @@ lift.tprod f
 multilinear_map.ext $ reindex_tprod e
 
 @[simp] lemma lift_comp_reindex (e : ι ≃ ι₂) (φ : multilinear_map R (λ _ : ι₂, M) E) :
-  (lift φ).comp (↑(reindex R M e) : ⨂[R] i, M →ₗ[R] ⨂[R] i, M) = lift (φ.dom_dom_congr e.symm) :=
+  (lift φ) ∘ₗ ↑(reindex R M e) = lift (φ.dom_dom_congr e.symm) :=
 by { ext, simp, }
 
 @[simp]

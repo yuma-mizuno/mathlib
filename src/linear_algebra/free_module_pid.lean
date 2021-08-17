@@ -76,8 +76,7 @@ begin
   refine b.ext_elem (λ i, _),
   rw (eq_bot_iff_generator_eq_zero _).mpr hgen at hϕ,
   rw [linear_equiv.map_zero, finsupp.zero_apply],
-  exact (submodule.eq_bot_iff _).mp
-    (hϕ ((finsupp.lapply i).comp (b.repr : M →ₗ[R] ι →₀ R)) bot_le) _ ⟨x, hx, rfl⟩
+  exact (submodule.eq_bot_iff _).mp (hϕ ((finsupp.lapply i) ∘ₗ b.repr) bot_le) _ ⟨x, hx, rfl⟩
 end
 
 -- Note that the converse may not hold if `ϕ` is not injective.
