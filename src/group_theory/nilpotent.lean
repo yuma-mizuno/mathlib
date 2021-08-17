@@ -353,11 +353,6 @@ begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
-example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (x y : G) : (f x) * (f y) = f (x * y)
-:= begin
-  refine (monoid_hom.map_mul f x y).symm,
-end
-
 -- upper_central_series is functorial with respect to surjections
 lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
@@ -368,6 +363,11 @@ begin
   { rintros _ ⟨x, hx : x ∈ upper_central_series G d.succ, rfl⟩ y',
     rcases (h y') with ⟨y, rfl⟩,
     simpa using hd (mem_map_of_mem f (hx y)) }
+end
+
+example (G : Type*) [group G] (x y z : G) : y * x⁻¹ = z ↔ y = z * x :=
+begin
+  refine mul_inv_eq_iff_eq_mul,
 end
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
@@ -382,44 +382,28 @@ begin
     have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n) = ⊥, {
       exact (map_eq_bot_iff _).mpr (le_of_eq (ker_mk _).symm),
     },
-    have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      have h3 : normal (lower_central_series G n), {
+    have h3 : normal (lower_central_series G n), {
         exact lower_central_series.subgroup.normal n,
-      },
-      intros x hx,
-
-      -- g * x = x * g → g * x * g⁻¹ = x
-      -- apply eq_mul_of_mul_inv_eq,
-      -- revert g,
-      -- then h3.conj_mem x hx,
-
-
+    },
+    have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
+      intros x hx g,
       sorry,
     },
-    have h4 : ∀ g x : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
-      sorry,
+    have h4 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
+      intros x g hg,
+      rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
+      exact (h2 g hg x).symm,
     },
     intro hx,
     unfold lower_central_series at hx,
     rw general_commutator_def at hx,
     rw mem_bot,
     simp only [exists_prop, mem_top, true_and] at hx,
-
-    -- do this with the p from the exists in hx
-    -- rw ← mul_inv_self,
-    unfold center at h2,
-
-
-    -- rw ← mul_inv_self (has_one.nonempty G).elim,
-    -- unfold lower_central_series at hx,
-    -- rw general_commutator_def at hx,
-
-    -- simp at hx,
     sorry,
   },
   { intro h,
     rw mem_bot at h,
-    simp only [h, one_mem], },
+    simp only [h, one_mem] },
 end
 
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
