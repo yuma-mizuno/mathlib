@@ -330,13 +330,21 @@ lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) 
   refl,
 end
 
--- why can't i put n_ih and subgroup.top_normal in the apply directly?
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
   induction n,
   { simp [lower_central_series_zero_def, subgroup.top_normal] },
   { haveI := n_ih,
     exact general_commutator_normal (lower_central_series G n_n) ⊤ },
+end
+
+lemma upper_central_series_le_succ (n : ℕ)
+: upper_central_series G n ≤ upper_central_series G n.succ :=
+begin
+  intros x hx y,
+  rw mul_assoc, rw mul_assoc, rw ←mul_assoc y x⁻¹ y⁻¹,
+  exact mul_mem (upper_central_series G n) hx
+    (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
 end
 
 example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
@@ -346,6 +354,7 @@ end
 
 -- upper_central_series is functorial with respect to surjections
 #check general_commutator_containment
+#check set_like.le_def.mp
 example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f) (n : ℕ)
 : subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
 begin
@@ -367,11 +376,7 @@ begin
         rw mem_upper_central_series_succ_iff,
         sorry,
       },
-      rw mem_upper_central_series_succ_iff at h,
-      have h2 : upper_central_series G n_n ≤ upper_central_series G n_n.succ, {
-        sorry,
-        -- bc ascending central series
-      },
+      rw mem_upper_central_series_succ_iff at h1,
       rw mem_map at hx,
       sorry,
     },
