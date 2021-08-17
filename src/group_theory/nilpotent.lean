@@ -387,6 +387,7 @@ begin
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
       intros x hx g,
+      -- doesn't this immediately follow from normal lcs?
       sorry,
     },
     have h4 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
@@ -399,6 +400,7 @@ begin
     rw general_commutator_def at hx,
     rw mem_bot,
     simp only [exists_prop, mem_top, true_and] at hx,
+    -- doesn't this immediately follow from h4 and hx?
     sorry,
   },
   { intro h,
