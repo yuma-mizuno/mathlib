@@ -323,12 +323,13 @@ lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
 
 -- for some reason doesn't let me use ⁅lower_central_series n, ⊤⁆ directly
 -- why doesn't by refl work??? something dodgy going on here
-lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
-  x ∈ lower_central_series G (n + 1) ↔
-  x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
-:= begin
-  refl,
-end
+-- TODO: MAKE THIS SOMETHING MORE HELPFUL!
+-- lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
+--   x ∈ lower_central_series G (n + 1) ↔
+--   x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
+-- := begin
+--   refl,
+-- end
 
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
@@ -338,57 +339,35 @@ begin
     exact general_commutator_normal (lower_central_series G n_n) ⊤ },
 end
 
-lemma upper_central_series_le_succ (n : ℕ)
+lemma upper_central_series_le_succ (G : Type*) [group G] (n : ℕ)
 : upper_central_series G n ≤ upper_central_series G n.succ :=
 begin
   intros x hx y,
-  rw mul_assoc, rw mul_assoc, rw ←mul_assoc y x⁻¹ y⁻¹,
+  rw [mul_assoc, mul_assoc, ← mul_assoc y x⁻¹ y⁻¹],
   exact mul_mem (upper_central_series G n) hx
     (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
 end
 
-example (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
+lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
+example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (x y : G) : (f x) * (f y) = f (x * y)
+:= begin
+  refine (monoid_hom.map_mul f x y).symm,
+end
+
 -- upper_central_series is functorial with respect to surjections
-#check general_commutator_containment
-#check set_like.le_def.mp
-example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (h : function.surjective f) (n : ℕ)
+lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
+(h : function.surjective f) (n : ℕ)
 : subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
 begin
-  induction n,
+  induction n with d hd,
   { simp [upper_central_series_zero_def] },
-  {
-    intros x hx,
-    specialize h x,
-    apply exists.elim h,
-    rw mem_upper_central_series_succ_iff,
-    rintro a hx2 y,
-    apply set_like.le_def.mp n_ih,
-    simp only [exists_prop, mem_map],
-    use a,
-    split,
-    {
-      rw ← hx2 at hx,
-      have h1 : a ∈ upper_central_series G n_n.succ, {
-        rw mem_upper_central_series_succ_iff,
-        sorry,
-      },
-      rw mem_upper_central_series_succ_iff at h1,
-      rw mem_map at hx,
-      sorry,
-    },
-    {
-      sorry,
-    }
-
-    -- use preimage of x under f
-
-
-    -- rw mem_upper_central_series_succ_iff at hx,
-  }
+  { rintros _ ⟨x, hx : x ∈ upper_central_series G d.succ, rfl⟩ y',
+    rcases (h y') with ⟨y, rfl⟩,
+    simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
@@ -400,24 +379,36 @@ begin
   ext x,
   split,
   {
-    -- intro hx,
-    -- unfold lower_central_series at hx,
-    -- rw general_commutator_def at hx,
-    -- simp at hx,
-    have h0 : ∀ i : ℕ, quotient (lower_central_series G i)
-    = lower_central_series (quotient (center G)) i,
-    { sorry, },
-    have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n)
-      = (⊥ : subgroup (quotient G)), {
-      sorry,
+    have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n) = ⊥, {
+      exact (map_eq_bot_iff _).mpr (le_of_eq (ker_mk _).symm),
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
+      have h3 : normal (lower_central_series G n), {
+        exact lower_central_series.subgroup.normal n,
+      },
       intros x hx,
-      rw mem_center_iff,
-      intro g,
-      -- group tactic can make this equiv to proving g * x * g⁻¹ * x⁻¹
+
+      -- g * x = x * g → g * x * g⁻¹ = x
+      -- apply eq_mul_of_mul_inv_eq,
+      -- revert g,
+      -- then h3.conj_mem x hx,
+
+
       sorry,
     },
+    have h4 : ∀ g x : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
+      sorry,
+    },
+    intro hx,
+    unfold lower_central_series at hx,
+    rw general_commutator_def at hx,
+    rw mem_bot,
+    simp only [exists_prop, mem_top, true_and] at hx,
+
+    -- do this with the p from the exists in hx
+    -- rw ← mul_inv_self,
+    unfold center at h2,
+
 
     -- rw ← mul_inv_self (has_one.nonempty G).elim,
     -- unfold lower_central_series at hx,
@@ -428,7 +419,7 @@ begin
   },
   { intro h,
     rw mem_bot at h,
-    simp [h, one_mem] },
+    simp only [h, one_mem], },
 end
 
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
@@ -440,28 +431,25 @@ end
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
-  intro hG,
-  rw nilpotent_iff_lower_central_series at *,
-  -- have g : ∀ i : ℕ, (lower_central_series H i) ≤ lower_central_series G i, {
+  -- intro hG,
+  -- rw nilpotent_iff_lower_central_series at *,
+  -- -- have g : ∀ i : ℕ, (lower_central_series H i) ≤ lower_central_series G i, {
+  -- --   sorry,
+  -- -- },
+  -- have h : ∀ i : ℕ, lower_central_series G i = ⊥ → ∃ n : ℕ, lower_central_series H n = ⊥, {
+  --   intros x hx,
+  --   use x,
+  --   -- apply eq_bot_mono _ hx,
   --   sorry,
   -- },
-  have h : ∀ i : ℕ, lower_central_series G i = ⊥ → ∃ n : ℕ, lower_central_series H n = ⊥, {
-    intros x hx,
-    use x,
-    -- apply eq_bot_mono _ hx,
-    sorry,
-  },
-  exact exists.elim hG h,
+  -- exact exists.elim hG h,
+  sorry,
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
 begin
   sorry,
 end
-
-
-#check subgroup.map (quotient_group.mk' (center G)) (center G)
-
 
 universe u
 example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
