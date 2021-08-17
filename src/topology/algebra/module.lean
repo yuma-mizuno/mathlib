@@ -343,7 +343,7 @@ end add
 
 /-- Composition of bounded linear maps. -/
 def comp (g : M₂ →L[R] M₃) (f : M →L[R] M₂) : M →L[R] M₃ :=
-⟨(g : M₂ →ₗ[R] M₃) ∘ₗ f, g.2.comp f.2⟩
+⟨(g : M₂ →ₗ[R] M₃) ∘ₗ ↑f, g.2.comp f.2⟩
 
 @[simp, norm_cast] lemma coe_comp : ((h.comp f) :
   (M →ₗ[R] M₃)) = (h : M₂ →ₗ[R] M₃).comp (f : M →ₗ[R] M₂) :=
