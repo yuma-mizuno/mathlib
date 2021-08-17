@@ -153,7 +153,7 @@ with respect to the basis `b`.
 finite-dimensional spaces it is the `ι`th basis vector of the dual space.
 -/
 @[simps]
-def coord (i : ι) : M →ₗ[R] R := (finsupp.lapply i) ∘ₗ b.repr
+def coord (i : ι) : M →ₗ[R] R := (finsupp.lapply i) ∘ₗ ↑b.repr
 
 lemma forall_coord_eq_zero_iff {x : M} :
   (∀ i, b.coord i x = 0) ↔ x = 0 :=
@@ -399,7 +399,8 @@ you can recover an `add_equiv` by setting `S := ℕ`.
 See library note [bundled maps over different rings].
 -/
 def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
-{ to_fun := λ f, (finsupp.total M' M' R id).comp $ (finsupp.lmap_domain R R f) ∘ₗ b.repr,
+{ to_fun := λ f, (finsupp.total M' M' R id).comp $
+    (finsupp.lmap_domain R R f) ∘ₗ ↑b.repr,
   inv_fun := λ f i, f (b i),
   left_inv := λ f, by { ext, simp },
   right_inv := λ f, by { refine b.ext (λ i, _), simp },
@@ -407,9 +408,8 @@ def constr : (ι → M') ≃ₗ[S] (M →ₗ[R] M') :=
   map_smul' := λ c f, by { refine b.ext (λ i, _), simp } }
 
 theorem constr_def (f : ι → M') :
-  b.constr S f = (finsupp.total M' M' R id).comp
-    ((finsupp.lmap_domain R R f) ∘ₗ b.repr :=
-rfl
+  b.constr S f = (finsupp.total M' M' R id) ∘ₗ
+    ((finsupp.lmap_domain R R f) ∘ₗ ↑b.repr) := rfl
 
 theorem constr_apply (f : ι → M') (x : M) :
   b.constr S f x = (b.repr x).sum (λ b a, a • f b) :=
@@ -626,7 +626,7 @@ variables [fintype ι] (b : basis ι R M)
 /-- A module over `R` with a finite basis is linearly equivalent to functions from its basis to `R`.
 -/
 def basis.equiv_fun : M ≃ₗ[R] (ι → R) :=
-linear_equiv.trans b.repr
+linear_equiv.trans b.repr linear_equiv.from_plain_linear_equiv $
    { to_fun := coe_fn,
       map_add' := finsupp.coe_add,
       map_smul' := finsupp.coe_smul,
