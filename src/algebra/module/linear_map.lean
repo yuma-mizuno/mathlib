@@ -222,11 +222,14 @@ variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add
 variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R M₂] [module S M₃]
 
+variables (R M M₂)
 /-- Convert a plain linear map into a linear map. -/
 abbreviation from_plain_linear_map (f : plain_linear_map R M M₂) : M →ₗ[R] M₂ :=
 { to_fun := f.to_fun,
   map_add' := f.map_add',
   map_smul' := λ r x, by simp [f.map_smul'] }
+
+variables {R M M₂}
 
 def to_mul_action_hom (f : M →ₗ[R] M₂) : mul_action_hom R M M₂ := {..f}
 
@@ -659,11 +662,14 @@ variables [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables [module R M] [module S M₂] [module R M₃] {σ : R ≃+* S}
 variables {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
 
+variables (R M M₃)
 /-- Convert a plain linear equiv into a linear equiv. -/
 abbreviation from_plain_linear_equiv (e : plain_linear_equiv R M M₃) : M ≃ₗ[R] M₃ :=
 { to_fun := e.to_fun,
   map_smul' := λ r x, by simp [e.map_smul'],
   ..e }
+
+variables {R M M₃}
 
 include R
 
