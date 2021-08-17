@@ -758,6 +758,14 @@ def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
 omit σ₃₁ re₁₃ re₃₁
 
+infixl ` ≫ₗ `:80 := @linear_equiv.trans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _)
+  ring_equiv_comp_triple.ids
+  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _)
+  ring_equiv_comp_triple.ids
+  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
+  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
+
 -- @[trans] abbreviation trans := @transₛₗ R₁ R₁ R₁ N₁ N₂ N₃ _ _ _ _ _ _ module_N₁ module_N₂ module_N₃
 --   (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
 --   (ring_equiv.refl R₁) (ring_equiv.refl R₁) (ring_equiv.refl R₁) ring_equiv_comp_triple.ids
