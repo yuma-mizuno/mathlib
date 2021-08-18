@@ -318,6 +318,7 @@ begin
     (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
 end
 
+-- change this to be descending central series and equiv for ucs version
 lemma lower_central_series_succ_le (G : Type*) [group G] (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n := sorry
 
