@@ -66,7 +66,7 @@ open_locale big_operators
 variables {R : Type*} {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {R₄ : Type*}
 variables {K : Type*} {K₂ : Type*}
 variables {M : Type*} {M' : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} {M₄ : Type*}
-variables {N : Type*} {N' : Type*} {N₁ : Type*} {N₂ : Type*} {N₃ : Type*} {N₄ : Type*} {ι : Type*}
+variables {ι : Type*}
 variables {V : Type*} {V₂ : Type*}
 
 namespace finsupp
@@ -2072,9 +2072,7 @@ section semiring
 
 variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃]
-variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
-variables [module R N] [module R N₂] [module R N₃]
 variables {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
@@ -2138,7 +2136,6 @@ section add_comm_monoid
 section subsingleton
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables [module R M] [module R₂ M₂]
 variables [subsingleton M] [subsingleton M₂]
 variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
@@ -2172,7 +2169,6 @@ end subsingleton
 section
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂}
 variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
@@ -2210,7 +2206,6 @@ end
 section uncurry
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 
 variables (V V₂ R)
 
@@ -2466,10 +2461,10 @@ def arrow_congr {R M₁ M₂ M₂₁ M₂₂ : Sort*} [comm_ring R]
   (M₁ →ₗ[R] M₂₁) ≃ₗ[R] (M₂ →ₗ[R] M₂₂) :=
 { to_fun := λ f : M₁ →ₗ[R] M₂₁, (e₂ : M₂₁ →ₗ[R] M₂₂).comp $ f.comp (e₁.symm : M₂ →ₗ[R] M₁),
   inv_fun := λ f, (e₂.symm : M₂₂ →ₗ[R] M₂₁).comp $ f.comp (e₁ : M₁ →ₗ[R] M₂),
-  left_inv := λ f, by { ext x, simp },
-  right_inv := λ f, by { ext x, simp },
-  map_add' := λ f g, by { ext x, simp },
-  map_smul' := λ c f, by { ext x, simp } }
+  left_inv := λ f, by { apply linear_map.ext, intro x, simp },
+  right_inv := λ f, by { apply linear_map.ext, intro x, simp },
+  map_add' := λ f g, by { apply linear_map.ext, intro x, simp },
+  map_smul' := λ c f, by { apply linear_map.ext, intro x, simp } }
 
 @[simp] lemma arrow_congr_apply {R M₁ M₂ M₂₁ M₂₂ : Sort*} [comm_ring R]
   [add_comm_group M₁] [add_comm_group M₂] [add_comm_group M₂₁] [add_comm_group M₂₂]
