@@ -338,8 +338,8 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
--- needs golfing!
-lemma lower_central_series_mono (n : ℕ) :
+-- buzzard thinks this is antimono/antitone
+lemma lower_central_series_antimono (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n :=
 begin
   intros x hx,
@@ -353,6 +353,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
+-- i think the def of ascending isn't strong enough to prove this
 lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
   monotone H := monotone_nat_of_le_succ $ λ n,
 begin
@@ -367,7 +368,8 @@ begin
   -- intros x hx,
 end
 
-lemma descending_series_mono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
+-- i think the def of descending isn't strong enough to prove this
+lemma descending_series_antimono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
   H n.succ ≤ H n :=
 begin
   rcases hH with ⟨h0, hn⟩,
@@ -387,6 +389,9 @@ begin
     refine closure_induction hx _ _ _ _,
     -- i haven't actually used the induction n hypothesis.. this must be for the last sorry
     { rintros y ⟨a, ha, b, hb⟩,
+      apply mem_closure.mpr,
+      intros K hK,
+      simp only [exists_prop, mem_top, exists_true_left, true_and] at hK,
 
       -- i have closure in the goal again...
       sorry,
@@ -398,6 +403,7 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
+#check quotient_group.mk'
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
