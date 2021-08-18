@@ -48,13 +48,6 @@ instance cconj : ring_equiv_inv_pair (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj �
 
 end ring_equiv_inv_pair
 
---namespace ring_equiv_comp_triple
---
---instance cconj_cconj : ring_equiv_comp_triple complex.cconj complex.cconj (ring_equiv.refl ℂ) :=
---⟨ring_equiv.ext $ λ x, by simp⟩
---
---end ring_equiv_comp_triple
-
 notation M ` →ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_map (is_R_or_C.cconj k) M M₂
 notation M ` ≃ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_equiv (is_R_or_C.cconj k) M M₂
 
@@ -66,26 +59,26 @@ variables (f : M₁ →ₗ*[𝕜] M₂) (g : M₂ →ₗ*[𝕜] M₃) (f' : M₁
 --#check @linear_equiv 𝕜 𝕜 _ _ (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) _ _ M₁ M₂ _ _ _ _
 variables (e₁ : M₁ ≃ₗ*[𝕜] M₂) (e₂ : M₂ ≃ₗ*[𝕜] M₃) (e₁' : M₁ ≃ₗ[𝕜] M₂) (e₂' : M₂ ≃ₗ[𝕜] M₃)
 
---#check g.compₛₗ f
---#check g'.compₛₗ f
---#check g.compₛₗ f'
---#check g'.compₛₗ f'
---#check e₁.transₛₗ e₂
-----#check g.compₛₗ e₁  -- fails, but also fails in std mathlib
+example := g.comp f
+--#check g'.comp f
+--#check g.comp f'
+--#check g'.comp f'
+--#check e₁.trans e₂
+----#check g.comp e₁  -- fails, but also fails in std mathlib
 --#check g'.comp (e₁' : M₁ →ₗ[𝕜] M₂)
 --#check g'.comp ↑e₁'
---#check g'.compₛₗ ↑e₁'
---#check g.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
---#check g.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
---#check g'.compₛₗ (e₁' : M₁ →ₗ[𝕜] M₂)
---#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
---#check g'.compₛₗ (e₁ : M₁ →ₗ*[𝕜] M₂)
+--#check g'.comp ↑e₁'
+--#check g.comp (e₁ : M₁ →ₗ*[𝕜] M₂)
+--#check g.comp (e₁' : M₁ →ₗ[𝕜] M₂)
+--#check g'.comp (e₁' : M₁ →ₗ[𝕜] M₂)
+--#check g'.comp (e₁ : M₁ →ₗ*[𝕜] M₂)
+--#check g'.comp (e₁ : M₁ →ₗ*[𝕜] M₂)
 --
 --#check e₁.symm
 --#check e₁'.symm
---#check e₁'.symm.transₛₗ e₁
---#check e₁.symm.transₛₗ e₁'
---#check e₁.transₛₗ e₁.symm
---#check e₁.transₛₗ e₁'.symm
---#check e₁'.transₛₗ e₁'.symm
---#check e₁'.transₛₗ e₁.symm
+--#check e₁'.symm.trans e₁
+--#check e₁.symm.trans e₁'
+--#check e₁.trans e₁.symm
+--#check e₁.trans e₁'.symm
+--#check e₁'.trans e₁'.symm
+--#check e₁'.trans e₁.symm
