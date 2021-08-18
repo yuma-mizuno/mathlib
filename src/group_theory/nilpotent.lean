@@ -333,13 +333,13 @@ begin
   -- intros x hx,
 end
 
--- change this to be descending central series and using mono
-lemma lower_central_series_mono (G : Type*) [group G] (n : ℕ) (hn : normal (lower_central_series G n)) :
+-- needs golfing!
+lemma lower_central_series_mono (G : Type*) [group G] (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n :=
 begin
   intros x hx,
-  rw mem_lower_central_series_succ_iff at hx,
-  simp at hx,
+  simp only [mem_lower_central_series_succ_iff, exists_prop, mem_top, exists_true_left, true_and]
+    at hx,
   refine closure_induction hx _ (subgroup.one_mem _) (@subgroup.mul_mem _ _ _)
     (@subgroup.inv_mem _ _ _),
   intros y hy,
@@ -348,7 +348,13 @@ begin
   intros z hz a ha,
   rw [← ha, mul_assoc, mul_assoc, ← mul_assoc a z⁻¹ a⁻¹],
   exact mul_mem (lower_central_series G n) hz
-    (normal.conj_mem (hn) z⁻¹ (inv_mem _ hz) a),
+    (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
+end
+
+lemma descending_series_mono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
+  H n.succ ≤ H n :=
+begin
+  sorry,
 end
 
 --PRD
