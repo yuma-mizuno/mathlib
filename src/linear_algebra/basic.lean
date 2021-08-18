@@ -2443,7 +2443,6 @@ end ring
 section comm_ring
 variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module R M] [module R M₂] [module R M₃]
---variables {σ₁₂ : R ≃+* R₂} {σ₁ : R ≃+* R}
 open linear_map
 
 /-- Multiplying by a unit `a` of the ring `R` is a linear equivalence. -/
