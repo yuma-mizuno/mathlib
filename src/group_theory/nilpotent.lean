@@ -322,9 +322,15 @@ end
 lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
   monotone H := monotone_nat_of_le_succ $ λ n,
 begin
-  rcases hH with ⟨h0, h1⟩,
-  intros x hx,
-  sorry,
+  induction n with d hd,
+  { simp [hH.1] },
+  { rcases hH with ⟨h0, h1⟩,
+    intros x hx,
+
+    sorry,
+  }
+  -- rcases hH with ⟨h0, h1⟩,
+  -- intros x hx,
 end
 
 -- change this to be descending central series and using mono
@@ -350,6 +356,11 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
+example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (x : G ): f x⁻¹ = (f x)⁻¹ :=
+begin
+library_search,
+end
+
 lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -358,11 +369,18 @@ begin
   { simp [nat.nat_zero_eq_zero] },
   {
     rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
-    rw mem_lower_central_series_succ_iff,
-    simp only [exists_prop, mem_top, exists_true_left, true_and],
-
-    sorry,
-  }
+    refine closure_induction hx _ _ _ _,
+    { intros y hy,
+      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and] at hy,
+      sorry,
+    },
+    { rw f.map_one,
+      exact subgroup.one_mem _ },
+    { intros y z hy hz,
+      simp [monoid_hom.map_mul, subgroup.mul_mem _ hy hz] },
+    { intros y hy,
+      rw f.map_inv,
+      exact subgroup.inv_mem _ hy } }
 end
 
 
