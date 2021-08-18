@@ -390,3 +390,78 @@ lemma coe_units_equiv_ne_zero (a : units K) :
   ((units_equiv_ne_zero K a) : K) = a := rfl
 
 end equiv
+
+section prop_typeclasses
+
+/-! ### Propositional typeclasses on several ring equivalences, useful in the theory of semilinear
+maps
+
+-/
+
+variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
+variables [semiring R₁] [semiring R₂] [semiring R₃]
+variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
+
+class ring_equiv_comp_triple : Prop :=
+(is_comp_triple : σ₁₃ = σ₁₂.trans σ₂₃)
+
+variables {σ₁₂} {σ₂₃} {σ₁₃}
+
+namespace ring_equiv_comp_triple
+
+@[simp] lemma comp_eq [t : ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] : σ₁₂.trans σ₂₃ = σ₁₃ :=
+t.is_comp_triple.symm
+
+@[simp] lemma comp_apply [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
+  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
+show (σ₁₂.trans σ₂₃) x = σ₁₃ x, by rw [comp_eq]
+
+instance ids : ring_equiv_comp_triple (ring_equiv.refl R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
+instance right_ids : ring_equiv_comp_triple σ₁₂ (ring_equiv.refl R₂) σ₁₂ := ⟨by { ext, simp }⟩
+
+end ring_equiv_comp_triple
+
+variables (σ : R₁ ≃+* R₂) (σ' : out_param (R₂ ≃+* R₁))
+
+class ring_equiv_inv_pair : Prop :=
+(is_inv_pair : σ'.symm = σ)
+
+variables {σ} {σ'}
+
+namespace ring_equiv_inv_pair
+
+@[simp] lemma symm_eq [t : ring_equiv_inv_pair σ σ'] : σ'.symm = σ :=
+  t.is_inv_pair
+
+@[simp] lemma symm_apply [t : ring_equiv_inv_pair σ σ'] {x : R₁} : σ'.symm x = σ x :=
+by rw [t.is_inv_pair]
+
+variables (σ) (σ')
+lemma symm_eq₂ [ring_equiv_inv_pair σ σ'] : σ.symm = σ' :=
+by rw [←(show σ'.symm = σ, from symm_eq), ring_equiv.symm_symm]
+variables {σ} {σ'}
+
+variables [ring_equiv_inv_pair σ σ']
+
+lemma symm_eq₂_apply {x : R₂} : σ.symm x = σ' x := by rw [symm_eq₂]
+
+@[simp] lemma trans_eq : σ'.trans σ = (ring_equiv.refl R₂) :=
+by { rw [←symm_eq₂ σ σ'], simp }
+
+@[simp] lemma trans_eq₂ : σ.trans σ' = (ring_equiv.refl R₁) :=
+by { rw [←symm_eq₂ σ σ'], simp }
+
+@[simp] lemma inv_pair_apply {x : R₁} : σ' (σ x) = x :=
+by { rw [←symm_eq₂ σ σ'], simp }
+
+@[simp] lemma inv_pair_apply₂ {x : R₂} : σ (σ' x) = x :=
+by { rw [←symm_eq₂ σ σ'], simp }
+
+instance ids : ring_equiv_inv_pair (ring_equiv.refl R₁) (ring_equiv.refl R₁) := ⟨rfl⟩
+instance triples {σ₂₁ : R₂ ≃+* R₁} [ring_equiv_inv_pair σ₁₂ σ₂₁] :
+  ring_equiv_comp_triple σ₁₂ σ₂₁ (ring_equiv.refl R₁) :=
+⟨by simp only [trans_eq₂]⟩
+
+end ring_equiv_inv_pair
+
+end prop_typeclasses
