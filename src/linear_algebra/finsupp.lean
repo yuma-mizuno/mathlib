@@ -589,9 +589,9 @@ noncomputable def congr {α' : Type*} (s : set α) (t : set α') (e : s ≃ t) :
 begin
   haveI := classical.dec_pred (λ x, x ∈ s),
   haveI := classical.dec_pred (λ x, x ∈ t),
-  refine linear_equiv.trans (finsupp.supported_equiv_finsupp s)
-    ((finsupp.dom_lcongr e : _ ≃ₗ[R] _).trans (finsupp.supported_equiv_finsupp t).symm);
-  apply_instance
+  refine (finsupp.supported_equiv_finsupp s) ≫ₗ
+      (_ ≫ₗ (finsupp.supported_equiv_finsupp t).symm),
+  exact finsupp.dom_lcongr e
 end
 
 /-- `finsupp.map_range` as a `linear_map`. -/
