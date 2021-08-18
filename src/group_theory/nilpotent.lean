@@ -334,8 +334,22 @@ begin
 end
 
 -- change this to be descending central series and using mono
-lemma lower_central_series_succ_le (G : Type*) [group G] (n : ℕ) :
-  lower_central_series G n.succ ≤ lower_central_series G n := sorry
+lemma lower_central_series_mono (G : Type*) [group G] (n : ℕ) (hn : normal (lower_central_series G n)) :
+  lower_central_series G n.succ ≤ lower_central_series G n :=
+begin
+  intros x hx,
+  rw mem_lower_central_series_succ_iff at hx,
+  simp at hx,
+  refine closure_induction hx _ (subgroup.one_mem _) (@subgroup.mul_mem _ _ _)
+    (@subgroup.inv_mem _ _ _),
+  intros y hy,
+  apply exists.elim hy,
+  simp only [and_imp, exists_imp_distrib],
+  intros z hz a ha,
+  rw [← ha, mul_assoc, mul_assoc, ← mul_assoc a z⁻¹ a⁻¹],
+  exact mul_mem (lower_central_series G n) hz
+    (normal.conj_mem (hn) z⁻¹ (inv_mem _ hz) a),
+end
 
 --PRD
 lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
@@ -356,11 +370,6 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
-example (G : Type*) [group G] (H : Type*) [group H] (f : G →* H) (x : G ): f x⁻¹ = (f x)⁻¹ :=
-begin
-library_search,
-end
-
 lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -370,17 +379,17 @@ begin
   {
     rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     refine closure_induction hx _ _ _ _,
+    -- i haven't actually used the induction n hypothesis.. this must be for the last sorry
     { intros y hy,
       simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and] at hy,
+      -- i have closure in the goal again...
       sorry,
     },
-    { rw f.map_one,
-      exact subgroup.one_mem _ },
+    { simp [f.map_one, subgroup.one_mem _] },
     { intros y z hy hz,
       simp [monoid_hom.map_mul, subgroup.mul_mem _ hy hz] },
     { intros y hy,
-      rw f.map_inv,
-      exact subgroup.inv_mem _ hy } }
+      simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
 
