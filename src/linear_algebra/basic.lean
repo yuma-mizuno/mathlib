@@ -2091,7 +2091,7 @@ lemma range_comp_of_range_eq_top {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →�
   (hf : range f = ⊤) : range (g.comp f : M →ₛₗ[τ₁₃] M₃) = range g :=
 by rw [range_comp, hf, submodule.map_top]
 
-lemma ker_comp_of_ker_eq_botₛₗ (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
+lemma ker_comp_of_ker_eq_bot (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
   (hg : ker g = ⊥) : ker (g.comp f : M →ₛₗ[τ₁₃] M₃) = ker f :=
 by rw [ker_comp, hg, submodule.comap_bot]
 
@@ -2231,17 +2231,14 @@ end uncurry
 section
 variables [semiring R] [semiring R₂] [semiring R₃] [semiring R₄]
 variables [add_comm_monoid M] [add_comm_monoid M₂] [add_comm_monoid M₃] [add_comm_monoid M₄]
-variables [add_comm_monoid N] [add_comm_monoid N₂] [add_comm_monoid N₃] [add_comm_monoid N₄]
 variables {module_M : module R M} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
-variables {module_N : module R N} {module_N₂ : module R N₂} {module_N₃ : module R N₃}
 variables {σ₁₂ : R ≃+* R₂} {σ₂₁ : R₂ ≃+* R}
 variables {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R ≃+* R₃} [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables {σ₃₂ : R₃ ≃+* R₂}
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂} {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃}
 variables (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₁] M) (e : M ≃ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M₃)
-variables (fₗ : N →ₗ[R] N₂) (gₗ : N₂ →ₗ[R] N) (eₗ : N ≃ₗ[R] N₂) (hₗ : N₂ →ₗ[R] N₃)
-variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃) (eₗ'' : N₂ ≃ₗ[R] N₃)
+variables (e'' : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 variables (p q : submodule R M)
 
@@ -2347,12 +2344,10 @@ linear_map.ker_eq_bot_of_injective e.to_equiv.injective
 @[simp] theorem range_comp : (h.comp (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
 linear_map.range_comp_of_range_eq_top _ e.range
 
--- @[simp] theorem range_comp : (hₗ.comp (eₗ : N →ₗ[R] N₂)).range = hₗ.range := range_compₛₗ _ _
-
 include module_M
 @[simp] theorem ker_comp (l : M →ₛₗ[σ₁₂] M₂) :
   (((e'' : M₂ →ₛₗ[σ₂₃] M₃).comp l : M →ₛₗ[σ₁₃] M₃) : M →ₛₗ[σ₁₃] M₃).ker = l.ker :=
-linear_map.ker_comp_of_ker_eq_botₛₗ _ e''.ker
+linear_map.ker_comp_of_ker_eq_bot _ e''.ker
 omit module_M
 
 variables {f g}
