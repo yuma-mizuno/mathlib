@@ -1560,7 +1560,6 @@ end dfinsupp
 variables {σ₂₁ : R₂ ≃+* R} {τ₁₂ : R ≃+* R₂} {τ₂₃ : R₂ ≃+* R₃} {τ₁₃ : R ≃+* R₃}
 variables [ring_equiv_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
-
 theorem map_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) (h p') :
   submodule.map (cod_restrict p f h) p' = comap p.subtype (p'.map f) :=
 submodule.ext $ λ ⟨x, hx⟩, by simp [subtype.ext_iff_val]
@@ -1892,7 +1891,6 @@ variables [semiring R] [semiring R₂] [add_comm_monoid M] [add_comm_monoid M₂
 variables [module R M] [module R₂ M₂]
 variables (p p' : submodule R M) (q : submodule R₂ M₂)
 variables {τ₁₂ : R ≃+* R₂}
---include T
 open linear_map
 
 @[simp] theorem map_top (f : M →ₛₗ[τ₁₂] M₂) : map f ⊤ = range f := f.range_eq_map.symm
@@ -2093,16 +2091,9 @@ lemma range_comp_of_range_eq_top {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →�
   (hf : range f = ⊤) : range (g.comp f : M →ₛₗ[τ₁₃] M₃) = range g :=
 by rw [range_comp, hf, submodule.map_top]
 
--- lemma range_comp_of_range_eq_top {f : N →ₗ[R] N₂} (g : N₂ →ₗ[R] N₃)
---   (hf : range f = ⊤) : range (g.comp f) = range g :=
--- range_comp_of_range_eq_topₛₗ g hf
-
 lemma ker_comp_of_ker_eq_botₛₗ (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
   (hg : ker g = ⊥) : ker (g.comp f : M →ₛₗ[τ₁₃] M₃) = ker f :=
 by rw [ker_comp, hg, submodule.comap_bot]
-
--- lemma ker_comp_of_ker_eq_bot (f : N →ₗ[R] N₂) {g : N₂ →ₗ[R] N₃}
---   (hg : ker g = ⊥) : ker (g.comp f) = ker f := ker_comp_of_ker_eq_botₛₗ f hg
 
 end semiring
 
@@ -2329,25 +2320,14 @@ def of_linear (h₁ : f.comp g = linear_map.id) (h₂ : g.comp f = linear_map.id
   ..f }
 omit σ₂₁ re₁₂ re₂₁
 
--- def of_linear (h₁ : fₗ.comp gₗ = linear_map.id) (h₂ : gₗ.comp fₗ = linear_map.id) : N ≃ₗ[R] N₂ :=
--- { inv_fun   := gₗ,
---   left_inv  := linear_map.ext_iff.1 h₂,
---   right_inv := linear_map.ext_iff.1 h₁,
---   ..fₗ }
-
 include σ₂₁ re₁₂ re₂₁
 @[simp] theorem of_linear_apply {h₁ h₂} (x : M) : of_linear f g h₁ h₂ x = f x := rfl
 omit σ₂₁ re₁₂ re₂₁
-
--- @[simp] theorem of_linear_apply {h₁ h₂} (x : N) : of_linear fₗ gₗ h₁ h₂ x = fₗ x := rfl
 
 include σ₂₁ re₁₂ re₂₁
 @[simp] theorem of_linear_symm_apply {h₁ h₂} (x : M₂) : (of_linear f g h₁ h₂).symm x = g x :=
 rfl
 omit σ₂₁ re₁₂ re₂₁
-
--- @[simp] theorem of_linear_symm_apply {h₁ h₂} (x : N₂) : (of_linear fₗ gₗ h₁ h₂).symm x = gₗ x :=
--- rfl
 
 @[simp] protected theorem range : (e : M →ₛₗ[σ₁₂] M₂).range = ⊤ :=
 linear_map.range_eq_top.2 e.to_equiv.surjective
@@ -2374,11 +2354,6 @@ include module_M
   (((e'' : M₂ →ₛₗ[σ₂₃] M₃).comp l : M →ₛₗ[σ₁₃] M₃) : M →ₛₗ[σ₁₃] M₃).ker = l.ker :=
 linear_map.ker_comp_of_ker_eq_botₛₗ _ e''.ker
 omit module_M
-
--- include module_N
--- @[simp] theorem ker_comp (l : N →ₗ[R] N₂) :
---   (((eₗ'' : N₂ →ₗ[R] N₃).comp l)).ker = l.ker := ker_compₛₗ _ l
--- omit module_N
 
 variables {f g}
 
@@ -2900,8 +2875,6 @@ begin
   { exact this.injective },
   intro x,
   rw [←linear_map.comp_apply, ← fun_left_comp, hg.id, fun_left_id],
-  --SLFIXME: simp doesn't work here for some reason
-  --simp [← linear_map.comp_apply, ← fun_left_comp, hg.id, fun_left_id]
 end
 
 /-- Given an `R`-module `M` and an equivalence `m ≃ n` between arbitrary types,
