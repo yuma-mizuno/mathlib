@@ -289,11 +289,10 @@ end
 -- Then for a statement below which takes your fancy, try and find a maths proof
 -- and then try and find a Lean proof.
 
+--PRD
 @[simp] lemma lower_central_series_zero_def : lower_central_series G 0 = ⊤ := rfl
 
--- for some reason doesn't let me use ⁅lower_central_series n, ⊤⁆ directly
--- why doesn't by refl work??? something dodgy going on here
--- TODO: MAKE THIS SOMETHING MORE HELPFUL!
+--PRD
 lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) :
   x ∈ lower_central_series G (n + 1) ↔
   x ∈ closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
@@ -301,6 +300,7 @@ lemma mem_lower_central_series_succ_iff {G : Type*} [group G] (n : ℕ) (x : G) 
   refl,
 end
 
+--PRD
 instance (n : ℕ) : normal (lower_central_series G n) :=
 begin
   induction n,
@@ -309,6 +309,7 @@ begin
     exact general_commutator_normal (lower_central_series G n_n) ⊤ },
 end
 
+--PRD
 lemma upper_central_series_mono : monotone (upper_central_series G) :=
   monotone_nat_of_le_succ $ λ n,
 begin
@@ -321,18 +322,22 @@ end
 lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
   monotone H := monotone_nat_of_le_succ $ λ n,
 begin
+  rcases hH with ⟨h0, h1⟩,
+  intros x hx,
   sorry,
 end
 
--- change this to be descending central series and equiv for ucs version
+-- change this to be descending central series and using mono
 lemma lower_central_series_succ_le (G : Type*) [group G] (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n := sorry
 
+--PRD
 lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
 begin
   exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
 end
 
+--PRD
 -- upper_central_series is functorial with respect to surjections
 lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
@@ -355,6 +360,7 @@ begin
     rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     rw mem_lower_central_series_succ_iff,
     simp only [exists_prop, mem_top, exists_true_left, true_and],
+
     sorry,
   }
 end
