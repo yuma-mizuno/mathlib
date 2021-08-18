@@ -309,13 +309,19 @@ begin
     exact general_commutator_normal (lower_central_series G n_n) ⊤ },
 end
 
-lemma upper_central_series_le_succ (G : Type*) [group G] (n : ℕ)
-: upper_central_series G n ≤ upper_central_series G n.succ :=
+lemma upper_central_series_mono : monotone (upper_central_series G) :=
+  monotone_nat_of_le_succ $ λ n,
 begin
   intros x hx y,
   rw [mul_assoc, mul_assoc, ← mul_assoc y x⁻¹ y⁻¹],
   exact mul_mem (upper_central_series G n) hx
     (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
+end
+
+lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
+  monotone H := monotone_nat_of_le_succ $ λ n,
+begin
+  sorry,
 end
 
 -- change this to be descending central series and equiv for ucs version
