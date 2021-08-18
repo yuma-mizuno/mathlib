@@ -319,6 +319,25 @@ begin
     (normal.conj_mem (upper_central_series.subgroup.normal G n) x⁻¹ (inv_mem _ hx) y),
 end
 
+--PRD
+lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
+begin
+  exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
+end
+
+--PRD
+-- upper_central_series is functorial with respect to surjections
+lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
+(h : function.surjective f) (n : ℕ)
+: subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
+begin
+  induction n with d hd,
+  { simp [upper_central_series_zero_def] },
+  { rintros _ ⟨x, hx : x ∈ upper_central_series G d.succ, rfl⟩ y',
+    rcases (h y') with ⟨y, rfl⟩,
+    simpa using hd (mem_map_of_mem f (hx y)) }
+end
+
 lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
   monotone H := monotone_nat_of_le_succ $ λ n,
 begin
@@ -334,7 +353,7 @@ begin
 end
 
 -- needs golfing!
-lemma lower_central_series_mono (G : Type*) [group G] (n : ℕ) :
+lemma lower_central_series_mono (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n :=
 begin
   intros x hx,
@@ -355,25 +374,6 @@ lemma descending_series_mono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descend
   H n.succ ≤ H n :=
 begin
   sorry,
-end
-
---PRD
-lemma subsingleton_is_nilpotent (G : Type*) [group G] (hG : subsingleton G) : is_nilpotent G :=
-begin
-  exact nilpotent_iff_lower_central_series.2 ⟨0, subsingleton.elim ⊤ ⊥⟩,
-end
-
---PRD
--- upper_central_series is functorial with respect to surjections
-lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
-(h : function.surjective f) (n : ℕ)
-: subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
-begin
-  induction n with d hd,
-  { simp [upper_central_series_zero_def] },
-  { rintros _ ⟨x, hx : x ∈ upper_central_series G d.succ, rfl⟩ y',
-    rcases (h y') with ⟨y, rfl⟩,
-    simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
 lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
