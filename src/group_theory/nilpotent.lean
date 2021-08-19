@@ -353,30 +353,6 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
--- i think the def of ascending isn't strong enough to prove this
-lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
-  monotone H := monotone_nat_of_le_succ $ λ n,
-begin
-  induction n with d hd,
-  { simp [hH.1] },
-  { rcases hH with ⟨h0, h1⟩,
-    intros x hx,
-
-    sorry,
-  }
-  -- rcases hH with ⟨h0, h1⟩,
-  -- intros x hx,
-end
-
--- i think the def of descending isn't strong enough to prove this
-lemma descending_series_antimono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
-  H n.succ ≤ H n :=
-begin
-  rcases hH with ⟨h0, hn⟩,
-  intros x hx,
-  sorry,
-end
-
 lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -403,7 +379,7 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
-#check quotient_group.mk'
+#check lower_central_series G
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -413,6 +389,7 @@ begin
   ext x,
   split,
   {
+    have h0 :
     have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n) = ⊥, {
       exact (map_eq_bot_iff _).mpr (le_of_eq (ker_mk _).symm),
     },
@@ -487,3 +464,28 @@ end
 
 example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) : is_nilpotent H :=
 sorry
+
+-- i think these may not be true or at least not provable with the current defs
+-- i think the def of ascending isn't strong enough to prove this
+lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
+  monotone H := monotone_nat_of_le_succ $ λ n,
+begin
+  induction n with d hd,
+  { simp [hH.1] },
+  { rcases hH with ⟨h0, h1⟩,
+    intros x hx,
+
+    sorry,
+  }
+  -- rcases hH with ⟨h0, h1⟩,
+  -- intros x hx,
+end
+
+-- i think the def of descending isn't strong enough to prove this
+lemma descending_series_antimono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
+  H n.succ ≤ H n :=
+begin
+  rcases hH with ⟨h0, hn⟩,
+  intros x hx,
+  sorry,
+end
