@@ -353,6 +353,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
+
 lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -379,8 +380,6 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
-#check subgroup.normal.conj_mem
-#check quotient.exists_rep
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -394,20 +393,19 @@ begin
         lower_central_series (quotient (center G)) n, {
       exact lcs_functorial_wrt_surjection (quotient_group.mk' _) (quot.exists_rep) n,
     },
-    have h5 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
+    have h1 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
       refine eq_bot_mono h0 hG,
     },
+    have h4 : mk' (center G) x = 1, {
+      apply mem_bot.mp,
+      sorry,
+    },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      intros x hx g,
-
-
-
-
-
+      intros x hx,
       -- follows from functorial of lcs
       sorry,
     },
-    have h4 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
+    have h3 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
       intros x g hg,
       rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
       exact (h2 g hg x).symm,
@@ -418,7 +416,7 @@ begin
     symmetry,
     rw closure_eq_bot_iff,
     rintro x ⟨p, hp, q, -, rfl⟩,
-    exact set.mem_singleton_iff.mpr (h4 _ _ hp),
+    exact set.mem_singleton_iff.mpr (h3 _ _ hp),
   },
   { intro h,
     rw mem_bot at h,
@@ -495,3 +493,14 @@ begin
   intros x hx,
   sorry,
 end
+
+-- abelian → nilpotent
+-- how does abelian work in Lean ??
+
+
+-- any nilpotent subgroup is normal
+-- find out why this doesn't compile!
+-- instance {J : subgroup G} [is_nilpotent G] : normal H :=
+-- begin
+--   sorry,
+-- end
