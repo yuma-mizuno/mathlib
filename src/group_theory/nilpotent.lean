@@ -338,7 +338,7 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
--- buzzard thinks this is antimono/antitone
+-- for PRing
 lemma lower_central_series_antimono (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n :=
 begin
@@ -353,6 +353,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
+-- for PRing
 lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -425,21 +426,18 @@ begin
   sorry,
 end
 
+example (h : H = ⊤) : ↥H = G :=
+begin
+  sorry,
+end
+
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
-  -- intro hG,
-  -- rw nilpotent_iff_lower_central_series at *,
-  -- -- have g : ∀ i : ℕ, (lower_central_series H i) ≤ lower_central_series G i, {
-  -- --   sorry,
-  -- -- },
-  -- have h : ∀ i : ℕ, lower_central_series G i = ⊥ → ∃ n : ℕ, lower_central_series H n = ⊥, {
-  --   intros x hx,
-  --   use x,
-  --   -- apply eq_bot_mono _ hx,
-  --   sorry,
-  -- },
-  -- exact exists.elim hG h,
-  sorry,
+  rintro ⟨n, hG⟩,
+  split,
+  use n,
+  -- i think the nilpotency class of H is at most n, but could be less
+  sorry
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
