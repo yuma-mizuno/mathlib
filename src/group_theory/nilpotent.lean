@@ -396,8 +396,7 @@ begin
     have h1 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
       refine eq_bot_mono h0 hG,
     },
-    have h4 : mk' (center G) x = 1, {
-      apply mem_bot.mp,
+    have h4 : center (quotient (center G)) ≤ quotient (center G), {
       sorry,
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
@@ -456,6 +455,7 @@ universe u
 example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
   is_nilpotent (Π i, f i) := sorry
 
+-- i think this doesn't require N.normal
 example (G : Type*) [group G] (N : subgroup G) [N.normal] (hG : is_nilpotent G) :
   is_nilpotent (quotient_group.quotient N) :=
 begin
@@ -496,6 +496,8 @@ end
 
 -- abelian → nilpotent
 -- how does abelian work in Lean ??
+
+-- if a subgroup and it's quotient is nilpotent, the group is nilpotent
 
 
 -- any nilpotent subgroup is normal
