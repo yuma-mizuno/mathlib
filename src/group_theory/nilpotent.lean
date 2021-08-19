@@ -353,7 +353,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
-lemma lcs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
+lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
 begin
@@ -379,7 +379,7 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
-#check lower_central_series G
+#check quotient.exists_rep
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -389,7 +389,16 @@ begin
   ext x,
   split,
   {
-    have h0 :
+    have h0 : function.surjective (quotient_group.mk' (lower_central_series G n)), {
+      unfold function.surjective,
+      -- exact quotient.exists_rep but have type class problem with quotient not recognised
+        -- as a setoid or something??
+      sorry,
+    },
+    have h00: map (mk' (lower_central_series G n)) (lower_central_series G n) ≤
+                     lower_central_series (quotient (lower_central_series G n)) n, {
+      exact lcs_functorial_wrt_surjection (quotient_group.mk' _) h0 n,
+    },
     have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n) = ⊥, {
       exact (map_eq_bot_iff _).mpr (le_of_eq (ker_mk _).symm),
     },
@@ -397,7 +406,8 @@ begin
         exact lower_central_series.subgroup.normal n,
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      intros x hx g,
+      intros x hx g, clear h0,
+
       -- follows from functorial of lcs
       sorry,
     },
