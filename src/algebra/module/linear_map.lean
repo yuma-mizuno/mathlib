@@ -136,9 +136,9 @@ variables (fₗ gₗ f g)
 
 @[simp] lemma map_add (x y : M) : f (x + y) = f x + f y := f.map_add' x y
 
-@[simp] lemma map_smul (c : R) (x : M) : fₗ (c • x) = c • fₗ x := fₗ.map_smul' c x
-
 @[simp] lemma map_smulₛₗ (c : R) (x : M) : f (c • x) = (σ c) • f x := f.map_smul' c x
+
+lemma map_smul (c : R) (x : M) : fₗ (c • x) = c • fₗ x := fₗ.map_smul' c x
 
 lemma map_smul_inv {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] (c : S) (x : M) :
   c • f x = f (σ' c • x) :=
@@ -190,7 +190,7 @@ def to_add_monoid_hom : M →+ M₃ :=
 
 section restrict_scalars
 
-variables (R) [semiring S] [module S M] [module S M₂] [compatible_smul M M₂ R S]
+variables (R) [module S M] [module S M₂] [compatible_smul M M₂ R S]
 
 /-- If `M` and `M₂` are both `R`-modules and `S`-modules and `R`-module structures
 are defined by an action of `R` on `S` (formally, we have two scalar towers), then any `S`-linear
@@ -579,7 +579,7 @@ variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ
 
 include σ₃₁ re₁₃ re₃₁
 /-- Linear equivalences are transitive. The linter thinks the `ring_equiv_comp_triple` argument
-is redundant -- it is not. -/
+is oubled -- it is not. -/
 @[trans, nolint unused_arguments]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
