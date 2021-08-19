@@ -353,7 +353,6 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
-
 lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -396,12 +395,10 @@ begin
     have h1 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
       refine eq_bot_mono h0 hG,
     },
-    have h4 : center (quotient (center G)) ≤ quotient (center G), {
-      sorry,
-    },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
       intros x hx,
-      -- follows from functorial of lcs
+      rw set_like.le_def at h0,
+      -- follows from functorial of lcs (h0)
       sorry,
     },
     have h3 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
@@ -422,9 +419,14 @@ begin
     simp only [h, one_mem] },
 end
 
+#check ucs_functorial_wrt_surjection _ _
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
 begin
+  split,
+  unfreezingI {rcases hH with ⟨n, hn⟩},
+  -- may not be correct- could be n + 1 for example
+  use n,
   sorry,
 end
 
@@ -506,3 +508,13 @@ end
 -- begin
 --   sorry,
 -- end
+
+-- is the n-1th term of the ucs center G if nilpotent?
+
+
+
+-- lemma upper_central_series_quotient (n : ℕ) : upper_central_series G (n + 1) =
+--   quotient (center (upper_central_series G n)) := sorry
+-- need a coe for H n : subgroup H (n + 1)
+-- lemma upper_central_series_something (n : ℕ) : quotient (upper_central_series G n : subgroup (upper_central_series G (n + 1)))
+--   = center (quotient (upper_central_series G n)) := sorry
