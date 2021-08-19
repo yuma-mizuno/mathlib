@@ -379,6 +379,7 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
+#check subgroup.normal.conj_mem
 #check quotient.exists_rep
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
@@ -389,24 +390,19 @@ begin
   ext x,
   split,
   {
-    have h0 : function.surjective (quotient_group.mk' (lower_central_series G n)), {
-      unfold function.surjective,
-      -- exact quotient.exists_rep but have type class problem with quotient not recognised
-        -- as a setoid or something??
-      sorry,
+    have h0: map (mk' (center G)) (lower_central_series G n) ≤
+        lower_central_series (quotient (center G)) n, {
+      exact lcs_functorial_wrt_surjection (quotient_group.mk' _) (quot.exists_rep) n,
     },
-    have h00: map (mk' (lower_central_series G n)) (lower_central_series G n) ≤
-                     lower_central_series (quotient (lower_central_series G n)) n, {
-      exact lcs_functorial_wrt_surjection (quotient_group.mk' _) h0 n,
-    },
-    have h1 : subgroup.map (quotient_group.mk' (lower_central_series G n)) (lower_central_series G n) = ⊥, {
-      exact (map_eq_bot_iff _).mpr (le_of_eq (ker_mk _).symm),
-    },
-    have h3 : normal (lower_central_series G n), {
-        exact lower_central_series.subgroup.normal n,
+    have h5 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
+      refine eq_bot_mono h0 hG,
     },
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      intros x hx g, clear h0,
+      intros x hx g,
+
+
+
+
 
       -- follows from functorial of lcs
       sorry,
