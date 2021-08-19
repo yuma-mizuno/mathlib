@@ -571,14 +571,16 @@ variables {module_N₁ : module R₁ N₁} {module_N₂ : module R₁ N₂}
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂}
 variables {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 include σ₃₁ re₁₃ re₃₁
-/-- Linear equivalences are transitive. -/
-@[trans]
+/-- Linear equivalences are transitive. The linter thinks the `ring_equiv_comp_triple` argument
+is redundant -- it is not. -/
+@[trans, nolint unused_arguments]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
