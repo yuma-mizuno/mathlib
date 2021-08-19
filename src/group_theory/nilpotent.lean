@@ -353,6 +353,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
+#check set_like.coe_subset_coe.mp
 lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
@@ -360,17 +361,26 @@ begin
   induction n with d hd,
   { simp [nat.nat_zero_eq_zero] },
   {
-    -- might be able to get rid of this rintros i dont seem to use any of it??
     rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     refine closure_induction hx _ _ _ _,
-    -- i haven't actually used the induction n hypothesis.. this must be for the last sorry
+    -- i haven't actually used the induction hypothesis... should it be shorter without?
     { rintros y ⟨a, ha, b, hb⟩,
       apply mem_closure.mpr,
       intros K hK,
       simp only [exists_prop, mem_top, exists_true_left, true_and] at hK,
-
-      -- i have closure in the goal again...
-      sorry,
+      rcases hb with ⟨-, rfl⟩,
+      have h1 : ∀ x : H, x ∈ {x : H | ∃ (p : H), p ∈ lower_central_series H d ∧ ∃ (q : H), p * q * p⁻¹ * q⁻¹ = x}
+        → x ∈ K, {
+          -- there's some funky versions of {} causing me type problems here... what's going on?
+          sorry,
+        },
+      apply h1,
+      simp only [monoid_hom.map_mul, monoid_hom.map_mul_inv, set.mem_set_of_eq],
+      use f a,
+      -- exact ⟨use f b, hd (mem_map_of_mem f ha)⟩,
+      split,
+      { exact hd (mem_map_of_mem f ha) },
+      { use f b, },
     },
     { simp [f.map_one, subgroup.one_mem _] },
     { intros y z hy hz,
@@ -419,7 +429,6 @@ begin
     simp only [h, one_mem] },
 end
 
-#check ucs_functorial_wrt_surjection _ _
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
 begin
@@ -429,7 +438,6 @@ begin
   use n,
   sorry,
 end
-
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
