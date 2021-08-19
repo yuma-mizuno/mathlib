@@ -353,35 +353,22 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
-#check set_like.coe_subset_coe.mp
 lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
 begin
   induction n with d hd,
   { simp [nat.nat_zero_eq_zero] },
-  {
-    rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
+  { rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     refine closure_induction hx _ _ _ _,
-    -- i haven't actually used the induction hypothesis... should it be shorter without?
-    { rintros y ⟨a, ha, b, hb⟩,
+    { rintros y ⟨a, ha, b, ⟨-, rfl⟩⟩,
       apply mem_closure.mpr,
       intros K hK,
       simp only [exists_prop, mem_top, exists_true_left, true_and] at hK,
-      rcases hb with ⟨-, rfl⟩,
-      have h1 : ∀ x : H, x ∈ {x : H | ∃ (p : H), p ∈ lower_central_series H d ∧ ∃ (q : H), p * q * p⁻¹ * q⁻¹ = x}
-        → x ∈ K, {
-          -- there's some funky versions of {} causing me type problems here... what's going on?
-          sorry,
-        },
-      apply h1,
+      apply hK,
       simp only [monoid_hom.map_mul, monoid_hom.map_mul_inv, set.mem_set_of_eq],
       use f a,
-      -- exact ⟨use f b, hd (mem_map_of_mem f ha)⟩,
-      split,
-      { exact hd (mem_map_of_mem f ha) },
-      { use f b, },
-    },
+      exact ⟨hd (mem_map_of_mem f ha), by use f b⟩ },
     { simp [f.map_one, subgroup.one_mem _] },
     { intros y z hy hz,
       simp [monoid_hom.map_mul, subgroup.mul_mem _ hy hz] },
@@ -408,7 +395,7 @@ begin
     have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
       intros x hx,
       rw set_like.le_def at h0,
-      -- follows from functorial of lcs (h0)
+      -- follows from h0 : functorial of lcs
       sorry,
     },
     have h3 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
