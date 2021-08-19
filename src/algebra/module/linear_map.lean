@@ -243,6 +243,7 @@ variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
 
 include module_M₁ module_M₂ module_M₃
+/-- Composition of two linear maps is a linear map -/
 def comp : M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
@@ -555,7 +556,7 @@ omit module_M module_S_M₂ re₁ re₂
 
 /-- See Note [custom simps projection] -/
 def simps.symm_apply {R : Type*} {S : Type*} [semiring R] [semiring S] {σ : R ≃+* S}
-  {σ' : out_param (S ≃+* R)} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+  {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
   {M : Type*} {M₂ : Type*} [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   (e : M ≃ₛₗ[σ] M₂) : M₂ → M := e.symm
 
@@ -570,7 +571,6 @@ variables {module_N₁ : module R₁ N₁} {module_N₂ : module R₁ N₂}
 variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
 variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
 variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
-variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
 variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂}
 variables {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
 variables {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
@@ -653,7 +653,7 @@ rfl
 @[simp] theorem map_smulₛₗ (c : R) (x : M) : e (c • x) = (σ c) • e x := e.map_smul' c x
 
 include module_N₁ module_N₂
-@[simp] theorem map_smul (e : N₁ ≃ₗ[R₁] N₂) (c : R₁) (x : N₁) :
+theorem map_smul (e : N₁ ≃ₗ[R₁] N₂) (c : R₁) (x : N₁) :
   e (c • x) = c • e x := map_smulₛₗ _ _ _
 omit module_N₁ module_N₂
 
@@ -713,7 +713,7 @@ rfl
 
 section restrict_scalars
 
-variables (R) [module R M] [module R M₂] [semiring S] [module S M] [module S M₂]
+variables (R) [module R M] [module R M₂] [module S M] [module S M₂]
   [linear_map.compatible_smul M M₂ R S]
 
 /-- If `M` and `M₂` are both `R`-semimodules and `S`-semimodules and `R`-semimodule structures

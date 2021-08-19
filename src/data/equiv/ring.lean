@@ -402,6 +402,8 @@ variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
 variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables (σ₁₂ : R₁ ≃+* R₂) (σ₂₃ : R₂ ≃+* R₃) (σ₁₃ : out_param (R₁ ≃+* R₃))
 
+/-- Class that expresses the fact that three ring equivs form a composition triple. This is
+used to handle composition of semilinear maps. -/
 class ring_equiv_comp_triple : Prop :=
 (is_comp_triple : σ₁₃ = σ₁₂.trans σ₂₃)
 
@@ -423,6 +425,8 @@ end ring_equiv_comp_triple
 
 variables (σ : R₁ ≃+* R₂) (σ' : out_param (R₂ ≃+* R₁))
 
+/-- Class that expresses the fact that two ring equivs are inverses of each other. This is used
+to handle `symm` for semilinear equivalences. -/
 class ring_equiv_inv_pair : Prop :=
 (is_inv_pair : σ'.symm = σ)
 

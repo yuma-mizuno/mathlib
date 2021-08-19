@@ -243,11 +243,13 @@ section to_lin'
 
 variables [algebra R₂ R] [module R₂ M] [is_scalar_tower R₂ R M]
 
+/-- Auxiliary definition to define `to_lin_hom`; see below. -/
 def to_lin_hom_aux₁ (A : bilin_form R M) (x : M) : M →ₗ[R] R :=
 { to_fun := λ y, A x y,
       map_add' := A.bilin_add_right x,
       map_smul' := λ c, A.bilin_smul_right c x }
 
+/-- Auxiliary definition to define `to_lin_hom`; see below. -/
 def to_lin_hom_aux₂ (A : bilin_form R M) : M →ₗ[R₂] M →ₗ[R] R :=
 { to_fun := to_lin_hom_aux₁ A,
     map_add' := λ x₁ x₂, linear_map.ext $ λ x, by simp only [to_lin_hom_aux₁, linear_map.coe_mk,
