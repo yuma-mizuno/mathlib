@@ -1710,7 +1710,8 @@ lemma ker_cod_restrict {τ₂₁ : R₂ →+* R} (p : submodule R M) (f : M₂ �
 by rw [ker, comap_cod_restrict, map_bot]; refl
 
 include τ₁₂
-lemma range_cod_restrict {τ₂₁ : R₂ →+* R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
+lemma range_cod_restrict {τ₂₁ : R₂ →+* R} [ring_equiv_inv_pair τ₂₁ τ₁₂] (p : submodule R M)
+  (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
   range (cod_restrict p f hf) = comap p.subtype f.range :=
 by simpa only [range_eq_map] using map_cod_restrict _ _ _ _
 omit τ₁₂
