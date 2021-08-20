@@ -47,7 +47,9 @@ noncomputable def subobject_Module : subobject M ≃o submodule R M := order_iso
       { apply linear_map.ext,
         intros x,
         refl },
-      rw [this, comp_def, linear_equiv.range_comp] },
+      rw [this, comp_def, linear_equiv.range_comp],
+      apply_instance,
+      apply_instance },
     { exact (submodule.range_subtype _).symm }
   end,
   map_rel_iff' := λ S T,
