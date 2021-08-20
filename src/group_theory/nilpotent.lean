@@ -417,24 +417,26 @@ end
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
 begin
-  split,
   unfreezingI {rcases hH with ⟨n, hn⟩},
-  -- may not be correct- could be n + 1 for example
   use n,
   sorry,
 end
 
-example (h : H = ⊤) : ↥H = G :=
-begin
-  sorry,
-end
+-- an induction proof once the types work
+-- and makes the below trivial
+-- example (n : ℕ) : lower_central_series H n ≤ lower_central_series G n
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
+  rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
   rintro ⟨n, hG⟩,
-  split,
   use n,
-  -- i think the nilpotency class of H is at most n, but could be less
+  rw eq_bot_iff,
+  -- rw ←hG,
+
+  rw set_like.ext_iff at hG,
+  rw set_like.le_def,
+  -- FUNKY TYPE PROBLEM! HOW DO I DEAL W COE H NOT RETURNING TO G?
   sorry
 end
 
