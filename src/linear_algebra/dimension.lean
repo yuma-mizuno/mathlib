@@ -642,7 +642,8 @@ lemma le_rank_iff_exists_linear_independent {c : cardinal} {f : V →ₗ[K] V'} 
   ∃ s : set V, cardinal.lift.{v v'} (cardinal.mk s) = cardinal.lift.{v' v} c ∧
     linear_independent K (λ x : s, f x) :=
 begin
-  rcases f.range_restrict.exists_right_inverse_of_surjective f.range_range_restrict with ⟨g, hg⟩,
+  let fr := f.range_restrict,
+  rcases fr.exists_right_inverse_of_surjective f.range_range_restrict with ⟨g, hg⟩,
   have fg : left_inverse f.range_restrict g, from linear_map.congr_fun hg,
   refine ⟨λ h, _, _⟩,
   { rcases le_dim_iff_exists_linear_independent.1 h with ⟨s, rfl, si⟩,
