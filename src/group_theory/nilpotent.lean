@@ -414,6 +414,7 @@ begin
     simp only [h, one_mem] },
 end
 
+-- need a maths proof for this
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
 begin
@@ -422,57 +423,35 @@ begin
   sorry,
 end
 
--- an induction proof once the types work
--- and makes the below trivial
-lemma lcs_subgroup_le_lcs_group (n : ℕ) : (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
+-- need help with types
+lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) : (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
 begin
   induction n with d hd,
   { simp },
   {
     rintros g ⟨h, h1, h2⟩,
-    sorry,
-
-    -- refine closure_induction h1 _ _ (by simp) (by simp),
-    -- {
-    --   simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
-    --   rw [mem_lower_central_series_succ_iff, mem_closure],
-    --   rintros x1 x2 hx2 x3 - hx1 K hK,
-    --   apply hK,
-    --   simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
-    --   simp only [set_like.mem_coe] at h1,
-    --   rw mem_lower_central_series_succ_iff at h1,
-    --   sorry,
-    -- },
-    -- {
-    --   rw ← h2,
-    --   simp only [set_like.mem_coe] at h1,
-    --   rw mem_lower_central_series_succ_iff at ⊢ h1,
-    --   sorry,
-    -- },
-  }
-end
-
--- is this really the way forward here...?
-lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≤ upper_central_series G n :=
-begin
-  induction n with d hd,
-  { simp },
-  { intros g hg,
-    rw mem_upper_central_series_succ_iff at ⊢,
-    intro y,
-    apply hd,
-    rw mem_map,
-    simp only [exists_prop, subgroup.coe_subtype],
-    use g * y * g⁻¹ * y⁻¹,
+    refine closure_induction h1 _ _ (by simp) (by simp),
     {
+      simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
+      rw [mem_lower_central_series_succ_iff, mem_closure],
+      rintros x1 x2 hx2 x3 - hx1 K hK,
+      apply hK,
+      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
+      simp only [set_like.mem_coe] at h1,
+      rw mem_lower_central_series_succ_iff at h1,
       sorry,
     },
-    split,
     {
-      rw [mul_assoc, mul_assoc, ← mul_assoc y g⁻¹ y⁻¹],
+      rw ← h2,
+      simp only [set_like.mem_coe] at h1,
+      rw mem_lower_central_series_succ_iff at ⊢ h1,
+      rw h2,
+      rw mem_closure,
+      rintros K hK,
+      apply hK,
+      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
       sorry,
     },
-    refl,
   }
 end
 
@@ -481,12 +460,16 @@ begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
   rintro ⟨n, hG⟩,
   use n,
-  rw eq_bot_iff,
-  -- rw ←hG,
-
-  rw set_like.ext_iff at hG,
-  rw set_like.le_def,
-  -- FUNKY TYPE PROBLEM! HOW DO I DEAL W COE H NOT RETURNING TO G?
+  rw [eq_bot_iff, set_like.le_def],
+  intros x hx,
+  have := lcs_subgroup_le_lcs_group H n,
+  rw [hG, set_like.le_def] at this,
+  simp only [and_imp, subgroup.coe_subtype, mem_bot, mem_map,
+    forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
+  rw mem_bot,
+  have h1 := this x hx,
+  -- literally have ↑x = 1 and want to prove x = 1...
+  -- need to recognise 1 ∈ H is the same 1 as ∈ G because H ≤ G
   sorry
 end
 
@@ -513,43 +496,36 @@ end
 example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) : is_nilpotent H :=
 sorry
 
--- i think these may not be true or at least not provable with the current defs
--- i think the def of ascending isn't strong enough to prove this
-lemma ascending_series_mono {H : ℕ → subgroup G} (hH : is_ascending_central_series H) :
-  monotone H := monotone_nat_of_le_succ $ λ n,
+-- is this really the way forward here...?
+lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≤ upper_central_series G n :=
 begin
   induction n with d hd,
-  { simp [hH.1] },
-  { rcases hH with ⟨h0, h1⟩,
-    intros x hx,
-
-    sorry,
+  { simp },
+  { intros g hg,
+    rw mem_upper_central_series_succ_iff at ⊢,
+    intro y,
+    apply hd,
+    rw mem_map,
+    simp only [exists_prop, subgroup.coe_subtype],
+    use g * y * g⁻¹ * y⁻¹,
+    {
+      sorry,
+    },
+    split,
+    {
+      rw [mul_assoc, mul_assoc, ← mul_assoc y g⁻¹ y⁻¹],
+      sorry,
+    },
+    refl,
   }
-  -- rcases hH with ⟨h0, h1⟩,
-  -- intros x hx,
-end
-
--- i think the def of descending isn't strong enough to prove this
-lemma descending_series_antimono {H : ℕ → subgroup G} (n : ℕ) (hH : is_descending_central_series H) :
-  H n.succ ≤ H n :=
-begin
-  rcases hH with ⟨h0, hn⟩,
-  intros x hx,
-  sorry,
 end
 
 -- abelian → nilpotent
 -- how does abelian work in Lean ??
 
 -- if a subgroup and it's quotient is nilpotent, the group is nilpotent
-
-
 -- any nilpotent subgroup is normal
--- find out why this doesn't compile!
--- instance {J : subgroup G} [is_nilpotent G] : normal H :=
--- begin
---   sorry,
--- end
+
 
 -- is the n-1th term of the ucs center G if nilpotent?
 
@@ -557,6 +533,6 @@ end
 
 -- lemma upper_central_series_quotient (n : ℕ) : upper_central_series G (n + 1) =
 --   quotient (center (upper_central_series G n)) := sorry
--- need a coe for H n : subgroup H (n + 1)
+
 -- lemma upper_central_series_something (n : ℕ) : quotient (upper_central_series G n : subgroup (upper_central_series G (n + 1)))
 --   = center (quotient (upper_central_series G n)) := sorry
