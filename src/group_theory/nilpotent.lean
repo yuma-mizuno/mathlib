@@ -327,6 +327,7 @@ end
 
 --PRD
 -- upper_central_series is functorial with respect to surjections
+-- lcs is functorial wrt all homomorphisms- could this be true for ucs?
 lemma ucs_functorial_wrt_surjection (G : Type*) [group G] (H : Type*) [group H] (f : G →* H)
 (h : function.surjective f) (n : ℕ)
 : subgroup.map f (upper_central_series G n) ≤ upper_central_series H n :=
