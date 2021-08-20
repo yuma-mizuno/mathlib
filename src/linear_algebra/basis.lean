@@ -956,9 +956,11 @@ end division_ring
 
 section field
 
-variables [field K] [add_comm_group V] [add_comm_group V'] [module K V] [module K V']
+variables [field K] [add_comm_group V] [add_comm_group V']
+variables {mV : module K V} {mV' : module K V'}
 variables {v : ι → V} {s t : set V} {x y z : V}
 
+include mV mV'
 lemma linear_map.exists_left_inverse_of_injective (f : V →ₗ[K] V')
   (hf_inj : f.ker = ⊥) : ∃g:V' →ₗ[K] V, g.comp f = linear_map.id :=
 begin
@@ -984,6 +986,7 @@ begin
   exact left_inverse_inv_fun (linear_map.ker_eq_bot.1 hf_inj) _
 end
 
+omit mV'
 lemma submodule.exists_is_compl (p : submodule K V) : ∃ q : submodule K V, is_compl p q :=
 let ⟨f, hf⟩ := p.subtype.exists_left_inverse_of_injective p.ker_subtype in
 ⟨f.ker, linear_map.is_compl_of_proj $ linear_map.ext_iff.1 hf⟩
@@ -991,6 +994,7 @@ let ⟨f, hf⟩ := p.subtype.exists_left_inverse_of_injective p.ker_subtype in
 instance module.submodule.is_complemented : is_complemented (submodule K V) :=
 ⟨submodule.exists_is_compl⟩
 
+include mV'
 lemma linear_map.exists_right_inverse_of_surjective (f : V →ₗ[K] V')
   (hf_surj : f.range = ⊤) : ∃g:V' →ₗ[K] V, f.comp g = linear_map.id :=
 begin
@@ -1012,6 +1016,7 @@ let ⟨g, hg⟩ := p.subtype.exists_left_inverse_of_injective p.ker_subtype in
 
 open submodule linear_map
 
+omit mV'
 /-- If `p < ⊤` is a subspace of a vector space `V`, then there exists a nonzero linear map
 `f : V →ₗ[K] K` such that `p ≤ ker f`. -/
 lemma submodule.exists_le_ker_of_lt_top (p : submodule K V) (hp : p < ⊤) :
