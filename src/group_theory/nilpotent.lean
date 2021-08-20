@@ -122,7 +122,7 @@ def upper_central_series (n : ℕ) : subgroup G := (upper_central_series_aux G n
 
 instance (n : ℕ) : normal (upper_central_series G n) := (upper_central_series_aux G n).2
 
-lemma upper_central_series_zero_def : upper_central_series G 0 = ⊥ := rfl
+@[simp] lemma upper_central_series_zero_def : upper_central_series G 0 = ⊥ := rfl
 
 /-- The `n+1`st term of the upper central series `H i` has underlying set equal to the `x` such
 that `⁅x,G⁆ ⊆ H n`-/
@@ -430,20 +430,49 @@ begin
   { simp },
   {
     rintros g ⟨h, h1, h2⟩,
-    refine closure_induction h1 _ _ _ _,
-    {
-      simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
-      rintros x1 x2 hx2 x3 -,
-      sorry,
-    },
-    {
-      sorry,
-    },
-    {
-      sorry,
-    },
     sorry,
 
+    -- refine closure_induction h1 _ _ (by simp) (by simp),
+    -- {
+    --   simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
+    --   rw [mem_lower_central_series_succ_iff, mem_closure],
+    --   rintros x1 x2 hx2 x3 - hx1 K hK,
+    --   apply hK,
+    --   simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
+    --   simp only [set_like.mem_coe] at h1,
+    --   rw mem_lower_central_series_succ_iff at h1,
+    --   sorry,
+    -- },
+    -- {
+    --   rw ← h2,
+    --   simp only [set_like.mem_coe] at h1,
+    --   rw mem_lower_central_series_succ_iff at ⊢ h1,
+    --   sorry,
+    -- },
+  }
+end
+
+-- is this really the way forward here...?
+lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≤ upper_central_series G n :=
+begin
+  induction n with d hd,
+  { simp },
+  { intros g hg,
+    rw mem_upper_central_series_succ_iff at ⊢,
+    intro y,
+    apply hd,
+    rw mem_map,
+    simp only [exists_prop, subgroup.coe_subtype],
+    use g * y * g⁻¹ * y⁻¹,
+    {
+      sorry,
+    },
+    split,
+    {
+      rw [mul_assoc, mul_assoc, ← mul_assoc y g⁻¹ y⁻¹],
+      sorry,
+    },
+    refl,
   }
 end
 
