@@ -113,8 +113,11 @@ lemma lsingle_range_le_ker_lapply (s t : set α) (h : disjoint s t) :
   (⨆a∈s, (lsingle a : M →ₗ[R] (α →₀ M)).range) ≤ (⨅a∈t, ker (lapply a)) :=
 begin
   refine supr_le (assume a₁, supr_le $ assume h₁, range_le_iff_comap.2 _),
-  simp only [(ker_comp _ _).symm, eq_top_iff, set_like.le_def, mem_ker, comap_infi, mem_infi],
-  assume b hb a₂ h₂,
+  rw [comap_infi],
+  simp only [eq_top_iff, set_like.le_def, mem_infi],
+  intros b hb a₂,
+  rw [comap_infi, mem_infi, ← ker_comp],
+  intros h₂,
   have : a₁ ≠ a₂ := assume eq, h ⟨h₁, eq.symm ▸ h₂⟩,
   exact single_eq_of_ne this
 end
