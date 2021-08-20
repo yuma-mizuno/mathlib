@@ -354,22 +354,19 @@ begin
 end
 
 -- for PRing
-lemma lcs_functorial_wrt_surjection {H : Type*} [group H] (f : G →* H)
-(h : function.surjective f) (n : ℕ)
-: subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
+lemma lower_central_series.map {H : Type*} [group H] (f : G →* H) (n : ℕ) :
+  subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
 begin
   induction n with d hd,
   { simp [nat.nat_zero_eq_zero] },
   { rintros a ⟨x, hx : x ∈ lower_central_series G d.succ, rfl⟩,
     refine closure_induction hx _ (by simp [f.map_one, subgroup.one_mem _]) _ _,
-    { rintros y ⟨a, ha, b, ⟨-, rfl⟩⟩,
+    { rintros a ⟨y, hy, z, ⟨-, rfl⟩⟩,
       apply mem_closure.mpr,
+      simp only [exists_prop, mem_top, exists_true_left, true_and, monoid_hom.map_mul,
+        monoid_hom.map_mul_inv, set.mem_set_of_eq],
       intros K hK,
-      simp only [exists_prop, mem_top, exists_true_left, true_and] at hK,
-      apply hK,
-      simp only [monoid_hom.map_mul, monoid_hom.map_mul_inv, set.mem_set_of_eq],
-      use f a,
-      exact ⟨hd (mem_map_of_mem f ha), by use f b⟩ },
+      exact hK ⟨f y, hd (mem_map_of_mem f hy), by use f z⟩ },
     { intros y z hy hz,
       simp [monoid_hom.map_mul, subgroup.mul_mem _ hy hz] },
     { intros y hy,
@@ -387,7 +384,7 @@ begin
   {
     have h0: map (mk' (center G)) (lower_central_series G n) ≤
         lower_central_series (quotient (center G)) n, {
-      exact lcs_functorial_wrt_surjection (quotient_group.mk' _) (quot.exists_rep) n,
+      exact lower_central_series.map (quotient_group.mk' _) n,
     },
     have h1 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
       refine eq_bot_mono h0 hG,
