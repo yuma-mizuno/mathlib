@@ -16,7 +16,7 @@ corresponding group of automorphisms `ring_aut`.
 
 ## Notations
 
-* ``infix ` →+* `:25 := ring_equiv``
+* ``infix ` ≃+* `:25 := ring_equiv``
 
 The extended equiv have coercions to functions, and the coercion is the canonical notation when
 treating the isomorphism as maps.
