@@ -424,7 +424,28 @@ end
 
 -- an induction proof once the types work
 -- and makes the below trivial
--- example (n : ℕ) : lower_central_series H n ≤ lower_central_series G n
+lemma lcs_subgroup_le_lcs_group (n : ℕ) : (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
+begin
+  induction n with d hd,
+  { simp },
+  {
+    rintros g ⟨h, h1, h2⟩,
+    refine closure_induction h1 _ _ _ _,
+    {
+      simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
+      rintros x1 x2 hx2 x3 -,
+      sorry,
+    },
+    {
+      sorry,
+    },
+    {
+      sorry,
+    },
+    sorry,
+
+  }
+end
 
 example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
