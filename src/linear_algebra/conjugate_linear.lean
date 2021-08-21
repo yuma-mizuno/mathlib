@@ -20,36 +20,36 @@ It adds some notation.
 Conjugate linear maps, semilinear maps
 -/
 
-namespace is_R_or_C
+-- namespace is_R_or_C
 
-variables (𝕜 : Type*) [is_R_or_C 𝕜]
+-- variables (𝕜 : Type*) [is_R_or_C 𝕜]
 
-/-- Complex conjugate as a ring equiv, which it probably should be in mathlib... -/
-def cconj : 𝕜 ≃+* 𝕜 :=
-{ to_fun := conj,
-  inv_fun := conj,
-  left_inv := λ x, by simp,
-  right_inv := λ x, by simp,
-  ..conj }
+-- /-- Complex conjugate as a ring equiv, which it probably should be in mathlib... -/
+-- def cconj : 𝕜 ≃+* 𝕜 :=
+-- { to_fun := conj,
+--   inv_fun := conj,
+--   left_inv := λ x, by simp,
+--   right_inv := λ x, by simp,
+--   ..conj }
 
-@[simp] lemma cconj_apply (x : 𝕜) : cconj 𝕜 x = conj x := rfl
+-- @[simp] lemma cconj_apply (x : 𝕜) : cconj 𝕜 x = conj x := rfl
 
-@[simp] lemma cconj_symm_apply (x : 𝕜) : (cconj 𝕜).symm x = conj x := rfl
+-- @[simp] lemma cconj_symm_apply (x : 𝕜) : (cconj 𝕜).symm x = conj x := rfl
 
-end is_R_or_C
+-- end is_R_or_C
 
-namespace ring_equiv_inv_pair
+namespace ring_hom_inv_pair
 
 variables {𝕜 : Type*} [is_R_or_C 𝕜]
 
 /-- Docstring in case the linter complains -/
-instance cconj : ring_equiv_inv_pair (is_R_or_C.cconj 𝕜) (is_R_or_C.cconj 𝕜) :=
-⟨ring_equiv.ext $ λ x, by simp⟩
+instance conj : ring_hom_inv_pair (is_R_or_C.conj : 𝕜 →+* 𝕜) is_R_or_C.conj :=
+⟨ring_hom.ext $ is_R_or_C.conj_conj, ring_hom.ext $ is_R_or_C.conj_conj⟩
 
-end ring_equiv_inv_pair
+end ring_hom_inv_pair
 
-notation M ` →ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_map (is_R_or_C.cconj k) M M₂
-notation M ` ≃ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_equiv (is_R_or_C.cconj k) M M₂
+notation M ` →ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_map (is_R_or_C.conj : k →+* k) M M₂
+notation M ` ≃ₗ*[`:25 k:25 `] `:0 M₂:0 := linear_equiv (is_R_or_C.conj : k →+* k) M M₂
 
 variables {𝕜 : Type*} [is_R_or_C 𝕜]
 variables {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} --{R : Type*} [semiring R]
