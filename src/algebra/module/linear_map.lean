@@ -549,7 +549,7 @@ include module_M module_S_M₂ re₁ re₂
 def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
 { to_fun := e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   inv_fun := e.to_equiv.symm.inv_fun,
-  map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_hom_inv_pair.symm_eq₂])],
+  map_smul' := λ r x, by simp,
   .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   .. e.to_equiv.symm }
 omit module_M module_S_M₂ re₁ re₂
