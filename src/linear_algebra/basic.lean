@@ -1652,8 +1652,8 @@ end⟩
 /-- Restrict the codomain of a linear map `f` to `f.range`.
 
 This is the bundled version of `set.range_factorization`. -/
-@[reducible] def range_restrict [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) : M →ₛₗ[τ₁₂] f.range :=
-f.cod_restrict f.range f.mem_range_self
+@[reducible] def range_restrict [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) :
+  M →ₛₗ[τ₁₂] f.range := f.cod_restrict f.range f.mem_range_self
 
 section
 variables (R) (M)

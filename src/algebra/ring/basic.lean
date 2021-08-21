@@ -1176,6 +1176,8 @@ instance triples {σ₂₁ : R₂ →+* R₁} [ring_hom_inv_pair σ₁₂ σ₂�
 
 end ring_hom_inv_pair
 
+/-- Class expressing the fact that a `ring_hom` is surjective. This is needed in the context
+of semilinear maps, where some lemmas require this. -/
 class ring_hom_surjective (σ : R₁ →+* R₂) : Prop :=
 (is_surjective : function.surjective σ)
 
@@ -1184,14 +1186,15 @@ t.is_surjective
 
 namespace ring_hom_surjective
 
-instance inv_pair {σ₁ : R₁ →+* R₂} {σ₂ : R₂ →+* R₁} [ring_hom_inv_pair σ₁ σ₂] :
-  ring_hom_surjective σ₁ :=
+-- The linter gives a false positive, since `σ₂` is an out_param
+@[priority 100, nolint dangerous_instance] instance inv_pair {σ₁ : R₁ →+* R₂} {σ₂ : R₂ →+* R₁}
+  [ring_hom_inv_pair σ₁ σ₂] : ring_hom_surjective σ₁ :=
 ⟨λ x, ⟨σ₂ x, ring_hom_inv_pair.inv_pair_apply₂⟩⟩
 
 instance ids : ring_hom_surjective (ring_hom.id R₁) := ⟨is_surjective⟩
 
 -- if this is an instance, it causes typeclass inference to loop
-def comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
+lemma comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
   ring_hom_surjective σ₁₃ :=
 { is_surjective := begin
     have := σ₂₃.is_surjective.comp σ₁₂.is_surjective,
