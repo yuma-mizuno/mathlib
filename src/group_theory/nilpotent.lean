@@ -501,7 +501,8 @@ sorry
 -- this type stuff is actually atrocious
 
 #check set_like.mem_coe
-#check set_like.coe_mk
+#check @set_like.coe_set_eq
+#check subgroup.mul_mem
 lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
 begin
   induction n with d hd,
@@ -512,7 +513,9 @@ begin
       -- might not matter as ill likely remove the have later on anyway
       intro y,
       exact hd (hg y) },
-    have hh : g ∈ H := sorry,
+    have hh : g ∈ H, {
+      sorry,
+    },
     refine ⟨⟨g, hh⟩, _⟩,
     {
       refine ⟨_, by simp⟩,
@@ -520,7 +523,6 @@ begin
       intro y,
       rcases mem_map.mp (this y) with ⟨z, hz1, hz2⟩,
       simp only [subgroup.coe_subtype, subgroup.coe_mk, ← subgroup.coe_inv] at hz2,
-      clear hd, clear hg, clear this,
       rw ← set_like.mem_coe,
       rw ← set_like.mem_coe at hz1,
       suffices : z = ⟨g, hh⟩ * y * ⟨g, hh⟩⁻¹ * y⁻¹,
@@ -530,10 +532,10 @@ begin
         rw ← subtype.coe_mk g hh at hz2,
         rw ← subgroup.coe_inv at hz2,
         rw [← subgroup.coe_mul, ← subgroup.coe_mul, ← subgroup.coe_mul] at hz2,
-        -- this is set_like.coe_set_eq but smth is going wrong
+        -- exact set_like.coe_set_eq.mp hz2,
+        -- failed to synthesize type class instance for set_like ↥H ?m_1
 
       -- help
-      -- trivial once you fix the types
       sorry } }
   },
 end
