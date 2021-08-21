@@ -455,6 +455,7 @@ begin
   }
 end
 
+-- might be possible to golf second set of intros out
 lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
@@ -463,11 +464,8 @@ begin
   rw [eq_bot_iff, set_like.le_def],
   intros x hx,
   have := lcs_subgroup_le_lcs_group H n,
-  rw [hG, set_like.le_def] at this,
-  simp only [and_imp, subgroup.coe_subtype, mem_bot, mem_map,
-    forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
-  rw mem_bot,
-  refine subtype.ext (this x hx),
+  simp only [hG, set_like.le_def, mem_map, forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
+  exact subtype.ext (this x hx),
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
