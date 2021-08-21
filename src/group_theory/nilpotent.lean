@@ -424,39 +424,19 @@ begin
 end
 
 -- need help with types
+#check subgroup.closure_le
+#check add_subgroup.closure_mono
+#check set_like.le_def
 lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) :
   (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
 begin
   induction n with d hd,
   { simp },
   {
-    rintros g ⟨h, h1, h2⟩,
-    refine closure_induction h1 _ _ (by simp) (by simp),
-    {
-      simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
-      rw [mem_lower_central_series_succ_iff, mem_closure],
-      rintros x1 x2 hx2 x3 - hx1 K hK,
-      simp only [set_like.mem_coe] at h1,
-      rw mem_lower_central_series_succ_iff at h1,
-      rw ← h2,
-      simp only [subgroup.coe_subtype],
-      apply hK,
-      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
-      -- i don't think this is provable from here
-      sorry,
-    },
-    {
-      rw ← h2,
-      simp only [set_like.mem_coe] at h1,
-      rw mem_lower_central_series_succ_iff at ⊢ h1,
-      rw h2,
-      rw mem_closure,
-      rintros K hK,
-      apply hK,
-      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and, mem_closure],
-
-      sorry,
-    },
+    -- help
+    -- need this for the proof but w all the coes can't unify the types
+    -- refine subgroup.closure_mono,
+    sorry,
   }
 end
 
@@ -514,6 +494,7 @@ begin
       intro y,
       exact hd (hg y) },
     have hh : g ∈ H, {
+
       sorry,
     },
     refine ⟨⟨g, hh⟩, _⟩,
