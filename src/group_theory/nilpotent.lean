@@ -499,7 +499,9 @@ sorry
 
 -- is this really the way forward here...?
 -- this type stuff is actually atrocious
-#check normal.conj_mem
+
+#check set_like.mem_coe
+#check set_like.coe_mk
 lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
 begin
   induction n with d hd,
@@ -510,23 +512,25 @@ begin
       -- might not matter as ill likely remove the have later on anyway
       intro y,
       exact hd (hg y) },
-    use g,
-    {
-
-      -- because of mul_mem conj_mem and ucs normal
-      -- g is in H.subtype ucs H d
-      sorry,
-    },
+    have hh : g ∈ H := sorry,
+    refine ⟨⟨g, hh⟩, _⟩,
     {
       refine ⟨_, by simp⟩,
       rw [set_like.mem_coe, mem_upper_central_series_succ_iff],
       intro y,
       rcases mem_map.mp (this y) with ⟨z, hz1, hz2⟩,
-      simp only [subgroup.coe_subtype, subgroup.coe_mk] at hz2,
-      rw ← subgroup.coe_inv at hz2,
+      simp only [subgroup.coe_subtype, subgroup.coe_mk, ← subgroup.coe_inv] at hz2,
+      clear hd, clear hg, clear this,
+      rw ← set_like.mem_coe,
+      rw ← set_like.mem_coe at hz1,
+      suffices : z = ⟨g, hh⟩ * y * ⟨g, hh⟩⁻¹ * y⁻¹,
+      { rw ← this,
+        exact hz1 },
+      {
+
       -- help
       -- trivial once you fix the types
-      sorry }
+      sorry } }
   },
 end
 
