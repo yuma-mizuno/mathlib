@@ -496,34 +496,37 @@ end
 example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) : is_nilpotent H :=
 sorry
 
+
 -- is this really the way forward here...?
 -- this type stuff is actually atrocious
+#check normal.conj_mem
 lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
 begin
   induction n with d hd,
   { simp },
   { intros g hg,
-    rw mem_map,
-    rw mem_upper_central_series_succ_iff at hg,
     have : ∀ (y : G), g * y * g⁻¹ * y⁻¹ ∈ map H.subtype (upper_central_series ↥H d), {
       -- this is definitely golfable into a one-liner
+      -- might not matter as ill likely remove the have later on anyway
       intro y,
       exact hd (hg y) },
     use g,
     {
-      -- because of conj_mem and ucs normal
+
+      -- because of mul_mem conj_mem and ucs normal
       -- g is in H.subtype ucs H d
       sorry,
     },
-    refine ⟨_, by simp⟩,
-    rw mem_upper_central_series_succ_iff,
-    intro y,
-    specialize this y,
-    rw mem_map at this,
-    rcases this with ⟨z, hz1, hz2⟩,
-    simp only [subgroup.coe_subtype, subgroup.coe_mk] at hz2,
-    -- trivial once you fix the types
-    sorry,
+    {
+      refine ⟨_, by simp⟩,
+      rw [set_like.mem_coe, mem_upper_central_series_succ_iff],
+      intro y,
+      rcases mem_map.mp (this y) with ⟨z, hz1, hz2⟩,
+      simp only [subgroup.coe_subtype, subgroup.coe_mk] at hz2,
+      rw ← subgroup.coe_inv at hz2,
+      -- help
+      -- trivial once you fix the types
+      sorry }
   },
 end
 
