@@ -424,7 +424,8 @@ begin
 end
 
 -- need help with types
-lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) : (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
+lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) :
+  (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
 begin
   induction n with d hd,
   { simp },
@@ -435,10 +436,13 @@ begin
       simp only [and_imp, exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, exists_imp_distrib],
       rw [mem_lower_central_series_succ_iff, mem_closure],
       rintros x1 x2 hx2 x3 - hx1 K hK,
-      apply hK,
-      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
       simp only [set_like.mem_coe] at h1,
       rw mem_lower_central_series_succ_iff at h1,
+      rw ← h2,
+      simp only [subgroup.coe_subtype],
+      apply hK,
+      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
+      -- i don't think this is provable from here
       sorry,
     },
     {
@@ -449,7 +453,8 @@ begin
       rw mem_closure,
       rintros K hK,
       apply hK,
-      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and],
+      simp only [exists_prop, mem_top, exists_true_left, set.mem_set_of_eq, true_and, mem_closure],
+
       sorry,
     },
   }
@@ -492,27 +497,28 @@ example (G H : Type*) [group G] [group H] (e : G ≃* H) (hG : is_nilpotent G) :
 sorry
 
 -- is this really the way forward here...?
-lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≤ upper_central_series G n :=
+lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
 begin
   induction n with d hd,
   { simp },
   { intros g hg,
-    rw mem_upper_central_series_succ_iff at ⊢,
-    intro y,
-    apply hd,
     rw mem_map,
-    simp only [exists_prop, subgroup.coe_subtype],
-    use g * y * g⁻¹ * y⁻¹,
+    rw mem_upper_central_series_succ_iff at hg,
+    have : ∀ (y : G), g * y * g⁻¹ * y⁻¹ ∈ map H.subtype (upper_central_series ↥H d) := sorry,
+    use g,
     {
       sorry,
     },
     split,
     {
-      rw [mul_assoc, mul_assoc, ← mul_assoc y g⁻¹ y⁻¹],
+      rw mem_upper_central_series_succ_iff,
+      intro y,
+      specialize this y,
+      rw mem_map at this,
       sorry,
     },
-    refl,
-  }
+    sorry,
+  },
 end
 
 -- abelian → nilpotent
