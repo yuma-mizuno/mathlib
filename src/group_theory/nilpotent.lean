@@ -455,7 +455,7 @@ begin
   }
 end
 
-example (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
+lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
   rintro ⟨n, hG⟩,
@@ -467,10 +467,7 @@ begin
   simp only [and_imp, subgroup.coe_subtype, mem_bot, mem_map,
     forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
   rw mem_bot,
-  have h1 := this x hx,
-  -- literally have ↑x = 1 and want to prove x = 1...
-  -- need to recognise 1 ∈ H is the same 1 as ∈ G because H ≤ G
-  sorry
+  refine subtype.ext (this x hx),
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
