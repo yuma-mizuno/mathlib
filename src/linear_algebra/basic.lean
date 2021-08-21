@@ -778,14 +778,9 @@ lemma apply_coe_mem_map (f : M →ₛₗ[σ₁₂] M₂) {p : submodule R M} (r 
 @[simp] lemma map_id : map (linear_map.id : M →ₗ[R] M) p = p :=
 submodule.ext $ λ a, by simp
 
-section
-local attribute [instance] ring_hom_surjective.comp
-
 lemma map_comp [ring_hom_surjective σ₂₃] (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
   (p : submodule R M) : map (g.comp f : M →ₛₗ[σ₁₃] M₃) p = map g (map f p) :=
 set_like.coe_injective $ by simp [map_coe]; rw ← image_comp
-
-end
 
 lemma map_mono {f : M →ₛₗ[σ₁₂] M₂} {p p' : submodule R M} :
   p ≤ p' → map f p ≤ map f p' := image_subset _
@@ -1609,9 +1604,6 @@ theorem mem_range_self (f : M →ₛₗ[τ₁₂] M₂) (x : M) : f x ∈ f.rang
 @[simp] theorem range_id : range (linear_map.id : M →ₗ[R] M) = ⊤ :=
 set_like.coe_injective set.range_id
 
-section
-local attribute [instance] ring_hom_surjective.comp
-
 theorem range_comp [ring_hom_surjective τ₂₃] (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) = map g (range f) :=
 set_like.coe_injective (set.range_comp g f)
@@ -1619,8 +1611,6 @@ set_like.coe_injective (set.range_comp g f)
 theorem range_comp_le_range [ring_hom_surjective τ₂₃] (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) ≤ range g :=
 set_like.coe_mono (set.range_comp_subset_range f g)
-
-end
 
 theorem range_eq_top {f : M →ₛₗ[τ₁₂] M₂} : range f = ⊤ ↔ surjective f :=
 by rw [set_like.ext'_iff, range_coe, top_coe, set.range_iff_surjective]
@@ -2126,15 +2116,10 @@ begin
   exact range_zero
 end
 
-section
-local attribute [instance] ring_hom_surjective.comp
-
 lemma range_comp_of_range_eq_top [ring_hom_surjective τ₁₂] [ring_hom_surjective τ₂₃]
   {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃) (hf : range f = ⊤) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) = range g :=
 by rw [range_comp, hf, submodule.map_top]
-
-end
 
 lemma ker_comp_of_ker_eq_bot (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
   (hg : ker g = ⊥) : ker (g.comp f : M →ₛₗ[τ₁₃] M₃) = ker f :=
@@ -2383,14 +2368,9 @@ omit σ₂₁ re₁₂ re₂₁
 @[simp] protected theorem ker : (e : M →ₛₗ[σ₁₂] M₂).ker = ⊥ :=
 linear_map.ker_eq_bot_of_injective e.to_equiv.injective
 
-section
-local attribute [instance] ring_hom_surjective.comp
-
 @[simp] theorem range_comp [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
   (h.comp (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
 linear_map.range_comp_of_range_eq_top _ e.range
-
-end
 
 include module_M
 @[simp] theorem ker_comp (l : M →ₛₗ[σ₁₂] M₂) :
