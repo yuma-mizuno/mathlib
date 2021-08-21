@@ -302,9 +302,9 @@ lift_lie R H (root_space H χ₁) (weight_space M χ₂) (weight_space M χ₃)
     subtype.coe_mk, subtype.coe_mk],
   map_smul' := λ t x,
   begin
-    simp only [ring_equiv.refl_apply],
+    simp only [ring_hom.id_apply],
     ext m,
-rw [linear_map.smul_apply, linear_map.coe_mk, linear_map.coe_mk,
+    rw [linear_map.smul_apply, linear_map.coe_mk, linear_map.coe_mk,
     subtype.coe_mk, lie_submodule.coe_smul, smul_lie, lie_submodule.coe_smul, subtype.coe_mk],
   end,
   map_lie'  := λ x y, by ext m; rw [lie_hom.lie_apply, lie_submodule.coe_sub, linear_map.coe_mk,
