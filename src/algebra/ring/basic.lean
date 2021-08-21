@@ -1112,3 +1112,85 @@ theorem neg_left : commute a b → commute (- a) b := semiconj_by.neg_left
 @[simp] theorem sub_left : commute a c → commute b c → commute (a - b) c := semiconj_by.sub_left
 
 end commute
+section prop_typeclasses
+
+/-! ### Propositional typeclasses on several ring equivalences, useful in the theory of semilinear
+maps
+
+-/
+variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
+variables [semiring R₁] [semiring R₂] [semiring R₃]
+variables (σ₁₂ : R₁ →+* R₂) (σ₂₃ : R₂ →+* R₃) (σ₁₃ : out_param (R₁ →+* R₃))
+
+/-- Class that expresses the fact that three ring equivs form a composition triple. This is
+used to handle composition of semilinear maps. -/
+class ring_hom_comp_triple : Prop :=
+(is_comp_triple : σ₁₃ = σ₂₃.comp σ₁₂)
+
+variables {σ₁₂} {σ₂₃} {σ₁₃}
+
+namespace ring_hom_comp_triple
+
+@[simp] lemma comp_eq [t : ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] : σ₂₃.comp σ₁₂ = σ₁₃ :=
+t.is_comp_triple.symm
+
+@[simp] lemma comp_apply [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] {x : R₁} :
+  σ₂₃ (σ₁₂ x) = σ₁₃ x :=
+show (σ₂₃.comp σ₁₂) x = σ₁₃ x, by rw [comp_eq]
+
+instance ids : ring_hom_comp_triple (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
+instance right_ids : ring_hom_comp_triple σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by { ext, simp }⟩
+
+end ring_hom_comp_triple
+
+variables (σ : R₁ →+* R₂) (σ' : out_param (R₂ →+* R₁))
+
+/-- Class that expresses the fact that two ring equivs are inverses of each other. This is used
+to handle `symm` for semilinear equivalences. -/
+class ring_hom_inv_pair : Prop :=
+(is_inv_pair₁ : σ'.comp σ = ring_hom.id R₁)
+(is_inv_pair₂ : σ.comp σ' = ring_hom.id R₂)
+
+variables {σ} {σ'}
+
+namespace ring_hom_inv_pair
+
+variables [ring_hom_inv_pair σ σ']
+
+@[simp] lemma trans_eq : σ.comp σ' = (ring_hom.id R₂) :=
+by { rw ring_hom_inv_pair.is_inv_pair₂ }
+
+@[simp] lemma trans_eq₂ : σ'.comp σ = (ring_hom.id R₁) :=
+by { rw ring_hom_inv_pair.is_inv_pair₁ }
+
+@[simp] lemma inv_pair_apply {x : R₁} : σ' (σ x) = x :=
+by { rw [← ring_hom.comp_apply, trans_eq₂], simp }
+
+@[simp] lemma inv_pair_apply₂ {x : R₂} : σ (σ' x) = x :=
+by { rw [← ring_hom.comp_apply, trans_eq], simp }
+
+instance ids : ring_hom_inv_pair (ring_hom.id R₁) (ring_hom.id R₁) := ⟨rfl, rfl⟩
+instance triples {σ₂₁ : R₂ →+* R₁} [ring_hom_inv_pair σ₁₂ σ₂₁] :
+  ring_hom_comp_triple σ₁₂ σ₂₁ (ring_hom.id R₁) :=
+⟨by simp only [trans_eq₂]⟩
+
+end ring_hom_inv_pair
+
+class ring_hom_surjective (σ : R₁ →+* R₂) : Prop :=
+(is_surjective : function.surjective σ)
+
+namespace ring_hom_surjective
+
+instance inv_pair {σ₁ : R₁ →+* R₂} {σ₂ : R₂ →+* R₁} [ring_hom_inv_pair σ₁ σ₂] :
+  ring_hom_surjective σ₁ :=
+⟨λ x, ⟨σ₂ x, ring_hom_inv_pair.inv_pair_apply₂⟩⟩
+
+instance ids : ring_hom_surjective (ring_hom.id R₁) := ⟨is_surjective⟩
+
+end ring_hom_surjective
+
+lemma ring_hom.is_surjective (σ : R₁ →+* R₂) [t : ring_hom_surjective σ] : function.surjective σ :=
+t.is_surjective
+
+
+end prop_typeclasses

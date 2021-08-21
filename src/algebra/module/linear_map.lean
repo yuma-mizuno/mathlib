@@ -49,7 +49,7 @@ set_option old_structure_cmd true
 `f (x + y) = f x + f y` and `f (c • x) = c • f x`. Elements of `linear_map R M M₂` (available under
 the notation `M →ₗ[R] M₂`) are bundled versions of such maps. An unbundled version is available
 with the predicate `is_linear_map`, but it should be avoided most of the time. -/
-structure linear_map {R : Type*} {S : Type*} [semiring R] [semiring S]  (σ : R ≃+* S)
+structure linear_map {R : Type*} {S : Type*} [semiring R] [semiring S]  (σ : R →+* S)
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   extends add_hom M M₂ :=
@@ -61,7 +61,7 @@ end
 add_decl_doc linear_map.to_add_hom
 
 notation M ` →ₛₗ[`:25 σ:25 `] `:0 M₂:0 := linear_map σ M M₂
-notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_equiv.refl R) M M₂
+notation M ` →ₗ[`:25 R:25 `] `:0 M₂:0 := linear_map (ring_hom.id R) M M₂
 
 namespace linear_map
 
@@ -81,7 +81,7 @@ def to_mul_action_hom (f : M →ₗ[R] M₂) : mul_action_hom R M M₂ := {..f}
 def to_distrib_mul_action_hom (f : M →ₗ[R] M₂) : distrib_mul_action_hom R M M₂ :=
 { map_zero' := zero_smul R (0 : M) ▸ zero_smul R (f.to_fun 0) ▸ f.map_smul' 0 0, ..f }
 
-instance {σ : R ≃+* S} : has_coe_to_fun (M →ₛₗ[σ] M₃) := ⟨_, to_fun⟩
+instance {σ : R →+* S} : has_coe_to_fun (M →ₛₗ[σ] M₃) := ⟨_, to_fun⟩
 
 initialize_simps_projections linear_map (to_fun → apply)
 
@@ -105,7 +105,7 @@ section
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables [add_comm_monoid N₁] [add_comm_monoid N₂] [add_comm_monoid N₃]
 variables [module R M] [module R M₂] [module S M₃]
-variables (σ : R ≃+* S)
+variables (σ : R →+* S)
 variables (fₗ gₗ : M →ₗ[R] M₂) (f g : M →ₛₗ[σ] M₃)
 
 @[simp] lemma to_fun_eq_coe : f.to_fun = ⇑f := rfl
@@ -140,7 +140,7 @@ variables (fₗ gₗ f g)
 
 lemma map_smul (c : R) (x : M) : fₗ (c • x) = c • fₗ x := fₗ.map_smul' c x
 
-lemma map_smul_inv {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] (c : S) (x : M) :
+lemma map_smul_inv {σ' : S →+* R} [ring_hom_inv_pair σ σ'] (c : S) (x : M) :
   c • f x = f (σ' c • x) :=
 by simp
 
@@ -228,7 +228,7 @@ theorem to_add_monoid_hom_injective :
 @[ext] theorem ext_ring {f g : R →ₛₗ[σ] M₃} (h : f 1 = g 1) : f = g :=
 ext $ λ x, by rw [← mul_one x, ← smul_eq_mul, f.map_smulₛₗ, g.map_smulₛₗ, h]
 
-theorem ext_ring_iff {σ : R ≃+* R} {f g : R →ₛₗ[σ] M} : f = g ↔ f 1 = g 1 :=
+theorem ext_ring_iff {σ : R →+* R} {f g : R →ₛₗ[σ] M} : f = g ↔ f 1 = g 1 :=
 ⟨λ h, h ▸ rfl, ext_ring⟩
 
 end
@@ -238,8 +238,8 @@ section
 variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 variables {module_M₁ : module R₁ M₁} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
-variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
-variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : R₁ →+* R₃}
+variables [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃]
 variables (f : M₂ →ₛₗ[σ₂₃] M₃) (g : M₁ →ₛₗ[σ₁₂] M₂)
 
 include module_M₁ module_M₂ module_M₃
@@ -247,11 +247,11 @@ include module_M₁ module_M₂ module_M₃
 def comp : M₁ →ₛₗ[σ₁₃] M₃ :=
 { to_fun := f ∘ g,
   map_add' := by simp only [map_add, forall_const, eq_self_iff_true, comp_app],
-  map_smul' := λ r x, by rw [comp_app, map_smulₛₗ, map_smulₛₗ, ring_equiv_comp_triple.comp_apply] }
+  map_smul' := λ r x, by rw [comp_app, map_smulₛₗ, map_smulₛₗ, ring_hom_comp_triple.comp_apply] }
 omit module_M₁ module_M₂ module_M₃
 
 infixr ` ∘ₗ `:80 := @linear_map.comp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _) ring_equiv_comp_triple.ids
+  (ring_hom.id _) (ring_hom.id _) (ring_hom.id _) ring_hom_comp_triple.ids
 
 include σ₁₃
 lemma comp_apply (x : M₁) : f.comp g x = f (g x) := rfl
@@ -272,7 +272,7 @@ end
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂] [add_comm_monoid M₃]
 
 /-- If a function `g` is a left and right inverse of a linear map `f`, then `g` is linear itself. -/
-def inverse [module R M] [module S M₂] {σ : R ≃+* S} {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ']
+def inverse [module R M] [module S M₂] {σ : R →+* S} {σ' : S →+* R} [ring_hom_inv_pair σ σ']
   (f : M →ₛₗ[σ] M₂) (g : M₂ → M) (h₁ : left_inverse g f) (h₂ : right_inverse g f) :
   M₂ →ₛₗ[σ'] M :=
 by dsimp [left_inverse, function.right_inverse] at h₁ h₂; exact
@@ -285,7 +285,7 @@ end add_comm_monoid
 section add_comm_group
 
 variables [semiring R] [semiring S] [add_comm_group M] [add_comm_group M₂]
-variables {module_M : module R M} {module_M₂ : module S M₂} {σ : R ≃+* S}
+variables {module_M : module R M} {module_M₂ : module S M₂} {σ : R →+* S}
 variables (f : M →ₛₗ[σ] M₂)
 
 @[simp] lemma map_neg (x : M) : f (- x) = - f x :=
@@ -442,8 +442,8 @@ set_option old_structure_cmd true
 
 /-- A linear equivalence is an invertible linear map. -/
 @[nolint has_inhabited_instance]
-structure linear_equiv {R : Type*} {S : Type*} [semiring R] [semiring S] (σ : R ≃+* S)
-  {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+structure linear_equiv {R : Type*} {S : Type*} [semiring R] [semiring S] (σ : R →+* S)
+  {σ' : S →+* R} [ring_hom_inv_pair σ σ'] [ring_hom_inv_pair σ' σ]
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   extends linear_map σ M M₂, M ≃+ M₂
@@ -453,7 +453,7 @@ attribute [nolint doc_blame] linear_equiv.to_linear_map
 attribute [nolint doc_blame] linear_equiv.to_add_equiv
 
 notation M ` ≃ₛₗ[`:50 σ `] ` M₂ := linear_equiv σ M M₂
-notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_equiv.refl R) M M₂
+notation M ` ≃ₗ[`:50 R `] ` M₂ := linear_equiv (ring_hom.id R) M M₂
 
 namespace linear_equiv
 
@@ -464,8 +464,8 @@ variables [semiring R] [semiring S]
 
 section
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
-variables [module R M] [module S M₂] {σ : R ≃+* S} {σ' : S ≃+* R}
-variables [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+variables [module R M] [module S M₂] {σ : R →+* S} {σ' : S →+* R}
+variables [ring_hom_inv_pair σ σ'] [ring_hom_inv_pair σ' σ]
 
 include R
 
@@ -503,8 +503,8 @@ variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 variables [add_comm_monoid M₃] [add_comm_monoid M₄]
 variables [add_comm_monoid N₁] [add_comm_monoid N₂]
-variables {module_M : module R M} {module_S_M₂ : module S M₂} {σ : R ≃+* S} {σ' : S ≃+* R}
-variables {re₁ : ring_equiv_inv_pair σ σ'} {re₂ : ring_equiv_inv_pair σ' σ}
+variables {module_M : module R M} {module_S_M₂ : module S M₂} {σ : R →+* S} {σ' : S →+* R}
+variables {re₁ : ring_hom_inv_pair σ σ'} {re₂ : ring_hom_inv_pair σ' σ}
 variables (e e' : M ≃ₛₗ[σ] M₂)
 
 lemma to_linear_map_eq_coe : e.to_linear_map = (e : M →ₛₗ[σ] M₂) := rfl
@@ -549,14 +549,14 @@ include module_M module_S_M₂ re₁ re₂
 def symm (e : M ≃ₛₗ[σ] M₂) : M₂ ≃ₛₗ[σ'] M :=
 { to_fun := e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   inv_fun := e.to_equiv.symm.inv_fun,
-  map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_equiv_inv_pair.symm_eq₂])],
+  map_smul' := λ r x, by simp [(show σ.symm = σ', from by rw [ring_hom_inv_pair.symm_eq₂])],
   .. e.to_linear_map.inverse e.inv_fun e.left_inv e.right_inv,
   .. e.to_equiv.symm }
 omit module_M module_S_M₂ re₁ re₂
 
 /-- See Note [custom simps projection] -/
-def simps.symm_apply {R : Type*} {S : Type*} [semiring R] [semiring S] {σ : R ≃+* S}
-  {σ' : S ≃+* R} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+def simps.symm_apply {R : Type*} {S : Type*} [semiring R] [semiring S] {σ : R →+* S}
+  {σ' : S →+* R} [ring_hom_inv_pair σ σ'] [ring_hom_inv_pair σ' σ]
   {M : Type*} {M₂ : Type*} [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
   (e : M ≃ₛₗ[σ] M₂) : M₂ → M := e.symm
 
@@ -568,17 +568,17 @@ omit σ'
 
 variables {module_M₁ : module R₁ M₁} {module_M₂ : module R₂ M₂} {module_M₃ : module R₃ M₃}
 variables {module_N₁ : module R₁ N₁} {module_N₂ : module R₁ N₂}
-variables {σ₁₂ : R₁ ≃+* R₂} {σ₂₃ : R₂ ≃+* R₃} {σ₁₃ : R₁ ≃+* R₃}
-variables {σ₂₁ : R₂ ≃+* R₁} {σ₃₂ : R₃ ≃+* R₂} {σ₃₁ : R₃ ≃+* R₁}
-variables [ring_equiv_comp_triple σ₁₂ σ₂₃ σ₁₃]
-variables [ring_equiv_comp_triple σ₃₂ σ₂₁ σ₃₁]
-variables {re₁₂ : ring_equiv_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_equiv_inv_pair σ₂₃ σ₃₂}
-variables {re₁₃ : ring_equiv_inv_pair σ₁₃ σ₃₁} {re₂₁ : ring_equiv_inv_pair σ₂₁ σ₁₂}
-variables {re₃₂ : ring_equiv_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_equiv_inv_pair σ₃₁ σ₁₃}
+variables {σ₁₂ : R₁ →+* R₂} {σ₂₃ : R₂ →+* R₃} {σ₁₃ : R₁ →+* R₃}
+variables {σ₂₁ : R₂ →+* R₁} {σ₃₂ : R₃ →+* R₂} {σ₃₁ : R₃ →+* R₁}
+variables [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃]
+variables [ring_hom_comp_triple σ₃₂ σ₂₁ σ₃₁]
+variables {re₁₂ : ring_hom_inv_pair σ₁₂ σ₂₁} {re₂₃ : ring_hom_inv_pair σ₂₃ σ₃₂}
+variables {re₁₃ : ring_hom_inv_pair σ₁₃ σ₃₁} {re₂₁ : ring_hom_inv_pair σ₂₁ σ₁₂}
+variables {re₃₂ : ring_hom_inv_pair σ₃₂ σ₂₃} {re₃₁ : ring_hom_inv_pair σ₃₁ σ₁₃}
 variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ₂₃] M₃)
 
 include σ₃₁ re₁₃ re₃₁
-/-- Linear equivalences are transitive. The linter thinks the `ring_equiv_comp_triple` argument
+/-- Linear equivalences are transitive. The linter thinks the `ring_hom_comp_triple` argument
 is oubled -- it is not. -/
 @[trans, nolint unused_arguments]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
@@ -587,11 +587,11 @@ def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 omit σ₃₁ re₁₃ re₃₁
 
 infixl ` ≫ₗ `:80 := @linear_equiv.trans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _)
-  (ring_equiv.refl _) (ring_equiv.refl _) (ring_equiv.refl _)
-  ring_equiv_comp_triple.ids ring_equiv_comp_triple.ids
-  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
-  ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids ring_equiv_inv_pair.ids
+  (ring_hom.id _) (ring_hom.id _) (ring_hom.id _)
+  (ring_hom.id _) (ring_hom.id _) (ring_hom.id _)
+  ring_hom_comp_triple.ids ring_hom_comp_triple.ids
+  ring_hom_inv_pair.ids ring_hom_inv_pair.ids ring_hom_inv_pair.ids
+  ring_hom_inv_pair.ids ring_hom_inv_pair.ids ring_hom_inv_pair.ids
 
 variables {e₁₂} {e₂₃}
 
@@ -640,7 +640,7 @@ by { ext x, simp }
   (linear_equiv.refl R M : M →ₗ[R] M) = linear_map.id :=
 rfl
 
-instance : ring_equiv_inv_pair (ring_equiv.refl R) (ring_equiv.refl R) := by apply_instance
+instance : ring_hom_inv_pair (ring_hom.id R) (ring_hom.id R) := by apply_instance
 
 @[simp, norm_cast]
 lemma comp_coe [module R M] [module R M₂] [module R M₃] (f :  M ≃ₗ[R] M₂)
@@ -672,8 +672,8 @@ include module_M module_S_M₂ re₁ re₂
 by { cases e, refl }
 omit module_M module_S_M₂ re₁ re₂
 
-lemma symm_bijective [module R M] [module S M₂] [ring_equiv_inv_pair σ' σ]
-  [ring_equiv_inv_pair σ σ'] : function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
+lemma symm_bijective [module R M] [module S M₂] [ring_hom_inv_pair σ' σ]
+  [ring_hom_inv_pair σ σ'] : function.bijective (symm : (M ≃ₛₗ[σ] M₂) → (M₂ ≃ₛₗ[σ'] M)) :=
 equiv.bijective ⟨(symm : (M ≃ₛₗ[σ] M₂) →
   (M₂ ≃ₛₗ[σ'] M)), (symm : (M₂ ≃ₛₗ[σ'] M) → (M ≃ₛₗ[σ] M₂)), symm_symm, symm_symm⟩
 
@@ -703,13 +703,13 @@ variables [semiring R₁] [semiring R₂] [semiring R₃]
 variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 
 /-- An involutive linear map is a linear equivalence. -/
-def of_involutive {σ σ' : R ≃+* R} [ring_equiv_inv_pair σ σ'] [ring_equiv_inv_pair σ' σ]
+def of_involutive {σ σ' : R →+* R} [ring_hom_inv_pair σ σ'] [ring_hom_inv_pair σ' σ]
   {module_M : module R M} (f : M →ₛₗ[σ] M) (hf : involutive f) :
   M ≃ₛₗ[σ] M :=
 { .. f, .. hf.to_equiv f  }
 
-@[simp] lemma coe_of_involutive {σ σ' : R ≃+* R} [ring_equiv_inv_pair σ σ']
-  [ring_equiv_inv_pair σ' σ] {module_M : module R M} (f : M →ₛₗ[σ] M) (hf : involutive f) :
+@[simp] lemma coe_of_involutive {σ σ' : R →+* R} [ring_hom_inv_pair σ σ']
+  [ring_hom_inv_pair σ' σ] {module_M : module R M} (f : M →ₛₗ[σ] M) (hf : involutive f) :
   ⇑(of_involutive f hf) = f :=
 rfl
 
