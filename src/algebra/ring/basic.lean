@@ -1179,6 +1179,9 @@ end ring_hom_inv_pair
 class ring_hom_surjective (σ : R₁ →+* R₂) : Prop :=
 (is_surjective : function.surjective σ)
 
+lemma ring_hom.is_surjective (σ : R₁ →+* R₂) [t : ring_hom_surjective σ] : function.surjective σ :=
+t.is_surjective
+
 namespace ring_hom_surjective
 
 instance inv_pair {σ₁ : R₁ →+* R₂} {σ₂ : R₂ →+* R₁} [ring_hom_inv_pair σ₁ σ₂] :
@@ -1187,10 +1190,14 @@ instance inv_pair {σ₁ : R₁ →+* R₂} {σ₂ : R₂ →+* R₁} [ring_hom_
 
 instance ids : ring_hom_surjective (ring_hom.id R₁) := ⟨is_surjective⟩
 
+-- if this is an instance, it causes typeclass inference to loop
+def comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
+  ring_hom_surjective σ₁₃ :=
+{ is_surjective := begin
+    have := σ₂₃.is_surjective.comp σ₁₂.is_surjective,
+    rwa [← ring_hom.coe_comp, ring_hom_comp_triple.comp_eq] at this,
+  end }
+
 end ring_hom_surjective
-
-lemma ring_hom.is_surjective (σ : R₁ →+* R₂) [t : ring_hom_surjective σ] : function.surjective σ :=
-t.is_surjective
-
 
 end prop_typeclasses

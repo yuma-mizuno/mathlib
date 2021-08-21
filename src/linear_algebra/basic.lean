@@ -748,15 +748,18 @@ theorem mem_left_iff_eq_zero_of_disjoint {p p' : submodule R M} (h : disjoint p 
   (x:M) ∈ p ↔ x = 0 :=
 ⟨λ hx, coe_eq_zero.1 $ disjoint_def.1 h x hx x.2, λ h, h.symm ▸ p.zero_mem⟩
 
+section
+variables [ring_hom_surjective σ₁₂]
+
 /-- The pushforward of a submodule `p ⊆ M` by `f : M → M₂` -/
 def map (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : submodule R₂ M₂ :=
 { carrier   := f '' p,
   smul_mem' :=
   begin
-    rintro c x ⟨b, hb, rfl⟩,
-    refine ⟨_, p.smul_mem (σ₁₂.symm c) hb, _⟩,
-    have h : σ₁₂ (σ₁₂.symm c) = c := by { change σ₁₂ (σ₁₂.symm c) = c, simp },
-    simp [h],
+    rintro c x ⟨y, hy, rfl⟩,
+    obtain ⟨a, ha⟩ := σ₁₂.is_surjective c,
+    refine ⟨_, p.smul_mem a hy, _⟩,
+    simp [ha]
   end,
   .. p.to_add_submonoid.map f.to_add_monoid_hom }
 
@@ -772,12 +775,17 @@ theorem mem_map_of_mem {f : M →ₛₗ[σ₁₂] M₂} {p : submodule R M} {r} 
 lemma apply_coe_mem_map (f : M →ₛₗ[σ₁₂] M₂) {p : submodule R M} (r : p) :
   f r ∈ map f p := mem_map_of_mem r.prop
 
-@[simp] lemma map_id : map linear_map.id p = p :=
+@[simp] lemma map_id : map (linear_map.id : M →ₗ[R] M) p = p :=
 submodule.ext $ λ a, by simp
 
-lemma map_comp (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
+section
+local attribute [instance] ring_hom_surjective.comp
+
+lemma map_comp [ring_hom_surjective σ₂₃] (f : M →ₛₗ[σ₁₂] M₂) (g : M₂ →ₛₗ[σ₂₃] M₃)
   (p : submodule R M) : map (g.comp f : M →ₛₗ[σ₁₃] M₃) p = map g (map f p) :=
 set_like.coe_injective $ by simp [map_coe]; rw ← image_comp
+
+end
 
 lemma map_mono {f : M →ₛₗ[σ₁₂] M₂} {p p' : submodule R M} :
   p ≤ p' → map f p ≤ map f p' := image_subset _
@@ -789,6 +797,8 @@ ext $ by simp [this, eq_comm]
 lemma range_map_nonempty (N : submodule R M) :
   (set.range (λ ϕ, submodule.map ϕ N : (M →ₛₗ[σ₁₂] M₂) → submodule R₂ M₂)).nonempty :=
 ⟨_, set.mem_range.mpr ⟨0, rfl⟩⟩
+
+end
 
 include σ₂₁
 /-- The pushforward of a submodule by an injective linear map is
@@ -823,6 +833,9 @@ rfl
 lemma comap_mono {f : M →ₛₗ[σ₁₂] M₂} {q q' : submodule R₂ M₂} :
   q ≤ q' → comap f q ≤ comap f q' := preimage_mono
 
+section
+variables [ring_hom_surjective σ₁₂]
+
 lemma map_le_iff_le_comap {f : M →ₛₗ[σ₁₂] M₂} {p : submodule R M} {q : submodule R₂ M₂} :
   map f p ≤ q ↔ p ≤ comap f q := image_subset_iff
 
@@ -839,25 +852,30 @@ lemma gc_map_comap (f : M →ₛₗ[σ₁₂] M₂) : galois_connection (map f) 
   map f (⨆i, p i) = (⨆i, map f (p i)) :=
 (gc_map_comap f).l_supr
 
+end
+
 @[simp] lemma comap_top (f : M →ₛₗ[σ₁₂] M₂) : comap f ⊤ = ⊤ := rfl
 
 @[simp] lemma comap_inf (f : M →ₛₗ[σ₁₂] M₂) : comap f (q ⊓ q') = comap f q ⊓ comap f q' := rfl
 
-@[simp] lemma comap_infi {ι : Sort*} (f : M →ₛₗ[σ₁₂] M₂) (p : ι → submodule R₂ M₂) :
+@[simp] lemma comap_infi [ring_hom_surjective σ₁₂] {ι : Sort*} (f : M →ₛₗ[σ₁₂] M₂)
+  (p : ι → submodule R₂ M₂) :
   comap f (⨅i, p i) = (⨅i, comap f (p i)) :=
 (gc_map_comap f).u_infi
 
 @[simp] lemma comap_zero : comap (0 : M →ₛₗ[σ₁₂] M₂) q = ⊤ :=
 ext $ by simp
 
-lemma map_comap_le (f : M →ₛₗ[σ₁₂] M₂) (q : submodule R₂ M₂) : map f (comap f q) ≤ q :=
+lemma map_comap_le [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) (q : submodule R₂ M₂) :
+  map f (comap f q) ≤ q :=
 (gc_map_comap f).l_u_le _
 
-lemma le_comap_map (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) : p ≤ comap f (map f p) :=
+lemma le_comap_map [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) :
+  p ≤ comap f (map f p) :=
 (gc_map_comap f).le_u_l _
 
 section galois_coinsertion
-variables {f : M →ₛₗ[σ₁₂] M₂} (hf : injective f)
+variables [ring_hom_surjective σ₁₂] {f : M →ₛₗ[σ₁₂] M₂} (hf : injective f)
 include hf
 
 /-- `map f` and `comap f` form a `galois_coinsertion` when `f` is injective. -/
@@ -895,7 +913,7 @@ lemma map_strict_mono_of_injective : strict_mono (map f) :=
 end galois_coinsertion
 
 --TODO(Mario): is there a way to prove this from order properties?
-lemma map_inf_eq_map_inf_comap {f : M →ₛₗ[σ₁₂] M₂}
+lemma map_inf_eq_map_inf_comap [ring_hom_surjective σ₁₂] {f : M →ₛₗ[σ₁₂] M₂}
   {p : submodule R M} {p' : submodule R₂ M₂} :
   map f p ⊓ p' = map f (p ⊓ comap f p') :=
 le_antisymm
@@ -934,7 +952,7 @@ le_antisymm (span_le.2 h₁) h₂
 @[simp] lemma span_eq : span R (p : set M) = p :=
 span_eq_of_le _ (subset.refl _) subset_span
 
-lemma map_span (f : M →ₛₗ[σ₁₂] M₂) (s : set M) :
+lemma map_span [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) (s : set M) :
   (span R s).map f = span R₂ (f '' s) :=
 eq.symm $ span_eq_of_le _ (set.image_subset f subset_span) $
 map_le_iff_le_comap.2 $ span_le.2 $ λ x hx, subset_span ⟨x, hx, rfl⟩
@@ -1193,12 +1211,13 @@ span_eq_bot.trans $ by simp
 
 @[simp] lemma span_zero : span R (0 : set M) = ⊥ := by rw [←singleton_zero, span_singleton_eq_bot]
 
-@[simp] lemma span_image (f : M →ₛₗ[σ₁₂] M₂) : span R₂ (f '' s) = map f (span R s) :=
+@[simp] lemma span_image [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) :
+  span R₂ (f '' s) = map f (span R s) :=
 span_eq_of_le _ (image_subset _ subset_span) $ map_le_iff_le_comap.2 $
 span_le.2 $ image_subset_iff.1 subset_span
 
 lemma apply_mem_span_image_of_mem_span
-   (f : M →ₛₗ[σ₁₂] M₂) {x : M} {s : set M} (h : x ∈ submodule.span R s) :
+   [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) {x : M} {s : set M} (h : x ∈ submodule.span R s) :
    f x ∈ submodule.span R₂ (f '' s) :=
 begin
   rw submodule.span_image,
@@ -1207,7 +1226,8 @@ end
 
 /-- `f` is an explicit argument so we can `apply` this theorem and obtain `h` as a new goal. -/
 lemma not_mem_span_of_apply_not_mem_span_image
-   (f : M →ₛₗ[σ₁₂] M₂) {x : M} {s : set M} (h : f x ∉ submodule.span R₂ (f '' s)) :
+   [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) {x : M} {s : set M}
+   (h : f x ∉ submodule.span R₂ (f '' s)) :
    x ∉ submodule.span R s :=
 not.imp h (apply_mem_span_image_of_mem_span f)
 
@@ -1560,13 +1580,16 @@ end dfinsupp
 variables {σ₂₁ : R₂ →+*R} {τ₁₂ : R →+*R₂} {τ₂₃ : R₂ →+*R₃} {τ₁₃ : R →+*R₃}
 variables [ring_hom_comp_triple τ₁₂ τ₂₃ τ₁₃]
 
-theorem map_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) (h p') :
+theorem map_cod_restrict [ring_hom_surjective σ₂₁] (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) (h p') :
   submodule.map (cod_restrict p f h) p' = comap p.subtype (p'.map f) :=
 submodule.ext $ λ ⟨x, hx⟩, by simp [subtype.ext_iff_val]
 
 theorem comap_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) (hf p') :
   submodule.comap (cod_restrict p f hf) p' = submodule.comap f (map p.subtype p') :=
 submodule.ext $ λ x, ⟨λ h, ⟨⟨_, hf x⟩, h, rfl⟩, by rintro ⟨⟨_, _⟩, h, ⟨⟩⟩; exact h⟩
+
+section
+variables [ring_hom_surjective τ₁₂]
 
 /-- The range of a linear map `f : M → M₂` is a submodule of `M₂`.
 See Note [range copy pattern]. -/
@@ -1586,13 +1609,18 @@ theorem mem_range_self (f : M →ₛₗ[τ₁₂] M₂) (x : M) : f x ∈ f.rang
 @[simp] theorem range_id : range (linear_map.id : M →ₗ[R] M) = ⊤ :=
 set_like.coe_injective set.range_id
 
-theorem range_comp (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+section
+local attribute [instance] ring_hom_surjective.comp
+
+theorem range_comp [ring_hom_surjective τ₂₃] (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) = map g (range f) :=
 set_like.coe_injective (set.range_comp g f)
 
-theorem range_comp_le_range (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
+theorem range_comp_le_range [ring_hom_surjective τ₂₃] (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) ≤ range g :=
 set_like.coe_mono (set.range_comp_subset_range f g)
+
+end
 
 theorem range_eq_top {f : M →ₛₗ[τ₁₂] M₂} : range f = ⊤ ↔ surjective f :=
 by rw [set_like.ext'_iff, range_coe, top_coe, set.range_iff_surjective]
@@ -1603,6 +1631,8 @@ by rw [range_eq_map, map_le_iff_le_comap, eq_top_iff]
 
 lemma map_le_range {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} : map f p ≤ range f :=
 set_like.coe_mono (set.image_subset_range f p)
+
+end
 
 /--
 The decreasing sequence of submodules consisting of the ranges of the iterates of a linear map.
@@ -1622,7 +1652,7 @@ end⟩
 /-- Restrict the codomain of a linear map `f` to `f.range`.
 
 This is the bundled version of `set.range_factorization`. -/
-@[reducible] def range_restrict (f : M →ₛₗ[τ₁₂] M₂) : M →ₛₗ[τ₁₂] f.range :=
+@[reducible] def range_restrict [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) : M →ₛₗ[τ₁₂] f.range :=
 f.cod_restrict f.range f.mem_range_self
 
 section
@@ -1673,14 +1703,16 @@ theorem ker_eq_bot_of_inverse {τ₂₁ : R₂ →+*R} [ring_hom_inv_pair τ₁�
   ker f = ⊥ :=
 ker_eq_bot'.2 $ λ m hm, by rw [← id_apply m, ← h, comp_apply, hm, g.map_zero]
 
-lemma le_ker_iff_map {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} : p ≤ ker f ↔ map f p = ⊥ :=
+lemma le_ker_iff_map [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} :
+  p ≤ ker f ↔ map f p = ⊥ :=
 by rw [ker, eq_bot_iff, map_le_iff_le_comap]
 
 lemma ker_cod_restrict {τ₂₁ : R₂ →+*R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
   ker (cod_restrict p f hf) = ker f :=
 by rw [ker, comap_cod_restrict, map_bot]; refl
 
-lemma range_cod_restrict {τ₂₁ : R₂ →+*R} (p : submodule R M) (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
+lemma range_cod_restrict {τ₂₁ : R₂ →+*R} [ring_hom_surjective τ₂₁] (p : submodule R M)
+  (f : M₂ →ₛₗ[τ₂₁] M) (hf) :
   range (cod_restrict p f hf) = comap p.subtype f.range :=
 by simpa only [range_eq_map] using map_cod_restrict _ _ _ _
 
@@ -1688,23 +1720,27 @@ lemma ker_restrict {p : submodule R M} {f : M →ₗ[R] M} (hf : ∀ x : M, x �
   ker (f.restrict hf) = (f.dom_restrict p).ker :=
 by rw [restrict_eq_cod_restrict_dom_restrict, ker_cod_restrict]
 
-lemma map_comap_eq (f : M →ₛₗ[τ₁₂] M₂) (q : submodule R₂ M₂) :
+lemma map_comap_eq [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) (q : submodule R₂ M₂) :
   map f (comap f q) = range f ⊓ q :=
 le_antisymm (le_inf map_le_range (map_comap_le _ _)) $
 by rintro _ ⟨⟨x, _, rfl⟩, hx⟩; exact ⟨x, hx, rfl⟩
 
-lemma map_comap_eq_self {f : M →ₛₗ[τ₁₂] M₂} {q : submodule R₂ M₂} (h : q ≤ range f) :
+lemma map_comap_eq_self [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} {q : submodule R₂ M₂}
+  (h : q ≤ range f) :
   map f (comap f q) = q :=
 by rwa [map_comap_eq, inf_eq_right]
 
 @[simp] theorem ker_zero : ker (0 : M →ₛₗ[τ₁₂] M₂) = ⊤ :=
 eq_top_iff'.2 $ λ x, by simp
 
-@[simp] theorem range_zero : range (0 : M →ₛₗ[τ₁₂] M₂) = ⊥ :=
+@[simp] theorem range_zero [ring_hom_surjective τ₁₂] : range (0 : M →ₛₗ[τ₁₂] M₂) = ⊥ :=
 by simpa only [range_eq_map] using submodule.map_zero _
 
 theorem ker_eq_top {f : M →ₛₗ[τ₁₂] M₂} : ker f = ⊤ ↔ f = 0 :=
 ⟨λ h, ext $ λ x, mem_ker.1 $ h.symm ▸ trivial, λ h, h.symm ▸ ker_zero⟩
+
+section
+variables [ring_hom_surjective τ₁₂]
 
 lemma range_le_bot_iff (f : M →ₛₗ[τ₁₂] M₂) : range f ≤ ⊥ ↔ f = 0 :=
 by rw [range_le_iff_comap]; exact ker_eq_top
@@ -1724,6 +1760,8 @@ theorem comap_le_comap_iff {f : M →ₛₗ[τ₁₂] M₂} (hf : range f = ⊤)
 theorem comap_injective {f : M →ₛₗ[τ₁₂] M₂} (hf : range f = ⊤) : injective (comap f) :=
 λ p p' h, le_antisymm ((comap_le_comap_iff hf).1 (le_of_eq h))
   ((comap_le_comap_iff hf).1 (ge_of_eq h))
+
+end
 
 theorem ker_eq_bot_of_injective {f : M →ₛₗ[τ₁₂] M₂} (hf : injective f) : ker f = ⊥ :=
 begin
@@ -1751,7 +1789,7 @@ variables [semiring R] [semiring R₂] [semiring R₃]
 variables [add_comm_group M] [add_comm_group M₂] [add_comm_group M₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables {τ₁₂ : R →+*R₂} {τ₂₃ : R₂ →+*R₃} {τ₁₃ : R →+*R₃}
-variables [ring_hom_comp_triple τ₁₂ τ₂₃ τ₁₃]
+variables [ring_hom_comp_triple τ₁₂ τ₂₃ τ₁₃] [ring_hom_surjective τ₁₂]
 include R
 open submodule
 
@@ -1812,7 +1850,8 @@ theorem inj_of_disjoint_ker {p : submodule R M}
 theorem ker_eq_bot : ker f = ⊥ ↔ injective f :=
 by simpa [disjoint] using @disjoint_ker' _ _ _ _ _ _ _ _ _ _ _ f ⊤
 
-lemma ker_le_iff {p : submodule R M} : ker f ≤ p ↔ ∃ (y ∈ range f), f ⁻¹' {y} ⊆ p :=
+lemma ker_le_iff [ring_hom_surjective τ₁₂] {p : submodule R M} :
+  ker f ≤ p ↔ ∃ (y ∈ range f), f ⁻¹' {y} ⊆ p :=
 begin
   split,
   { intros h, use 0, rw [← set_like.mem_coe, f.range_coe], exact ⟨⟨0, map_zero f⟩, h⟩, },
@@ -1893,7 +1932,8 @@ variables (p p' : submodule R M) (q : submodule R₂ M₂)
 variables {τ₁₂ : R →+*R₂}
 open linear_map
 
-@[simp] theorem map_top (f : M →ₛₗ[τ₁₂] M₂) : map f ⊤ = range f := f.range_eq_map.symm
+@[simp] theorem map_top [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) : map f ⊤ = range f :=
+f.range_eq_map.symm
 
 @[simp] theorem comap_bot (f : M →ₛₗ[τ₁₂] M₂) : comap f ⊥ = ker f := rfl
 
@@ -2013,7 +2053,7 @@ le_antisymm
   (by rintro ⟨x⟩ hx; exact ⟨_, hx, rfl⟩)
   (by rw [map_le_iff_le_comap, ← comap_comp, liftq_mkq]; exact le_refl _)
 
-theorem map_liftq (f : M →ₛₗ[τ₁₂] M₂) (h) (q : submodule R (quotient p)) :
+theorem map_liftq [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) (h) (q : submodule R (quotient p)) :
   q.map (p.liftq f h) = (q.comap p.mkq).map f :=
 le_antisymm
   (by rintro _ ⟨⟨x⟩, hxq, rfl⟩; exact ⟨x, hxq, rfl⟩)
@@ -2022,7 +2062,7 @@ le_antisymm
 theorem ker_liftq (f : M →ₛₗ[τ₁₂] M₂) (h) :
   ker (p.liftq f h) = (ker f).map (mkq p) := comap_liftq _ _ _ _
 
-theorem range_liftq (f : M →ₛₗ[τ₁₂] M₂) (h) :
+theorem range_liftq [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) (h) :
   range (p.liftq f h) = range f :=
 by simpa only [range_eq_map] using map_liftq _ _ _ _
 
@@ -2048,7 +2088,8 @@ def comap_mkq.order_embedding :
 @[simp] lemma comap_mkq_embedding_eq (p' : submodule R p.quotient) :
   comap_mkq.order_embedding p p' = comap p.mkq p' := rfl
 
-lemma span_preimage_eq {f : M →ₛₗ[τ₁₂] M₂} {s : set M₂} (h₀ : s.nonempty) (h₁ : s ⊆ range f) :
+lemma span_preimage_eq [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} {s : set M₂} (h₀ : s.nonempty)
+  (h₁ : s ⊆ range f) :
   span R (f ⁻¹' s) = (span R₂ s).comap f :=
 begin
   suffices : (span R₂ s).comap f ≤ span R (f ⁻¹' s),
@@ -2085,9 +2126,15 @@ begin
   exact range_zero
 end
 
-lemma range_comp_of_range_eq_top {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃)
-  (hf : range f = ⊤) : range (g.comp f : M →ₛₗ[τ₁₃] M₃) = range g :=
+section
+local attribute [instance] ring_hom_surjective.comp
+
+lemma range_comp_of_range_eq_top [ring_hom_surjective τ₁₂] [ring_hom_surjective τ₂₃]
+  {f : M →ₛₗ[τ₁₂] M₂} (g : M₂ →ₛₗ[τ₂₃] M₃) (hf : range f = ⊤) :
+  range (g.comp f : M →ₛₗ[τ₁₃] M₃) = range g :=
 by rw [range_comp, hf, submodule.map_top]
+
+end
 
 lemma ker_comp_of_ker_eq_bot (f : M →ₛₗ[τ₁₂] M₂) {g : M₂ →ₛₗ[τ₂₃] M₃}
   (hg : ker g = ⊥) : ker (g.comp f : M →ₛₗ[τ₁₃] M₃) = ker f :=
@@ -2101,7 +2148,7 @@ variables [ring R] [ring R₂] [ring R₃]
 variables [add_comm_monoid M] [add_comm_group M₂] [add_comm_monoid M₃]
 variables [module R M] [module R₂ M₂] [module R₃ M₃]
 variables {τ₁₂ : R →+*R₂} {τ₂₃ : R₂ →+*R₃} {τ₁₃ : R →+*R₃}
-variables [ring_hom_comp_triple τ₁₂ τ₂₃ τ₁₃]
+variables [ring_hom_comp_triple τ₁₂ τ₂₃ τ₁₃] [ring_hom_surjective τ₁₂]
 
 lemma range_mkq_comp (f : M →ₛₗ[τ₁₂] M₂) : f.range.mkq.comp f = 0 :=
 linear_map.ext $ λ x, by simp
@@ -2336,8 +2383,14 @@ omit σ₂₁ re₁₂ re₂₁
 @[simp] protected theorem ker : (e : M →ₛₗ[σ₁₂] M₂).ker = ⊥ :=
 linear_map.ker_eq_bot_of_injective e.to_equiv.injective
 
-@[simp] theorem range_comp : (h.comp (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
+section
+local attribute [instance] ring_hom_surjective.comp
+
+@[simp] theorem range_comp [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
+  (h.comp (e : M →ₛₗ[σ₁₂] M₂) : M →ₛₗ[σ₁₃] M₃).range = h.range :=
 linear_map.range_comp_of_range_eq_top _ e.range
+
+end
 
 include module_M
 @[simp] theorem ker_comp (l : M →ₛₗ[σ₁₂] M₂) :
