@@ -527,6 +527,10 @@ begin
       { rw ← this,
         exact hz1 },
       {
+        rw ← subtype.coe_mk g hh at hz2,
+        rw ← subgroup.coe_inv at hz2,
+        rw [← subgroup.coe_mul, ← subgroup.coe_mul, ← subgroup.coe_mul] at hz2,
+        -- this is set_like.coe_set_eq but smth is going wrong
 
       -- help
       -- trivial once you fix the types
