@@ -83,31 +83,6 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 
 end mul_action
 
-section cauchy
-
-lemma exists_prime_order_of_dvd_card {G : Type*} [group G] [fintype G] (p : ℕ) [hp : fact p.prime]
-  (hdvd : p ∣ fintype.card G) : ∃ x : G, order_of x = p :=
-begin
-  let S := {v : vector G p | v.to_list.prod = 1},
-  let f : ℕ → S → S := λ k s, ⟨⟨s.1.1.rotate k, (s.1.1.length_rotate k).trans s.1.2⟩,
-    list.prod_rotate_eq_one_of_prod_eq_one s.2 k⟩,
-  have hf1 : ∀ (j k : ℕ) (s : S), f k (f j s) = f (j + k) s :=
-  λ j k s, subtype.ext (subtype.ext (s.1.1.rotate_rotate j k)),
-  have hf2 : ∀ s : S, f p s = s :=
-  λ s, subtype.ext (subtype.ext ((congr_arg _ s.1.2.symm).trans s.1.1.rotate_length)),
-
-
-
-  let g : zmod p → S → S := λ k, f k.val,
-  let σ : S ≃ S :=
-  { to_fun := f 1,
-    inv_fun := f (p - 1),
-    left_inv := hf 1 (p - 1) (nat.add_sub_cancel' hp.out.pos),
-    right_inv := hf (p - 1) 1 (nat.sub_add_cancel hp.out.pos) },
-end
-
-end cauchy
-
 section pgroup
 
 variables (p : ℕ) (G : Type*) [group G]

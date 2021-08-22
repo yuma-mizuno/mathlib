@@ -192,7 +192,7 @@ lemma cycle_type_prime_order {σ : perm α} (hσ : (order_of σ).prime) :
   ∃ n : ℕ, σ.cycle_type = repeat (order_of σ) (n + 1) :=
 begin
   use σ.cycle_type.card - 1,
-  rw [nat.sub_add_cancel, ←cycle_type_prime_order' hσ (pow_order_of_eq_one σ)],
+  rw [nat.sub_add_cancel, ←cycle_type_pow_prime_eq_one hσ (pow_order_of_eq_one σ)],
   rw [nat.succ_le_iff, pos_iff_ne_zero, ne, card_cycle_type_eq_zero],
   intro h,
   rw [h, order_of_one] at hσ,
@@ -355,19 +355,17 @@ begin
     change v.1.tail.to_list.prod⁻¹ ::ᵥ v.1.tail = v.1,
     sorry,
   end),
-  replace ϕ : vector G (p - 1) ≃ S p := sorry,
+  specialize ϕ (p - 1),
+  rw nat.sub_add_cancel hp.out.pos at ϕ,
   haveI Sfin : fintype (S p) := fintype.of_equiv (vector G (p - 1)) ϕ,
   have Scard : p ∣ fintype.card (S p) :=
   begin
     rw [←fintype.card_congr ϕ, card_vector],
     refine hdvd.trans (dvd_pow (dvd_refl _) _),
-    sorry,
+    rw [ne, nat.sub_eq_zero_iff_le],
+    exact not_le_of_lt hp.out.one_lt,
   end,
-
   let s₀ : S p := ⟨vector.repeat 1 p, (list.prod_repeat 1 p).trans (one_pow p)⟩,
-
-
-
   let f : ℕ → S p → S p := λ k s, ⟨⟨s.1.1.rotate k, (s.1.1.length_rotate k).trans s.1.2⟩,
     list.prod_rotate_eq_one_of_prod_eq_one s.2 k⟩,
   have hf1 : ∀ s : S p, f 0 s = s := λ s, subtype.ext (subtype.ext s.1.1.rotate_zero),
@@ -378,13 +376,10 @@ begin
   let σ : S p ≃ S p := equiv.mk (f 1) (f (p - 1))
     (λ s, by rw [hf2, nat.add_sub_cancel' hp.out.pos, hf3])
     (λ s, by rw [hf2, nat.sub_add_cancel hp.out.pos, hf3]),
-
   have hσ1 : ∀ (k : ℕ) (s : S p), (σ ^ k) s = f k s :=
   λ k s, nat.rec (hf1 s).symm (λ k hk, eq.trans (by exact congr_arg σ hk) (hf2 k 1 s)) k,
   have hσ2 : σ ^ p = 1 := perm.ext (λ s, (hσ1 p s).trans (hf3 s)),
-
   have key' : σ s₀ = s₀ := subtype.ext (subtype.ext (list.rotate_repeat (1 : G) p 1)),
-
   obtain ⟨s, hs1, hs2⟩ := exists_fixed_point Scard hσ2 key',
   obtain ⟨g, hg⟩ := list.rotate_one_eq_self_iff_eq_repeat.mp
     (subtype.ext_iff.mp (subtype.ext_iff.mp hs1)),
