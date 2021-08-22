@@ -82,3 +82,69 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 ⟨b, hb, λ hab, hba $ by simp [hab]⟩
 
 end mul_action
+
+section cauchy
+
+lemma exists_prime_order_of_dvd_card {G : Type*} [group G] [fintype G] (p : ℕ) [hp : fact p.prime]
+  (hdvd : p ∣ fintype.card G) : ∃ x : G, order_of x = p :=
+begin
+  let S := {v : vector G p | v.to_list.prod = 1},
+  let f : ℕ → S → S := λ k s, ⟨⟨s.1.1.rotate k, (s.1.1.length_rotate k).trans s.1.2⟩,
+    list.prod_rotate_eq_one_of_prod_eq_one s.2 k⟩,
+  have hf1 : ∀ (j k : ℕ) (s : S), f k (f j s) = f (j + k) s :=
+  λ j k s, subtype.ext (subtype.ext (s.1.1.rotate_rotate j k)),
+  have hf2 : ∀ s : S, f p s = s :=
+  λ s, subtype.ext (subtype.ext ((congr_arg _ s.1.2.symm).trans s.1.1.rotate_length)),
+
+
+
+  let g : zmod p → S → S := λ k, f k.val,
+  let σ : S ≃ S :=
+  { to_fun := f 1,
+    inv_fun := f (p - 1),
+    left_inv := hf 1 (p - 1) (nat.add_sub_cancel' hp.out.pos),
+    right_inv := hf (p - 1) 1 (nat.sub_add_cancel hp.out.pos) },
+end
+
+end cauchy
+
+section pgroup
+
+variables (p : ℕ) (G : Type*) [group G]
+
+def is_p_group : Prop := ∀ g : G, ∃ k : ℕ, g ^ (p ^ k) = 1
+
+variables {G}
+
+lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
+  exact λ h, hG h,
+end
+
+lemma le_is_p_group {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
+  exact λ h, hK ⟨h, hHK h.2⟩,
+end
+
+variables (G)
+
+def p_subgroups : set (subgroup G) :=
+{H | is_p_group p H}
+
+variables {G}
+
+instance : semilattice_inf_bot (p_subgroups p G) :=
+{ bot := ⟨⊥, λ g, ⟨0, (pow_one g).trans (subtype.ext (subgroup.mem_bot.mp g.2))⟩⟩,
+  bot_le := λ P, @bot_le (subgroup G) _ P,
+  inf := λ H K, ⟨H ⊓ K, le_is_p_group p H.2 (inf_le_left)⟩,
+  inf_le_left := λ H K, @inf_le_left (subgroup G) _ H K,
+  inf_le_right := λ H K, @inf_le_right (subgroup G) _ H K,
+  le_inf := λ H K L hHK hHL, @le_inf (subgroup G) _ H K L hHK hHL,
+  .. subtype.partial_order _ }
+
+def sylow_p_subgroup : set (p_subgroups p G) :=
+{H | ∀ K, H ≤ K → H = K}
+
+end pgroup

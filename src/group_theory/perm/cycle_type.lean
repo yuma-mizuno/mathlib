@@ -182,16 +182,20 @@ lemma two_dvd_card_support {σ : perm α} (hσ : σ ^ 2 = 1) : 2 ∣ σ.support.
   (multiset.dvd_sum (λ n hn, by rw le_antisymm (nat.le_of_dvd zero_lt_two (dvd_trans
   (dvd_of_mem_cycle_type hn) (order_of_dvd_of_pow_eq_one hσ))) (two_le_of_mem_cycle_type hn)))
 
+lemma cycle_type_pow_prime_eq_one {σ : perm α} {p : ℕ} (hp : p.prime) (hσ : σ ^ p = 1) :
+  σ.cycle_type = repeat (order_of σ) σ.cycle_type.card :=
+multiset.eq_repeat_of_mem (λ n hn, let h1 := dvd_of_mem_cycle_type hn,
+  h2 := order_of_dvd_of_pow_eq_one hσ in nat.dvd_antisymm h1 ((congr_arg _
+  ((nat.dvd_prime_two_le hp (two_le_of_mem_cycle_type hn)).mp (h1.trans h2))).mpr h2))
+
 lemma cycle_type_prime_order {σ : perm α} (hσ : (order_of σ).prime) :
   ∃ n : ℕ, σ.cycle_type = repeat (order_of σ) (n + 1) :=
 begin
-  rw eq_repeat_of_mem (λ n hn, or_iff_not_imp_left.mp
-    (hσ.2 n (dvd_of_mem_cycle_type hn)) (ne_of_gt (one_lt_of_mem_cycle_type hn))),
   use σ.cycle_type.card - 1,
-  rw nat.sub_add_cancel,
+  rw [nat.sub_add_cancel, ←cycle_type_prime_order' hσ (pow_order_of_eq_one σ)],
   rw [nat.succ_le_iff, pos_iff_ne_zero, ne, card_cycle_type_eq_zero],
-  rintro rfl,
-  rw order_of_one at hσ,
+  intro h,
+  rw [h, order_of_one] at hσ,
   exact hσ.ne_one rfl,
 end
 
@@ -331,6 +335,65 @@ begin
   rw [←one_mul (fintype.card α), ←h2, mul_lt_mul_right (order_of_pos σ)],
   exact one_lt_two,
 end
+
+section cauchy
+
+lemma exists_fixed_point {p : ℕ} [hp : fact p.prime] (hα : p ∣ fintype.card α)
+  {σ : perm α} (hσ : σ ^ p = 1) {a : α} (ha : σ a = a) : ∃ b : α, σ b = b ∧ b ≠ a :=
+begin
+  sorry,
+end
+
+lemma exists_prime_order_of_dvd_card {G : Type*} [group G] [fintype G] (p : ℕ) [hp : fact p.prime]
+  (hdvd : p ∣ fintype.card G) : ∃ x : G, order_of x = p :=
+begin
+  let S : Π n, set (vector G n) := λ n, {v | v.to_list.prod = 1},
+  have Smem : ∀ (n : ℕ) (v : vector G n), v ∈ S n ↔ v.to_list.prod = 1 := λ n v, iff.rfl,
+  let ϕ : Π n, vector G n ≃ S (n + 1) := λ n, equiv.mk
+  (λ v, ⟨v.to_list.prod⁻¹ ::ᵥ v, by rw [Smem, vector.to_list_cons, list.prod_cons, inv_mul_self]⟩)
+  (λ v, v.1.tail) (λ v, v.tail_cons v.to_list.prod⁻¹) (λ v, subtype.ext begin
+    change v.1.tail.to_list.prod⁻¹ ::ᵥ v.1.tail = v.1,
+    sorry,
+  end),
+  replace ϕ : vector G (p - 1) ≃ S p := sorry,
+  haveI Sfin : fintype (S p) := fintype.of_equiv (vector G (p - 1)) ϕ,
+  have Scard : p ∣ fintype.card (S p) :=
+  begin
+    rw [←fintype.card_congr ϕ, card_vector],
+    refine hdvd.trans (dvd_pow (dvd_refl _) _),
+    sorry,
+  end,
+
+  let s₀ : S p := ⟨vector.repeat 1 p, (list.prod_repeat 1 p).trans (one_pow p)⟩,
+
+
+
+  let f : ℕ → S p → S p := λ k s, ⟨⟨s.1.1.rotate k, (s.1.1.length_rotate k).trans s.1.2⟩,
+    list.prod_rotate_eq_one_of_prod_eq_one s.2 k⟩,
+  have hf1 : ∀ s : S p, f 0 s = s := λ s, subtype.ext (subtype.ext s.1.1.rotate_zero),
+  have hf2 : ∀ (j k : ℕ) (s : S p), f k (f j s) = f (j + k) s :=
+  λ j k s, subtype.ext (subtype.ext (s.1.1.rotate_rotate j k)),
+  have hf3 : ∀ s : S p, f p s = s :=
+  λ s, subtype.ext (subtype.ext ((congr_arg _ s.1.2.symm).trans s.1.1.rotate_length)),
+  let σ : S p ≃ S p := equiv.mk (f 1) (f (p - 1))
+    (λ s, by rw [hf2, nat.add_sub_cancel' hp.out.pos, hf3])
+    (λ s, by rw [hf2, nat.sub_add_cancel hp.out.pos, hf3]),
+
+  have hσ1 : ∀ (k : ℕ) (s : S p), (σ ^ k) s = f k s :=
+  λ k s, nat.rec (hf1 s).symm (λ k hk, eq.trans (by exact congr_arg σ hk) (hf2 k 1 s)) k,
+  have hσ2 : σ ^ p = 1 := perm.ext (λ s, (hσ1 p s).trans (hf3 s)),
+
+  have key' : σ s₀ = s₀ := subtype.ext (subtype.ext (list.rotate_repeat (1 : G) p 1)),
+
+  obtain ⟨s, hs1, hs2⟩ := exists_fixed_point Scard hσ2 key',
+  obtain ⟨g, hg⟩ := list.rotate_one_eq_self_iff_eq_repeat.mp
+    (subtype.ext_iff.mp (subtype.ext_iff.mp hs1)),
+  refine ⟨g, order_of_eq_prime _ (λ hg', hs2 (subtype.ext (subtype.ext (by rwa [hg', s.1.2] at hg))))⟩,
+  have key : s.1.1.prod = 1 := s.2,
+  rwa [hg, list.prod_repeat, s.1.2] at key,
+end
+
+end cauchy
 
 lemma subgroup_eq_top_of_swap_mem [decidable_eq α] {H : subgroup (perm α)}
   [d : decidable_pred (∈ H)] {τ : perm α} (h0 : (fintype.card α).prime)
