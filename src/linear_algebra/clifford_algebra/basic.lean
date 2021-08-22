@@ -198,8 +198,12 @@ def as_exterior : clifford_algebra (0 : quadratic_form R M) ≃ₐ[R] exterior_a
 alg_equiv.of_alg_hom
   (clifford_algebra.lift 0 ⟨(exterior_algebra.ι R), by simp⟩)
   (exterior_algebra.lift R ⟨(ι (0 : quadratic_form R M)), by simp⟩)
-  (by { ext, simp, })
-  (by { ext, simp, })
+  (by { ext, simp only [alg_hom.comp_to_linear_map, alg_hom.to_linear_map_apply,
+    alg_hom.to_linear_map_id, clifford_algebra.lift_ι_apply, eq_self_iff_true,
+    exterior_algebra.lift_ι_apply, function.comp_app, linear_map.coe_comp, linear_map.id_comp], })
+  (by { ext, simp only [alg_hom.comp_to_linear_map, alg_hom.to_linear_map_apply,
+    alg_hom.to_linear_map_id, clifford_algebra.lift_ι_apply, eq_self_iff_true,
+    exterior_algebra.lift_ι_apply, function.comp_app, linear_map.coe_comp, linear_map.id_comp], })
 
 section map
 
