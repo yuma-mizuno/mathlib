@@ -182,12 +182,6 @@ lemma two_dvd_card_support {σ : perm α} (hσ : σ ^ 2 = 1) : 2 ∣ σ.support.
   (multiset.dvd_sum (λ n hn, by rw le_antisymm (nat.le_of_dvd zero_lt_two (dvd_trans
   (dvd_of_mem_cycle_type hn) (order_of_dvd_of_pow_eq_one hσ))) (two_le_of_mem_cycle_type hn)))
 
-lemma cycle_type_pow_prime_eq_one {σ : perm α} {p : ℕ} (hp : p.prime) (hσ : σ ^ p = 1) :
-  σ.cycle_type = repeat (order_of σ) σ.cycle_type.card :=
-multiset.eq_repeat_of_mem (λ n hn, let h1 := dvd_of_mem_cycle_type hn,
-  h2 := order_of_dvd_of_pow_eq_one hσ in nat.dvd_antisymm h1 ((congr_arg _
-  ((nat.dvd_prime_two_le hp (two_le_of_mem_cycle_type hn)).mp (h1.trans h2))).mpr h2))
-
 lemma cycle_type_prime_order {σ : perm α} (hσ : (order_of σ).prime) :
   ∃ n : ℕ, σ.cycle_type = repeat (order_of σ) (n + 1) :=
 begin
