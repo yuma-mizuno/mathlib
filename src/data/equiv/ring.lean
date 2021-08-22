@@ -393,8 +393,8 @@ end equiv
 
 section prop_typeclasses
 
-/-! ### Propositional typeclasses on several ring equivalences, useful in the theory of semilinear
-maps
+/-!
+### Propositional typeclasses on several ring equivalences, useful in the theory of semilinear maps
 -/
 
 variables {R₁ : Type*} {R₂ : Type*} {R₃ : Type*}
