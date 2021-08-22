@@ -1138,9 +1138,6 @@ t.is_comp_triple.symm
   σ₂₃ (σ₁₂ x) = σ₁₃ x :=
 show (σ₂₃.comp σ₁₂) x = σ₁₃ x, by rw [comp_eq]
 
-instance ids : ring_hom_comp_triple (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
-instance right_ids : ring_hom_comp_triple σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by { ext, simp }⟩
-
 end ring_hom_comp_triple
 
 variables (σ : R₁ →+* R₂) (σ' : out_param (R₂ →+* R₁))
@@ -1175,6 +1172,13 @@ instance triples {σ₂₁ : R₂ →+* R₁} [ring_hom_inv_pair σ₁₂ σ₂�
 ⟨by simp only [trans_eq₂]⟩
 
 end ring_hom_inv_pair
+
+namespace ring_hom_comp_triple
+
+instance ids : ring_hom_comp_triple (ring_hom.id R₁) σ₁₂ σ₁₂ := ⟨by { ext, simp }⟩
+instance right_ids : ring_hom_comp_triple σ₁₂ (ring_hom.id R₂) σ₁₂ := ⟨by { ext, simp }⟩
+
+end ring_hom_comp_triple
 
 /-- Class expressing the fact that a `ring_hom` is surjective. This is needed in the context
 of semilinear maps, where some lemmas require this. -/
