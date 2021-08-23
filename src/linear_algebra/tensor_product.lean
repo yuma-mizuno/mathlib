@@ -609,19 +609,14 @@ eq.symm $ lift.unique $ λ x y, by simp
 theorem lift_mk_compr₂ (f : M ⊗ N →ₗ[R] P) : lift ((mk R M N).compr₂ f) = f :=
 by rw [lift_compr₂ f, lift_mk, linear_map.comp_id]
 
-omit R
 /--
 Using this as the `@[ext]` lemma instead of `tensor_product.ext` allows `ext` to apply lemmas
 specific to `M →ₗ _` and `N →ₗ _`.
 
 See note [partially-applied ext lemmas]. -/
 @[ext]
-theorem mk_compr₂_inj
-  {S : Type*} {M : Type*} {N : Type*} {P : Type*} {cS: comm_semiring S}
-  [add_comm_monoid M] [add_comm_monoid N] [add_comm_monoid P]
-  {mM : module S M} {mN : module S N} {mP : module S P}
-  {g h : M ⊗[S] N →ₗ[S] P}
-  (H : (mk S M N).compr₂ g = (mk S M N).compr₂ h) : g = h :=
+theorem mk_compr₂_inj {g h : M ⊗ N →ₗ[R] P}
+  (H : (mk R M N).compr₂ g = (mk R M N).compr₂ h) : g = h :=
 by rw [← lift_mk_compr₂ g, H, lift_mk_compr₂]
 
 example : M → N → (M → N → P) → P :=
