@@ -3,9 +3,9 @@ Copyright (c) 2018 . All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes
 -/
-import group_theory.group_action.basic
-import data.fintype.card
-import data.zmod.basic
+
+import group_theory.perm.cycle_type
+
 /-!
 # p-groups
 
@@ -13,6 +13,71 @@ This file contains a proof that if `G` is a `p`-group acting on a finite set `α
 then the number of fixed points of the action is congruent mod `p` to the cardinality of `α`.
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
+
+section pgroup
+
+variables (p : ℕ) (G : Type*) [group G]
+
+def is_p_group : Prop := ∀ g : G, ∃ k : ℕ, g ^ (p ^ k) = 1
+
+variables {p} {G}
+
+/-lemma is_p_group_iff_order_of [hp : fact (p.prime)] :
+  is_p_group p G ↔ ∀ g : G, ∃ k : ℕ, order_of g = p ^ k :=
+begin
+  refine forall_congr (λ g, ⟨_, _⟩),
+  all_goals { rintros ⟨k, hk⟩ },
+  { obtain ⟨j, hj1, hj2⟩ := (nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk),
+    exact ⟨j, hj2⟩ },
+  { exact ⟨k, by rw [←hk, pow_order_of_eq_one]⟩ },
+end-/
+
+lemma is_p_group_iff_card [hp : fact (p.prime)] [fintype G] :
+  is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
+begin
+  split,
+  { intro h,
+    have key : ∀ q : ℕ, q.prime → q ∣ fintype.card G → q = p,
+    { sorry },
+    sorry },
+  { rintros ⟨n, hn⟩ g,
+    exact ⟨n, by rw [←hn, pow_card_eq_one]⟩ },
+end
+
+lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
+  exact λ h, hG h,
+end
+
+lemma le_is_p_group {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
+  exact λ h, hK ⟨h, hHK h.2⟩,
+end
+
+variables (p) (G)
+
+def p_subgroups : set (subgroup G) :=
+{H | is_p_group p H}
+
+variables {p} {G}
+
+instance : semilattice_inf_bot (p_subgroups p G) :=
+{ bot := ⟨⊥, λ g, ⟨0, (pow_one g).trans (subtype.ext (subgroup.mem_bot.mp g.2))⟩⟩,
+  bot_le := λ P, @bot_le (subgroup G) _ P,
+  inf := λ H K, ⟨H ⊓ K, le_is_p_group H.2 (inf_le_left)⟩,
+  inf_le_left := λ H K, @inf_le_left (subgroup G) _ H K,
+  inf_le_right := λ H K, @inf_le_right (subgroup G) _ H K,
+  le_inf := λ H K L hHK hHL, @le_inf (subgroup G) _ H K L hHK hHL,
+  .. subtype.partial_order _ }
+
+variables (p) (G)
+
+def sylow_p_subgroup : set (p_subgroups p G) :=
+{H | ∀ K, H ≤ K → H = K}
+
+end pgroup
 
 namespace mul_action
 
@@ -82,44 +147,3 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 ⟨b, hb, λ hab, hba $ by simp [hab]⟩
 
 end mul_action
-
-section pgroup
-
-variables (p : ℕ) (G : Type*) [group G]
-
-def is_p_group : Prop := ∀ g : G, ∃ k : ℕ, g ^ (p ^ k) = 1
-
-variables {G}
-
-lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
-  exact λ h, hG h,
-end
-
-lemma le_is_p_group {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
-  exact λ h, hK ⟨h, hHK h.2⟩,
-end
-
-variables (G)
-
-def p_subgroups : set (subgroup G) :=
-{H | is_p_group p H}
-
-variables {G}
-
-instance : semilattice_inf_bot (p_subgroups p G) :=
-{ bot := ⟨⊥, λ g, ⟨0, (pow_one g).trans (subtype.ext (subgroup.mem_bot.mp g.2))⟩⟩,
-  bot_le := λ P, @bot_le (subgroup G) _ P,
-  inf := λ H K, ⟨H ⊓ K, le_is_p_group p H.2 (inf_le_left)⟩,
-  inf_le_left := λ H K, @inf_le_left (subgroup G) _ H K,
-  inf_le_right := λ H K, @inf_le_right (subgroup G) _ H K,
-  le_inf := λ H K L hHK hHL, @le_inf (subgroup G) _ H K L hHK hHL,
-  .. subtype.partial_order _ }
-
-def sylow_p_subgroup : set (p_subgroups p G) :=
-{H | ∀ K, H ≤ K → H = K}
-
-end pgroup

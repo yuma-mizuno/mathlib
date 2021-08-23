@@ -7,7 +7,6 @@ Authors: Thomas Browning
 import algebra.gcd_monoid.multiset
 import combinatorics.partition
 import group_theory.perm.cycles
-import group_theory.sylow
 import ring_theory.int.basic
 import tactic.linarith
 
@@ -398,7 +397,7 @@ lemma subgroup_eq_top_of_swap_mem [decidable_eq α] {H : subgroup (perm α)}
   H = ⊤ :=
 begin
   haveI : fact (fintype.card α).prime := ⟨h0⟩,
-  obtain ⟨σ, hσ⟩ := sylow.exists_prime_order_of_dvd_card (fintype.card α) h1,
+  obtain ⟨σ, hσ⟩ := exists_prime_order_of_dvd_card (fintype.card α) h1,
   have hσ1 : order_of (σ : perm α) = fintype.card α := (order_of_subgroup σ).trans hσ,
   have hσ2 : is_cycle ↑σ := is_cycle_of_prime_order'' h0 hσ1,
   have hσ3 : (σ : perm α).support = ⊤ :=
