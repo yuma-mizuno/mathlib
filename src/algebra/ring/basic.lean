@@ -1156,3 +1156,5 @@ theorem neg_left : commute a b → commute (- a) b := semiconj_by.neg_left
 @[simp] theorem sub_left : commute a c → commute b c → commute (a - b) c := semiconj_by.sub_left
 
 end commute
+
+
