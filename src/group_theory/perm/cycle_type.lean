@@ -338,21 +338,18 @@ lemma exists_fixed_point {p : ℕ} [hp : fact p.prime] (hα : p ∣ fintype.card
   {σ : perm α} (hσ : σ ^ p = 1) {a : α} (ha : σ a = a) : ∃ b : α, σ b = b ∧ b ≠ a :=
 begin
   classical,
-  have h1 : ∀ n : ℕ, n ∈ σ.cycle_type → n = p :=
-  λ n hn, (nat.dvd_prime_two_le hp.out (two_le_of_mem_cycle_type hn)).mp
-    ((dvd_of_mem_cycle_type hn).trans (order_of_dvd_of_pow_eq_one hσ)),
-  have h2 : σ.cycle_type = repeat p σ.cycle_type.card := multiset.eq_repeat_of_mem h1,
-  have h3 : p ∣ σ.support.card,
-  { rw [←sum_cycle_type, h2, multiset.sum_repeat],
+  have h1 : σ.cycle_type = repeat p σ.cycle_type.card :=
+  eq_repeat_of_mem (λ n hn, (nat.dvd_prime_two_le hp.out (two_le_of_mem_cycle_type hn)).mp
+    ((dvd_of_mem_cycle_type hn).trans (order_of_dvd_of_pow_eq_one hσ))),
+  have h2 : p ∣ σ.supportᶜ.card,
+  { refine (congr_arg _ σ.support.card_compl).mpr (nat.dvd_sub' hα _),
+    rw [←sum_cycle_type, h1, multiset.sum_repeat, smul_eq_mul],
     exact dvd_mul_left p σ.cycle_type.card },
-  have h4 : p ∣ σ.supportᶜ.card,
-  { rw [finset.card_compl],
-    exact nat.dvd_sub' hα h3 },
-  have h5 : a ∈ σ.supportᶜ := by rwa [finset.mem_compl, mem_support, not_not],
-  have h6 : 1 < σ.supportᶜ.card,
-  { sorry },
-  have key := finset.exists_ne_of_one_lt_card h6 a,
-  sorry,
+  have h3 : ∀ b : α, b ∈ σ.supportᶜ ↔ σ b = b :=
+  λ b, by rw [finset.mem_compl, mem_support, not_not],
+  obtain ⟨b, hb1, hb2⟩ := finset.finset.exists_ne_of_one_lt_card
+    (lt_of_lt_of_le hp.out.one_lt (nat.le_of_dvd (finset.card_pos.mpr ⟨a, (h3 a).mpr ha⟩) h2)) a,
+  exact ⟨b, (h3 b).mp hb1, hb2⟩,
 end
 
 lemma exists_prime_order_of_dvd_card {G : Type*} [group G] [fintype G] (p : ℕ) [hp : fact p.prime]
