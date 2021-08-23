@@ -614,10 +614,12 @@ Using this as the `@[ext]` lemma instead of `tensor_product.ext` allows `ext` to
 specific to `M →ₗ _` and `N →ₗ _`.
 
 See note [partially-applied ext lemmas]. -/
-@[ext]
+--@[ext]
 theorem mk_compr₂_inj {g h : M ⊗ N →ₗ[R] P}
   (H : (mk R M N).compr₂ g = (mk R M N).compr₂ h) : g = h :=
 by rw [← lift_mk_compr₂ g, H, lift_mk_compr₂]
+
+local attribute [ext] mk_compr₂_inj
 
 example : M → N → (M → N → P) → P :=
 λ m, flip $ λ f, f m
@@ -810,6 +812,8 @@ lemma lift_comp_map (i : P →ₗ[R] Q →ₗ[R] Q') (f : M →ₗ[R] P) (g : N 
   (lift i).comp (map f g) = lift ((i.comp f).compl₂ g) :=
 ext $ λ _ _, by simp only [lift.tmul, map_tmul, linear_map.compl₂_apply, linear_map.comp_apply]
 
+local attribute [ext] mk_compr₂_inj
+
 @[simp] lemma map_id : map (id : M →ₗ[R] M) (id : N →ₗ[R] N) = id :=
 by { ext, simp only [mk_apply, id_coe, compr₂_apply, id.def, map_tmul], }
 
@@ -912,6 +916,8 @@ variables (g : P →ₗ[R] Q) (f : N →ₗ[R] P)
 @[simp] lemma rtensor_tmul (m : M) (n : N) : f.rtensor M (n ⊗ₜ m) = (f n) ⊗ₜ m := rfl
 
 open tensor_product
+
+local attribute [ext] mk_compr₂_inj
 
 /-- `ltensor_hom M` is the natural linear map that sends a linear map `f : N →ₗ P` to `M ⊗ f`. -/
 def ltensor_hom : (N →ₗ[R] P) →ₗ[R] (M ⊗[R] N →ₗ[R] M ⊗[R] P) :=
