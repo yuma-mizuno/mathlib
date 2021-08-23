@@ -1197,8 +1197,8 @@ namespace ring_hom_surjective
 
 instance ids : ring_hom_surjective (ring_hom.id R₁) := ⟨is_surjective⟩
 
--- if this is an instance, it causes typeclass inference to loop
-lemma comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_hom_surjective σ₁₂] [ring_hom_surjective σ₂₃] :
+@[priority 80] instance comp [ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃] [ring_hom_surjective σ₁₂]
+  [ring_hom_surjective σ₂₃] :
   ring_hom_surjective σ₁₃ :=
 { is_surjective := begin
     have := σ₂₃.is_surjective.comp σ₁₂.is_surjective,
