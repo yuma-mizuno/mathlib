@@ -375,7 +375,7 @@ begin
 end
 
 -- for PR 4
-lemma lower_central_series_succ_iff (n : ℕ) :
+lemma lower_central_series_succ (n : ℕ) :
   lower_central_series G (n + 1) =
   closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
 := rfl
@@ -386,7 +386,7 @@ lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) :
 begin
   induction n with d hd,
   { simp },
-  { rw [lower_central_series_succ_iff, lower_central_series_succ_iff, monoid_hom.map_closure],
+  { rw [lower_central_series_succ, lower_central_series_succ, monoid_hom.map_closure],
     apply subgroup.closure_mono,
     rintros x1 ⟨x2, ⟨x3, hx3, x4, hx4, rfl⟩, rfl⟩,
     exact ⟨x3, (hd (mem_map.mpr ⟨x3, hx3, rfl⟩)), x4, by simp⟩,
@@ -427,25 +427,24 @@ begin
     exact set_like.le_def.mp (bot_le) },
 end
 
--- lemma lower_central_series.map {H : Type*} [group H] (f : G →* H) (n : ℕ) :
---   subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
--- map f (lcs G n) =  ⊥ so
--- lcs G n ≤ f.ker
--- so lcs G n ≤ center by hypothesis
-
-lemma lcs_le_center_to_nilpotent (n : ℕ) (h : lower_central_series G n ≤ center G)
+lemma lower_central_series_le_center_to_nilpotent (n : ℕ) (h : lower_central_series G n ≤ center G)
   : lower_central_series G (n + 1) = ⊥ :=
 begin
-  sorry,
+  rw [lower_central_series_succ, closure_eq_bot_iff, set.subset_singleton_iff],
+  rintro x ⟨y, hy1, z, ⟨⟩, rfl⟩,
+  symmetry,
+  rw [eq_mul_inv_iff_mul_eq, eq_mul_inv_iff_mul_eq, one_mul],
+  exact mem_center_iff.mp (h hy1) z,
 end
 
-#check (map_eq_bot_iff _).mp
-example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G)
+lemma ker_le_center_to_nilpotent (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G)
 (hH : is_nilpotent H) : is_nilpotent G :=
 begin
   rw nilpotent_iff_lower_central_series at *,
+  -- why can't I make hn rfl?
   rcases hH with ⟨n, hn⟩,
-  refine ⟨n + 1, lcs_le_center_to_nilpotent _ (le_trans ((map_eq_bot_iff _).mp _) hf1)⟩,
+  use n + 1,
+  refine lower_central_series_le_center_to_nilpotent _ (le_trans ((map_eq_bot_iff _).mp _) hf1),
   refine eq_bot_iff.mpr _,
   rw ← hn,
   exact (lower_central_series.map f n),
