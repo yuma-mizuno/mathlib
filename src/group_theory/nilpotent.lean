@@ -339,7 +339,7 @@ begin
     simpa using hd (mem_map_of_mem f (hx y)) }
 end
 
--- for PRing
+-- for PR 3
 lemma lower_central_series_antimono (n : ℕ) :
   lower_central_series G n.succ ≤ lower_central_series G n :=
 begin
@@ -354,7 +354,7 @@ begin
     (normal.conj_mem (lower_central_series.subgroup.normal n) z⁻¹ (inv_mem _ hz) a),
 end
 
--- for PRing
+-- for PR 3
 lemma lower_central_series.map {H : Type*} [group H] (f : G →* H) (n : ℕ) :
   subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
 begin
@@ -374,45 +374,13 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
-example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
-  is_nilpotent G :=
-begin
-  rw nilpotent_iff_lower_central_series at *,
-  rcases hG with ⟨n, hG⟩,
-  use n + 1,
-  ext x,
-  split,
-  {
-    -- help golfing
-    have h1 := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
-    have h2 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
-      intros x g hg,
-      rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
-      rw [map_eq_bot_iff, ker_mk, set_like.le_def] at h1,
-      exact (h1 hg x).symm,
-    },
-    refine (set_like.ext_iff.mp ((closure_eq_bot_iff _ _ ).mpr _) x).mp,
-    rintro x ⟨p, hp, q, -, rfl⟩,
-    exact set.mem_singleton_iff.mpr (h2 _ _ hp) },
-  { revert x,
-    refine set_like.le_def.mp (bot_le) },
-end
-
--- help need a maths proof for this
-example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
-  is_nilpotent G :=
-begin
-  unfreezingI {rcases hH with ⟨n, hn⟩},
-  use n,
-  sorry,
-end
-
-
+-- for PR 4
 lemma lower_central_series_succ_iff (n : ℕ) :
   lower_central_series G (n + 1) =
   closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
 := rfl
 
+-- for PR 4
 lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) :
   (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
 begin
@@ -425,6 +393,7 @@ begin
   }
 end
 
+-- for PR 4
 lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
@@ -433,8 +402,53 @@ begin
   rw [eq_bot_iff, set_like.le_def],
   have := lcs_subgroup_le_lcs_group H n,
   simp only [hG, set_like.le_def, mem_map, forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
-  intros x hx,
-  exact subtype.ext (this x hx),
+  exact λ x hx, subtype.ext (this x hx),
+end
+
+lemma nilpotent_quotient_center_to_nilpotent
+  (hG : is_nilpotent (quotient_group.quotient (center G))) : is_nilpotent G :=
+begin
+  rw nilpotent_iff_lower_central_series at *,
+  rcases hG with ⟨n, hG⟩,
+  use n + 1,
+  ext x,
+  split,
+  { have h1 := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
+    have h2 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
+      intros x g hg,
+      rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
+      rw [map_eq_bot_iff, ker_mk, set_like.le_def] at h1,
+      exact (h1 hg x).symm,
+    },
+    refine (set_like.ext_iff.mp ((closure_eq_bot_iff _ _ ).mpr _) x).mp,
+    rintro x ⟨p, hp, q, -, rfl⟩,
+    exact set.mem_singleton_iff.mpr (h2 _ _ hp) },
+  { revert x,
+    exact set_like.le_def.mp (bot_le) },
+end
+
+-- lemma lower_central_series.map {H : Type*} [group H] (f : G →* H) (n : ℕ) :
+--   subgroup.map f (lower_central_series G n) ≤ lower_central_series H n :=
+-- map f (lcs G n) =  ⊥ so
+-- lcs G n ≤ f.ker
+-- so lcs G n ≤ center by hypothesis
+
+lemma lcs_le_center_to_nilpotent (n : ℕ) (h : lower_central_series G n ≤ center G)
+  : lower_central_series G (n + 1) = ⊥ :=
+begin
+  sorry,
+end
+
+#check (map_eq_bot_iff _).mp
+example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G)
+(hH : is_nilpotent H) : is_nilpotent G :=
+begin
+  rw nilpotent_iff_lower_central_series at *,
+  rcases hH with ⟨n, hn⟩,
+  refine ⟨n + 1, lcs_le_center_to_nilpotent _ (le_trans ((map_eq_bot_iff _).mp _) hf1)⟩,
+  refine eq_bot_iff.mpr _,
+  rw ← hn,
+  exact (lower_central_series.map f n),
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
