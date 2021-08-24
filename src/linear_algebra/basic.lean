@@ -62,6 +62,7 @@ open_locale big_operators pointwise
 variables {R : Type*} {R₁ : Type*} {R₂ : Type*} {R₃ : Type*} {R₄ : Type*}
 variables {K : Type*} {K₂ : Type*}
 variables {M : Type*} {M' : Type*} {M₁ : Type*} {M₂ : Type*} {M₃ : Type*} {M₄ : Type*}
+variables {N : Type*} {N₂ : Type*}
 variables {ι : Type*}
 variables {V : Type*} {V₂ : Type*}
 
@@ -238,8 +239,8 @@ instance : add_comm_monoid (M →ₛₗ[σ₁₂] M₂) :=
     simp [nat.succ_eq_one_add, add_nsmul],
   end }
 
-/-- Evaluation of an `R`-linear map at a fixed `a`, as an `add_monoid_hom`. -/
-def eval_add_monoid_hom (a : M) : (M →ₗ[R] M₂) →+ M₂ :=
+/-- Evaluation of a `σ₁₂`-linear map at a fixed `a`, as an `add_monoid_hom`. -/
+def eval_add_monoid_hom (a : M) : (M →ₛₗ[σ₁₂] M₂) →+ M₂ :=
 { to_fun := λ f, f a,
   map_add' := λ f g, linear_map.add_apply f g a,
   map_zero' := rfl }
@@ -251,12 +252,12 @@ lemma comp_add (g : M →ₛₗ[σ₁₂] M₂) (h : M₂ →ₛₗ[σ₂₃] M�
   (h.comp (f + g) : M →ₛₗ[σ₁₃] M₃)  = h.comp f + h.comp g := by { ext, simp }
 
 /-- `linear_map.to_add_monoid_hom` promoted to an `add_monoid_hom` -/
-def to_add_monoid_hom' : (M →ₗ[R] M₂) →+ (M →+ M₂) :=
+def to_add_monoid_hom' : (M →ₛₗ[σ₁₂] M₂) →+ (M →+ M₂) :=
 { to_fun := to_add_monoid_hom,
   map_zero' := by ext; refl,
   map_add' := by intros; ext; refl }
 
-lemma sum_apply (t : finset ι) (f : ι → M →ₗ[R] M₂) (b : M) :
+lemma sum_apply (t : finset ι) (f : ι → M →ₛₗ[σ₁₂] M₂) (b : M) :
   (∑ d in t, f d) b = ∑ d in t, f d b :=
 add_monoid_hom.map_sum ((add_monoid_hom.eval b).comp to_add_monoid_hom') f _
 
@@ -828,11 +829,11 @@ noncomputable def equiv_map_of_injective (f : M →ₛₗ[σ₁₂] M₂) (i : i
 { map_add' := by { intros, simp, refl, },
   map_smul' := by { intros, simp, refl, },
   ..(equiv.set.image f p i) }
-omit σ₂₁
 
-@[simp] lemma coe_equiv_map_of_injective_apply (f : M →ₗ[R] M₂) (i : injective f)
+@[simp] lemma coe_equiv_map_of_injective_apply (f : M →ₛₗ[σ₁₂] M₂) (i : injective f)
   (p : submodule R M) (x : p) :
   (equiv_map_of_injective f i p x : M₂) = f x := rfl
+omit σ₂₁
 
 /-- The pullback of a submodule `p ⊆ M₂` along `f : M → M₂` -/
 def comap (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R₂ M₂) : submodule R M :=
@@ -1612,7 +1613,7 @@ section sum_add_hom
 
 variables [Π i, add_zero_class (γ i)]
 
-@[simp] lemma map_dfinsupp_sum_add_hom (f : M →ₗ[R] M₂) {t : Π₀ i, γ i} {g : Π i, γ i →+ M} :
+@[simp] lemma map_dfinsupp_sum_add_hom (f : M →ₛₗ[σ₁₂] M₂) {t : Π₀ i, γ i} {g : Π i, γ i →+ M} :
   f (sum_add_hom g t) = sum_add_hom (λ i, f.to_add_monoid_hom.comp (g i)) t :=
 f.to_add_monoid_hom.map_dfinsupp_sum_add_hom _ _
 
@@ -1693,10 +1694,12 @@ This is the bundled version of `set.range_factorization`. -/
 @[reducible] def range_restrict [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) :
   M →ₛₗ[τ₁₂] f.range := f.cod_restrict f.range f.mem_range_self
 
+--set_option trace.class_instances true
 /-- The range of a linear map is finite if the domain is finite.
 Note: this instance can form a diamond with `subtype.fintype` in the
   presence of `fintype M₂`. -/
-instance fintype_range [fintype M] [decidable_eq M₂] (f : M →ₗ[R] M₂) : fintype (range f) :=
+instance fintype_range [fintype M] [decidable_eq M₂] [ring_hom_surjective τ₁₂]
+  (f : M →ₛₗ[τ₁₂] M₂) : fintype (range f) :=
 set.fintype_range f
 
 section
@@ -2052,12 +2055,12 @@ def mkq : M →ₗ[R] p.quotient :=
 
 See note [partially-applied ext lemmas]. -/
 @[ext]
-lemma linear_map_qext ⦃f g : p.quotient →ₗ[R] M₂⦄ (h : f.comp p.mkq = g.comp p.mkq) : f = g :=
+lemma linear_map_qext ⦃f g : p.quotient →ₛₗ[τ₁₂] M₂⦄ (h : f.comp p.mkq = g.comp p.mkq) : f = g :=
 linear_map.ext $ λ x, quotient.induction_on' x $ (linear_map.congr_fun h : _)
 
 /-- The map from the quotient of `M` by a submodule `p` to `M₂` induced by a linear map `f : M → M₂`
 vanishing on `p`, as a linear map. -/
-def liftq (f : M →ₗ[R] M₂) (h : p ≤ f.ker) : p.quotient →ₗ[R] M₂ :=
+def liftq (f : M →ₛₗ[τ₁₂] M₂) (h : p ≤ f.ker) : p.quotient →ₛₗ[τ₁₂] M₂ :=
 { to_fun := λ x, _root_.quotient.lift_on' x f $
     λ a b (ab : a - b ∈ p), eq_of_sub_eq_zero $ by simpa using h ab,
   map_add' := by rintro ⟨x⟩ ⟨y⟩; exact f.map_add x y,
@@ -2298,24 +2301,37 @@ omit σ₂₁
 end
 
 section finsupp
-variables {γ : Type*} [module R M] [module R M₂] [has_zero γ]
+variables {γ : Type*}
+variables [semiring R] [semiring R₂]
+variables [add_comm_monoid M] [add_comm_monoid M₂]
+variables [module R M] [module R₂ M₂] [has_zero γ]
+variables {τ₁₂ : R →+*R₂} {τ₂₁ : R₂ →+* R}
+variables [ring_hom_inv_pair τ₁₂ τ₂₁] [ring_hom_inv_pair τ₂₁ τ₁₂]
 
-@[simp] lemma map_finsupp_sum (f : M ≃ₗ[R] M₂) {t : ι →₀ γ} {g : ι → γ → M} :
+include τ₂₁
+@[simp] lemma map_finsupp_sum (f : M ≃ₛₗ[τ₁₂] M₂) {t : ι →₀ γ} {g : ι → γ → M} :
   f (t.sum g) = t.sum (λ i d, f (g i d)) := f.map_sum _
+omit τ₂₁
 
 end finsupp
 
 section dfinsupp
 open dfinsupp
 
-variables {γ : ι → Type*} [decidable_eq ι] [module R M] [module R M₂]
+variables [semiring R] [semiring R₂]
+variables [add_comm_monoid M] [add_comm_monoid M₂]
+variables [module R M] [module R₂ M₂]
+variables {τ₁₂ : R →+*R₂} {τ₂₁ : R₂ →+* R}
+variables [ring_hom_inv_pair τ₁₂ τ₂₁] [ring_hom_inv_pair τ₂₁ τ₁₂]
+variables {γ : ι → Type*} [decidable_eq ι]
 
+include τ₂₁
 @[simp] lemma map_dfinsupp_sum [Π i, has_zero (γ i)] [Π i (x : γ i), decidable (x ≠ 0)]
-  (f : M ≃ₗ[R] M₂) (t : Π₀ i, γ i) (g : Π i, γ i → M) :
+  (f : M ≃ₛₗ[τ₁₂] M₂) (t : Π₀ i, γ i) (g : Π i, γ i → M) :
   f (t.sum g) = t.sum (λ i d, f (g i d)) := f.map_sum _
 
-@[simp] lemma map_dfinsupp_sum_add_hom [Π i, add_zero_class (γ i)] (f : M ≃ₗ[R] M₂) (t : Π₀ i, γ i)
-  (g : Π i, γ i →+ M) :
+@[simp] lemma map_dfinsupp_sum_add_hom [Π i, add_zero_class (γ i)] (f : M ≃ₛₗ[τ₁₂] M₂)
+  (t : Π₀ i, γ i) (g : Π i, γ i →+ M) :
   f (sum_add_hom g t) = sum_add_hom (λ i, f.to_add_equiv.to_add_monoid_hom.comp (g i)) t :=
 f.to_add_equiv.map_dfinsupp_sum_add_hom _ _
 
@@ -2786,36 +2802,43 @@ end submodule
 
 namespace submodule
 
-variables [comm_ring R] [add_comm_group M] [add_comm_group M₂] [module R M] [module R M₂]
-variables (p : submodule R M) (q : submodule R M₂)
+variables [comm_ring R] [comm_ring R₂]
+variables [add_comm_group M] [add_comm_group M₂] [module R M] [module R₂ M₂]
+variables [add_comm_group N] [add_comm_group N₂] [module R N] [module R N₂]
+variables {τ₁₂ : R →+*R₂} {τ₂₁ : R₂ →+*R}
+variables [ring_hom_inv_pair τ₁₂ τ₂₁] [ring_hom_inv_pair τ₂₁ τ₁₂]
+variables (p : submodule R M) (q : submodule R₂ M₂)
+variables (pₗ : submodule R N) (qₗ : submodule R N₂)
 
-@[simp] lemma mem_map_equiv {e : M ≃ₗ[R] M₂} {x : M₂} : x ∈ p.map (e : M →ₗ[R] M₂) ↔
+include τ₂₁
+@[simp] lemma mem_map_equiv {e : M ≃ₛₗ[τ₁₂] M₂} {x : M₂} : x ∈ p.map (e : M →ₛₗ[τ₁₂] M₂) ↔
   e.symm x ∈ p :=
 begin
   rw submodule.mem_map, split,
   { rintros ⟨y, hy, hx⟩, simp [←hx, hy], },
   { intros hx, refine ⟨e.symm x, hx, by simp⟩, },
 end
+omit τ₂₁
 
-lemma map_equiv_eq_comap_symm (e : M ≃ₗ[R] M₂) (K : submodule R M) :
-  K.map (e : M →ₗ[R] M₂) = K.comap e.symm :=
+lemma map_equiv_eq_comap_symm (e : M ≃ₛₗ[τ₁₂] M₂) (K : submodule R M) :
+  K.map (e : M →ₛₗ[τ₁₂] M₂) = K.comap (e.symm : M₂ →ₛₗ[τ₂₁] M) :=
 submodule.ext (λ _, by rw [mem_map_equiv, mem_comap, linear_equiv.coe_coe])
 
-lemma comap_equiv_eq_map_symm (e : M ≃ₗ[R] M₂) (K : submodule R M₂) :
-  K.comap (e : M →ₗ[R] M₂) = K.map e.symm :=
+lemma comap_equiv_eq_map_symm (e : M ≃ₛₗ[τ₁₂] M₂) (K : submodule R₂ M₂) :
+  K.comap (e : M →ₛₗ[τ₁₂] M₂) = K.map (e.symm : M₂ →ₛₗ[τ₂₁] M) :=
 (map_equiv_eq_comap_symm e.symm K).symm
 
-lemma comap_le_comap_smul (f : M →ₗ[R] M₂) (c : R) :
-  comap f q ≤ comap (c • f) q :=
+lemma comap_le_comap_smul (fₗ : N →ₗ[R] N₂) (c : R) :
+  comap fₗ qₗ ≤ comap (c • fₗ) qₗ :=
 begin
   rw set_like.le_def,
   intros m h,
-  change c • (f m) ∈ q,
-  change f m ∈ q at h,
-  apply q.smul_mem _ h,
+  change c • (fₗ m) ∈ qₗ,
+  change fₗ m ∈ qₗ at h,
+  apply qₗ.smul_mem _ h,
 end
 
-lemma inf_comap_le_comap_add (f₁ f₂ : M →ₗ[R] M₂) :
+lemma inf_comap_le_comap_add (f₁ f₂ : M →ₛₗ[τ₁₂] M₂) :
   comap f₁ q ⊓ comap f₂ q ≤ comap (f₁ + f₂) q :=
 begin
   rw set_like.le_def,
@@ -2827,16 +2850,16 @@ end
 
 /-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`,
 the set of maps $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \}$ is a submodule of `Hom(M, M₂)`. -/
-def compatible_maps : submodule R (M →ₗ[R] M₂) :=
-{ carrier   := {f | p ≤ comap f q},
-  zero_mem' := by { change p ≤ comap 0 q, rw comap_zero, refine le_top, },
-  add_mem'  := λ f₁ f₂ h₁ h₂, by { apply le_trans _ (inf_comap_le_comap_add q f₁ f₂), rw le_inf_iff,
+def compatible_maps : submodule R (N →ₗ[R] N₂) :=
+{ carrier   := {fₗ | pₗ ≤ comap fₗ qₗ},
+  zero_mem' := by { change pₗ ≤ comap 0 qₗ, rw comap_zero, refine le_top, },
+  add_mem'  := λ f₁ f₂ h₁ h₂, by { apply le_trans _ (inf_comap_le_comap_add qₗ f₁ f₂), rw le_inf_iff,
                                  exact ⟨h₁, h₂⟩, },
-  smul_mem' := λ c f h, le_trans h (comap_le_comap_smul q f c), }
+  smul_mem' := λ c fₗ h, le_trans h (comap_le_comap_smul qₗ fₗ c), }
 
 /-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`,
 the natural map $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \} \to Hom(M/p, M₂/q)$ is linear. -/
-def mapq_linear : compatible_maps p q →ₗ[R] p.quotient →ₗ[R] q.quotient :=
+def mapq_linear : compatible_maps pₗ qₗ →ₗ[R] pₗ.quotient →ₗ[R] qₗ.quotient :=
 { to_fun    := λ f, mapq _ _ f.val f.property,
   map_add'  := λ x y, by { ext, refl, },
   map_smul' := λ c f, by { ext, refl, } }
