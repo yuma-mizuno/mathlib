@@ -2853,8 +2853,8 @@ the set of maps $\{f ∈ Hom(M, M₂) | f(p) ⊆ q \}$ is a submodule of `Hom(M,
 def compatible_maps : submodule R (N →ₗ[R] N₂) :=
 { carrier   := {fₗ | pₗ ≤ comap fₗ qₗ},
   zero_mem' := by { change pₗ ≤ comap 0 qₗ, rw comap_zero, refine le_top, },
-  add_mem'  := λ f₁ f₂ h₁ h₂, by { apply le_trans _ (inf_comap_le_comap_add qₗ f₁ f₂), rw le_inf_iff,
-                                 exact ⟨h₁, h₂⟩, },
+  add_mem'  := λ f₁ f₂ h₁ h₂, by { apply le_trans _ (inf_comap_le_comap_add qₗ f₁ f₂),
+                                 rw le_inf_iff, exact ⟨h₁, h₂⟩, },
   smul_mem' := λ c fₗ h, le_trans h (comap_le_comap_smul qₗ fₗ c), }
 
 /-- Given modules `M`, `M₂` over a commutative ring, together with submodules `p ⊆ M`, `q ⊆ M₂`,
