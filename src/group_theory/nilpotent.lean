@@ -394,7 +394,8 @@ begin
 end
 
 -- for PR 4
-lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
+lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) :
+  is_nilpotent G → is_nilpotent H :=
 begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
   rintro ⟨n, hG⟩,
@@ -405,6 +406,7 @@ begin
   exact λ x hx, subtype.ext (this x hx),
 end
 
+-- for PR 6
 lemma nilpotent_quotient_center_to_nilpotent
   (hG : is_nilpotent (quotient_group.quotient (center G))) : is_nilpotent G :=
 begin
@@ -427,6 +429,7 @@ begin
     exact set_like.le_def.mp (bot_le) },
 end
 
+-- for PR 5
 lemma lower_central_series_le_center_to_nilpotent (n : ℕ) (h : lower_central_series G n ≤ center G)
   : lower_central_series G (n + 1) = ⊥ :=
 begin
@@ -437,21 +440,21 @@ begin
   exact mem_center_iff.mp (h hy1) z,
 end
 
+-- for PR 5
 lemma ker_le_center_to_nilpotent (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G)
 (hH : is_nilpotent H) : is_nilpotent G :=
 begin
   rw nilpotent_iff_lower_central_series at *,
-  -- why can't I make hn rfl?
   rcases hH with ⟨n, hn⟩,
   use n + 1,
   refine lower_central_series_le_center_to_nilpotent _ (le_trans ((map_eq_bot_iff _).mp _) hf1),
-  refine eq_bot_iff.mpr _,
-  rw ← hn,
-  exact (lower_central_series.map f n),
+  exact eq_bot_iff.mpr (hn ▸ (lower_central_series.map f n)),
 end
 
 example (G H : Type*) [group G] [group H] : is_nilpotent G → is_nilpotent H → is_nilpotent (G × H) :=
 begin
+  rintro ⟨nG, hnG⟩ ⟨nH, hnH⟩,
+  use max nG nH,
   sorry,
 end
 
