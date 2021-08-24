@@ -374,6 +374,7 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
+#check (closure_eq_bot_iff _ _).mpr
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -383,35 +384,22 @@ begin
   ext x,
   split,
   {
-    have h0: map (mk' (center G)) (lower_central_series G n) ≤
-        lower_central_series (quotient (center G)) n, {
-      exact lower_central_series.map (quotient_group.mk' _) n,
-    },
-    have h1 : map (mk' (center G)) (lower_central_series G n) = ⊥, {
-      refine eq_bot_mono h0 hG,
-    },
-    have h2 : ∀ g ∈ lower_central_series G n, g ∈ center G, {
-      intros x hx,
-      rw set_like.le_def at h0,
-      -- follows from h0 : functorial of lcs
-      sorry,
-    },
-    have h3 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
+    have h1 := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
+    have h2 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
       intros x g hg,
       rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
-      exact (h2 g hg x).symm,
+      rw [map_eq_bot_iff, ker_mk, set_like.le_def] at h1,
+      exact (h1 hg x).symm,
     },
     intro hx,
-    rw mem_lower_central_series_succ_iff at hx,
     convert hx,
-    symmetry,
-    rw closure_eq_bot_iff,
+    refine ((closure_eq_bot_iff _ _ ).mpr _).symm,
     rintro x ⟨p, hp, q, -, rfl⟩,
-    exact set.mem_singleton_iff.mpr (h3 _ _ hp),
-  },
+    exact set.mem_singleton_iff.mpr (h2 _ _ hp) },
   { intro h,
-    rw mem_bot at h,
-    simp only [h, one_mem] },
+    have := mem_bot.mp h,
+    -- simp only [mem_bot.mp h, one_mem] doesn't work??
+    simp only [this, one_mem] },
 end
 
 -- need a maths proof for this
@@ -441,7 +429,6 @@ begin
   }
 end
 
--- might be possible to golf second set of intros out
 lemma subgroups_are_nilpotent (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
 begin
   rw [nilpotent_iff_lower_central_series, nilpotent_iff_lower_central_series],
