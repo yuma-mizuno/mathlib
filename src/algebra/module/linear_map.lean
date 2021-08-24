@@ -176,10 +176,6 @@ lemma map_smul_of_tower {R S : Type*} [semiring S] [has_scalar R M]
   fₗ (c • x) = c • fₗ x :=
 compatible_smul.map_smul fₗ c x
 
-instance : is_add_monoid_hom f :=
-{ map_add := map_add f,
-  map_zero := map_zero f }
-
 /-- convert a linear map to an additive map -/
 def to_add_monoid_hom : M →+ M₃ :=
 { to_fun := f,
@@ -294,9 +290,6 @@ f.to_add_monoid_hom.map_neg x
 @[simp] lemma map_sub (x y : M) : f (x - y) = f x - f y :=
 f.to_add_monoid_hom.map_sub x y
 
-instance : is_add_group_hom f :=
-{ map_add := map_add f }
-
 instance compatible_smul.int_module
   {S : Type*} [semiring S] [module S M] [module S M₂] : compatible_smul M M₂ ℤ S :=
 ⟨λ fₗ c x, begin
@@ -315,6 +308,19 @@ instance compatible_smul.units {R S : Type*}
 end add_comm_group
 
 end linear_map
+
+namespace module
+
+/-- `g : R →+* S` is `R`-linear when the module structure on `S` is `module.comp_hom S g` . -/
+@[simps]
+def comp_hom.to_linear_map {R S : Type*} [semiring R] [semiring S] (g : R →+* S) :
+  (by haveI := comp_hom S g; exact (R →ₗ[R] S)) :=
+by exact {
+  to_fun := (g : R → S),
+  map_add' := g.map_add,
+  map_smul' := g.map_mul }
+
+end module
 
 namespace distrib_mul_action_hom
 
@@ -688,6 +694,11 @@ include σ'
     ..(⟨e, h₁, h₂, f, h₃, h₄⟩ : M ≃ₛₗ[σ] M₂).symm } := rfl
 omit σ'
 
+@[simp] lemma coe_symm_mk [module R M] [module R M₂]
+  {to_fun inv_fun map_add map_smul left_inv right_inv} :
+  ⇑((⟨to_fun, map_add, map_smul, inv_fun, left_inv, right_inv⟩ : M ≃ₗ[R] M₂).symm) = inv_fun :=
+rfl
+
 protected lemma bijective : function.bijective e := e.to_equiv.bijective
 protected lemma injective : function.injective e := e.to_equiv.injective
 protected lemma surjective : function.surjective e := e.to_equiv.surjective
@@ -706,7 +717,7 @@ variables [add_comm_monoid M] [add_comm_monoid M₁] [add_comm_monoid M₂]
 def of_involutive {σ σ' : R →+* R} [ring_hom_inv_pair σ σ'] [ring_hom_inv_pair σ' σ]
   {module_M : module R M} (f : M →ₛₗ[σ] M) (hf : involutive f) :
   M ≃ₛₗ[σ] M :=
-{ .. f, .. hf.to_equiv f  }
+{ .. f, .. hf.to_equiv f }
 
 @[simp] lemma coe_of_involutive {σ σ' : R →+* R} [ring_hom_inv_pair σ σ']
   [ring_hom_inv_pair σ' σ] {module_M : module R M} (f : M →ₛₗ[σ] M) (hf : involutive f) :
@@ -745,3 +756,17 @@ end restrict_scalars
 end add_comm_monoid
 
 end linear_equiv
+
+namespace module
+
+/-- `g : R ≃+* S` is `R`-linear when the module structure on `S` is `module.comp_hom S g` . -/
+@[simps]
+def comp_hom.to_linear_equiv {R S : Type*} [semiring R] [semiring S] (g : R ≃+* S) :
+  (by haveI := comp_hom S (↑g : R →+* S); exact (R ≃ₗ[R] S)) :=
+by exact {
+  to_fun := (g : R → S),
+  inv_fun := (g.symm : S → R),
+  map_smul' := g.map_mul,
+  ..g }
+
+end module
