@@ -374,7 +374,6 @@ begin
       simp [f.map_inv, subgroup.inv_mem _ hy] } }
 end
 
-#check (closure_eq_bot_iff _ _).mpr
 example (G : Type*) [group G] (hG : is_nilpotent (quotient_group.quotient (center G))) :
   is_nilpotent G :=
 begin
@@ -384,6 +383,7 @@ begin
   ext x,
   split,
   {
+    -- help golfing
     have h1 := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
     have h2 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
       intros x g hg,
@@ -391,18 +391,14 @@ begin
       rw [map_eq_bot_iff, ker_mk, set_like.le_def] at h1,
       exact (h1 hg x).symm,
     },
-    intro hx,
-    convert hx,
-    refine ((closure_eq_bot_iff _ _ ).mpr _).symm,
+    refine (set_like.ext_iff.mp ((closure_eq_bot_iff _ _ ).mpr _) x).mp,
     rintro x ⟨p, hp, q, -, rfl⟩,
     exact set.mem_singleton_iff.mpr (h2 _ _ hp) },
-  { intro h,
-    have := mem_bot.mp h,
-    -- simp only [mem_bot.mp h, one_mem] doesn't work??
-    simp only [this, one_mem] },
+  { revert x,
+    refine set_like.le_def.mp (bot_le) },
 end
 
--- need a maths proof for this
+-- help need a maths proof for this
 example (G H : Type*) [group G] [group H] (f : G →* H) (hf1 : f.ker ≤ center G) (hH : is_nilpotent H) :
   is_nilpotent G :=
 begin
