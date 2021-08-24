@@ -423,20 +423,21 @@ begin
   sorry,
 end
 
--- need help with types
-#check subgroup.closure_le
-#check add_subgroup.closure_mono
-#check set_like.le_def
+
+lemma lower_central_series_succ_iff (n : ℕ) :
+  lower_central_series G (n + 1) =
+  closure {x | ∃ (p ∈ lower_central_series G n) (q ∈ (⊤ : subgroup G)), p * q * p⁻¹ * q⁻¹ = x}
+:= rfl
+
 lemma lcs_subgroup_le_lcs_group (H : subgroup G) (n : ℕ) :
   (lower_central_series H n).map H.subtype ≤ lower_central_series G n :=
 begin
   induction n with d hd,
   { simp },
-  {
-    -- help
-    -- need this for the proof but w all the coes can't unify the types
-    -- refine subgroup.closure_mono,
-    sorry,
+  { rw [lower_central_series_succ_iff, lower_central_series_succ_iff, monoid_hom.map_closure],
+    apply subgroup.closure_mono,
+    rintros x1 ⟨x2, ⟨x3, hx3, x4, hx4, rfl⟩, rfl⟩,
+    exact ⟨x3, (hd (mem_map.mpr ⟨x3, hx3, rfl⟩)), x4, by simp⟩,
   }
 end
 
@@ -447,9 +448,9 @@ begin
   rintro ⟨n, hG⟩,
   use n,
   rw [eq_bot_iff, set_like.le_def],
-  intros x hx,
   have := lcs_subgroup_le_lcs_group H n,
   simp only [hG, set_like.le_def, mem_map, forall_apply_eq_imp_iff₂, exists_imp_distrib] at this,
+  intros x hx,
   exact subtype.ext (this x hx),
 end
 
@@ -462,7 +463,7 @@ universe u
 example (ι : Type*) [fintype ι] (f : ι → Type u) [∀ i, group (f i)] (h : ∀ i, is_nilpotent (f i)) :
   is_nilpotent (Π i, f i) := sorry
 
--- i think this doesn't require N.normal
+-- why does this require N.normal
 example (G : Type*) [group G] (N : subgroup G) [N.normal] (hG : is_nilpotent G) :
   is_nilpotent (quotient_group.quotient N) :=
 begin
@@ -480,10 +481,8 @@ sorry
 -- is this really the way forward here...?
 -- this type stuff is actually atrocious
 
-#check set_like.mem_coe
-#check @set_like.coe_set_eq
-#check subgroup.mul_mem
-lemma ucs_subgroup_le_ucs_group (n : ℕ) : (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
+lemma ucs_subgroup_ge_ucs_group (H : subgroup G) (n : ℕ) :
+  (upper_central_series H n).map H.subtype ≥ upper_central_series G n :=
 begin
   induction n with d hd,
   { simp },
@@ -513,12 +512,20 @@ begin
         rw ← subtype.coe_mk g hh at hz2,
         rw ← subgroup.coe_inv at hz2,
         rw [← subgroup.coe_mul, ← subgroup.coe_mul, ← subgroup.coe_mul] at hz2,
-        -- exact set_like.coe_set_eq.mp hz2,
-        -- failed to synthesize type class instance for set_like ↥H ?m_1
-
-      -- help
-      sorry } }
+        ext,
+        exact hz2 } }
   },
+end
+
+lemma subgroups_are_nilpotent' (G : Type*) [group G] (H : subgroup G) : is_nilpotent G → is_nilpotent H :=
+begin
+  rintros ⟨n, hn⟩,
+  use n,
+  have := ucs_subgroup_ge_ucs_group H n,
+  rw ge_iff_le at this,
+  rw eq_top_iff,
+
+  sorry,
 end
 
 -- abelian → nilpotent
