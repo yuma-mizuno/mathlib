@@ -155,7 +155,7 @@ invariant_basis_number.eq_of_fin_equiv
 
 lemma card_eq_of_lequiv {α β : Type*} [fintype α] [fintype β]
   (f : (α → R) ≃ₗ[R] (β → R)) : fintype.card α = fintype.card β :=
-eq_of_fin_equiv R (((linear_equiv.fun_congr_left R R (fintype.equiv_fin α)).trans f).trans
+eq_of_fin_equiv R (((linear_equiv.fun_congr_left R R (fintype.equiv_fin α)).trans f) ≫ₗ
   ((linear_equiv.fun_congr_left R R (fintype.equiv_fin β)).symm))
 
 lemma nontrivial_of_invariant_basis_number : nontrivial R :=
