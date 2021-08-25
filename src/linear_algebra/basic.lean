@@ -1634,27 +1634,30 @@ theorem comap_cod_restrict (p : submodule R M) (f : M₂ →ₛₗ[σ₂₁] M) 
 submodule.ext $ λ x, ⟨λ h, ⟨⟨_, hf x⟩, h, rfl⟩, by rintro ⟨⟨_, _⟩, h, ⟨⟩⟩; exact h⟩
 
 section
-variables [ring_hom_surjective τ₁₂]
 
 /-- The range of a linear map `f : M → M₂` is a submodule of `M₂`.
 See Note [range copy pattern]. -/
-def range (f : M →ₛₗ[τ₁₂] M₂) : submodule R₂ M₂ :=
+def range [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) : submodule R₂ M₂ :=
 (map f ⊤).copy (set.range f) set.image_univ.symm
 
-theorem range_coe (f : M →ₛₗ[τ₁₂] M₂) : (range f : set M₂) = set.range f := rfl
+theorem range_coe [ring_hom_surjective τ₁₂] (f : M →ₛₗ[τ₁₂] M₂) :
+  (range f : set M₂) = set.range f := rfl
 
-@[simp] theorem mem_range {f : M →ₛₗ[τ₁₂] M₂} {x} : x ∈ range f ↔ ∃ y, f y = x :=
+@[simp] theorem mem_range [ring_hom_surjective τ₁₂]
+  {f : M →ₛₗ[τ₁₂] M₂} {x} : x ∈ range f ↔ ∃ y, f y = x :=
 iff.rfl
 
-lemma range_eq_map (f : M →ₛₗ[τ₁₂] M₂) : f.range = map f ⊤ :=
+lemma range_eq_map [ring_hom_surjective τ₁₂]
+  (f : M →ₛₗ[τ₁₂] M₂) : f.range = map f ⊤ :=
 by { ext, simp }
 
-theorem mem_range_self (f : M →ₛₗ[τ₁₂] M₂) (x : M) : f x ∈ f.range := ⟨x, rfl⟩
+theorem mem_range_self [ring_hom_surjective τ₁₂]
+  (f : M →ₛₗ[τ₁₂] M₂) (x : M) : f x ∈ f.range := ⟨x, rfl⟩
 
 @[simp] theorem range_id : range (linear_map.id : M →ₗ[R] M) = ⊤ :=
 set_like.coe_injective set.range_id
 
-theorem range_comp [ring_hom_surjective τ₂₃] [ring_hom_surjective τ₁₃]
+theorem range_comp [ring_hom_surjective τ₁₂] [ring_hom_surjective τ₂₃] [ring_hom_surjective τ₁₃]
   (f : M →ₛₗ[τ₁₂] M₂) (g : M₂ →ₛₗ[τ₂₃] M₃) :
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) = map g (range f) :=
 set_like.coe_injective (set.range_comp g f)
@@ -1664,14 +1667,16 @@ theorem range_comp_le_range [ring_hom_surjective τ₂₃] [ring_hom_surjective 
   range (g.comp f : M →ₛₗ[τ₁₃] M₃) ≤ range g :=
 set_like.coe_mono (set.range_comp_subset_range f g)
 
-theorem range_eq_top {f : M →ₛₗ[τ₁₂] M₂} : range f = ⊤ ↔ surjective f :=
+theorem range_eq_top [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} :
+  range f = ⊤ ↔ surjective f :=
 by rw [set_like.ext'_iff, range_coe, top_coe, set.range_iff_surjective]
 
-lemma range_le_iff_comap {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R₂ M₂} :
+lemma range_le_iff_comap [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R₂ M₂} :
   range f ≤ p ↔ comap f p = ⊤ :=
 by rw [range_eq_map, map_le_iff_le_comap, eq_top_iff]
 
-lemma map_le_range {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} : map f p ≤ range f :=
+lemma map_le_range [ring_hom_surjective τ₁₂] {f : M →ₛₗ[τ₁₂] M₂} {p : submodule R M} :
+  map f p ≤ range f :=
 set_like.coe_mono (set.image_subset_range f p)
 
 end
