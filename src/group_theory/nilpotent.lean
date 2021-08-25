@@ -407,6 +407,7 @@ begin
 end
 
 -- for PR 6
+-- depends on PR 3
 lemma nilpotent_quotient_center_to_nilpotent
   (hG : is_nilpotent (quotient_group.quotient (center G))) : is_nilpotent G :=
 begin
@@ -415,16 +416,12 @@ begin
   use n + 1,
   ext x,
   split,
-  { have h1 := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
-    have h2 : ∀ x g : G, g ∈ lower_central_series G n → g * x * g⁻¹ * x⁻¹ = 1, {
-      intros x g hg,
-      rw [mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
-      rw [map_eq_bot_iff, ker_mk, set_like.le_def] at h1,
-      exact (h1 hg x).symm,
-    },
+  { have := eq_bot_mono (lower_central_series.map (quotient_group.mk' (center G)) n) hG,
     refine (set_like.ext_iff.mp ((closure_eq_bot_iff _ _ ).mpr _) x).mp,
     rintro x ⟨p, hp, q, -, rfl⟩,
-    exact set.mem_singleton_iff.mpr (h2 _ _ hp) },
+    rw [map_eq_bot_iff, ker_mk, set_like.le_def] at this,
+    rw [set.mem_singleton_iff, mul_inv_eq_one, mul_inv_eq_iff_eq_mul],
+    exact (mem_center_iff.mp (this hp) q).symm },
   { revert x,
     exact set_like.le_def.mp (bot_le) },
 end
