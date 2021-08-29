@@ -367,24 +367,6 @@ end
 
 section cauchy
 
-lemma exists_fixed_point {p : ℕ} [hp : fact p.prime] (hα : p ∣ fintype.card α)
-  {σ : perm α} (hσ : σ ^ p = 1) {a : α} (ha : σ a = a) : ∃ b : α, σ b = b ∧ b ≠ a :=
-begin
-  classical,
-  have h1 : σ.cycle_type = repeat p σ.cycle_type.card :=
-  eq_repeat_of_mem (λ n hn, (nat.dvd_prime_two_le hp.out (two_le_of_mem_cycle_type hn)).mp
-    ((dvd_of_mem_cycle_type hn).trans (order_of_dvd_of_pow_eq_one hσ))),
-  have h2 : p ∣ σ.supportᶜ.card,
-  { refine (congr_arg _ σ.support.card_compl).mpr (nat.dvd_sub' hα _),
-    rw [←sum_cycle_type, h1, multiset.sum_repeat, smul_eq_mul],
-    exact dvd_mul_left p σ.cycle_type.card },
-  have h3 : ∀ b : α, b ∈ σ.supportᶜ ↔ σ b = b :=
-  λ b, by rw [finset.mem_compl, mem_support, not_not],
-  obtain ⟨b, hb1, hb2⟩ := finset.exists_ne_of_one_lt_card
-    (lt_of_lt_of_le hp.out.one_lt (nat.le_of_dvd (finset.card_pos.mpr ⟨a, (h3 a).mpr ha⟩) h2)) a,
-  exact ⟨b, (h3 b).mp hb1, hb2⟩,
-end
-
 lemma exists_prime_order_of_dvd_card {G : Type*} [group G] [fintype G] (p : ℕ) [hp : fact p.prime]
   (hdvd : p ∣ fintype.card G) : ∃ x : G, order_of x = p :=
 begin
@@ -413,9 +395,10 @@ begin
     (λ s, by rw [hf2, nat.sub_add_cancel hp.out.pos, hf3]),
   have hσ : ∀ (k : ℕ) (s : S p), (σ ^ k) s = f k s :=
   λ k s, nat.rec (hf1 s).symm (λ k hk, eq.trans (by exact congr_arg σ hk) (hf2 k 1 s)) k,
+  replace hσ : σ ^ (p ^ 1) = 1 := perm.ext (λ s, by rw [pow_one, hσ, hf3, one_apply]),
   let s₀ : S p := ⟨vector.repeat 1 p, (list.prod_repeat 1 p).trans (one_pow p)⟩,
   have hs₀ : σ s₀ = s₀ := subtype.ext (subtype.ext (list.rotate_repeat (1 : G) p 1)),
-  obtain ⟨s, hs1, hs2⟩ := exists_fixed_point Scard (perm.ext (λ s, (hσ p s).trans (hf3 s))) hs₀,
+  obtain ⟨s, hs1, hs2⟩ := exists_fixed_point_of_prime' Scard hσ hs₀,
   refine exists_imp_exists (λ g hg, order_of_eq_prime _ (λ hg', hs2 _))
     (list.rotate_one_eq_self_iff_eq_repeat.mp (subtype.ext_iff.mp (subtype.ext_iff.mp hs1))),
   { rw [←list.prod_repeat, ←s.1.2, ←hg, (show s.val.val.prod = 1, from s.2)] },
