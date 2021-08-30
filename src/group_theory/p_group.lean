@@ -18,31 +18,16 @@ section pgroup
 
 variables (p : ℕ) (G : Type*) [group G]
 
+/-- A p-group is a group in which every element has prime power order -/
 def is_p_group : Prop := ∀ g : G, ∃ k : ℕ, g ^ (p ^ k) = 1
 
 variables {p} {G}
 
-/-lemma is_p_group_iff_order_of [hp : fact (p.prime)] :
+lemma is_p_group_iff_order_of [hp : fact (p.prime)] :
   is_p_group p G ↔ ∀ g : G, ∃ k : ℕ, order_of g = p ^ k :=
-begin
-  refine forall_congr (λ g, ⟨_, _⟩),
-  all_goals { rintros ⟨k, hk⟩ },
-  { obtain ⟨j, hj1, hj2⟩ := (nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk),
-    exact ⟨j, hj2⟩ },
-  { exact ⟨k, by rw [←hk, pow_order_of_eq_one]⟩ },
-end-/
-
-lemma is_p_group_iff_card [hp : fact (p.prime)] [fintype G] :
-  is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
-begin
-  split,
-  { intro h,
-    have key : ∀ q : ℕ, q.prime → q ∣ fintype.card G → q = p,
-    { sorry },
-    sorry },
-  { rintros ⟨n, hn⟩ g,
-    exact ⟨n, by rw [←hn, pow_card_eq_one]⟩ },
-end
+forall_congr (λ g, ⟨λ ⟨k, hk⟩, exists_imp_exists (by exact λ j, Exists.snd)
+  ((nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk)),
+  exists_imp_exists (λ k hk, by rw [←hk, pow_order_of_eq_one])⟩)
 
 lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
 begin
@@ -56,8 +41,27 @@ begin
   exact λ h, hK ⟨h, hHK h.2⟩,
 end
 
+lemma is_p_group_iff_card [hp : fact (p.prime)] [fintype G] :
+  is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
+begin
+  have hG : 0 < fintype.card G := fintype.card_pos_iff.mpr has_one.nonempty,
+  refine ⟨λ h, _, λ ⟨n, hn⟩ g, ⟨n, by rw [←hn, pow_card_eq_one]⟩⟩,
+  suffices : ∀ q ∈ nat.factors (fintype.card G), q = p,
+  { use (fintype.card G).factors.length,
+    rw [←list.prod_repeat, ←list.eq_repeat_of_mem this, nat.prod_factors hG] },
+  intros q hq,
+  obtain ⟨hq1, hq2⟩ := (nat.mem_factors hG).mp hq,
+  haveI : fact q.prime := ⟨hq1⟩,
+  obtain ⟨g, hg⟩ := equiv.perm.exists_prime_order_of_dvd_card q hq2,
+  obtain ⟨k, hk⟩ := h g,
+  obtain ⟨j, hj1, hj2⟩ := (nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk),
+  have key := hg.symm.trans hj2,
+  sorry,
+end
+
 variables (p) (G)
 
+/-- The set of p-subgroups of G -/
 def p_subgroups : set (subgroup G) :=
 {H | is_p_group p H}
 
@@ -74,6 +78,7 @@ instance : semilattice_inf_bot (p_subgroups p G) :=
 
 variables (p) (G)
 
+/-- The set of Sylow p-subgroups of G -/
 def sylow_p_subgroup : set (p_subgroups p G) :=
 {H | ∀ K, H ≤ K → H = K}
 
@@ -85,7 +90,7 @@ open fintype equiv finset subgroup
 open_locale big_operators classical
 
 variables {G : Type*} (α : Type*) [group G] [mul_action G α] [fintype G] [fintype α]
-  [fintype (fixed_points G α)] {p n : ℕ} [fact p.prime] (hG : card G = p ^ n)
+  [fintype (fixed_points G α)] {p : ℕ} [fact p.prime] (hG : is_p_group p G)
 
 include hG
 
@@ -97,6 +102,7 @@ calc card α = card (Σ y : quotient (orbit_rel G α), {x // quotient.mk' x = y}
 ... = ∑ a : quotient (orbit_rel G α), card {x // quotient.mk' x = a} : card_sigma _
 ... ≡ ∑ a : fixed_points G α, 1 [MOD p] :
 begin
+  obtain ⟨n, hG⟩ := is_p_group_iff_card.mp hG,
   rw [←zmod.eq_iff_modeq_nat p, nat.cast_sum, nat.cast_sum],
   refine eq.symm (sum_bij_ne_zero (λ a _ _, quotient.mk' a.1)
     (λ _ _ _, mem_univ _)
