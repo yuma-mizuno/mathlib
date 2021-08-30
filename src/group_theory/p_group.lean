@@ -55,8 +55,7 @@ begin
   obtain ⟨g, hg⟩ := equiv.perm.exists_prime_order_of_dvd_card q hq2,
   obtain ⟨k, hk⟩ := h g,
   obtain ⟨j, hj1, hj2⟩ := (nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk),
-  have key := hg.symm.trans hj2,
-  sorry,
+  exact (hq1.pow_eq_iff.mp (hg.symm.trans hj2).symm).1.symm,
 end
 
 variables (p) (G)
