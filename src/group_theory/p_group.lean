@@ -5,6 +5,7 @@ Authors: Chris Hughes
 -/
 
 import group_theory.perm.cycle_type
+import group_theory.quotient_group
 
 /-!
 # p-groups
@@ -23,25 +24,13 @@ def is_p_group : Prop := ∀ g : G, ∃ k : ℕ, g ^ (p ^ k) = 1
 
 variables {p} {G}
 
-lemma is_p_group_iff_order_of [hp : fact (p.prime)] :
+lemma is_p_group_iff_order_of [hp : fact p.prime] :
   is_p_group p G ↔ ∀ g : G, ∃ k : ℕ, order_of g = p ^ k :=
 forall_congr (λ g, ⟨λ ⟨k, hk⟩, exists_imp_exists (by exact λ j, Exists.snd)
   ((nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk)),
   exists_imp_exists (λ k hk, by rw [←hk, pow_order_of_eq_one])⟩)
 
-lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
-  exact λ h, hG h,
-end
-
-lemma le_is_p_group {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
-  exact λ h, hK ⟨h, hHK h.2⟩,
-end
-
-lemma is_p_group_iff_card [hp : fact (p.prime)] [fintype G] :
+lemma is_p_group_iff_card [hp : fact p.prime] [fintype G] :
   is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
 begin
   have hG : 0 < fintype.card G := fintype.card_pos_iff.mpr has_one.nonempty,
@@ -53,10 +42,83 @@ begin
   obtain ⟨hq1, hq2⟩ := (nat.mem_factors hG).mp hq,
   haveI : fact q.prime := ⟨hq1⟩,
   obtain ⟨g, hg⟩ := equiv.perm.exists_prime_order_of_dvd_card q hq2,
-  obtain ⟨k, hk⟩ := h g,
-  obtain ⟨j, hj1, hj2⟩ := (nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk),
-  exact (hq1.pow_eq_iff.mp (hg.symm.trans hj2).symm).1.symm,
+  obtain ⟨k, hk⟩ := (is_p_group_iff_order_of.mp h) g,
+  exact (hq1.pow_eq_iff.mp (hg.symm.trans hk).symm).1.symm,
 end
+
+lemma le_is_p_group {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
+  exact λ h, hK ⟨h, hHK h.2⟩,
+end
+
+lemma subgroup_is_p_group (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
+begin
+  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
+  exact λ h, hG h,
+end
+
+lemma quotient_is_p_group (hG : is_p_group p G) (H : subgroup G) [H.normal] :
+  is_p_group p (quotient_group.quotient H) :=
+begin
+  refine quotient.ind' (forall_imp (λ g, _) hG),
+  exact exists_imp_exists (λ k h, (quotient_group.coe_pow H g _).symm.trans (congr_arg coe h)),
+end
+
+lemma index_is_p_power (H : subgroup G) [fintype (quotient_group.quotient H)] :
+  ∃ n : ℕ, fintype.card (quotient_group.quotient H) = p ^ n :=
+begin
+  -- quotient by normal core of H, now have finite p-group, index same, now is power of p
+  sorry,
+end
+
+namespace mul_action
+
+open fintype
+
+variables {α : Type*} [mul_action G α] [fact p.prime] (hG : is_p_group p G)
+
+include hG
+
+lemma card_orbit_is_p_power (a : α) [fintype (orbit G a)] :
+  ∃ n : ℕ, fintype.card (orbit G a) = p ^ n :=
+begin
+  -- card orbit = card quotient = p power
+  sorry
+end
+
+variables (α) [fintype α] [fintype (fixed_points G α)]
+
+lemma card_modeq_card_fixed_points : card α ≡ card (fixed_points G α) [MOD p] :=
+begin
+  -- tricky...
+  sorry
+end
+
+lemma nonempty_fixed_point_of_prime_not_dvd_card
+  (hp : ¬ p ∣ fintype.card α) :
+  (fixed_points G α).nonempty :=
+@set.nonempty_of_nonempty_subtype _ _ begin
+  rw [← fintype.card_pos_iff, pos_iff_ne_zero],
+  assume h,
+  have := card_modeq_card_fixed_points α hG,
+  rw [h, nat.modeq_zero_iff_dvd] at this,
+  contradiction
+end
+
+/-- If a p-group acts on `α` and the cardinality of `α` is a multiple
+  of `p`, and the action has one fixed point, then it has another fixed point. -/
+lemma exists_fixed_point_of_prime_dvd_card_of_fixed_point
+  (hpα : p ∣ fintype.card α) {a : α} (ha : a ∈ fixed_points G α) :
+  ∃ b, b ∈ fixed_points G α ∧ a ≠ b :=
+have hpf : p ∣ fintype.card (fixed_points G α),
+  from nat.modeq_zero_iff_dvd.1 ((card_modeq_card_fixed_points α hG).symm.trans hpα.modeq_zero_nat),
+have hα : 1 < fintype.card (fixed_points G α),
+  from (fact.out p.prime).one_lt.trans_le (nat.le_of_dvd (fintype.card_pos_iff.2 ⟨⟨a, ha⟩⟩) hpf),
+let ⟨⟨b, hb⟩, hba⟩ := fintype.exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
+⟨b, hb, λ hab, hba $ by simp [hab]⟩
+
+end mul_action
 
 variables (p) (G)
 
@@ -95,7 +157,7 @@ include hG
 
 /-- If `G` is a `p`-group acting on a finite set `α`, then the number of fixed points
   of the action is congruent mod `p` to the cardinality of `α` -/
-lemma card_modeq_card_fixed_points : card α ≡ card (fixed_points G α) [MOD p] :=
+lemma card_modeq_card_fixed_points' : card α ≡ card (fixed_points G α) [MOD p] :=
 calc card α = card (Σ y : quotient (orbit_rel G α), {x // quotient.mk' x = y}) :
   card_congr (sigma_preimage_equiv (@quotient.mk' _ (orbit_rel G α))).symm
 ... = ∑ a : quotient (orbit_rel G α), card {x // quotient.mk' x = a} : card_sigma _
@@ -128,7 +190,7 @@ end
 
 /-- If a p-group acts on `α` and the cardinality of `α` is not a multiple
   of `p` then the action has a fixed point. -/
-lemma nonempty_fixed_point_of_prime_not_dvd_card
+lemma nonempty_fixed_point_of_prime_not_dvd_card'
   (hp : ¬ p ∣ fintype.card α) :
   (fixed_points G α).nonempty :=
 @set.nonempty_of_nonempty_subtype _ _ begin
@@ -141,7 +203,7 @@ end
 
 /-- If a p-group acts on `α` and the cardinality of `α` is a multiple
   of `p`, and the action has one fixed point, then it has another fixed point. -/
-lemma exists_fixed_point_of_prime_dvd_card_of_fixed_point
+lemma exists_fixed_point_of_prime_dvd_card_of_fixed_point'
   (hpα : p ∣ fintype.card α) {a : α} (ha : a ∈ fixed_points G α) :
   ∃ b, b ∈ fixed_points G α ∧ a ≠ b :=
 have hpf : p ∣ fintype.card (fixed_points G α),
