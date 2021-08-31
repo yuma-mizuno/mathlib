@@ -15,43 +15,24 @@ then the number of fixed points of the action is congruent mod `p` to the cardin
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
 
-namespace subgroup
+/-lemma quotient_group.fintype_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K)
+  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient K) :=
+begin
+  sorry,
+end-/
 
-def normal_core {G : Type*} [group G] (H : subgroup G) : subgroup G :=
-{ carrier := {a : G | ∀ b : G, b * a * b⁻¹ ∈ H},
-  one_mem' := λ a, by rw [mul_one, mul_inv_self]; exact H.one_mem,
-  inv_mem' := λ a h b, (congr_arg (∈ H) conj_inv).mp (H.inv_mem (h b)),
-  mul_mem' := λ a b h k c, (congr_arg (∈ H) conj_mul).mp (H.mul_mem (h c) (k c)) }
+instance subgroup.normal_core_finite_index {G : Type*} [group G] (H : subgroup G)
+  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient H.normal_core) :=
+begin
+  sorry,
+end
 
-lemma normal_core_le {G : Type*} [group G] (H : subgroup G) : H.normal_core ≤ H :=
-λ a h, by rw [←mul_one a, ←one_inv, ←one_mul a]; exact h 1
-
-instance normal_core_normal {G : Type*} [group G] (H : subgroup G) : H.normal_core.normal :=
-⟨λ a h b c, by rw [mul_assoc, mul_assoc, ←mul_inv_rev, ←mul_assoc, ←mul_assoc]; exact h (c * b)⟩
-
-lemma normal_le_normal_core {G : Type*} [group G] {H : subgroup G} {N : subgroup G} [hN : N.normal] :
-  N ≤ H.normal_core ↔ N ≤ H :=
-⟨ge_trans H.normal_core_le, λ h_le n hn g, h_le (hN.conj_mem n hn g)⟩
-
-lemma normal_core_mono {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
-  H.normal_core ≤ K.normal_core :=
-normal_le_normal_core.mpr (H.normal_core_le.trans h)
-
-lemma normal_core_eq_infi {G : Type*} [group G] (H : subgroup G) :
-  H.normal_core = ⨆ (N : subgroup G) [normal N] (hs : N ≤ H), N :=
-le_antisymm (le_supr_of_le H.normal_core
-  (le_supr_of_le H.normal_core_normal (le_supr_of_le H.normal_core_le le_rfl)))
-  (supr_le (λ N, supr_le (λ hN, supr_le (by exactI normal_le_normal_core.mpr))))
-
-lemma normal_core_eq_self {G : Type*} [group G] (H : subgroup G) [H.normal] :
-  H.normal_core = H :=
-le_antisymm H.normal_core_le (normal_le_normal_core.mpr le_rfl)
-
-@[simp] theorem normal_core_idempotent {G : Type*} [group G] (H : subgroup G) :
-  H.normal_core.normal_core = H.normal_core :=
-H.normal_core.normal_core_eq_self
-
-end subgroup
+lemma quotient_group.card_dvd_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K)
+  [fintype (quotient_group.quotient H)] [fintype (quotient_group.quotient K)] :
+    fintype.card (quotient_group.quotient K) ∣ fintype.card (quotient_group.quotient H) :=
+begin
+  sorry,
+end
 
 open_locale big_operators
 
@@ -72,7 +53,7 @@ forall_congr (λ g, ⟨λ ⟨k, hk⟩, exists_imp_exists (by exact λ j, Exists.
   ((nat.dvd_prime_pow hp.out).mp (order_of_dvd_of_pow_eq_one hk)),
   exists_imp_exists (λ k hk, by rw [←hk, pow_order_of_eq_one])⟩)
 
-lemma iff_card [hp : fact p.prime] [fintype G] :
+lemma iff_card [fact p.prime] [fintype G] :
   is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
 begin
   have hG : 0 < fintype.card G := fintype.card_pos_iff.mpr has_one.nonempty,
@@ -94,30 +75,37 @@ begin
   exact λ h, hK ⟨h, hHK h.2⟩,
 end
 
-lemma to_subgroup (hG : is_p_group p G) (H : subgroup G) : is_p_group p H :=
+variables (H : subgroup G) (hG : is_p_group p G)
+
+include hG
+
+lemma to_subgroup : is_p_group p H :=
 begin
   simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
   exact λ h, hG h,
 end
 
-lemma to_quotient (hG : is_p_group p G) (H : subgroup G) [H.normal] :
+lemma to_quotient [H.normal] :
   is_p_group p (quotient_group.quotient H) :=
 begin
   refine quotient.ind' (forall_imp (λ g, _) hG),
   exact exists_imp_exists (λ k h, (quotient_group.coe_pow H g _).symm.trans (congr_arg coe h)),
 end
 
-lemma index (H : subgroup G) [fintype (quotient_group.quotient H)] :
+variables [hp : fact p.prime]
+
+include hp
+
+lemma index [fintype (quotient_group.quotient H)] :
   ∃ n : ℕ, fintype.card (quotient_group.quotient H) = p ^ n :=
 begin
-
-  -- quotient by normal core of H, now have finite p-group, index same, now is power of p
-  sorry,
+  obtain ⟨n, hn⟩ := iff_card.mp (hG.to_quotient H.normal_core),
+  obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp
+    ((congr_arg _ hn).mp (quotient_group.card_dvd_of_le H.normal_core_le)),
+  exact ⟨k, hk2⟩,
 end
 
-variables {α : Type*} [mul_action G α] [fact p.prime] (hG : is_p_group p G)
-
-include hG
+variables {α : Type*} [mul_action G α]
 
 lemma card_orbit (a : α) [fintype (mul_action.orbit G a)] :
   ∃ n : ℕ, fintype.card (mul_action.orbit G a) = p ^ n :=
@@ -125,7 +113,7 @@ begin
   let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
   haveI := fintype.of_equiv (mul_action.orbit G a) ϕ,
   rw fintype.card_congr ϕ,
-  exact index (mul_action.stabilizer G a),
+  exact index (mul_action.stabilizer G a) hG,
 end
 
 variables (α) [fintype α] [fintype (mul_action.fixed_points G α)]
@@ -162,7 +150,7 @@ lemma nonempty_fixed_point_of_prime_not_dvd_card
   rw [←fintype.card_pos_iff, pos_iff_ne_zero],
   contrapose! hp,
   rw [←nat.modeq_zero_iff_dvd, ←hp],
-  exact (card_fixed_points_modeq α hG).symm,
+  exact (card_fixed_points_modeq hG α).symm,
 end
 
 /-- If a p-group acts on `α` and the cardinality of `α` is a multiple
@@ -197,7 +185,7 @@ instance : semilattice_inf_bot (p_subgroups p G) :=
 variables (p) (G)
 
 /-- The set of Sylow p-subgroups of G -/
-def sylow_p_subgroup : set (p_subgroups p G) :=
+def sylow_p_subgroups : set (p_subgroups p G) :=
 {H | ∀ K, H ≤ K → H = K}
 
 end pgroup
