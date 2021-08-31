@@ -15,6 +15,44 @@ then the number of fixed points of the action is congruent mod `p` to the cardin
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
 
+namespace subgroup
+
+def normal_core {G : Type*} [group G] (H : subgroup G) : subgroup G :=
+{ carrier := {a : G | ∀ b : G, b * a * b⁻¹ ∈ H},
+  one_mem' := λ a, by rw [mul_one, mul_inv_self]; exact H.one_mem,
+  inv_mem' := λ a h b, (congr_arg (∈ H) conj_inv).mp (H.inv_mem (h b)),
+  mul_mem' := λ a b h k c, (congr_arg (∈ H) conj_mul).mp (H.mul_mem (h c) (k c)) }
+
+lemma normal_core_le {G : Type*} [group G] (H : subgroup G) : H.normal_core ≤ H :=
+λ a h, by rw [←mul_one a, ←one_inv, ←one_mul a]; exact h 1
+
+instance normal_core_normal {G : Type*} [group G] (H : subgroup G) : H.normal_core.normal :=
+⟨λ a h b c, by rw [mul_assoc, mul_assoc, ←mul_inv_rev, ←mul_assoc, ←mul_assoc]; exact h (c * b)⟩
+
+lemma normal_le_normal_core {G : Type*} [group G] {H : subgroup G} {N : subgroup G} [hN : N.normal] :
+  N ≤ H.normal_core ↔ N ≤ H :=
+⟨ge_trans H.normal_core_le, λ h_le n hn g, h_le (hN.conj_mem n hn g)⟩
+
+lemma normal_core_mono {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
+  H.normal_core ≤ K.normal_core :=
+normal_le_normal_core.mpr (H.normal_core_le.trans h)
+
+lemma normal_core_eq_infi {G : Type*} [group G] (H : subgroup G) :
+  H.normal_core = ⨆ (N : subgroup G) [normal N] (hs : N ≤ H), N :=
+le_antisymm (le_supr_of_le H.normal_core
+  (le_supr_of_le H.normal_core_normal (le_supr_of_le H.normal_core_le le_rfl)))
+  (supr_le (λ N, supr_le (λ hN, supr_le (by exactI normal_le_normal_core.mpr))))
+
+lemma normal_core_eq_self {G : Type*} [group G] (H : subgroup G) [H.normal] :
+  H.normal_core = H :=
+le_antisymm H.normal_core_le (normal_le_normal_core.mpr le_rfl)
+
+@[simp] theorem normal_core_idempotent {G : Type*} [group G] (H : subgroup G) :
+  H.normal_core.normal_core = H.normal_core :=
+H.normal_core.normal_core_eq_self
+
+end subgroup
+
 open_locale big_operators
 
 section pgroup
@@ -72,6 +110,7 @@ end
 lemma index (H : subgroup G) [fintype (quotient_group.quotient H)] :
   ∃ n : ℕ, fintype.card (quotient_group.quotient H) = p ^ n :=
 begin
+
   -- quotient by normal core of H, now have finite p-group, index same, now is power of p
   sorry,
 end
