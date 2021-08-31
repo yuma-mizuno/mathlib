@@ -15,17 +15,23 @@ then the number of fixed points of the action is congruent mod `p` to the cardin
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
 
-/-lemma quotient_group.fintype_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K)
-  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient K) :=
-begin
-  sorry,
-end-/
+section quotient_group_stuff
 
-instance subgroup.normal_core_finite_index {G : Type*} [group G] (H : subgroup G)
-  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient H.normal_core) :=
-begin
-  sorry,
-end
+def quotient_group.map_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
+  quotient_group.quotient H → quotient_group.quotient K :=
+quotient.map' id (λ x y hxy, h hxy)
+
+def quotient_group.map_of_le_mk {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) (g : G) :
+  quotient_group.map_of_le h (quotient_group.mk g) = quotient_group.mk g := rfl
+
+lemma quotient_group.map_of_le_surjective {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
+  function.surjective (quotient_group.map_of_le h) :=
+λ g, quotient_group.induction_on g (λ g, ⟨quotient_group.mk g, rfl⟩)
+
+lemma quotient_group.fintype_of_le {G : Type*} [group G] {H K : subgroup G}
+  (h : H ≤ K) [fintype (quotient_group.quotient H)] [decidable_eq (quotient_group.quotient K)] :
+  fintype (quotient_group.quotient K) :=
+fintype.of_surjective _ (quotient_group.map_of_le_surjective h)
 
 lemma quotient_group.card_dvd_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K)
   [fintype (quotient_group.quotient H)] [fintype (quotient_group.quotient K)] :
@@ -33,6 +39,28 @@ lemma quotient_group.card_dvd_of_le {G : Type*} [group G] {H K : subgroup G} (h 
 begin
   sorry,
 end
+
+lemma subgroup.normal_core_eq_ker {G : Type*} [group G] (H : subgroup G) :
+  H.normal_core = (mul_action.to_perm_hom G (quotient_group.quotient H)).ker :=
+begin
+  refine le_antisymm (λ g hg, equiv.perm.ext (λ q, quotient_group.induction_on q (λ g',
+    (mul_action.quotient.smul_mk H g g').trans (quotient_group.eq.mpr _))))
+    (subgroup.normal_le_normal_core.mpr (λ g hg, _)),
+  { rw [←H.inv_mem_iff, mul_inv_rev, mul_inv_rev, mul_inv_rev, inv_inv, ←mul_assoc],
+    exact hg g'⁻¹ },
+  { rw [←H.inv_mem_iff, ←mul_one g⁻¹, ←quotient_group.eq, ←mul_one g],
+    exact (mul_action.quotient.smul_mk H g 1).symm.trans (equiv.perm.ext_iff.mp hg (1 : G)) },
+end
+
+noncomputable instance subgroup.fintype_quotient_normal_core {G : Type*} [group G] (H : subgroup G)
+  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient H.normal_core) :=
+begin
+  rw H.normal_core_eq_ker,
+  classical,
+  exact fintype.of_equiv _ (quotient_group.quotient_ker_equiv_range _).symm.to_equiv,
+end
+
+end quotient_group_stuff
 
 open_locale big_operators
 
