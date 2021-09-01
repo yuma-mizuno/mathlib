@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes
 -/
 
-import group_theory.findex
+import group_theory.index
 import group_theory.perm.cycle_type
 import group_theory.quotient_group
 
@@ -17,29 +17,6 @@ It also contains proofs of some corollaries of this lemma about existence of fix
 -/
 
 section quotient_group_stuff
-
-/-def quotient_group.map_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
-  quotient_group.quotient H → quotient_group.quotient K :=
-quotient.map' id (λ x y hxy, h hxy)
-
-def quotient_group.map_of_le_mk {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) (g : G) :
-  quotient_group.map_of_le h (quotient_group.mk g) = quotient_group.mk g := rfl
-
-lemma quotient_group.map_of_le_surjective {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
-  function.surjective (quotient_group.map_of_le h) :=
-λ g, quotient_group.induction_on g (λ g, ⟨quotient_group.mk g, rfl⟩)
-
-lemma quotient_group.fintype_of_le {G : Type*} [group G] {H K : subgroup G}
-  (h : H ≤ K) [fintype (quotient_group.quotient H)] [decidable_eq (quotient_group.quotient K)] :
-  fintype (quotient_group.quotient K) :=
-fintype.of_surjective _ (quotient_group.map_of_le_surjective h)
-
-lemma quotient_group.card_dvd_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K)
-  [fintype (quotient_group.quotient H)] [fintype (quotient_group.quotient K)] :
-    fintype.card (quotient_group.quotient K) ∣ fintype.card (quotient_group.quotient H) :=
-begin
-  sorry,
-end-/
 
 lemma subgroup.normal_core_eq_ker {G : Type*} [group G] (H : subgroup G) :
   H.normal_core = (mul_action.to_perm_hom G (quotient_group.quotient H)).ker :=
@@ -126,11 +103,11 @@ variables [hp : fact p.prime]
 include hp
 
 lemma findex [fintype (quotient_group.quotient H)] :
-  ∃ n : ℕ, H.findex = p ^ n :=
+  ∃ n : ℕ, H.index = p ^ n :=
 begin
   obtain ⟨n, hn⟩ := iff_card.mp (hG.to_quotient H.normal_core),
   obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp ((congr_arg _
-    (H.normal_core.findex_eq_card.trans hn)).mp (subgroup.findex_dvd_of_le H.normal_core_le)),
+    (H.normal_core.index_eq_card.trans hn)).mp (subgroup.index_dvd_of_le H.normal_core_le)),
   exact ⟨k, hk2⟩,
 end
 
@@ -141,7 +118,7 @@ lemma card_orbit (a : α) [fintype (mul_action.orbit G a)] :
 begin
   let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
   haveI := fintype.of_equiv (mul_action.orbit G a) ϕ,
-  rw [fintype.card_congr ϕ, ←subgroup.findex_eq_card],
+  rw [fintype.card_congr ϕ, ←subgroup.index_eq_card],
   exact findex (mul_action.stabilizer G a) hG,
 end
 
