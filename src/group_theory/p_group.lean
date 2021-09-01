@@ -16,30 +16,6 @@ then the number of fixed points of the action is congruent mod `p` to the cardin
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
 
-section quotient_group_stuff
-
-lemma subgroup.normal_core_eq_ker {G : Type*} [group G] (H : subgroup G) :
-  H.normal_core = (mul_action.to_perm_hom G (quotient_group.quotient H)).ker :=
-begin
-  refine le_antisymm (λ g hg, equiv.perm.ext (λ q, quotient_group.induction_on q (λ g',
-    (mul_action.quotient.smul_mk H g g').trans (quotient_group.eq.mpr _))))
-    (subgroup.normal_le_normal_core.mpr (λ g hg, _)),
-  { rw [←H.inv_mem_iff, mul_inv_rev, mul_inv_rev, mul_inv_rev, inv_inv, ←mul_assoc],
-    exact hg g'⁻¹ },
-  { rw [←H.inv_mem_iff, ←mul_one g⁻¹, ←quotient_group.eq, ←mul_one g],
-    exact (mul_action.quotient.smul_mk H g 1).symm.trans (equiv.perm.ext_iff.mp hg (1 : G)) },
-end
-
-noncomputable instance subgroup.fintype_quotient_normal_core {G : Type*} [group G] (H : subgroup G)
-  [fintype (quotient_group.quotient H)] : fintype (quotient_group.quotient H.normal_core) :=
-begin
-  rw H.normal_core_eq_ker,
-  classical,
-  exact fintype.of_equiv _ (quotient_group.quotient_ker_equiv_range _).symm.to_equiv,
-end
-
-end quotient_group_stuff
-
 open_locale big_operators
 
 section pgroup
@@ -102,9 +78,10 @@ variables [hp : fact p.prime]
 
 include hp
 
-lemma findex [fintype (quotient_group.quotient H)] :
+lemma index [fintype (quotient_group.quotient H)] :
   ∃ n : ℕ, H.index = p ^ n :=
 begin
+  --classical,
   obtain ⟨n, hn⟩ := iff_card.mp (hG.to_quotient H.normal_core),
   obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp ((congr_arg _
     (H.normal_core.index_eq_card.trans hn)).mp (subgroup.index_dvd_of_le H.normal_core_le)),
@@ -119,7 +96,7 @@ begin
   let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
   haveI := fintype.of_equiv (mul_action.orbit G a) ϕ,
   rw [fintype.card_congr ϕ, ←subgroup.index_eq_card],
-  exact findex (mul_action.stabilizer G a) hG,
+  exact index (mul_action.stabilizer G a) hG,
 end
 
 variables (α) [fintype α] [fintype (mul_action.fixed_points G α)]
