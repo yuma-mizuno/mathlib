@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes
 -/
 
+import group_theory.findex
 import group_theory.perm.cycle_type
 import group_theory.quotient_group
 
@@ -17,7 +18,7 @@ It also contains proofs of some corollaries of this lemma about existence of fix
 
 section quotient_group_stuff
 
-def quotient_group.map_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
+/-def quotient_group.map_of_le {G : Type*} [group G] {H K : subgroup G} (h : H ≤ K) :
   quotient_group.quotient H → quotient_group.quotient K :=
 quotient.map' id (λ x y hxy, h hxy)
 
@@ -38,7 +39,7 @@ lemma quotient_group.card_dvd_of_le {G : Type*} [group G] {H K : subgroup G} (h 
     fintype.card (quotient_group.quotient K) ∣ fintype.card (quotient_group.quotient H) :=
 begin
   sorry,
-end
+end-/
 
 lemma subgroup.normal_core_eq_ker {G : Type*} [group G] (H : subgroup G) :
   H.normal_core = (mul_action.to_perm_hom G (quotient_group.quotient H)).ker :=
@@ -124,12 +125,12 @@ variables [hp : fact p.prime]
 
 include hp
 
-lemma index [fintype (quotient_group.quotient H)] :
-  ∃ n : ℕ, fintype.card (quotient_group.quotient H) = p ^ n :=
+lemma findex [fintype (quotient_group.quotient H)] :
+  ∃ n : ℕ, H.findex = p ^ n :=
 begin
   obtain ⟨n, hn⟩ := iff_card.mp (hG.to_quotient H.normal_core),
-  obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp
-    ((congr_arg _ hn).mp (quotient_group.card_dvd_of_le H.normal_core_le)),
+  obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp ((congr_arg _
+    (H.normal_core.findex_eq_card.trans hn)).mp (subgroup.findex_dvd_of_le H.normal_core_le)),
   exact ⟨k, hk2⟩,
 end
 
@@ -140,8 +141,8 @@ lemma card_orbit (a : α) [fintype (mul_action.orbit G a)] :
 begin
   let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
   haveI := fintype.of_equiv (mul_action.orbit G a) ϕ,
-  rw fintype.card_congr ϕ,
-  exact index (mul_action.stabilizer G a) hG,
+  rw [fintype.card_congr ϕ, ←subgroup.findex_eq_card],
+  exact findex (mul_action.stabilizer G a) hG,
 end
 
 variables (α) [fintype α] [fintype (mul_action.fixed_points G α)]
