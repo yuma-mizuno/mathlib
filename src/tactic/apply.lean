@@ -107,10 +107,6 @@ do tgt   ← target >>= instantiate_mvars,
      " tactic failed, target is not a relation application with the expected property."
    end
 
-/-- Similar to `reflexivity` with the difference that `apply'` is used instead of `apply` -/
-meta def reflexivity' (md := semireducible) : tactic unit :=
-relation_tactic md environment.refl_for "reflexivity"
-
 /-- Similar to `symmetry` with the difference that `apply'` is used instead of `apply` -/
 meta def symmetry' (md := semireducible) : tactic unit :=
 relation_tactic md environment.symm_for "symmetry"

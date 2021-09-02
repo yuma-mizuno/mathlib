@@ -85,7 +85,18 @@ lemma partial_order.to_preorder_injective {α : Type*} :
 @[ext]
 lemma linear_order.to_partial_order_injective {α : Type*} :
   function.injective (@linear_order.to_partial_order α) :=
-λ A B h, by { cases A, cases B, injection h, congr' }
+λ A B h, begin
+  cases A, cases B,
+  injection h with hle hlt,
+  cases hle,
+  cases hlt,
+  rw [hle, hlt] at *,
+  congr',
+  any_goals { dec_trivial },
+  all_goals { dsimp at A_max_def A_min_def B_max_def B_min_def,
+              substs A_max_def A_min_def B_max_def B_min_def,
+              convert rfl }
+end
 
 theorem preorder.ext {α} {A B : preorder α}
   (H : ∀ x y : α, (by haveI := A; exact x ≤ y) ↔ x ≤ y) : A = B :=
@@ -204,13 +215,23 @@ instance (α : Type*) [preorder α] : preorder (order_dual α) :=
 instance (α : Type*) [partial_order α] : partial_order (order_dual α) :=
 { le_antisymm := λ a b hab hba, @le_antisymm α _ a b hba hab, .. order_dual.preorder α }
 
-instance (α : Type*) [linear_order α] : linear_order (order_dual α) :=
+instance (α : Type*) [h : linear_order α] : linear_order (order_dual α) :=
 { le_total     := λ a b : α, le_total b a,
   decidable_le := show decidable_rel (λ a b : α, b ≤ a), by apply_instance,
   decidable_lt := show decidable_rel (λ a b : α, b < a), by apply_instance,
+  max          := h.min,
+  min          := h.max,
+  max_def      := funext $ λ x, funext $ λ y, by simpa [min_def],
+  min_def      := funext $ λ x, funext $ λ y, by simpa [max_def],
   .. order_dual.partial_order α }
 
 instance : Π [inhabited α], inhabited (order_dual α) := id
+
+lemma dual_max [linear_order α] {a b : α} :
+  @max (order_dual α) _ a b = @min α _ a b := rfl
+
+lemma dual_min [linear_order α] {a b : α} :
+  @min (order_dual α) _ a b = @max α _ a b := rfl
 
 theorem preorder.dual_dual (α : Type*) [H : preorder α] :
   order_dual.preorder (order_dual α) = H :=
