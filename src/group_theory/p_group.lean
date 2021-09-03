@@ -101,10 +101,46 @@ end
 
 variables (α) [fintype α] [fintype (mul_action.fixed_points G α)]
 
---tricky!!!
+lemma card_eq_sum_card_orbit (α β : Type*) [group α] [mul_action α β]
+  [fintype β] [fintype (quotient (mul_action.orbit_rel α β))]
+  [Π (b : β), fintype (mul_action.orbit α b)] :
+  fintype.card β = ∑ (ω : (quotient (mul_action.orbit_rel α β))),
+    fintype.card (mul_action.orbit α ω.out') :=
+sorry
+
+lemma key_lemma {m : multiset ℕ} (h : ∀ n : ℕ, n ∈ m → n = 1 ∨ p ∣ n) :
+  m.sum ≡ m.count 1 [MOD p] :=
+begin
+  sorry
+end
+
 lemma card_fixed_points_modeq :
   fintype.card (mul_action.fixed_points G α) ≡ fintype.card α [MOD p] :=
 begin
+  classical,
+  refine (congr_arg _ (card_eq_sum_card_orbit hG G α)).mpr ((key_lemma hG _).trans _).symm,
+  { refine λ n hn, _,
+    obtain ⟨ω ,hω, rfl⟩ := multiset.mem_map.mp hn,
+    obtain ⟨n, hn⟩ := card_orbit hG ω.out',
+    rw hn,
+    by_cases hn' : n = 0,
+    { rw hn',
+      exact or.inl rfl },
+    { exact or.inr (dvd_pow (dvd_refl p) hn') } },
+  { refine (zmod.eq_iff_modeq_nat p).mp (congr_arg coe _), -- silly congr thing
+    rw multiset.count,
+    rw multiset.countp_map,
+    change (finset.univ.filter _).card = _,
+    haveI : fintype (mul_action.fixed_points G α) :=
+    { elems := finset.univ.filter (λ ω, 1 = fintype.card (mul_action.orbit ω.out')),
+      complete := sorry },
+    have key : ↥mul_action.fixed_points G α = ↥(_ : finset _) := sorry,
+    simp_rw [key],
+    symmetry,
+    exact fintype.card_coe _,
+    rw fintype.card_coe, },
+
+
   classical,
   symmetry,
 
