@@ -99,77 +99,43 @@ begin
   exact index (mul_action.stabilizer G a) hG,
 end
 
-variables (α) [fintype α] [fintype (mul_action.fixed_points G α)]
+open finset fintype mul_action quotient
 
-lemma card_eq_sum_card_orbit (α β : Type*) [group α] [mul_action α β]
-  [fintype β] [fintype (quotient (mul_action.orbit_rel α β))]
-  [Π (b : β), fintype (mul_action.orbit α b)] :
-  fintype.card β = ∑ (ω : (quotient (mul_action.orbit_rel α β))),
-    fintype.card (mul_action.orbit α ω.out') :=
-sorry
+variables (α) [fintype α] [fintype (fixed_points G α)]
 
-lemma key_lemma {m : multiset ℕ} (h : ∀ n : ℕ, n ∈ m → n = 1 ∨ p ∣ n) :
-  m.sum ≡ m.count 1 [MOD p] :=
-begin
-  sorry
-end
-
-lemma card_fixed_points_modeq :
-  fintype.card (mul_action.fixed_points G α) ≡ fintype.card α [MOD p] :=
+/-- If `G` is a `p`-group acting on a finite set `α`, then the number of fixed points
+  of the action is congruent mod `p` to the cardinality of `α` -/
+lemma card_modeq_card_fixed_points :
+  card α ≡ card (fixed_points G α) [MOD p] :=
 begin
   classical,
-  refine (congr_arg _ (card_eq_sum_card_orbit hG G α)).mpr ((key_lemma hG _).trans _).symm,
-  { refine λ n hn, _,
-    obtain ⟨ω ,hω, rfl⟩ := multiset.mem_map.mp hn,
-    obtain ⟨n, hn⟩ := card_orbit hG ω.out',
-    rw hn,
-    by_cases hn' : n = 0,
-    { rw hn',
-      exact or.inl rfl },
-    { exact or.inr (dvd_pow (dvd_refl p) hn') } },
-  { refine (zmod.eq_iff_modeq_nat p).mp (congr_arg coe _), -- silly congr thing
-    rw multiset.count,
-    rw multiset.countp_map,
-    change (finset.univ.filter _).card = _,
-    haveI : fintype (mul_action.fixed_points G α) :=
-    { elems := finset.univ.filter (λ ω, 1 = fintype.card (mul_action.orbit ω.out')),
-      complete := sorry },
-    have key : ↥mul_action.fixed_points G α = ↥(_ : finset _) := sorry,
-    simp_rw [key],
-    symmetry,
-    exact fintype.card_coe _,
-    rw fintype.card_coe, },
-
-
-  classical,
-  symmetry,
-
-  calc fintype.card α
-    = fintype.card (Σ y : quotient (mul_action.orbit_rel G α), {x // quotient.mk' x = y}) : _
-... = ∑ a : quotient (mul_action.orbit_rel G α), fintype.card {x // quotient.mk' x = a} : _
-... ≡ ∑ a : mul_action.fixed_points G α, 1 [MOD p] : _
-... = fintype.card (mul_action.fixed_points G α) : _,
-  { exact fintype.card_congr (equiv.sigma_preimage_equiv quotient.mk').symm },
-  { exact fintype.card_sigma _ },
-  { rw [←zmod.eq_iff_modeq_nat p, nat.cast_sum, nat.cast_sum],
-    refine eq.symm (finset.sum_bij_ne_zero (λ a _ _, quotient.mk' a.1) (λ _ _ _, finset.mem_univ _)
-      (λ a₁ a₂ _ _ _ _ h, _) (λ b hb1 hb2, _) (λ a ha _, _)),
-    { exact subtype.ext ((mul_action.mem_fixed_points' α).1 a₂.2 a₁.1 (quotient.exact' h)) },
-    { sorry },
-    { rw [← mul_action.mem_fixed_points_iff_card_orbit_eq_one.1 a.2],
-      simp only [quotient.eq'],
-      congr } },
-  { rw [finset.sum_const, algebra.id.smul_eq_mul, mul_one, finset.card_univ] },
+  calc card α = card (Σ y : quotient (orbit_rel G α), {x // quotient.mk' x = y}) :
+    card_congr (equiv.sigma_preimage_equiv (@quotient.mk' _ (orbit_rel G α))).symm
+  ... = ∑ a : quotient (orbit_rel G α), card {x // quotient.mk' x = a} : card_sigma _
+  ... ≡ ∑ a : fixed_points G α, 1 [MOD p] : _
+  ... = _ : by simp; refl,
+  rw [←zmod.eq_iff_modeq_nat p, nat.cast_sum, nat.cast_sum],
+  have key : ∀ x, card {y // (quotient.mk' y : quotient (orbit_rel G α)) = quotient.mk' x} =
+    card (orbit G x) := λ x, by simp only [quotient.eq']; congr,
+  refine eq.symm (sum_bij_ne_zero (λ a _ _, quotient.mk' a.1) (λ _ _ _, mem_univ _)
+    (λ a₁ a₂ _ _ _ _ h, subtype.eq ((mem_fixed_points' α).mp a₂.2 a₁.1 (quotient.exact' h)))
+      (λ b, quotient.induction_on' b (λ b _ hb, _)) (λ a ha _, by
+      { rw [key, mem_fixed_points_iff_card_orbit_eq_one.mp a.2] })),
+  obtain ⟨k, hk⟩ := card_orbit hG b,
+  have : k = 0 := nat.le_zero_iff.1 (nat.le_of_lt_succ (lt_of_not_ge (mt (pow_dvd_pow p)
+    (by rwa [pow_one, ←hk, ←nat.modeq_zero_iff_dvd, ←zmod.eq_iff_modeq_nat, ←key])))),
+  exact ⟨⟨b, mem_fixed_points_iff_card_orbit_eq_one.2 $ by rw [hk, this, pow_zero]⟩,
+    mem_univ _, (ne_of_eq_of_ne nat.cast_one one_ne_zero), rfl⟩,
 end
 
-lemma nonempty_fixed_point_of_prime_not_dvd_card
+lemma nonempty_fixed_point_of_prime_not_dvd_card [fact p.prime]
   (hp : ¬ p ∣ fintype.card α) :
   (mul_action.fixed_points G α).nonempty :=
 @set.nonempty_of_nonempty_subtype _ _ begin
   rw [←fintype.card_pos_iff, pos_iff_ne_zero],
   contrapose! hp,
   rw [←nat.modeq_zero_iff_dvd, ←hp],
-  exact (card_fixed_points_modeq hG α).symm,
+  exact card_modeq_card_fixed_points hG α,
 end
 
 /-- If a p-group acts on `α` and the cardinality of `α` is a multiple
@@ -177,12 +143,12 @@ end
 lemma exists_fixed_point_of_prime_dvd_card_of_fixed_point
   (hpα : p ∣ fintype.card α) {a : α} (ha : a ∈ mul_action.fixed_points G α) :
   ∃ b, b ∈ mul_action.fixed_points G α ∧ a ≠ b :=
-have hpf : p ∣ fintype.card (mul_action.fixed_points G α),
-  from nat.modeq_zero_iff_dvd.1 ((card_fixed_points_modeq α hG).trans hpα.modeq_zero_nat),
-have hα : 1 < fintype.card (mul_action.fixed_points G α),
-  from (fact.out p.prime).one_lt.trans_le (nat.le_of_dvd (fintype.card_pos_iff.2 ⟨⟨a, ha⟩⟩) hpf),
+have hpf : p ∣ fintype.card (mul_action.fixed_points G α) :=
+  nat.modeq_zero_iff_dvd.mp ((card_modeq_card_fixed_points hG α).symm.trans hpα.modeq_zero_nat),
+have hα : 1 < fintype.card (mul_action.fixed_points G α) :=
+  (fact.out p.prime).one_lt.trans_le (nat.le_of_dvd (fintype.card_pos_iff.2 ⟨⟨a, ha⟩⟩) hpf),
 let ⟨⟨b, hb⟩, hba⟩ := fintype.exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
-⟨b, hb, λ hab, hba $ by simp [hab]⟩
+⟨b, hb, λ hab, hba (by simp_rw [hab])⟩
 
 end is_p_group
 
@@ -208,73 +174,3 @@ def sylow_p_subgroups : set (p_subgroups p G) :=
 {H | ∀ K, H ≤ K → H = K}
 
 end pgroup
-
-namespace mul_action
-
-open fintype equiv finset subgroup
-open_locale big_operators classical
-
-variables {G : Type*} (α : Type*) [group G] [mul_action G α] [fintype G] [fintype α]
-  [fintype (fixed_points G α)] {p : ℕ} [fact p.prime] (hG : is_p_group p G)
-
-include hG
-
-/-- If `G` is a `p`-group acting on a finite set `α`, then the number of fixed points
-  of the action is congruent mod `p` to the cardinality of `α` -/
-lemma card_modeq_card_fixed_points' : card α ≡ card (fixed_points G α) [MOD p] :=
-calc card α = card (Σ y : quotient (orbit_rel G α), {x // quotient.mk' x = y}) :
-  card_congr (sigma_preimage_equiv (@quotient.mk' _ (orbit_rel G α))).symm
-... = ∑ a : quotient (orbit_rel G α), card {x // quotient.mk' x = a} : card_sigma _
-... ≡ ∑ a : fixed_points G α, 1 [MOD p] :
-begin
-  obtain ⟨n, hG⟩ := is_p_group_iff_card.mp hG,
-  rw [←zmod.eq_iff_modeq_nat p, nat.cast_sum, nat.cast_sum],
-  refine eq.symm (sum_bij_ne_zero (λ a _ _, quotient.mk' a.1)
-    (λ _ _ _, mem_univ _)
-    (λ a₁ a₂ _ _ _ _ h,
-      subtype.eq ((mem_fixed_points' α).1 a₂.2 a₁.1 (quotient.exact' h)))
-      (λ b, _)
-      (λ a ha _, by rw [← mem_fixed_points_iff_card_orbit_eq_one.1 a.2];
-        simp only [quotient.eq']; congr)),
-  { refine quotient.induction_on' b (λ b _ hb, _),
-    have : card (orbit G b) ∣ p ^ n,
-    { rw [← hG, fintype.card_congr (orbit_equiv_quotient_stabilizer G b)],
-      exact card_quotient_dvd_card _ },
-    rcases (nat.dvd_prime_pow (fact.out p.prime)).1 this with ⟨k, _, hk⟩,
-    have hb' :¬ p ^ 1 ∣ p ^ k,
-    { rw [pow_one, ← hk, ← nat.modeq_zero_iff_dvd, ← zmod.eq_iff_modeq_nat,
-        nat.cast_zero, ← ne.def],
-      exact eq.mpr (by simp only [quotient.eq']; congr) hb },
-    have : k = 0 := nat.le_zero_iff.1 (nat.le_of_lt_succ (lt_of_not_ge (mt (pow_dvd_pow p) hb'))),
-    refine ⟨⟨b, mem_fixed_points_iff_card_orbit_eq_one.2 $ by rw [hk, this, pow_zero]⟩,
-      mem_univ _, _, rfl⟩,
-    rw [nat.cast_one], exact one_ne_zero }
-end
-... = _ : by simp; refl
-
-/-- If a p-group acts on `α` and the cardinality of `α` is not a multiple
-  of `p` then the action has a fixed point. -/
-lemma nonempty_fixed_point_of_prime_not_dvd_card'
-  (hp : ¬ p ∣ fintype.card α) :
-  (fixed_points G α).nonempty :=
-@set.nonempty_of_nonempty_subtype _ _ begin
-  rw [← fintype.card_pos_iff, pos_iff_ne_zero],
-  assume h,
-  have := card_modeq_card_fixed_points α hG,
-  rw [h, nat.modeq_zero_iff_dvd] at this,
-  contradiction
-end
-
-/-- If a p-group acts on `α` and the cardinality of `α` is a multiple
-  of `p`, and the action has one fixed point, then it has another fixed point. -/
-lemma exists_fixed_point_of_prime_dvd_card_of_fixed_point'
-  (hpα : p ∣ fintype.card α) {a : α} (ha : a ∈ fixed_points G α) :
-  ∃ b, b ∈ fixed_points G α ∧ a ≠ b :=
-have hpf : p ∣ fintype.card (fixed_points G α),
-  from nat.modeq_zero_iff_dvd.1 ((card_modeq_card_fixed_points α hG).symm.trans hpα.modeq_zero_nat),
-have hα : 1 < fintype.card (fixed_points G α),
-  from (fact.out p.prime).one_lt.trans_le (nat.le_of_dvd (fintype.card_pos_iff.2 ⟨⟨a, ha⟩⟩) hpf),
-let ⟨⟨b, hb⟩, hba⟩ := fintype.exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
-⟨b, hb, λ hab, hba $ by simp [hab]⟩
-
-end mul_action
