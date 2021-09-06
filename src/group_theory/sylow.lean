@@ -3,12 +3,7 @@ Copyright (c) 2018 Chris Hughes. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes
 -/
-import group_theory.group_action
-import group_theory.quotient_group
-import group_theory.order_of_element
-import data.zmod.basic
-import data.fintype.card
-import data.list.rotate
+
 import group_theory.p_group
 
 /-!
@@ -26,8 +21,6 @@ In this file, currently only the first of these results is proven.
 
 ## Main statements
 
-* `exists_prime_order_of_dvd_card`: For every prime `p` dividing the order of `G` there exists an
-  element of order `p` in `G`. This is known as Cauchy`s theorem.
 * `exists_subgroup_card_pow_prime`: A generalisation of the first of the Sylow theorems: For every
   prime power `pⁿ` dividing `G`, there exists a subgroup of `G` of order `pⁿ`.
 
