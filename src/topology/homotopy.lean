@@ -124,10 +124,8 @@ def trans {f₀ f₁ f₂ : X → Y} (F : homotopy f₀ f₁) (G : homotopy f₁
       norm_num [hx] },
     exact continuous_induced_dom.comp continuous_fst,
     exact continuous_const,
-
-    -- continuity!,
-    -- unfold extend Icc_extend,
-    -- continuity,
+    -- continuity used to work here...
+    continuity,
   end,
   to_fun_zero := λ x, by norm_num,
   to_fun_one := λ x, by norm_num }
