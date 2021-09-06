@@ -152,6 +152,9 @@ by { convert continuous_curry' ⟨_, h⟩, ext, refl }
 def curry (f : C(α × β, γ)) : C(α, C(β, γ)) :=
 ⟨_, continuous_curry' f⟩
 
+@[simp]
+lemma curry_apply (f : C(α × β, γ)) (a : α) (b : β) : f.curry a b = f (a, b) := rfl
+
 /-- The currying process is a continuous map between function spaces. -/
 lemma continuous_curry [locally_compact_space (α × β)] :
   continuous (curry : C(α × β, γ) → C(α, C(β, γ))) :=

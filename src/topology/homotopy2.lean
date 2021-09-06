@@ -6,8 +6,6 @@ Authors: Shing Tak Lam
 
 import topology.unit_interval
 import topology.algebra.ordered.proj_Icc
-import topology.continuous_function.basic
-import topology.compact_open
 
 /-!
 # Homotopy between functions
@@ -31,12 +29,15 @@ variables {X : Type u} {Y : Type v} [topological_space X] [topological_space Y]
 
 open_locale unit_interval
 
-namespace continuous_map
-
 /--
 The type of homotopies between two functions.
 -/
-structure homotopy (f₀ f₁ : X → Y) extends C(I × X, Y) :=
+
+-- There are functions for which there are no homotopies between them.
+@[nolint has_inhabited_instance]
+structure homotopy (f₀ f₁ : X → Y) :=
+(to_fun : I × X → Y)
+(continuous_to_fun : continuous to_fun)
 (to_fun_zero : ∀ x, to_fun (0, x) = f₀ x)
 (to_fun_one : ∀ x, to_fun (1, x) = f₁ x)
 
@@ -46,16 +47,7 @@ section
 
 variables {f₀ f₁ : X → Y}
 
-instance : has_coe_to_fun (homotopy f₀ f₁) := ⟨_, λ F, F.to_fun⟩
-
-@[ext]
-lemma ext {F G : homotopy f₀ f₁} (h : ∀ x, F x = G x) : F = G :=
-begin
-  cases F, cases G,
-  congr' 1,
-  ext x,
-  exact h x,
-end
+instance : has_coe_to_fun (homotopy f₀ f₁) := ⟨_, homotopy.to_fun⟩
 
 @[continuity]
 protected lemma continuous (F : homotopy f₀ f₁) : continuous F := F.continuous_to_fun
@@ -65,23 +57,19 @@ lemma apply_zero (F : homotopy f₀ f₁) (x : X) : F (0, x) = f₀ x := F.to_fu
 @[simp]
 lemma apply_one (F : homotopy f₀ f₁) (x : X) : F (1, x) = f₁ x := F.to_fun_one x
 
-@[simp]
-lemma to_continuous_map_apply (F : homotopy f₀ f₁) (k : I × X) : F.to_continuous_map k = F k := rfl
+/--
+Currying a homotopy to give us a function `X → I → Y`.
+-/
+def curry (F : homotopy f₀ f₁) : I → X → Y := function.curry F
 
 /--
-Currying a homotopy
+Extending a curried homotopy to a function `X → ℝ → Y`.
 -/
-def curry (F : homotopy f₀ f₁) : C(I, C(X, Y)) := F.to_continuous_map.curry
-
-/--
-Extending a homotopy to a curried function.
--/
-def extend (F : homotopy f₀ f₁) : C(ℝ, C(X, Y)) := F.curry.Icc_extend zero_le_one
+def extend (F : homotopy f₀ f₁) : ℝ → X → Y := set.Icc_extend zero_le_one F.curry
 
 @[simp]
 lemma extend_apply_zero (F : homotopy f₀ f₁) (x : X) : F.extend 0 x = f₀ x :=
-by simp [extend, curry]
-
+  by simp [extend, curry]
 @[simp]
 lemma extend_apply_one (F : homotopy f₀ f₁) (x : X) : F.extend 1 x = f₁ x := by simp [extend, curry]
 
@@ -96,8 +84,6 @@ def refl {f : X → Y} (hf : continuous f) : homotopy f f :=
   to_fun_zero := λ _, rfl,
   to_fun_one := λ _, rfl }
 
-instance : inhabited (homotopy (id : X → X) id) := ⟨homotopy.refl continuous_id⟩
-
 /--
 Given a `homotopy f₀ f₁`, we can define a `homotopy f₁ f₀` by reversing the homotopy.
 -/
@@ -106,10 +92,6 @@ def symm {f₀ f₁ : X → Y} (F : homotopy f₀ f₁) : homotopy f₁ f₀ :=
   continuous_to_fun := by continuity,
   to_fun_zero := by norm_num,
   to_fun_one := by norm_num }
-
-@[simp]
-lemma symm_apply {f₀ f₁ : X → Y} (F : homotopy f₀ f₁) (x : X) (t : I) :
-  F.symm (t, x) = F (σ t, x) := rfl
 
 /--
 Given `homotopy f₀ f₁` and `homotopy f₁ f₂`, we can define a `homotopy f₀ f₂` by putting the first
@@ -124,14 +106,15 @@ def trans {f₀ f₁ f₂ : X → Y} (F : homotopy f₀ f₁) (G : homotopy f₁
       norm_num [hx] },
     exact continuous_induced_dom.comp continuous_fst,
     exact continuous_const,
-
-    -- continuity!,
-    -- unfold extend Icc_extend,
-    -- continuity,
+    exact (homotopy.continuous F).comp
+  ((continuous_proj_Icc.comp (continuous_const.mul (continuous_induced_dom.comp continuous_fst))).prod_mk
+     continuous_snd),
+    exact (homotopy.continuous G).comp
+  ((continuous_proj_Icc.comp
+      ((continuous_const.mul (continuous_induced_dom.comp continuous_fst)).sub continuous_const)).prod_mk
+     continuous_snd),
   end,
   to_fun_zero := λ x, by norm_num,
   to_fun_one := λ x, by norm_num }
 
 end homotopy
-
-end continuous_map
