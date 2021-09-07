@@ -374,6 +374,14 @@ begin
   exact injective.of_comp h,
 end
 
+lemma surjective_of_iterate_surjective {n : ℕ} (hn : n ≠ 0) (h : surjective ⇑(f' ^ n)) :
+  surjective f' :=
+begin
+  rw [← nat.succ_pred_eq_of_pos (pos_iff_ne_zero.mpr hn), 
+    nat.succ_eq_add_one, add_comm, pow_add] at h,
+  exact surjective.of_comp h,
+end
+
 end
 
 section
@@ -716,6 +724,9 @@ p.subtype.cod_restrict p' $ λ ⟨x, hx⟩, h hx
 
 theorem of_le_apply (h : p ≤ p') (x : p) : of_le h x = ⟨x, h x.2⟩ := rfl
 
+theorem of_le_injective (h : p ≤ p') : function.injective (of_le h) :=
+λ x y h, subtype.val_injective (subtype.mk.inj h)
+
 variables (p p')
 
 lemma subtype_comp_of_le (p q : submodule R M) (h : p ≤ q) :
@@ -816,6 +827,12 @@ lemma map_mono {f : M →ₛₗ[σ₁₂] M₂} {p p' : submodule R M} :
 have ∃ (x : M), x ∈ p := ⟨0, p.zero_mem⟩,
 ext $ by simp [this, eq_comm]
 
+lemma map_add_le (f g : M →ₗ[R] M₂) : map (f + g) p ≤ map f p + map g p :=
+begin
+  rintros x ⟨m, hm, rfl⟩,
+  exact add_mem_sup (mem_map_of_mem hm) (mem_map_of_mem hm),
+end
+
 lemma range_map_nonempty (N : submodule R M) :
   (set.range (λ ϕ, submodule.map ϕ N : (M →ₛₗ[σ₁₂] M₂) → submodule R₂ M₂)).nonempty :=
 ⟨_, set.mem_range.mpr ⟨0, rfl⟩⟩
@@ -898,6 +915,49 @@ lemma map_comap_le [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M�
 lemma le_comap_map [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M₂) (p : submodule R M) :
   p ≤ comap f (map f p) :=
 (gc_map_comap f).le_u_l _
+
+section galois_insertion
+variables {f : M →ₗ[R] M₂} (hf : surjective f)
+include hf
+
+/-- `map f` and `comap f` form a `galois_insertion` when `f` is surjective. -/
+def gi_map_comap : galois_insertion (map f) (comap f) :=
+(gc_map_comap f).to_galois_insertion
+  (λ S x hx, begin
+    rcases hf x with ⟨y, rfl⟩,
+    simp only [mem_map, mem_comap],
+    exact ⟨y, hx, rfl⟩  
+  end)
+
+lemma map_comap_eq_of_surjective (p : submodule R M₂) : (p.comap f).map f = p :=
+(gi_map_comap hf).l_u_eq _
+
+lemma map_surjective_of_surjective : function.surjective (map f) :=
+(gi_map_comap hf).l_surjective
+
+lemma comap_injective_of_surjective : function.injective (comap f) :=
+(gi_map_comap hf).u_injective
+
+lemma map_sup_comap_of_surjective (p q : submodule R M₂) : 
+  (p.comap f ⊔ q.comap f).map f = p ⊔ q :=
+(gi_map_comap hf).l_sup_u _ _
+
+lemma map_supr_comap_of_sujective (S : ι → submodule R M₂) : (⨆ i, (S i).comap f).map f = supr S :=
+(gi_map_comap hf).l_supr_u _
+
+lemma map_inf_comap_of_surjective (p q : submodule R M₂) : (p.comap f ⊓ q.comap f).map f = p ⊓ q :=
+(gi_map_comap hf).l_inf_u _ _
+
+lemma map_infi_comap_of_surjective (S : ι → submodule R M₂) : (⨅ i, (S i).comap f).map f = infi S :=
+(gi_map_comap hf).l_infi_u _
+
+lemma comap_le_comap_iff_of_surjective (p q : submodule R M₂) : p.comap f ≤ q.comap f ↔ p ≤ q :=
+(gi_map_comap hf).u_le_u_iff
+
+lemma comap_strict_mono_of_surjective : strict_mono (comap f) :=
+(gi_map_comap hf).strict_mono_u
+
+end galois_insertion
 
 section galois_coinsertion
 variables [ring_hom_surjective σ₁₂] {f : M →ₛₗ[σ₁₂] M₂} (hf : injective f)
@@ -1074,16 +1134,6 @@ begin
     exact ⟨k, add_mem _ (ik hi) (jk hj)⟩ },
   { exact λ a x i hi, ⟨i, smul_mem _ a hi⟩ },
 end
-
-lemma sum_mem_bsupr {ι : Type*} {s : finset ι} {f : ι → M} {p : ι → submodule R M}
-  (h : ∀ i ∈ s, f i ∈ p i) :
-  ∑ i in s, f i ∈ ⨆ i ∈ s, p i :=
-sum_mem _ $ λ i hi, mem_supr_of_mem i $ mem_supr_of_mem hi (h i hi)
-
-lemma sum_mem_supr {ι : Type*} [fintype ι] {f : ι → M} {p : ι → submodule R M}
-  (h : ∀ i, f i ∈ p i) :
-  ∑ i, f i ∈ ⨆ i, p i :=
-sum_mem _ $ λ i hi, mem_supr_of_mem i (h i)
 
 @[simp] theorem mem_supr_of_directed {ι} [nonempty ι]
   (S : ι → submodule R M) (H : directed (≤) S) {x} :
@@ -1420,7 +1470,8 @@ namespace quotient
 when `p` is a submodule of `M`. -/
 def mk {p : submodule R M} : M → quotient p := quotient.mk'
 
-@[simp] theorem mk_eq_mk {p : submodule R M} (x : M) : (quotient.mk x : quotient p) = mk x := rfl
+@[simp] theorem mk_eq_mk {p : submodule R M} (x : M) :
+  (@_root_.quotient.mk _ (quotient_rel p) x) = mk x := rfl
 @[simp] theorem mk'_eq_mk {p : submodule R M} (x : M) : (quotient.mk' x : quotient p) = mk x := rfl
 @[simp] theorem quot_mk_eq_mk {p : submodule R M} (x : M) : (quot.mk _ x : quotient p) = mk x := rfl
 
@@ -2050,7 +2101,6 @@ def map_subtype.order_embedding :
 
 @[simp] lemma map_subtype_embedding_eq (p' : submodule R p) :
   map_subtype.order_embedding p p' = map p.subtype p' := rfl
-
 
 /-- The map from a module `M` to the quotient of `M` by a submodule `p` as a linear map. -/
 def mkq : M →ₗ[R] p.quotient :=

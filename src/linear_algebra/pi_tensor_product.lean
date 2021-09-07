@@ -376,11 +376,11 @@ For simplicity, this is defined only for homogeneously- (rather than dependently
 -/
 def reindex (e : ι ≃ ι₂) : ⨂[R] i : ι, M ≃ₗ[R] ⨂[R] i : ι₂, M :=
 linear_equiv.of_linear
-  (((lift.symm ≫ₗ
-    (multilinear_map.dom_dom_congr_linear_equiv M (⨂[R] i : ι₂, M) R R e.symm)) ≫ₗ
+  (((lift.symm ≪≫ₗ
+    (multilinear_map.dom_dom_congr_linear_equiv M (⨂[R] i : ι₂, M) R R e.symm)) ≪≫ₗ
       lift) (linear_map.id))
-  (((lift.symm ≫ₗ
-    (multilinear_map.dom_dom_congr_linear_equiv M (⨂[R] i : ι, M) R R e)) ≫ₗ
+  (((lift.symm ≪≫ₗ
+    (multilinear_map.dom_dom_congr_linear_equiv M (⨂[R] i : ι, M) R R e)) ≪≫ₗ
       lift) (linear_map.id))
   (by { ext, simp })
   (by { ext, simp })
@@ -471,7 +471,7 @@ private lemma tmul_symm_apply (a : ι ⊕ ι₂ → M) :
 pi_tensor_product.lift.tprod _
 
 variables (R M)
-local attribute [ext] tensor_product.mk_compr₂_inj
+local attribute [ext] tensor_product.ext
 
 /-- Equivalence between a `tensor_product` of `pi_tensor_product`s and a single
 `pi_tensor_product` indexed by a `sum` type.
