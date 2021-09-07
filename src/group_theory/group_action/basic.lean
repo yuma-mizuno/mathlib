@@ -5,9 +5,8 @@ Authors: Chris Hughes
 -/
 import group_theory.group_action.defs
 import group_theory.group_action.group
-import group_theory.coset
+import group_theory.quotient_group
 import data.setoid.basic
-import data.set_like.fintype
 import data.fintype.card
 
 /-!
@@ -482,12 +481,11 @@ begin
     exact (mul_action.quotient.smul_mk H g 1).symm.trans (equiv.perm.ext_iff.mp hg (1 : G)) },
 end
 
-noncomputable instance fintype_quotient_normal_core
-  [fintype (quotient_group.quotient H)] [decidable_eq (quotient_group.quotient H)]
-  [decidable_pred (∈ (mul_action.to_perm_hom G (quotient_group.quotient H)).range)] :
+noncomputable instance fintype_quotient_normal_core [fintype (quotient_group.quotient H)] :
   fintype (quotient_group.quotient H.normal_core) :=
 begin
   rw H.normal_core_eq_ker,
+  classical,
   exact fintype.of_equiv _ (quotient_group.quotient_ker_equiv_range _).symm.to_equiv,
 end
 
