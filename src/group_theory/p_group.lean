@@ -108,48 +108,6 @@ variables (α : Type*) [mul_action G α] [fintype α] [fintype (fixed_points G �
 
 include hG
 
-lemma to_subgroup : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
-  exact λ h, hG h,
-end
-
-lemma to_quotient [H.normal] :
-  is_p_group p (quotient_group.quotient H) :=
-begin
-  refine quotient.ind' (forall_imp (λ g, _) hG),
-  exact exists_imp_exists (λ k h, (quotient_group.coe_pow H g _).symm.trans (congr_arg coe h)),
-end
-
-variables [hp : fact p.prime]
-
-include hp
-
-lemma index [fintype (quotient_group.quotient H)] :
-  ∃ n : ℕ, H.index = p ^ n :=
-begin
-  --classical,
-  obtain ⟨n, hn⟩ := iff_card.mp (hG.to_quotient H.normal_core),
-  obtain ⟨k, hk1, hk2⟩ := (nat.dvd_prime_pow hp.out).mp ((congr_arg _
-    (H.normal_core.index_eq_card.trans hn)).mp (subgroup.index_dvd_of_le H.normal_core_le)),
-  exact ⟨k, hk2⟩,
-end
-
-variables {α : Type*} [mul_action G α]
-
-lemma card_orbit (a : α) [fintype (mul_action.orbit G a)] :
-  ∃ n : ℕ, fintype.card (mul_action.orbit G a) = p ^ n :=
-begin
-  let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
-  haveI := fintype.of_equiv (mul_action.orbit G a) ϕ,
-  rw [fintype.card_congr ϕ, ←subgroup.index_eq_card],
-  exact index (mul_action.stabilizer G a) hG,
-end
-
-open finset fintype mul_action quotient
-
-variables (α) [fintype α] [fintype (fixed_points G α)]
-
 /-- If `G` is a `p`-group acting on a finite set `α`, then the number of fixed points
   of the action is congruent mod `p` to the cardinality of `α` -/
 lemma card_modeq_card_fixed_points : card α ≡ card (fixed_points G α) [MOD p] :=
