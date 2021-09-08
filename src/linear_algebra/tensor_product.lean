@@ -634,8 +634,6 @@ ext' $ λ _ _, by simp only [lift.tmul, map_tmul, linear_map.compl₂_apply, lin
 
 local attribute [ext] ext
 
-local attribute [ext] mk_compr₂_inj
-
 @[simp] lemma map_id : map (id : M →ₗ[R] M) (id : N →ₗ[R] N) = id :=
 by { ext, simp only [mk_apply, id_coe, compr₂_apply, id.def, map_tmul], }
 

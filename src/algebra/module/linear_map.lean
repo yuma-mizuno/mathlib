@@ -592,7 +592,7 @@ def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
   .. e₁₂.to_equiv.trans e₂₃.to_equiv }
 omit σ₃₁ re₁₃ re₃₁
 
-infixl ` ≫ₗ `:80 := @linear_equiv.trans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+infixl ` ≪≫ₗ `:80 := @linear_equiv.trans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
   (ring_hom.id _) (ring_hom.id _) (ring_hom.id _)
   (ring_hom.id _) (ring_hom.id _) (ring_hom.id _)
   ring_hom_comp_triple.ids ring_hom_comp_triple.ids
@@ -600,8 +600,6 @@ infixl ` ≫ₗ `:80 := @linear_equiv.trans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
   ring_hom_inv_pair.ids ring_hom_inv_pair.ids ring_hom_inv_pair.ids
 
 variables {e₁₂} {e₂₃}
-
-infixl ` ≪≫ₗ `:80 := linear_equiv.trans
 
 @[simp] lemma coe_to_add_equiv : ⇑(e.to_add_equiv) = e := rfl
 
