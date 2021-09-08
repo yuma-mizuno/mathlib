@@ -377,7 +377,7 @@ end
 lemma surjective_of_iterate_surjective {n : ℕ} (hn : n ≠ 0) (h : surjective ⇑(f' ^ n)) :
   surjective f' :=
 begin
-  rw [← nat.succ_pred_eq_of_pos (pos_iff_ne_zero.mpr hn), 
+  rw [← nat.succ_pred_eq_of_pos (pos_iff_ne_zero.mpr hn),
     nat.succ_eq_add_one, add_comm, pow_add] at h,
   exact surjective.of_comp h,
 end
@@ -827,7 +827,7 @@ lemma map_mono {f : M →ₛₗ[σ₁₂] M₂} {p p' : submodule R M} :
 have ∃ (x : M), x ∈ p := ⟨0, p.zero_mem⟩,
 ext $ by simp [this, eq_comm]
 
-lemma map_add_le (f g : M →ₗ[R] M₂) : map (f + g) p ≤ map f p + map g p :=
+lemma map_add_le (f g : M →ₛₗ[σ₁₂] M₂) : map (f + g) p ≤ map f p + map g p :=
 begin
   rintros x ⟨m, hm, rfl⟩,
   exact add_mem_sup (mem_map_of_mem hm) (mem_map_of_mem hm),
@@ -917,7 +917,8 @@ lemma le_comap_map [ring_hom_surjective σ₁₂] (f : M →ₛₗ[σ₁₂] M�
 (gc_map_comap f).le_u_l _
 
 section galois_insertion
-variables {f : M →ₗ[R] M₂} (hf : surjective f)
+variables {f : M →ₛₗ[σ₁₂] M₂} (hf : surjective f)
+variables [ring_hom_surjective σ₁₂]
 include hf
 
 /-- `map f` and `comap f` form a `galois_insertion` when `f` is surjective. -/
@@ -926,10 +927,10 @@ def gi_map_comap : galois_insertion (map f) (comap f) :=
   (λ S x hx, begin
     rcases hf x with ⟨y, rfl⟩,
     simp only [mem_map, mem_comap],
-    exact ⟨y, hx, rfl⟩  
+    exact ⟨y, hx, rfl⟩
   end)
 
-lemma map_comap_eq_of_surjective (p : submodule R M₂) : (p.comap f).map f = p :=
+lemma map_comap_eq_of_surjective (p : submodule R₂ M₂) : (p.comap f).map f = p :=
 (gi_map_comap hf).l_u_eq _
 
 lemma map_surjective_of_surjective : function.surjective (map f) :=
@@ -938,20 +939,24 @@ lemma map_surjective_of_surjective : function.surjective (map f) :=
 lemma comap_injective_of_surjective : function.injective (comap f) :=
 (gi_map_comap hf).u_injective
 
-lemma map_sup_comap_of_surjective (p q : submodule R M₂) : 
+lemma map_sup_comap_of_surjective (p q : submodule R₂ M₂) :
   (p.comap f ⊔ q.comap f).map f = p ⊔ q :=
 (gi_map_comap hf).l_sup_u _ _
 
-lemma map_supr_comap_of_sujective (S : ι → submodule R M₂) : (⨆ i, (S i).comap f).map f = supr S :=
+lemma map_supr_comap_of_sujective (S : ι → submodule R₂ M₂) :
+  (⨆ i, (S i).comap f).map f = supr S :=
 (gi_map_comap hf).l_supr_u _
 
-lemma map_inf_comap_of_surjective (p q : submodule R M₂) : (p.comap f ⊓ q.comap f).map f = p ⊓ q :=
+lemma map_inf_comap_of_surjective (p q : submodule R₂ M₂) :
+  (p.comap f ⊓ q.comap f).map f = p ⊓ q :=
 (gi_map_comap hf).l_inf_u _ _
 
-lemma map_infi_comap_of_surjective (S : ι → submodule R M₂) : (⨅ i, (S i).comap f).map f = infi S :=
+lemma map_infi_comap_of_surjective (S : ι → submodule R₂ M₂) :
+  (⨅ i, (S i).comap f).map f = infi S :=
 (gi_map_comap hf).l_infi_u _
 
-lemma comap_le_comap_iff_of_surjective (p q : submodule R M₂) : p.comap f ≤ q.comap f ↔ p ≤ q :=
+lemma comap_le_comap_iff_of_surjective (p q : submodule R₂ M₂) :
+  p.comap f ≤ q.comap f ↔ p ≤ q :=
 (gi_map_comap hf).u_le_u_iff
 
 lemma comap_strict_mono_of_surjective : strict_mono (comap f) :=
