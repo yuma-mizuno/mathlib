@@ -352,9 +352,9 @@ end
 @[ancestor distrib_lattice semilattice_inf_bot semilattice_sup_bot]
 class distrib_lattice_bot α extends distrib_lattice α, semilattice_inf_bot α, semilattice_sup_bot α
 
-@[ancestor distrib_set_lattice set_semilattice_inter_empty set_semilattice_union_univ]
+@[ancestor distrib_set_lattice set_semilattice_inter_empty set_semilattice_union_empty]
 class distrib_set_lattice_empty α extends distrib_set_lattice α, set_semilattice_inter_empty α,
-  set_semilattice_union_univ α
+  set_semilattice_union_empty α
 
 attribute [to_set_notation] distrib_lattice_bot
 

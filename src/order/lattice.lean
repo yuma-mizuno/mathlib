@@ -290,13 +290,13 @@ end semilattice_sup
 /-- A `semilattice_inf` is a meet-semilattice, that is, a partial order
   with a meet (a.k.a. glb / greatest lower bound, inf / infimum) operation
   `⊓` which is the greatest element smaller than both factors. -/
-@[protect_proj, ancestor has_inf partial_order]
+@[ancestor has_inf partial_order]
 class semilattice_inf (α : Type u) extends has_inf α, partial_order α :=
 (inf_le_left : ∀ a b : α, a ⊓ b ≤ a)
 (inf_le_right : ∀ a b : α, a ⊓ b ≤ b)
 (le_inf : ∀ a b c : α, a ≤ b → a ≤ c → a ≤ b ⊓ c)
 
-@[protect_proj, ancestor has_inter set_partial_order]
+@[ancestor has_inter set_partial_order]
 class set_semilattice_inter (α : Type u) extends has_inter α, set_partial_order α :=
 (inter_subset_left : ∀ a b : α, a ∩ b ⊆ a)
 (inter_subset_right : ∀ a b : α, a ∩ b ⊆ b)
@@ -467,10 +467,10 @@ end
 -/
 
 /-- A lattice is a join-semilattice which is also a meet-semilattice. -/
-@[protect_proj, ancestor semilattice_sup semilattice_inf]
+@[ancestor semilattice_sup semilattice_inf]
 class lattice (α : Type u) extends semilattice_sup α, semilattice_inf α
 
-@[protect_proj, ancestor set_semilattice_union set_semilattice_inter]
+@[ancestor set_semilattice_union set_semilattice_inter]
 class set_lattice (α : Type u) extends set_semilattice_union α, set_semilattice_inter α
 
 attribute [to_set_notation] lattice

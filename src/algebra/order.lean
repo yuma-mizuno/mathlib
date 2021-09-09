@@ -24,8 +24,6 @@ This file contains some lemmas about `≤`/`≥`/`<`/`>`, and `cmp`.
 universe u
 variables {α : Type u}
 
---attribute [protect_proj] preorder partial_order linear_order
-
 attribute [ancestor has_le has_lt] preorder
 attribute [ancestor preorder] partial_order
 
@@ -77,11 +75,11 @@ instance decidable_ssubset_of_decidable_subset [set_partial_order α]
 
 attribute [to_set_notation] decidable_eq_of_decidable_le decidable_lt_of_decidable_le
 
-attribute [protect_proj, ancestor partial_order] linear_order
+attribute [ancestor partial_order] linear_order
 
 /-- A linear order is reflexive, transitive, antisymmetric and total relation `≤`.
 We assume that every linear ordered type has decidable `(≤)`, `(<)`, and `(=)`. -/
-@[protect_proj, ancestor set_partial_order]
+@[ancestor set_partial_order]
 class set_linear_order (α : Type u) extends set_partial_order α :=
 (subset_total : ∀ a b : α, a ⊆ b ∨ b ⊆ a)
 (decidable_subset : decidable_rel (⊆))

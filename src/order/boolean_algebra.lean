@@ -84,12 +84,12 @@ operation `\` (called `sdiff`, after "set difference") satisfying `(a ⊓ b) ⊔
 
 This is a generalization of Boolean algebras which applies to `finset α` for arbitrary
 (not-necessarily-`fintype`) `α`. -/
-@[protect_proj, ancestor distrib_lattice_bot has_sdiff]
+@[ancestor distrib_lattice_bot has_sdiff]
 class generalized_boolean_algebra (α : Type u) extends distrib_lattice_bot α, has_sdiff α :=
 (sup_inf_sdiff : ∀a b:α, (a ⊓ b) ⊔ (a \ b) = a)
 (inf_inf_sdiff : ∀a b:α, (a ⊓ b) ⊓ (a \ b) = ⊥)
 
-@[protect_proj, ancestor distrib_set_lattice_empty has_ssdiff]
+@[ancestor distrib_set_lattice_empty has_ssdiff]
 class generalized_set_boolean_algebra (α : Type u)
   extends distrib_set_lattice_empty α, has_sdiff α :=
 (union_inter_ssdiff : ∀a b:α, (a ∩ b) ∪ (a \ b) = a)
@@ -568,12 +568,12 @@ postfix `ᶜ`:(max+1) := compl
 
 /-- This class contains the core axioms of a Boolean algebra. The `boolean_algebra` class extends
 both this class and `generalized_boolean_algebra`, see Note [forgetful inheritance]. -/
-@[protect_proj, ancestor bounded_distrib_lattice has_compl]
+@[ancestor bounded_distrib_lattice has_compl]
 class boolean_algebra.core (α : Type u) extends bounded_distrib_lattice α, has_compl α :=
 (inf_compl_le_bot : ∀x:α, x ⊓ xᶜ ≤ ⊥)
 (top_le_sup_compl : ∀x:α, ⊤ ≤ x ⊔ xᶜ)
 
-@[protect_proj, ancestor bounded_distrib_set_lattice has_compl]
+@[ancestor bounded_distrib_set_lattice has_compl]
 class set_boolean_algebra.core (α : Type u) extends bounded_distrib_set_lattice α, has_compl α :=
 (inter_compl_subset_empty : ∀x:α, x ∩ xᶜ ⊆ ∅)
 (univ_subset_union_compl : ∀x:α, has_univ.univ ⊆ x ∪ xᶜ)
@@ -688,14 +688,14 @@ satisfying `x \ y = x ⊓ yᶜ`.
 This is a generalization of (classical) logic of propositions, or
 the powerset lattice. -/
 -- Lean complains about metavariables in the type if the universe is not specified
-@[protect_proj, ancestor generalized_boolean_algebra boolean_algebra.core]
+@[ancestor generalized_boolean_algebra boolean_algebra.core]
 class boolean_algebra (α : Type u) extends generalized_boolean_algebra α, boolean_algebra.core α :=
 (sdiff_eq : ∀x y:α, x \ y = x ⊓ yᶜ)
 -- TODO: is there a way to automatically fill in the proofs of sup_inf_sdiff and inf_inf_sdiff given
 -- everything in `boolean_algebra.core` and `sdiff_eq`? The following doesn't work:
 -- (sup_inf_sdiff := λ a b, by rw [sdiff_eq, ←inf_sup_left, sup_compl_eq_top, inf_top_eq])
 
-@[protect_proj, ancestor generalized_set_boolean_algebra set_boolean_algebra.core]
+@[ancestor generalized_set_boolean_algebra set_boolean_algebra.core]
 class set_boolean_algebra (α : Type u) extends generalized_set_boolean_algebra α,
   set_boolean_algebra.core α :=
 (ssdiff_eq : ∀ s t : α, s \ t = s ∩ tᶜ)
