@@ -29,7 +29,7 @@ variables {α : Type u}
 attribute [ancestor has_le has_lt] preorder
 attribute [ancestor preorder] partial_order
 
-attribute [to_set_notation] has_le has_lt has_le.le has_lt.lt ge gt
+attribute [to_set_notation] has_le has_lt ge gt
 
 set_option old_structure_cmd true
 
@@ -50,7 +50,6 @@ attribute [to_set_notation] preorder partial_order
   gt_irrefl lt_trans gt_trans ne_of_lt ne_of_gt lt_asymm le_of_lt lt_of_lt_of_le lt_of_le_of_lt
   gt_of_gt_of_ge gt_of_ge_of_gt not_le_of_gt not_lt_of_ge le_of_lt_or_eq le_of_eq_or_lt
   le_antisymm le_antisymm_iff lt_of_le_of_ne
-  preorder.to_has_le
 
 instance decidable_eq_of_decidable_subset [set_partial_order α]
   [decidable_rel ((⊆) : α → α → Prop)] :
