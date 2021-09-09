@@ -22,7 +22,7 @@ Many of the relevant definitions, including `module`, `submodule`, and `linear_m
 
 ## Main definitions
 
-* Many constructors for linear maps
+* Many constructors for (semi)linear maps
 * `submodule.span s` is defined to be the smallest submodule containing the set `s`.
 * If `p` is a submodule of `M`, `submodule.quotient p` is the quotient of `M` with respect to `p`:
   that is, elements of `M` are identified if their difference is in `p`. This is itself a module.
@@ -38,10 +38,8 @@ Many of the relevant definitions, including `module`, `submodule`, and `linear_m
 
 ## Notations
 
-* We continue to use the notation `M →ₗ[R] M₂` for the type of linear maps from `M` to `M₂` over the
-  ring `R`.
-* We introduce the notations `M ≃ₗ M₂` and `M ≃ₗ[R] M₂` for `linear_equiv M M₂`. In the first, the
-  ring `R` is implicit.
+* We continue to use the notations `M →ₛₗ[σ] M₂` and `M →ₗ[R] M₂` for the type of semilinear
+  (resp. linear) maps from `M` to `M₂` over the ring `R` (resp. over the ring homomorphism `σ`).
 * We introduce the notation `R ∙ v` for the span of a singleton, `submodule.span R {v}`.  This is
   `\.`, not the same as the scalar multiplication `•`/`\bub`.
 

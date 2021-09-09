@@ -17,9 +17,10 @@ In this file we define
   `f (c • x) = (σ c) • (f x)`. We recover plain linear maps by choosing `σ` to be `ring_hom.id R`.
   This is denoted by `M →ₗ[R] M₂`.
 
-* `is_linear_map R f` : predicate saying that `f : M → M₂` is a linear map.
+* `is_linear_map R f` : predicate saying that `f : M → M₂` is a linear map. (Note that this
+  was not generalized to semilinear maps.)
 
-* `linear_equiv σ M ₂`, `M ≃ₛₗ[R] M₂`: an invertible semilinear map. The plain linear version,
+* `linear_equiv σ M ₂`, `M ≃ₛₗ[σ] M₂`: an invertible semilinear map. The plain linear version,
   with `σ` being `ring_hom.id R`, is denoted by `M ≃ₗ[R] M₂`.
 
 ## Implementation notes
@@ -59,10 +60,12 @@ section
 
 set_option old_structure_cmd true
 
-/-- A map `f` between modules over a semiring is linear if it satisfies the two properties
-`f (x + y) = f x + f y` and `f (c • x) = c • f x`. Elements of `linear_map R M M₂` (available under
-the notation `M →ₗ[R] M₂`) are bundled versions of such maps. An unbundled version is available
-with the predicate `is_linear_map`, but it should be avoided most of the time. -/
+/-- A map `f` between an `R`-module and an `S`-module over a ring homomorphism `σ : R →+* S`
+is semilinear if it satisfies the two properties `f (x + y) = f x + f y` and
+`f (c • x) = (σ c) • f x`. Elements of `linear_map σ M M₂` (available under the notation
+`M →ₛₗ[σ] M₂`) are bundled versions of such maps. For plain linear maps (i.e. for which
+`σ = ring_hom.id R`, the notation `M →ₗ[R] M₂` is available. An unbundled version of plain linear
+maps is available with the predicate `is_linear_map`, but it should be avoided most of the time. -/
 structure linear_map {R : Type*} {S : Type*} [semiring R] [semiring S]  (σ : R →+* S)
   (M : Type*) (M₂ : Type*)
   [add_comm_monoid M] [add_comm_monoid M₂] [module R M] [module S M₂]
@@ -599,7 +602,7 @@ variables (e₁₂ : M₁ ≃ₛₗ[σ₁₂] M₂) (e₂₃ : M₂ ≃ₛₗ[σ
 
 include σ₃₁ re₁₃ re₃₁
 /-- Linear equivalences are transitive. The linter thinks the `ring_hom_comp_triple` argument
-is oubled -- it is not. -/
+is doubled -- it is not. -/
 @[trans, nolint unused_arguments]
 def trans : M₁ ≃ₛₗ[σ₁₃] M₃ :=
 { .. e₂₃.to_linear_map.comp e₁₂.to_linear_map,
