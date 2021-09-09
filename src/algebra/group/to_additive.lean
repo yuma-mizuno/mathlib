@@ -216,8 +216,7 @@ do
       end,
   return ⟨bang, ques, tgt.get_or_else name.anonymous, doc, ff⟩
 
-private meta def proceed_fields_aux (src tgt : name) (prio : ℕ)
-  (aux_attr : user_attribute (name_map name) name) (f : name → tactic (list string)) :
+private meta def proceed_fields_aux (src tgt : name) (prio : ℕ) (f : name → tactic (list string)) :
   command :=
 do
   src_fields ← f src,
@@ -230,9 +229,8 @@ do
 
 /-- Add the `aux_attr` attribute to the structure fields of `src`
 so that future uses of `to_additive` will map them to the corresponding `tgt` fields. -/
-meta def proceed_fields (env : environment) (src tgt : name) (prio : ℕ)
-  (aux_attr : user_attribute (name_map name) name) : command :=
-let aux := proceed_fields_aux src tgt prio aux_attr in
+meta def proceed_fields (env : environment) (src tgt : name) (prio : ℕ) : command :=
+let aux := proceed_fields_aux src tgt prio in
 do
 aux (λ n, pure $ list.map name.to_string $ (env.structure_fields n).get_or_else []) >>
 aux (λ n, (list.map (λ (x : name), "to_" ++ x.to_string) <$> get_tagged_ancestors n)) >>
@@ -444,7 +442,7 @@ protected meta def attr : user_attribute unit value_type :=
     aux_attr.set src tgt tt,
     let dict := dict.insert src tgt,
     if env.contains tgt
-    then proceed_fields env src tgt prio aux_attr
+    then proceed_fields env src tgt prio
     else do
       transform_decl_with_prefix_dict dict val.replace_all val.trace ignore reorder src tgt
         [`reducible, `_refl_lemma, `simp, `instance, `refl, `symm, `trans, `elab_as_eliminator,
