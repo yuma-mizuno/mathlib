@@ -24,16 +24,16 @@ This file contains some lemmas about `≤`/`≥`/`<`/`>`, and `cmp`.
 universe u
 variables {α : Type u}
 
-attribute [protect_proj] preorder partial_order linear_order
+--attribute [protect_proj] preorder partial_order linear_order
 
 attribute [ancestor has_le has_lt] preorder
 attribute [ancestor preorder] partial_order
 
-attribute [to_set_notation] has_le has_lt ge gt
+attribute [to_set_notation] has_le has_lt has_le.le has_lt.lt ge gt
 
 set_option old_structure_cmd true
 
-@[protect_proj, ancestor has_subset has_ssubset]
+@[ancestor has_subset has_ssubset]
 class set_preorder (α : Type u) extends has_subset α, has_ssubset α :=
 (subset_refl : ∀ a : α, a ⊆ a)
 (subset_trans : ∀ a b c : α, a ⊆ b → b ⊆ c → a ⊆ c)
@@ -41,7 +41,7 @@ class set_preorder (α : Type u) extends has_subset α, has_ssubset α :=
 (ssubset_iff_subset_not_subset : ∀ a b : α, a ⊂ b ↔ (a ⊆ b ∧ ¬ b ⊆ a))
 
 /-- A partial order is a reflexive, transitive, antisymmetric relation `≤`. -/
-@[protect_proj, ancestor set_preorder]
+@[ancestor set_preorder]
 class set_partial_order (α : Type u) extends set_preorder α :=
 (subset_antisymm : ∀ a b : α, a ⊆ b → b ⊆ a → a = b)
 
@@ -119,7 +119,8 @@ alias le_of_eq        ← eq.le
 
 attribute [nolint decidable_classical] has_le.le.lt_or_eq_dec
 
-attribute [to_set_notation]
+attribute [to_set_notation] linear_order.to_partial_order linear_order.le_total
+  linear_order.decidable_le
   has_le.le.trans has_le.le.trans_lt has_le.le.antisymm has_le.le.lt_of_ne has_le.le.lt_of_not_le
   has_lt.lt.le has_lt.lt.trans has_lt.lt.trans_le has_lt.lt.ne has_lt.lt.asymm has_lt.lt.not_lt
   eq.le

@@ -63,11 +63,11 @@ attribute [pattern] has_bot.bot has_top.top
 /-- An `order_top` is a partial order with a greatest element.
   (We could state this on preorders, but then it wouldn't be unique
   so distinguishing one would seem odd.) -/
-@[protect_proj, ancestor has_top partial_order]
+@[ancestor has_top partial_order]
 class order_top (α : Type u) extends has_top α, partial_order α :=
 (le_top : ∀ a : α, a ≤ ⊤)
 
-@[protect_proj, ancestor has_univ set_partial_order]
+@[ancestor has_univ set_partial_order]
 class order_univ (α : Type u) extends has_univ α, set_partial_order α :=
 (subset_univ : ∀ s : α, s ⊆ univ)
 
@@ -134,11 +134,11 @@ end
 /-- An `order_bot` is a partial order with a least element.
   (We could state this on preorders, but then it wouldn't be unique
   so distinguishing one would seem odd.) -/
-@[protect_proj, ancestor has_bot partial_order]
+@[ancestor has_bot partial_order]
 class order_bot (α : Type u) extends has_bot α, partial_order α :=
 (bot_le : ∀ a : α, ⊥ ≤ a)
 
-@[protect_proj, ancestor has_emptyc set_partial_order]
+@[ancestor has_emptyc set_partial_order]
 class order_empty (α : Type u) extends has_emptyc α, set_partial_order α :=
 (empty_le : ∀ a : α, ∅ ⊆ a)
 
@@ -210,10 +210,10 @@ begin
 end
 
 /-- A `semilattice_sup_top` is a semilattice with top and join. -/
-@[protect_proj, ancestor order_top semilattice_sup]
+@[ancestor order_top semilattice_sup]
 class semilattice_sup_top (α : Type u) extends order_top α, semilattice_sup α
 
-@[protect_proj, ancestor order_univ set_semilattice_union]
+@[ancestor order_univ set_semilattice_union]
 class set_semilattice_union_univ (α : Type u) extends order_univ α, set_semilattice_union α
 
 attribute [to_set_notation] semilattice_sup_top
@@ -230,11 +230,11 @@ sup_of_le_right le_top
 end semilattice_sup_top
 
 /-- A `semilattice_sup_bot` is a semilattice with bottom and join. -/
-@[protect_proj, ancestor order_bot semilattice_sup]
+@[ancestor order_bot semilattice_sup]
 class semilattice_sup_bot (α : Type u) extends order_bot α, semilattice_sup α
 
 /-- A `set_semilattice_union_empty` is a semilattice with empty and union. -/
-@[protect_proj, ancestor order_empty set_semilattice_union]
+@[ancestor order_empty set_semilattice_union]
 class set_semilattice_union_empty (α : Type u) extends order_empty α, set_semilattice_union α
 
 attribute [to_set_notation] semilattice_sup_bot
@@ -257,10 +257,10 @@ instance nat.semilattice_sup_bot : semilattice_sup_bot ℕ :=
 { bot := 0, bot_le := nat.zero_le, .. nat.distrib_lattice }
 
 /-- A `semilattice_inf_top` is a semilattice with top and meet. -/
-@[protect_proj, ancestor order_top semilattice_inf]
+@[ancestor order_top semilattice_inf]
 class semilattice_inf_top (α : Type u) extends order_top α, semilattice_inf α
 
-@[protect_proj, ancestor order_univ set_semilattice_inter]
+@[ancestor order_univ set_semilattice_inter]
 class set_semilattice_inter_univ (α : Type u) extends order_univ α, set_semilattice_inter α
 
 attribute [to_set_notation] semilattice_inf_top
@@ -280,11 +280,11 @@ by rw [eq_top_iff, le_inf_iff]; simp
 end semilattice_inf_top
 
 /-- A `semilattice_inf_bot` is a semilattice with bottom and meet. -/
-@[protect_proj, ancestor order_bot semilattice_inf]
+@[ancestor order_bot semilattice_inf]
 class semilattice_inf_bot (α : Type u) extends order_bot α, semilattice_inf α
 
 /-- A `set_semilattice_inter_empty` is a set_semilattice with empty and intersection. -/
-@[protect_proj, ancestor order_empty set_semilattice_inter]
+@[ancestor order_empty set_semilattice_inter]
 class set_semilattice_inter_empty (α : Type u) extends order_empty α, set_semilattice_inter α
 
 attribute [to_set_notation] semilattice_inf_bot
@@ -305,10 +305,10 @@ end semilattice_inf_bot
 /-- A bounded lattice is a lattice with a top and bottom element,
   denoted `⊤` and `⊥` respectively. This allows for the interpretation
   of all finite suprema and infima, taking `inf ∅ = ⊤` and `sup ∅ = ⊥`. -/
-@[protect_proj, ancestor lattice order_top order_bot]
+@[ancestor lattice order_top order_bot]
 class bounded_lattice (α : Type u) extends lattice α, order_top α, order_bot α
 
-@[protect_proj, ancestor set_lattice order_univ order_empty]
+@[ancestor set_lattice order_univ order_empty]
 class bounded_set_lattice (α : Type u) extends set_lattice α, order_univ α, order_empty α
 
 attribute [to_set_notation] bounded_lattice
@@ -347,20 +347,20 @@ begin
 end
 
 /-- A `distrib_lattice_bot` is a distributive lattice with a least element. -/
-@[protect_proj, ancestor distrib_lattice emilattice_inf_bot emilattice_sup_bot]
+@[ancestor distrib_lattice semilattice_inf_bot semilattice_sup_bot]
 class distrib_lattice_bot α extends distrib_lattice α, semilattice_inf_bot α, semilattice_sup_bot α
 
-@[protect_proj, ancestor distrib_set_lattice set_semilattice_inter_empty set_semilattice_union_univ]
+@[ancestor distrib_set_lattice set_semilattice_inter_empty set_semilattice_union_univ]
 class distrib_set_lattice_empty α extends distrib_set_lattice α, set_semilattice_inter_empty α,
   set_semilattice_union_univ α
 
 attribute [to_set_notation] distrib_lattice_bot
 
 /-- A bounded distributive lattice is exactly what it sounds like. -/
-@[protect_proj, ancestor distrib_lattice bounded_lattice]
+@[ancestor distrib_lattice bounded_lattice]
 class bounded_distrib_lattice α extends distrib_lattice α, bounded_lattice α
 
-@[protect_proj, ancestor distrib_set_lattice bounded_set_lattice]
+@[ancestor distrib_set_lattice bounded_set_lattice]
 class bounded_distrib_set_lattice α extends distrib_set_lattice α, bounded_set_lattice α
 
 attribute [to_set_notation] bounded_distrib_lattice

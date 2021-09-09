@@ -85,13 +85,13 @@ infix ⊓ := has_inf.inf
 /-- A `semilattice_sup` is a join-semilattice, that is, a partial order
   with a join (a.k.a. lub / least upper bound, sup / supremum) operation
   `⊔` which is the least element larger than both factors. -/
-@[protect_proj, ancestor has_sup partial_order]
+@[ancestor has_sup partial_order]
 class semilattice_sup (α : Type u) extends has_sup α, partial_order α :=
 (le_sup_left : ∀ a b : α, a ≤ a ⊔ b)
 (le_sup_right : ∀ a b : α, b ≤ a ⊔ b)
 (sup_le : ∀ a b c : α, a ≤ c → b ≤ c → a ⊔ b ≤ c)
 
-@[protect_proj, ancestor has_union set_partial_order]
+@[ancestor has_union set_partial_order]
 class set_semilattice_union (α : Type u) extends has_union α, set_partial_order α :=
 (subset_union_left : ∀ a b : α, a ⊆ a ∪ b)
 (subset_union_right : ∀ a b : α, b ⊆ a ∪ b)
@@ -579,11 +579,11 @@ A classic example of a distributive lattice
 is the lattice of subsets of a set, and in fact this example is
 generic in the sense that every distributive lattice is realizable
 as a sublattice of a powerset lattice. -/
-@[protect_proj, ancestor lattice]
+@[ancestor lattice]
 class distrib_lattice α extends lattice α :=
 (le_sup_inf : ∀x y z : α, (x ⊔ y) ⊓ (x ⊔ z) ≤ x ⊔ (y ⊓ z))
 
-@[protect_proj, ancestor set_lattice]
+@[ancestor set_lattice]
 class distrib_set_lattice α extends set_lattice α :=
 (subset_union_inter : ∀ x y z : α, (x ∪ y) ∩ (x ∪ z) ⊆ x ∪ (y ∩ z))
 
