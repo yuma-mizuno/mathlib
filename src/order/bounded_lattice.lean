@@ -50,15 +50,17 @@ variables {α : Type u} {β : Type v}
 /-- Typeclass for the `⊥` (`\bot`) notation -/
 @[notation_class] class has_bot (α : Type u) := (bot : α)
 
-class has_univ (α : Type u) := (univ : α)
+@[notation_class] class has_univ (α : Type u) := (univ : α)
 
 notation `⊤` := has_top.top
 notation `⊥` := has_bot.bot
 
-@[priority 100] instance has_top_nonempty (α : Type u) [has_top α] : nonempty α := ⟨⊤⟩
-@[priority 100] instance has_bot_nonempty (α : Type u) [has_bot α] : nonempty α := ⟨⊥⟩
+@[priority 100, to_set_notation] instance has_top_nonempty (α : Type u) [has_top α] : nonempty α :=
+⟨⊤⟩
+@[priority 100, to_set_notation] instance has_bot_nonempty (α : Type u) [has_bot α] : nonempty α :=
+⟨⊥⟩
 
-attribute [pattern] has_bot.bot has_top.top
+attribute [pattern] has_bot.bot has_top.top has_univ.univ
 
 /-- An `order_top` is a partial order with a greatest element.
   (We could state this on preorders, but then it wouldn't be unique
@@ -106,9 +108,9 @@ lt_top_iff_ne_top.1 $ lt_of_lt_of_le h le_top
 lemma eq_top_of_maximal (h : ∀ b, ¬ a < b) : a = ⊤ :=
 or.elim (lt_or_eq_of_le le_top) (λ hlt, absurd hlt (h ⊤)) (λ he, he)
 
-lemma ne.lt_top (h : a ≠ ⊤) : a < ⊤ := lt_top_iff_ne_top.mpr h
+@[to_set_notation] lemma ne.lt_top (h : a ≠ ⊤) : a < ⊤ := lt_top_iff_ne_top.mpr h
 
-lemma ne.lt_top' (h : ⊤ ≠ a) : a < ⊤ := h.symm.lt_top
+@[to_set_notation] lemma ne.lt_top' (h : ⊤ ≠ a) : a < ⊤ := h.symm.lt_top
 
 end order_top
 
@@ -184,9 +186,9 @@ bot_lt_iff_ne_bot.1 $ lt_of_le_of_lt bot_le h
 lemma eq_bot_of_minimal (h : ∀ b, ¬ b < a) : a = ⊥ :=
 or.elim (lt_or_eq_of_le bot_le) (λ hlt, absurd hlt (h ⊥)) (λ he, he.symm)
 
-lemma ne.bot_lt (h : a ≠ ⊥) : ⊥ < a := bot_lt_iff_ne_bot.mpr h
+@[to_set_notation] lemma ne.bot_lt (h : a ≠ ⊥) : ⊥ < a := bot_lt_iff_ne_bot.mpr h
 
-lemma ne.bot_lt' (h : ⊥ ≠ a) : ⊥ < a := h.symm.bot_lt
+@[to_set_notation] lemma ne.bot_lt' (h : ⊥ ≠ a) : ⊥ < a := h.symm.bot_lt
 
 end order_bot
 
