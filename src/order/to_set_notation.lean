@@ -90,7 +90,7 @@ protected meta def attr : user_attribute unit to_additive.value_type :=
     env ← get_env,
     val ← attr.get_param src,
     dict ← aux_attr.get_cache,
-    tgt ← to_additive.target_name "to_set_notation" src val.tgt dict guess_name,
+    tgt ← to_additive.target_name "to_set_notation" src val.tgt dict guess_name val.allow_auto_name,
     aux_attr.set src tgt tt,
     let dict := dict.insert src tgt,
     if env.contains tgt

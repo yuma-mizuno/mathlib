@@ -6,7 +6,7 @@ Authors: Nicolò Cavalleri
 
 import topology.subset_properties
 import topology.tactic
-import topology.algebra.ordered.basic
+import topology.algebra.ordered.proj_Icc
 
 /-!
 # Continuous bundled map
@@ -81,7 +81,7 @@ end
 /-- The identity as a continuous map. -/
 def id : C(α, α) := ⟨id⟩
 
-@[simp] lemma id_coe : (id : α → α) = id := rfl
+@[simp] lemma id_coe : (id : α → α) = _root_.id := rfl
 lemma id_apply (a : α) : id a = a := rfl
 
 /-- The composition of continuous maps, as a continuous map. -/
@@ -206,6 +206,20 @@ lemma inf'_coe {ι : Type*} {s : finset ι} (H : s.nonempty) (f : ι → C(β, �
 end inf'
 
 end lattice
+
+section extend
+
+variables [linear_order α] [order_topology α] {a b : α} (h : a ≤ b)
+
+/--
+Extend a continuous function `f : C(set.Icc a b, β)` to a function `f : C(α, β)`.
+-/
+def Icc_extend (f : C(set.Icc a b, β)) : C(α, β) := ⟨set.Icc_extend h f⟩
+
+@[simp] lemma coe_Icc_extend (f : C(set.Icc a b, β)) :
+  ((Icc_extend h f : C(α, β)) : α → β) = set.Icc_extend h f := rfl
+
+end extend
 
 end continuous_map
 

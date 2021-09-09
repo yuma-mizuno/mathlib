@@ -3,9 +3,8 @@ Copyright (c) 2020 Yury Kudryashov All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov, Frédéric Dupuis
 -/
-import linear_algebra.linear_pmap
 import analysis.convex.basic
-import order.zorn
+import analysis.normed_space.inner_product
 
 /-!
 # Convex cones
@@ -19,6 +18,9 @@ We define pointed, blunt, flat and salient cones, and prove the correspondence b
 convex cones and ordered modules.
 
 We also define `convex.to_cone` to be the minimal cone that includes a given convex set.
+
+We define `set.inner_dual_cone` to be the cone consisting of all points `y` such that for
+all points `x` in a given set `0 ≤ ⟪ x, y ⟫`.
 
 ## Main statements
 
@@ -45,15 +47,12 @@ While `convex` is a predicate on sets, `convex_cone` is a bundled convex cone.
 
 * https://en.wikipedia.org/wiki/Convex_cone
 
-## TODO
-
-* Define the dual cone.
 -/
 
 universes u v
 
 open set linear_map
-open_locale classical
+open_locale classical pointwise
 
 variables (E : Type*) [add_comm_group E] [module ℝ E]
   {F : Type*} [add_comm_group F] [module ℝ F]
@@ -193,9 +192,9 @@ ext' $ preimage_comp.symm
 Constructs an ordered module given an `ordered_add_comm_group`, a cone, and a proof that
 the order relation is the one defined by the cone.
 -/
-lemma to_ordered_module {M : Type*} [ordered_add_comm_group M] [module ℝ M]
-  (S : convex_cone M) (h : ∀ x y : M, x ≤ y ↔ y - x ∈ S) : ordered_module ℝ M :=
-ordered_module.mk'
+lemma to_ordered_smul {M : Type*} [ordered_add_comm_group M] [module ℝ M]
+  (S : convex_cone M) (h : ∀ x y : M, x ≤ y ↔ y - x ∈ S) : ordered_smul ℝ M :=
+ordered_smul.mk'
 begin
   intros x y z xy hz,
   rw [h (z • x) (z • y), ←smul_sub z y x],
@@ -276,7 +275,7 @@ def to_ordered_add_comm_group (S : convex_cone E) (h₁ : pointed S) (h₂ : sal
 /-! ### Positive cone of an ordered module -/
 section positive_cone
 
-variables (M : Type*) [ordered_add_comm_group M] [module ℝ M] [ordered_module ℝ M]
+variables (M : Type*) [ordered_add_comm_group M] [module ℝ M] [ordered_smul ℝ M]
 
 /--
 The positive cone is the convex cone formed by the set of nonnegative elements in an ordered
@@ -478,7 +477,7 @@ end
 
 end riesz_extension
 
-/-- M. Riesz extension theorem: given a convex cone `s` in a vector space `E`, a submodule `p`,
+/-- M. **Riesz extension theorem**: given a convex cone `s` in a vector space `E`, a submodule `p`,
 and a linear `f : p → ℝ`, assume that `f` is nonnegative on `p ∩ s` and `p + s = E`. Then
 there exists a globally defined linear function `g : E → ℝ` that agrees with `f` on `p`,
 and is nonnegative on `s`. -/
@@ -488,13 +487,13 @@ theorem riesz_extension (s : convex_cone E) (f : linear_pmap ℝ E ℝ)
 begin
   rcases riesz_extension.exists_top s f nonneg dense with ⟨⟨g_dom, g⟩, ⟨hpg, hfg⟩, htop, hgs⟩,
   clear hpg,
-  refine ⟨g.comp (linear_equiv.of_top _ htop).symm, _, _⟩;
+  refine ⟨g ∘ₗ ↑(linear_equiv.of_top _ htop).symm, _, _⟩;
     simp only [comp_apply, linear_equiv.coe_coe, linear_equiv.of_top_symm_apply],
   { exact λ x, (hfg (submodule.coe_mk _ _).symm).symm },
   { exact λ x hx, hgs ⟨x, _⟩ hx }
 end
 
-/-- Hahn-Banach theorem: if `N : E → ℝ` is a sublinear map, `f` is a linear map
+/-- **Hahn-Banach theorem**: if `N : E → ℝ` is a sublinear map, `f` is a linear map
 defined on a subspace of `E`, and `f x ≤ N x` for all `x` in the domain of `f`,
 then `f` can be extended to the whole space to a linear map `g` such that `g x ≤ N x`
 for all `x`. -/
@@ -518,7 +517,7 @@ begin
   { intros x y,
     simpa only [subtype.coe_mk, subtype.coe_eta] using g_eq ⟨(x, y), ⟨x.2, trivial⟩⟩ },
   { refine ⟨-g.comp (inl ℝ E ℝ), _, _⟩; simp only [neg_apply, inl_apply, comp_apply],
-    { intro x, simp  [g_eq x 0] },
+    { intro x, simp [g_eq x 0] },
     { intro x,
       have A : (x, N x) = (x, 0) + (0, N x), by simp,
       have B := g_nonneg ⟨x, N x⟩ (le_refl (N x)),
@@ -532,3 +531,42 @@ begin
     simp only [convex_cone.mem_mk, mem_set_of_eq, subtype.coe_mk, prod.fst_add, prod.snd_add,
       zero_add, sub_add_cancel] }
 end
+
+/-!
+### The dual cone
+-/
+section dual
+
+variables {H : Type*} [inner_product_space ℝ H] (s t : set H)
+open_locale real_inner_product_space
+
+/-- The dual cone is the cone consisting of all points `y` such that for
+all points `x` in a given set `0 ≤ ⟪ x, y ⟫`. -/
+noncomputable def set.inner_dual_cone (s : set H) : convex_cone H :=
+{ carrier := { y | ∀ x ∈ s, 0 ≤ ⟪ x, y ⟫ },
+  smul_mem' := λ c hc y hy x hx,
+  begin
+    rw real_inner_smul_right,
+    exact mul_nonneg (le_of_lt hc) (hy x hx)
+  end,
+  add_mem' := λ u hu v hv x hx,
+  begin
+    rw inner_add_right,
+    exact add_nonneg (hu x hx) (hv x hx)
+  end }
+
+lemma mem_inner_dual_cone (y : H) (s : set H) :
+  y ∈ s.inner_dual_cone ↔ ∀ x ∈ s, 0 ≤ ⟪ x, y ⟫ := by refl
+
+@[simp] lemma inner_dual_cone_empty : (∅ : set H).inner_dual_cone = ⊤ :=
+convex_cone.ext' (eq_univ_of_forall
+  (λ x y hy, false.elim (set.not_mem_empty _ hy)))
+
+lemma inner_dual_cone_le_inner_dual_cone (h : t ⊆ s) :
+  s.inner_dual_cone ≤ t.inner_dual_cone :=
+λ y hy x hx, hy x (h hx)
+
+lemma pointed_inner_dual_cone : s.inner_dual_cone.pointed :=
+λ x hx, by rw inner_zero_right
+
+end dual

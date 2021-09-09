@@ -355,7 +355,7 @@ end
 
 theorem norm_nonarchimedean (f g : padic_seq p) : (f + g).norm ≤ max (f.norm) (g.norm) :=
 if hfg : f + g ≈ 0 then
-  have 0 ≤ max (f.norm) (g.norm), from le_max_left_of_le (norm_nonneg _),
+  have 0 ≤ max (f.norm) (g.norm), from le_max_of_le_left (norm_nonneg _),
   by simpa only [hfg, norm, ne.def, le_max_iff, cau_seq.add_apply, not_true, dif_pos]
 else if hf : f ≈ 0 then
   have hfg' : f + g ≈ g,
@@ -907,7 +907,7 @@ begin
       simp only [neg_eq_zero],
       rw padic_val_rat.padic_val_rat_of_int _ hp.1.ne_one H,
       norm_cast,
-      rw [← enat.coe_inj, enat.coe_get, enat.coe_zero],
+      rw [← enat.coe_inj, enat.coe_get, nat.cast_zero],
       apply multiplicity.multiplicity_eq_zero_of_not_dvd h } },
   { rintro ⟨x, rfl⟩,
     push_cast,

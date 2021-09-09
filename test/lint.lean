@@ -57,15 +57,15 @@ return $ if d.to_name.last = "foo" then some "gotcha!" else none
 meta def linter.dummy_linter : linter :=
 { test := dummy_check,
   auto_decls := ff,
-  no_errors_found := "found nothing",
-  errors_found := "found something" }
+  no_errors_found := "found nothing.",
+  errors_found := "found something:" }
 
 @[nolint dummy_linter]
 def bar.foo : (if 3 = 3 then 1 else 2) = 1 := if_pos (by refl)
 
 run_cmd do
   (_, s) ← lint tt lint_verbosity.medium [`linter.dummy_linter] tt,
-  guard $ "/- found something: -/\n#print foo.foo /- gotcha! -/\n".is_suffix_of s.to_string
+  guard $ "/- found something: -/\n#check @foo.foo /- gotcha! -/\n".is_suffix_of s.to_string
 
 def incorrect_type_class_argument_test {α : Type} (x : α) [x = x] [decidable_eq α] [group α] :
   unit := ()
