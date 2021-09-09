@@ -63,6 +63,27 @@ begin
   exact λ h, hK ⟨h, hHK h.2⟩,
 end
 
+lemma to_inf_left {H K : subgroup G} (hH : is_p_group p H) : is_p_group p (H ⊓ K : subgroup G) :=
+hH.to_le inf_le_left
+
+lemma to_inf_right {H K : subgroup G} (hK : is_p_group p K) : is_p_group p (H ⊓ K : subgroup G) :=
+hK.to_le inf_le_right
+
+lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
+begin
+  replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
+  -- K is a normal subgroup of H ⊔ K
+  -- quotient by K
+  -- iso theorem!
+  -- etc...
+  sorry
+end
+
+lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
+(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)
+
 variables (hG : is_p_group p G)
 
 include hG
@@ -219,14 +240,30 @@ instance (H : subgroup G) : mul_action H (sylow p G) :=
   one_smul := sorry,
   mul_smul := sorry }
 
+--mem_smul lemma
+
+lemma subgroup.sylow_mem_fixed_points_iff
+  (H : subgroup G) {K : sylow p G} :
+  K ∈ mul_action.fixed_points H (sylow p G) ↔ H ≤ K.1.normalizer :=
+begin
+  refine ⟨λ h g hg k, _, λ h g, _⟩,
+  have key := h ⟨g, hg⟩,
+  sorry,
+  have key := h g.2,
+  refine subtype.ext (subgroup.ext (λ k, _)),
+  sorry
+end
+
+lemma is_p_group_inf_normalizer_sylow {H : subgroup G} (hH : is_p_group p H) (K : sylow p G) :
+  H ⊓ K.1.normalizer = H ⊓ K :=
+le_antisymm (le_inf inf_le_left (sup_eq_right.mp (K.2.2 (H ⊓ K.1.normalizer ⊔ K)
+  (hH.to_inf_left.to_sup_left K.2.1 inf_le_right) le_sup_right)))
+  (inf_le_inf_left H subgroup.le_normalizer)
+
 lemma is_p_group.sylow_mem_fixed_points_iff
   {H : subgroup G} (hH : is_p_group p H) {K : sylow p G} :
   K ∈ mul_action.fixed_points H (sylow p G) ↔ H ≤ K :=
-begin
-  split,
-  { sorry },
-  { sorry },
-end
+by rw [H.sylow_mem_fixed_points_iff, ←inf_eq_left, is_p_group_inf_normalizer_sylow hH, inf_eq_left]
 
 variables (p) (G)
 
