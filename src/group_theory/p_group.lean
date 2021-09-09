@@ -16,6 +16,8 @@ then the number of fixed points of the action is congruent mod `p` to the cardin
 It also contains proofs of some corollaries of this lemma about existence of fixed points.
 -/
 
+section temp
+
 open_locale big_operators
 
 variables (p : ℕ) (G : Type*) [group G]
@@ -35,6 +37,9 @@ forall_congr (λ g, ⟨λ ⟨k, hk⟩, exists_imp_exists (by exact λ j, Exists.
 
 lemma of_card [fintype G] {n : ℕ} (hG : fintype.card G = p ^ n) : is_p_group p G :=
 λ g, ⟨n, by rw [←hG, pow_card_eq_one]⟩
+
+lemma of_bot : is_p_group p (⊥ : subgroup G) :=
+of_card (show fintype.card (⊥ : subgroup G) = p ^ 0, from subgroup.card_bot)
 
 lemma iff_card [fact p.prime] [fintype G] :
   is_p_group p G ↔ ∃ n : ℕ, fintype.card G = p ^ n :=
@@ -157,23 +162,84 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 
 end mul_action
 
-/-- The set of p-subgroups of G -/
-def p_subgroups : set (subgroup G) :=
-{H | is_p_group p H}
+end temp
+
+variables (p : ℕ) (G : Type*) [group G]
+
+def sylow : set (subgroup G) :=
+{H | is_p_group p H ∧ ∀ K : subgroup G, is_p_group p K → H ≤ K → K = H}
 
 variables {p} {G}
 
-instance : semilattice_inf_bot (p_subgroups p G) :=
-{ bot := ⟨⊥, λ g, ⟨0, (pow_one g).trans (subtype.ext (subgroup.mem_bot.mp g.2))⟩⟩,
-  bot_le := λ P, @bot_le (subgroup G) _ P,
-  inf := λ H K, ⟨H ⊓ K, H.2.to_le (inf_le_left)⟩,
-  inf_le_left := λ H K, @inf_le_left (subgroup G) _ H K,
-  inf_le_right := λ H K, @inf_le_right (subgroup G) _ H K,
-  le_inf := λ H K L hHK hHL, @le_inf (subgroup G) _ H K L hHK hHL,
-  .. subtype.partial_order _ }
+lemma is_p_group.exists_le_sylow {H : subgroup G} (hH : is_p_group p H) :
+  ∃ K : sylow p G, H ≤ K :=
+begin
+  suffices : ∃ (K : subgroup G) (hK : is_p_group p K), H ≤ K ∧ ∀ L : subgroup G,
+    is_p_group p L → K ≤ L → L = K,
+  { obtain ⟨K, hK1, hK2, hK3⟩ := this,
+    exact ⟨⟨K, hK1, hK3⟩, hK2⟩ },
+  refine zorn.zorn_nonempty_partial_order₀ {K | is_p_group p K} (λ c hc1 hc2 K hK, _) H hH,
+  let L : subgroup G :=
+  { carrier := ⋃ (Q : c), Q,
+    one_mem' := ⟨K, ⟨⟨K, hK⟩, rfl⟩, K.one_mem⟩,
+    inv_mem' := λ g ⟨_, ⟨L, rfl⟩, hg⟩, ⟨L, ⟨L, rfl⟩, L.1.inv_mem hg⟩,
+    mul_mem' := λ g h ⟨_, ⟨L, rfl⟩, hg⟩ ⟨_, ⟨M, rfl⟩, hh⟩, (hc2.total_of_refl L.2 M.2).elim
+      (λ H, ⟨M, ⟨M, rfl⟩, M.1.mul_mem (H hg) hh⟩) (λ H, ⟨L, ⟨L, rfl⟩, L.1.mul_mem hg (H hh)⟩) },
+  exact ⟨L, λ ⟨g, _, ⟨M, rfl⟩, hg⟩, by
+  { refine exists_imp_exists (λ k hk, subtype.ext _) (hc1 M.2 ⟨g, hg⟩),
+    exact (L.coe_pow _ _).trans ((M.1.coe_pow _ _).symm.trans (subtype.ext_iff.mp hk)) },
+  λ M hM g hg, ⟨M, ⟨⟨M, hM⟩, rfl⟩, hg⟩⟩,
+end
+
+instance sylow_nonempty : nonempty (sylow p G) :=
+nonempty_of_exists is_p_group.of_bot.exists_le_sylow
+
+--note: fintype.of_injective makes this noncomputable, so might as well use classical
+noncomputable instance [fintype G] : fintype (sylow p G) :=
+@subtype.fintype _ _ (λ _, classical.prop_decidable _)
+  (fintype.of_injective subgroup.carrier (λ _ _ h, subgroup.ext (set.ext_iff.mp h)))
+
+instance mul_action' : mul_action G (subgroup G) :=
+{ smul := λ g H, H.comap (mul_aut.conj g)⁻¹.to_monoid_hom,
+  one_smul := λ H, by
+  { change H.comap (mul_aut.conj (1 : G))⁻¹.to_monoid_hom = H,
+    rw mul_aut.conj.map_one,
+    ext,
+    refl },
+  mul_smul := λ g h H, by
+  { change H.comap (mul_aut.conj (g * h))⁻¹.to_monoid_hom = _,
+    rw mul_aut.conj.map_mul,
+    refl } }
+
+-- is_p_group preserved under smul
+-- mem_sylow preserved under smul
+
+instance (H : subgroup G) : mul_action H (sylow p G) :=
+{ smul := λ g K, ⟨g • K, sorry⟩,
+  one_smul := sorry,
+  mul_smul := sorry }
+
+lemma is_p_group.sylow_mem_fixed_points_iff
+  {H : subgroup G} (hH : is_p_group p H) {K : sylow p G} :
+  K ∈ mul_action.fixed_points H (sylow p G) ↔ H ≤ K :=
+begin
+  split,
+  { sorry },
+  { sorry },
+end
 
 variables (p) (G)
 
-/-- The set of Sylow p-subgroups of G -/
-def sylow_p_subgroups : set (p_subgroups p G) :=
-{H | ∀ K, H ≤ K → H = K}
+lemma card_sylow_modeq_one [fact p.prime] [fintype (sylow p G)] :
+  fintype.card (sylow p G) ≡ 1 [MOD p] :=
+begin
+  refine sylow_nonempty.elim (λ H : sylow p G, _),
+  have key : mul_action.fixed_points H.1 (sylow p G) = {H} :=
+  set.eq_singleton_iff_unique_mem.mpr ⟨H.2.1.sylow_mem_fixed_points_iff.mpr le_rfl,
+    λ K hK, subtype.ext (H.2.2 K K.2.1 (H.2.1.sylow_mem_fixed_points_iff.mp hK))⟩,
+  haveI : fintype (mul_action.fixed_points H.1 (sylow p G)) :=
+  by { rw key, exact set.fintype_singleton H },
+  calc fintype.card (sylow p G) ≡ fintype.card (mul_action.fixed_points H.1 (sylow p G)) [MOD p] :
+    mul_action.card_modeq_card_fixed_points (sylow p G) H.2.1
+  ... = 1 : by simp_rw key; convert set.card_singleton H,
+end
