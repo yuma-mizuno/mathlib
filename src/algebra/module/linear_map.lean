@@ -8,15 +8,29 @@ import algebra.module.basic
 import algebra.group_action_hom
 
 /-!
-# Linear maps and linear equivalences
+# (Semi)linear maps and (semi)linear equivalences
 
 In this file we define
 
-* `linear_map R M M₂`, `M →ₗ[R] M₂` : a linear map between two R-`module`s.
+* `linear_map σ M M₂`, `M →ₛₗ[σ] M₂` : a semilinear map between two `module`s. Here,
+  `σ` is a `ring_hom` from `R` to `R₂` and an `f : M →ₛₗ[σ] M₂` satisfies
+  `f (c • x) = (σ c) • (f x)`. We recover plain linear maps by choosing `σ` to be `ring_hom.id R`.
+  This is denoted by `M →ₗ[R] M₂`.
 
 * `is_linear_map R f` : predicate saying that `f : M → M₂` is a linear map.
 
-* `linear_equiv R M ₂`, `M ≃ₗ[R] M₂`: an invertible linear map
+* `linear_equiv σ M ₂`, `M ≃ₛₗ[R] M₂`: an invertible semilinear map. The plain linear version,
+  with `σ` being `ring_hom.id R`, is denoted by `M ≃ₗ[R] M₂`.
+
+## Implementation notes
+
+To ensure that composition works smoothly for semilinear maps, we use the following typeclasses
+  for `ring_hom`s defined in `algebra/ring/basic`:
+* `ring_hom_comp_triple σ₁₂ σ₂₃ σ₁₃`, which states that `σ₁₃ = σ₂₃.comp σ₁₂`.
+* `ring_hom_inv_pair σ σ'`, which state that `σ` and `σ'` are inverses of each other.
+* `ring_hom_surjective σ`, which states that `σ` is surjective.
+These typeclasses ensure that objects such as `σ₂₃.comp σ₁₂` never end up in the type of a
+semilinear map; instead, the typeclass system directly finds the appropriate `ring_hom` to use.
 
 ## Tags
 
