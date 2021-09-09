@@ -207,7 +207,8 @@ calc x ⊓ (y \ x) = ((x ⊓ y) ⊔ (x \ y)) ⊓ (y \ x)         : by rw sup_inf
              ... = (x ⊓ y) ⊓ (y \ x) ⊔ (x \ y) ⊓ (y \ x) : by rw inf_sup_right
              ... = ⊥         : by rw [@inf_comm _ _ x y, inf_inf_sdiff, sdiff_inf_sdiff, bot_sup_eq]
 
-@[simp, to_set_notation] theorem inf_sdiff_self_left : (y \ x) ⊓ x = ⊥ := by rw [inf_comm, inf_sdiff_self_right]
+@[simp, to_set_notation] theorem inf_sdiff_self_left : (y \ x) ⊓ x = ⊥ :=
+by rw [inf_comm, inf_sdiff_self_right]
 
 @[to_set_notation] theorem disjoint_sdiff : disjoint x (y \ x) := inf_sdiff_self_right.le
 
