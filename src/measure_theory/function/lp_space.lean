@@ -559,6 +559,48 @@ lemma mem_ℒp.restrict (s : set α) {f : α → E} (hf : mem_ℒp f p μ) :
   mem_ℒp f p (μ.restrict s) :=
 hf.mono_measure measure.restrict_le_self
 
+lemma snorm'_smul_measure {p : ℝ} (hp : 0 ≤ p) {f : α → F} (c : ℝ≥0∞) :
+  snorm' f p (c • μ) = c ^ (1 / p) * snorm' f p μ :=
+by { rw [snorm', lintegral_smul_measure, ennreal.mul_rpow_of_nonneg, snorm'], simp [hp], }
+
+lemma snorm_ess_sup_smul_measure {f : α → F} {c : ℝ≥0∞} (hc : c ≠ 0) :
+  snorm_ess_sup f (c • μ) = snorm_ess_sup f μ :=
+by { simp_rw [snorm_ess_sup], exact ess_sup_smul_measure hc, }
+
+/-- Use `snorm_smul_measure_of_ne_top` instead. -/
+private lemma snorm_smul_measure_of_ne_zero_of_ne_top {p : ℝ≥0∞} (hp_ne_zero : p ≠ 0)
+  (hp_ne_top : p ≠ ∞) {f : α → F} (c : ℝ≥0∞) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  simp_rw snorm_eq_snorm' hp_ne_zero hp_ne_top,
+  rw snorm'_smul_measure ennreal.to_real_nonneg,
+  congr,
+  simp_rw one_div,
+  rw ennreal.to_real_inv,
+end
+
+lemma snorm_smul_measure_of_ne_zero {p : ℝ≥0∞} {f : α → F} {c : ℝ≥0∞} (hc : c ≠ 0) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  by_cases hp0 : p = 0,
+  { simp [hp0], },
+  by_cases hp_top : p = ∞,
+  { simp [hp_top, snorm_ess_sup_smul_measure hc], },
+  exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_top c,
+end
+
+lemma snorm_smul_measure_of_ne_top {p : ℝ≥0∞} (hp_ne_top : p ≠ ∞) {f : α → F} (c : ℝ≥0∞) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  by_cases hp0 : p = 0,
+  { simp [hp0], },
+  { exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_ne_top c, },
+end
+
+lemma snorm_one_smul_measure {f : α → F} (c : ℝ≥0∞) :
+  snorm f 1 (c • μ) = c * snorm f 1 μ :=
+by { rw @snorm_smul_measure_of_ne_top _ _ _ μ _ 1 (@ennreal.coe_ne_top 1) f c, simp, }
+
 section opens_measurable_space
 variable [opens_measurable_space E]
 

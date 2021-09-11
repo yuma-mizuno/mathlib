@@ -179,48 +179,6 @@ h.mono_measure $ measure.le_add_left $ le_refl _
   has_finite_integral f (μ + ν) ↔ has_finite_integral f μ ∧ has_finite_integral f ν :=
 ⟨λ h, ⟨h.left_of_add_measure, h.right_of_add_measure⟩, λ h, h.1.add_measure h.2⟩
 
-lemma snorm'_smul_measure {p : ℝ} (hp : 0 ≤ p) {f : α → β} (c : ℝ≥0∞) :
-  snorm' f p (c • μ) = c ^ (1 / p) * snorm' f p μ :=
-by { rw [snorm', lintegral_smul_measure, mul_rpow_of_nonneg, snorm'], simp [hp], }
-
-lemma snorm_ess_sup_smul_measure {f : α → β} {c : ℝ≥0∞} (hc : c ≠ 0) :
-  snorm_ess_sup f (c • μ) = snorm_ess_sup f μ :=
-by { simp_rw [snorm_ess_sup], exact ess_sup_smul_measure hc, }
-
-/-- Use `snorm_smul_measure_of_ne_top` instead. -/
-private lemma snorm_smul_measure_of_ne_zero_of_ne_top {p : ℝ≥0∞} (hp_ne_zero : p ≠ 0)
-  (hp_ne_top : p ≠ ∞) {f : α → β} (c : ℝ≥0∞) :
-  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
-begin
-  simp_rw snorm_eq_snorm' hp_ne_zero hp_ne_top,
-  rw snorm'_smul_measure ennreal.to_real_nonneg,
-  congr,
-  simp_rw one_div,
-  rw ennreal.to_real_inv,
-end
-
-lemma snorm_smul_measure_of_ne_zero {p : ℝ≥0∞} {f : α → β} {c : ℝ≥0∞} (hc : c ≠ 0) :
-  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
-begin
-  by_cases hp0 : p = 0,
-  { simp [hp0], },
-  by_cases hp_top : p = ∞,
-  { simp [hp_top, snorm_ess_sup_smul_measure hc], },
-  exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_top c,
-end
-
-lemma snorm_smul_measure_of_ne_top {p : ℝ≥0∞} (hp_ne_top : p ≠ ∞) {f : α → β} (c : ℝ≥0∞) :
-  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
-begin
-  by_cases hp0 : p = 0,
-  { simp [hp0], },
-  { exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_ne_top c, },
-end
-
-lemma snorm_one_smul_measure {f : α → β} (c : ℝ≥0∞) :
-  snorm f 1 (c • μ) = c * snorm f 1 μ :=
-by { rw @snorm_smul_measure_of_ne_top _ _ _ μ _ 1 (@ennreal.coe_ne_top 1) f c, simp, }
-
 lemma has_finite_integral.smul_measure {f : α → β} (h : has_finite_integral f μ) {c : ℝ≥0∞}
   (hc : c < ∞) : has_finite_integral f (c • μ) :=
 by { rw [has_finite_integral, snorm_one_smul_measure], exact mul_lt_top hc h, }
