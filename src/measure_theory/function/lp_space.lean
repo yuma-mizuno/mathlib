@@ -236,6 +236,9 @@ by convert snorm_zero
 lemma zero_mem_ℒp : mem_ℒp (0 : α → E) p μ :=
 ⟨measurable_zero.ae_measurable, by { rw snorm_zero, exact ennreal.coe_lt_top, } ⟩
 
+lemma zero_mem_ℒp' : mem_ℒp (λ x : α, (0 : E)) p μ :=
+by convert zero_mem_ℒp
+
 variables [measurable_space α]
 
 lemma snorm'_measure_zero_of_pos {f : α → F} (hq_pos : 0 < q) :
@@ -650,12 +653,14 @@ end
 lemma snorm_sub_le {f g : α → E} (hf : ae_measurable f μ) (hg : ae_measurable g μ) (hp1 : 1 ≤ p) :
   snorm (f - g) p μ ≤ snorm f p μ + snorm g p μ :=
 calc snorm (f - g) p μ = snorm (f + - g) p μ : by rw sub_eq_add_neg
+  -- We cannot use snorm_add_le on f and (-g) because we don't have `ae_measurable (-g) μ`, since
+  -- we don't suppose `[borel_space E]`.
 ... = snorm (λ x, ∥f x + - g x∥) p μ : (snorm_norm (f + - g)).symm
 ... ≤ snorm (λ x, ∥f x∥ + ∥- g x∥) p μ : by
 { refine snorm_mono_real (λ x, _), rw norm_norm, exact norm_add_le _ _, }
 ... = snorm (λ x, ∥f x∥ + ∥g x∥) p μ : by simp_rw norm_neg
 ... ≤ snorm (λ x, ∥f x∥) p μ + snorm (λ x, ∥g x∥) p μ : snorm_add_le hf.norm hg.norm hp1
-... = snorm f p μ + snorm g p μ : by { rw [← snorm_norm f, ← snorm_norm g], }
+... = snorm f p μ + snorm g p μ : by rw [← snorm_norm f, ← snorm_norm g]
 
 lemma snorm_add_lt_top_of_one_le {f g : α → E} (hf : mem_ℒp f p μ) (hg : mem_ℒp g p μ)
   (hq1 : 1 ≤ p) : snorm (f + g) p μ < ∞ :=
@@ -781,6 +786,9 @@ variable [borel_space E]
 
 lemma mem_ℒp.neg {f : α → E} (hf : mem_ℒp f p μ) : mem_ℒp (-f) p μ :=
 ⟨ae_measurable.neg hf.1, by simp [hf.right]⟩
+
+lemma mem_ℒp_neg_iff {f : α → E} : mem_ℒp (-f) p μ ↔ mem_ℒp f p μ :=
+⟨λ h, neg_neg f ▸ h.neg, mem_ℒp.neg⟩
 
 lemma snorm'_le_snorm'_mul_rpow_measure_univ {p q : ℝ} (hp0_lt : 0 < p) (hpq : p ≤ q)
   {f : α → E} (hf : ae_measurable f μ) :
@@ -944,6 +952,17 @@ lemma mem_ℒp.add {f g : α → E} (hf : mem_ℒp f p μ) (hg : mem_ℒp g p μ
 
 lemma mem_ℒp.sub {f g : α → E} (hf : mem_ℒp f p μ) (hg : mem_ℒp g p μ) : mem_ℒp (f - g) p μ :=
 by { rw sub_eq_add_neg, exact hf.add hg.neg }
+
+lemma mem_ℒp_finset_sum {ι} (s : finset ι) {f : ι → α → E} (hf : ∀ i, mem_ℒp (f i) p μ) :
+  mem_ℒp (λ a, ∑ i in s, f i a) p μ :=
+begin
+  haveI : decidable_eq ι := classical.dec_eq _,
+  refine finset.induction_on s _ _,
+  { simp only [finset.sum_empty, zero_mem_ℒp'], },
+  { intros i s his ih,
+    simp only [his, finset.sum_insert, not_false_iff],
+    exact (hf _).add ih, },
+end
 
 end second_countable_topology
 

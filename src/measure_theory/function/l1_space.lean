@@ -179,17 +179,66 @@ h.mono_measure $ measure.le_add_left $ le_refl _
   has_finite_integral f (μ + ν) ↔ has_finite_integral f μ ∧ has_finite_integral f ν :=
 ⟨λ h, ⟨h.left_of_add_measure, h.right_of_add_measure⟩, λ h, h.1.add_measure h.2⟩
 
+lemma snorm'_smul_measure {p : ℝ} (hp : 0 ≤ p) {f : α → β} (c : ℝ≥0∞) :
+  snorm' f p (c • μ) = c ^ (1 / p) * snorm' f p μ :=
+by { rw [snorm', lintegral_smul_measure, mul_rpow_of_nonneg, snorm'], simp [hp], }
+
+lemma ess_sup_smul_measure {β} [conditionally_complete_lattice β] {f : α → β} {c : ℝ≥0∞}
+  (hc : c ≠ 0) :
+  ess_sup f (c • μ) = ess_sup f μ :=
+begin
+  simp_rw ess_sup,
+  suffices h_smul : (c • μ).ae = μ.ae, by rw h_smul,
+  ext1,
+  simp_rw mem_ae_iff,
+  simp [hc],
+end
+
+lemma snorm_ess_sup_smul_measure {f : α → β} {c : ℝ≥0∞} (hc : c ≠ 0) :
+  snorm_ess_sup f (c • μ) = snorm_ess_sup f μ :=
+by { simp_rw [snorm_ess_sup], exact ess_sup_smul_measure hc, }
+
+/-- Use `snorm_smul_measure_of_ne_top` instead. -/
+private lemma snorm_smul_measure_of_ne_zero_of_ne_top {p : ℝ≥0∞} (hp_ne_zero : p ≠ 0)
+  (hp_ne_top : p ≠ ∞) {f : α → β} (c : ℝ≥0∞) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  simp_rw snorm_eq_snorm' hp_ne_zero hp_ne_top,
+  rw snorm'_smul_measure ennreal.to_real_nonneg,
+  congr,
+  simp_rw one_div,
+  rw ennreal.to_real_inv,
+end
+
+lemma snorm_smul_measure_of_ne_zero {p : ℝ≥0∞} {f : α → β} {c : ℝ≥0∞} (hc : c ≠ 0) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  by_cases hp0 : p = 0,
+  { simp [hp0], },
+  by_cases hp_top : p = ∞,
+  { simp [hp_top, snorm_ess_sup_smul_measure hc], },
+  exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_top c,
+end
+
+lemma snorm_smul_measure_of_ne_top {p : ℝ≥0∞} (hp_ne_top : p ≠ ∞) {f : α → β} (c : ℝ≥0∞) :
+  snorm f p (c • μ) = c ^ (1 / p).to_real • snorm f p μ :=
+begin
+  by_cases hp0 : p = 0,
+  { simp [hp0], },
+  { exact snorm_smul_measure_of_ne_zero_of_ne_top hp0 hp_ne_top c, },
+end
+
+lemma snorm_one_smul_measure {f : α → β} (c : ℝ≥0∞) :
+  snorm f 1 (c • μ) = c * snorm f 1 μ :=
+by { rw @snorm_smul_measure_of_ne_top _ _ _ μ _ 1 (@ennreal.coe_ne_top 1) f c, simp, }
+
 lemma has_finite_integral.smul_measure {f : α → β} (h : has_finite_integral f μ) {c : ℝ≥0∞}
   (hc : c < ∞) : has_finite_integral f (c • μ) :=
-begin
-  simp only [has_finite_integral, snorm_one_eq_lintegral_nnnorm, lintegral_smul_measure] at *,
-  exact mul_lt_top hc h
-end
+by { rw [has_finite_integral, snorm_one_smul_measure], exact mul_lt_top hc h, }
 
 @[simp] lemma has_finite_integral_zero_measure {m : measurable_space α} (f : α → β) :
   has_finite_integral f (0 : measure α) :=
-by simp only [has_finite_integral, snorm_one_eq_lintegral_nnnorm, lintegral_zero_measure,
-  with_top.zero_lt_top]
+by simp only [has_finite_integral, snorm_measure_zero, with_top.zero_lt_top]
 
 variables (α β μ)
 @[simp] lemma has_finite_integral_zero : has_finite_integral (λa:α, (0:β)) μ :=
@@ -451,12 +500,7 @@ variables {α β μ}
 lemma integrable.add' [opens_measurable_space β] {f g : α → β} (hf : integrable f μ)
   (hg : integrable g μ) :
   has_finite_integral (f + g) μ :=
-calc snorm (f + g) 1 μ = ∫⁻ a, nnnorm (f a + g a) ∂μ :
-  by { rw snorm_one_eq_lintegral_nnnorm, simp_rw pi.add_apply, }
-... ≤ ∫⁻ a, nnnorm (f a) + nnnorm (g a) ∂μ :
-  lintegral_mono (λ a, by exact_mod_cast nnnorm_add_le _ _)
-... = _ : lintegral_nnnorm_add hf.ae_measurable hg.ae_measurable
-... < ∞ : add_lt_top.2 ⟨hf.lintegral_nnnorm_lt_top, hg.lintegral_nnnorm_lt_top⟩
+snorm_add_lt_top hf hg
 
 lemma integrable.add [borel_space β] [second_countable_topology β]
   {f g : α → β} (hf : integrable f μ) (hg : integrable g μ) : integrable (f + g) μ :=
@@ -464,19 +508,14 @@ hf.add hg
 
 lemma integrable_finset_sum {ι} [borel_space β] [second_countable_topology β] (s : finset ι)
   {f : ι → α → β} (hf : ∀ i, integrable (f i) μ) : integrable (λ a, ∑ i in s, f i a) μ :=
-begin
-  refine finset.induction_on s _ _,
-  { simp only [finset.sum_empty, integrable_zero] },
-  { assume i s his ih, simp only [his, finset.sum_insert, not_false_iff],
-    exact (hf _).add ih }
-end
+mem_ℒp_finset_sum s hf
 
 lemma integrable.neg [borel_space β] {f : α → β} (hf : integrable f μ) : integrable (-f) μ :=
 hf.neg
 
 @[simp] lemma integrable_neg_iff [borel_space β] {f : α → β} :
   integrable (-f) μ ↔ integrable f μ :=
-⟨λ h, neg_neg f ▸ h.neg, integrable.neg⟩
+mem_ℒp_neg_iff
 
 lemma integrable.sub' [opens_measurable_space β] {f g : α → β}
   (hf : integrable f μ) (hg : integrable g μ) : has_finite_integral (f - g) μ :=
