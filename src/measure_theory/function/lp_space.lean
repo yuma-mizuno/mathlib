@@ -1550,77 +1550,6 @@ lemma mem_ℒp.indicator (hs : measurable_set s) (hf : mem_ℒp f p μ) :
   mem_ℒp (s.indicator f) p μ :=
 ⟨hf.ae_measurable.indicator hs, lt_of_le_of_lt (snorm_indicator_le f) hf.snorm_lt_top⟩
 
-lemma mem_map_indicator_ae_iff_mem_map_restrict_ae_of_zero_mem
-  {β} [conditionally_complete_lattice β] [has_zero β] {t : set β} (ht : (0 : β) ∈ t)
-  {f : α → β} (hs : measurable_set s) :
-  t ∈ map (s.indicator f) μ.ae ↔ t ∈ map f (μ.restrict s).ae :=
-begin
-  simp_rw [mem_map, mem_ae_iff],
-  rw [measure.restrict_apply' hs, set.indicator_preimage, set.ite],
-  simp_rw [set.compl_union, set.compl_inter],
-  change μ (((f ⁻¹' t)ᶜ ∪ sᶜ) ∩ ((λ x, (0 : β)) ⁻¹' t \ s)ᶜ) = 0 ↔ μ ((f ⁻¹' t)ᶜ ∩ s) = 0,
-  haveI : decidable ((0 : β) ∈ t), from classical.dec _,
-  simp only [ht, ← set.compl_eq_univ_diff, compl_compl, set.compl_union, if_true,
-    set.preimage_const],
-  simp_rw [set.union_inter_distrib_right, set.compl_inter_self s, set.union_empty],
-end
-
-lemma mem_map_indicator_ae_iff_of_zero_nmem {β} [conditionally_complete_lattice β] [has_zero β]
-  {t : set β} (ht : (0 : β) ∉ t) {f : α → β} (hs : measurable_set s) :
-  t ∈ map (s.indicator f) μ.ae ↔ μ ((f ⁻¹' t)ᶜ ∪ sᶜ) = 0 :=
-begin
-  rw [mem_map, mem_ae_iff, set.indicator_preimage, set.ite, set.compl_union, set.compl_inter],
-  change μ (((f ⁻¹' t)ᶜ ∪ sᶜ) ∩ ((λ x, (0 : β)) ⁻¹' t \ s)ᶜ) = 0 ↔ μ ((f ⁻¹' t)ᶜ ∪ sᶜ) = 0,
-  haveI : decidable ((0 : β) ∈ t), from classical.dec _,
-  simp only [ht, if_false, set.compl_empty, set.empty_diff, set.inter_univ, set.preimage_const],
-end
-
-lemma mem_map_restrict_ae_iff {β} {t : set β} {f : α → β} (hs : measurable_set s) :
-  t ∈ map f (μ.restrict s).ae ↔ μ ((f ⁻¹' t)ᶜ ∩ s) = 0 :=
-by rw [mem_map, mem_ae_iff, measure.restrict_apply' hs]
-
-lemma map_restrict_ae_le_map_indicator_ae {β} [conditionally_complete_lattice β] [has_zero β]
-  {f : α → β} (hs : measurable_set s) :
-  map f (μ.restrict s).ae ≤ map (s.indicator f) μ.ae :=
-begin
-  intro t,
-  by_cases ht : (0 : β) ∈ t,
-  { rw mem_map_indicator_ae_iff_mem_map_restrict_ae_of_zero_mem ht hs, exact id, },
-  rw [mem_map_indicator_ae_iff_of_zero_nmem ht hs, mem_map_restrict_ae_iff hs],
-  exact λ h, measure_mono_null ((set.inter_subset_left _ _).trans (set.subset_union_left _ _)) h,
-end
-
-lemma ess_sup_indicator_eq_ess_sup_restrict {β} [complete_linear_order β] [has_zero β]
-  {f : α → β} (hf : 0 ≤ᵐ[μ.restrict s] f) (hs : measurable_set s) (hs_not_null : μ s ≠ 0) :
-  ess_sup (s.indicator f) μ = ess_sup f (μ.restrict s) :=
-begin
-  simp_rw ess_sup,
-  refine le_antisymm _ _,
-  swap, { exact Limsup_le_Limsup_of_le (map_restrict_ae_le_map_indicator_ae hs)
-    (by is_bounded_default) (by is_bounded_default), },
-  refine Limsup_le_Limsup (by is_bounded_default) (by is_bounded_default) (λ c h_restrict_le, _),
-  rw eventually_map at h_restrict_le ⊢,
-  rw ae_restrict_iff' hs at h_restrict_le,
-  have hc : 0 ≤ c,
-  { suffices : ∃ x, 0 ≤ f x ∧ f x ≤ c, by { obtain ⟨x, hx⟩ := this, exact hx.1.trans hx.2, },
-    refine frequently.exists _,
-    { exact μ.ae, },
-    rw [eventually_le, ae_restrict_iff' hs] at hf,
-    have hs' : ∃ᵐ x ∂μ, x ∈ s,
-    { contrapose! hs_not_null,
-      rw [not_frequently, ae_iff] at hs_not_null,
-      suffices : {a : α | ¬a ∉ s} = s, by rwa ← this,
-      simp, },
-    refine hs'.mp (hf.mp (h_restrict_le.mono (λ x hxs_imp_c hxf_nonneg hxs, _))),
-    rw pi.zero_apply at hxf_nonneg,
-    exact ⟨hxf_nonneg hxs, hxs_imp_c hxs⟩, },
-  refine h_restrict_le.mono (λ x hxc, _),
-  haveI : decidable (x ∈ s) := classical.dec _,
-  by_cases hxs : x ∈ s,
-  { simpa [hxs] using hxc hxs, },
-  { simpa [hxs] using hc, },
-end
-
 lemma snorm_ess_sup_indicator_eq_snorm_ess_sup_restrict {f : α → F} (hs : measurable_set s) :
   snorm_ess_sup (s.indicator f) μ = snorm_ess_sup f (μ.restrict s) :=
 begin
@@ -1653,7 +1582,7 @@ begin
   simp_rw [nnnorm_indicator_eq_indicator_nnnorm, ennreal.coe_indicator],
   have h_zero : (λ x, x ^ p.to_real) (0 : ℝ≥0∞) = 0,
     by simp [ennreal.to_real_pos_iff.mpr ⟨ne.bot_lt hp_zero, hp_top⟩],
-  rw set.indicator_comp_of_zero h_zero,
+  exact (set.indicator_comp_of_zero h_zero).symm,
 end
 
 lemma mem_ℒp_indicator_iff_restrict (hs : measurable_set s) :
