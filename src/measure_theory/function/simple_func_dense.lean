@@ -319,8 +319,11 @@ lemma tendsto_approx_on_L1_nnnorm [opens_measurable_space E]
   {f : β → E} (hf : measurable f) {s : set E} {y₀ : E} (h₀ : y₀ ∈ s) [separable_space s]
   {μ : measure β} (hμ : ∀ᵐ x ∂μ, f x ∈ closure s) (hi : has_finite_integral (λ x, f x - y₀) μ) :
   tendsto (λ n, ∫⁻ x, ∥approx_on f hf s y₀ h₀ n x - f x∥₊ ∂μ) at_top (𝓝 0) :=
-by simpa [snorm_one_eq_lintegral_nnnorm] using tendsto_approx_on_Lp_snorm hf h₀ one_ne_top hμ
-  (by simpa [snorm_one_eq_lintegral_nnnorm] using hi)
+begin
+  rw [has_finite_integral, snorm_one_eq_lintegral_nnnorm] at hi,
+  simpa [snorm_one_eq_lintegral_nnnorm] using tendsto_approx_on_Lp_snorm hf h₀ one_ne_top hμ
+  (by simpa [snorm_one_eq_lintegral_nnnorm] using hi),
+end
 
 lemma integrable_approx_on [borel_space E]
   {f : β → E} {μ : measure β} (fmeas : measurable f) (hf : integrable f μ)
