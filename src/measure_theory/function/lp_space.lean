@@ -1592,25 +1592,16 @@ by simp [mem_ℒp, ae_measurable_indicator_iff hs, snorm_indicator_eq_snorm_rest
 lemma mem_ℒp_indicator_const (p : ℝ≥0∞) (hs : measurable_set s) (c : E) (hμsc : c = 0 ∨ μ s ≠ ∞) :
   mem_ℒp (s.indicator (λ _, c)) p μ :=
 begin
-  cases hμsc with hc hμs,
-  { simp only [hc, set.indicator_zero],
-    exact zero_mem_ℒp, },
-  refine ⟨(ae_measurable_indicator_iff hs).mpr ae_measurable_const, _⟩,
-  by_cases hp0 : p = 0,
-  { simp only [hp0, snorm_exponent_zero, with_top.zero_lt_top], },
+  rw mem_ℒp_indicator_iff_restrict hs,
+  by_cases hp_zero : p = 0,
+  { rw hp_zero, exact mem_ℒp_zero_iff_ae_measurable.mpr ae_measurable_const, },
   by_cases hp_top : p = ∞,
-  { rw [hp_top, snorm_exponent_top],
-    exact (snorm_ess_sup_indicator_const_le s c).trans_lt ennreal.coe_lt_top, },
-  have hp_pos : 0 < p.to_real,
-    from ennreal.to_real_pos_iff.mpr ⟨lt_of_le_of_ne (zero_le _) (ne.symm hp0), hp_top⟩,
-  rw snorm_lt_top_iff_lintegral_rpow_nnnorm_lt_top hp0 hp_top,
-  simp_rw [nnnorm_indicator_eq_indicator_nnnorm, ennreal.coe_indicator],
-  have h_indicator_pow : (λ a : α, s.indicator (λ _, (∥c∥₊ : ℝ≥0∞)) a ^ p.to_real)
-    = s.indicator (λ _, ↑∥c∥₊ ^ p.to_real),
-  { rw set.comp_indicator_const (∥c∥₊ : ℝ≥0∞) (λ x, x ^ p.to_real) _, simp [hp_pos], },
-  rw [h_indicator_pow, lintegral_indicator _ hs, set_lintegral_const],
-  refine ennreal.mul_lt_top _ (lt_top_iff_ne_top.mpr hμs),
-  exact ennreal.rpow_lt_top_of_nonneg hp_pos.le ennreal.coe_ne_top,
+  { rw hp_top,
+    exact mem_ℒp_top_of_bound ae_measurable_const (∥c∥) (eventually_of_forall (λ x, le_rfl)), },
+  rw [mem_ℒp_const_iff hp_zero hp_top, measure.restrict_apply_univ],
+  cases hμsc,
+  { exact or.inl hμsc, },
+  { exact or.inr hμsc.lt_top, },
 end
 
 end indicator
