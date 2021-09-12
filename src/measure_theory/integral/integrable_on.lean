@@ -169,8 +169,9 @@ by { delta integrable_on, rw measure.restrict_add, exact hμ.integrable.add_meas
 
 lemma integrable_indicator_iff (hs : measurable_set s) :
   integrable (indicator s f) μ ↔ integrable_on f s μ :=
-by simp [integrable_on, integrable, has_finite_integral, nnnorm_indicator_eq_indicator_nnnorm,
-  ennreal.coe_indicator, lintegral_indicator _ hs, ae_measurable_indicator_iff hs]
+by { simp [integrable_on, integrable, snorm_one_eq_lintegral_nnnorm,
+  nnnorm_indicator_eq_indicator_nnnorm,
+  ennreal.coe_indicator, lintegral_indicator _ hs, ae_measurable_indicator_iff hs], }
 
 lemma integrable_on.indicator (h : integrable_on f s μ) (hs : measurable_set s) :
   integrable (indicator s f) μ :=

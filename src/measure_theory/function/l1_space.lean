@@ -160,12 +160,19 @@ lemma has_finite_integral.mono_measure {f : α → β} (h : has_finite_integral 
   has_finite_integral f μ :=
 (snorm_mono_measure f hμ).trans_lt h
 
+lemma snorm_one_add_measure {f : α → β} :
+  snorm f 1 (μ + ν) = snorm f 1 μ + snorm f 1 ν :=
+by { simp_rw snorm_one_eq_lintegral_nnnorm, rw lintegral_add_measure _ μ ν, }
+
+lemma snorm_le_add_measure_right {f : α → β} {p : ℝ≥0∞} : snorm f p μ ≤ snorm f p (μ + ν) :=
+snorm_mono_measure f $ measure.le_add_right $ le_refl _
+
+lemma snorm_le_add_measure_left {f : α → β} {p : ℝ≥0∞} : snorm f p ν ≤ snorm f p (μ + ν) :=
+snorm_mono_measure f $ measure.le_add_left $ le_refl _
+
 lemma has_finite_integral.add_measure {f : α → β} (hμ : has_finite_integral f μ)
   (hν : has_finite_integral f ν) : has_finite_integral f (μ + ν) :=
-begin
-  simp only [has_finite_integral, snorm_one_eq_lintegral_nnnorm, lintegral_add_measure] at *,
-  exact add_lt_top.2 ⟨hμ, hν⟩
-end
+by { simp only [has_finite_integral, snorm_one_add_measure] at *, exact add_lt_top.2 ⟨hμ, hν⟩ }
 
 lemma has_finite_integral.left_of_add_measure {f : α → β} (h : has_finite_integral f (μ + ν)) :
   has_finite_integral f μ :=
@@ -188,7 +195,7 @@ by { rw [has_finite_integral, snorm_one_smul_measure], exact mul_lt_top hc h, }
 by simp only [has_finite_integral, snorm_measure_zero, with_top.zero_lt_top]
 
 variables (α β μ)
-@[simp] lemma has_finite_integral_zero : has_finite_integral (λa:α, (0:β)) μ :=
+@[simp] lemma has_finite_integral_zero : has_finite_integral (λ a : α, (0 : β)) μ :=
 by simp [has_finite_integral]
 variables {α β μ}
 
@@ -201,13 +208,13 @@ by simpa [has_finite_integral] using hfi
 ⟨λ h, neg_neg f ▸ h.neg, has_finite_integral.neg⟩
 
 lemma has_finite_integral.norm {f : α → β} (hfi : has_finite_integral f μ) :
-  has_finite_integral (λa, ∥f a∥) μ :=
+  has_finite_integral (λ a, ∥f a∥) μ :=
 have eq : (λ a, (nnnorm ∥f a∥ : ℝ≥0∞)) = λ a, (nnnorm (f a) : ℝ≥0∞),
   by { funext, rw nnnorm_norm },
 by rwa [has_finite_integral, snorm_one_eq_lintegral_nnnorm, eq, ← snorm_one_eq_lintegral_nnnorm]
 
 lemma has_finite_integral_norm_iff (f : α → β) :
-  has_finite_integral (λa, ∥f a∥) μ ↔ has_finite_integral f μ :=
+  has_finite_integral (λ a, ∥f a∥) μ ↔ has_finite_integral f μ :=
 has_finite_integral_congr' $ eventually_of_forall $ λ x, norm_norm (f x)
 
 section dominated_convergence
@@ -371,7 +378,7 @@ lemma integrable.has_finite_integral {f : α → β} (hf : integrable f μ) : ha
 hf.2
 
 lemma integrable.lintegral_nnnorm_lt_top {f : α → β} (hf : integrable f μ) : ∫⁻ x, ∥f x ∥₊ ∂μ < ∞ :=
-(has_finite_integral_iff_nnnorm f).mp hf.2
+(@snorm_one_eq_lintegral_nnnorm _ _ _ μ _ f) ▸ hf.2
 
 lemma integrable.mono {f : α → β} {g : α → γ} (hg : integrable g μ) (hf : ae_measurable f μ)
   (h : ∀ᵐ a ∂μ, ∥f a∥ ≤ ∥g a∥) : integrable f μ :=
