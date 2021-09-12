@@ -180,7 +180,7 @@ lemma integrable.indicator (h : integrable f μ) (hs : measurable_set s) :
 h.integrable_on.indicator hs
 
 lemma integrable_indicator_const_Lp {E} [normed_group E] [measurable_space E] [borel_space E]
-  [second_countable_topology E] {p : ℝ≥0∞} {s : set α} (hs : measurable_set s) (hμs : μ s ≠ ∞)
+  [second_countable_topology E] {p : ℝ≥0∞} (hs : measurable_set s) (hμs : μ s ≠ ∞)
   (c : E) :
   integrable (indicator_const_Lp p hs hμs c) μ :=
 begin
@@ -191,13 +191,11 @@ begin
 end
 
 lemma integrable_on_Lp_of_measure_ne_top {E} [normed_group E] [measurable_space E] [borel_space E]
-  [second_countable_topology E] {p : ℝ≥0∞} {s : set α} (f : Lp E p μ) (hp : 1 ≤ p) (hμs : μ s ≠ ∞) :
+  [second_countable_topology E] {p : ℝ≥0∞} (f : Lp E p μ) (hp : 1 ≤ p) (hμs : μ s ≠ ∞) :
   integrable_on f s μ :=
 begin
-  refine mem_ℒp_one_iff_integrable.mp _,
-  have hμ_restrict_univ : (μ.restrict s) set.univ < ∞,
-    by simpa only [set.univ_inter, measurable_set.univ, measure.restrict_apply, lt_top_iff_ne_top],
-  haveI hμ_finite : is_finite_measure (μ.restrict s) := ⟨hμ_restrict_univ⟩,
+  haveI hμ_finite : is_finite_measure (μ.restrict s) :=
+    ⟨by simpa only [measure.restrict_apply_univ, lt_top_iff_ne_top]⟩,
   exact ((Lp.mem_ℒp _).restrict s).mem_ℒp_of_exponent_le hp,
 end
 
