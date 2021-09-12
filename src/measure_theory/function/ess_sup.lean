@@ -48,45 +48,6 @@ limsup_congr hfg
 lemma ess_inf_congr_ae {f g : α → β} (hfg : f =ᵐ[μ] g) :  ess_inf f μ = ess_inf g μ :=
 @ess_sup_congr_ae α (order_dual β) _ _ _ _ _ hfg
 
-lemma mem_map_indicator_ae_iff_mem_map_restrict_ae_of_zero_mem [has_zero β] {s : set α} {t : set β}
-  (ht : (0 : β) ∈ t) {f : α → β} (hs : measurable_set s) :
-  t ∈ map (s.indicator f) μ.ae ↔ t ∈ map f (μ.restrict s).ae :=
-begin
-  simp_rw [mem_map, mem_ae_iff],
-  rw [measure.restrict_apply' hs, set.indicator_preimage, set.ite],
-  simp_rw [set.compl_union, set.compl_inter],
-  change μ (((f ⁻¹' t)ᶜ ∪ sᶜ) ∩ ((λ x, (0 : β)) ⁻¹' t \ s)ᶜ) = 0 ↔ μ ((f ⁻¹' t)ᶜ ∩ s) = 0,
-  haveI : decidable ((0 : β) ∈ t), from classical.dec _,
-  simp only [ht, ← set.compl_eq_univ_diff, compl_compl, set.compl_union, if_true,
-    set.preimage_const],
-  simp_rw [set.union_inter_distrib_right, set.compl_inter_self s, set.union_empty],
-end
-
-lemma mem_map_indicator_ae_iff_of_zero_nmem [has_zero β] {s : set α} {t : set β}
-  (ht : (0 : β) ∉ t) {f : α → β} (hs : measurable_set s) :
-  t ∈ map (s.indicator f) μ.ae ↔ μ ((f ⁻¹' t)ᶜ ∪ sᶜ) = 0 :=
-begin
-  rw [mem_map, mem_ae_iff, set.indicator_preimage, set.ite, set.compl_union, set.compl_inter],
-  change μ (((f ⁻¹' t)ᶜ ∪ sᶜ) ∩ ((λ x, (0 : β)) ⁻¹' t \ s)ᶜ) = 0 ↔ μ ((f ⁻¹' t)ᶜ ∪ sᶜ) = 0,
-  haveI : decidable ((0 : β) ∈ t), from classical.dec _,
-  simp only [ht, if_false, set.compl_empty, set.empty_diff, set.inter_univ, set.preimage_const],
-end
-
-lemma mem_map_restrict_ae_iff {β} {s : set α} {t : set β} {f : α → β} (hs : measurable_set s) :
-  t ∈ map f (μ.restrict s).ae ↔ μ ((f ⁻¹' t)ᶜ ∩ s) = 0 :=
-by rw [mem_map, mem_ae_iff, measure.restrict_apply' hs]
-
-lemma map_restrict_ae_le_map_indicator_ae [has_zero β] {s : set α} {f : α → β}
-  (hs : measurable_set s) :
-  map f (μ.restrict s).ae ≤ map (s.indicator f) μ.ae :=
-begin
-  intro t,
-  by_cases ht : (0 : β) ∈ t,
-  { rw mem_map_indicator_ae_iff_mem_map_restrict_ae_of_zero_mem ht hs, exact id, },
-  rw [mem_map_indicator_ae_iff_of_zero_nmem ht hs, mem_map_restrict_ae_iff hs],
-  exact λ h, measure_mono_null ((set.inter_subset_left _ _).trans (set.subset_union_left _ _)) h,
-end
-
 end conditionally_complete_lattice
 
 section complete_lattice
