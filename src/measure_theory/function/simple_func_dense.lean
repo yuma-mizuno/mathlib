@@ -322,7 +322,7 @@ lemma tendsto_approx_on_L1_nnnorm [opens_measurable_space E]
 begin
   rw [has_finite_integral, snorm_one_eq_lintegral_nnnorm] at hi,
   simpa [snorm_one_eq_lintegral_nnnorm] using tendsto_approx_on_Lp_snorm hf h₀ one_ne_top hμ
-  (by simpa [snorm_one_eq_lintegral_nnnorm] using hi),
+    (by simpa [snorm_one_eq_lintegral_nnnorm] using hi),
 end
 
 lemma integrable_approx_on [borel_space E]
