@@ -112,33 +112,6 @@ begin
   exact index hG (mul_action.stabilizer G a),
 end
 
-/-lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
-  [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
-begin
-  let ϕ : quotient_group.quotient ((H ⊓ K).comap H.subtype) ≃*
-    quotient_group.quotient (K.comap (H ⊔ K).subtype) :=
-  quotient_group.quotient_inf_equiv_prod_normal_quotient H K,
-  have key : is_p_group p (quotient_group.quotient (K.comap (H ⊔ K).subtype)),
-  { sorry },
-  sorry
-end
-
-lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
-  (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
-begin
-  replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
-  let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
-  let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
-  have hH' : is_p_group p H' := sorry,
-  have hK' : is_p_group p K' := sorry,
-  have key := to_sup_left_aux hH' hK',
-  sorry
-end
-
-lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
-  (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
-(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)-/
-
 variables (α) [fintype α] [fintype (fixed_points G α)]
 
 /-- If `G` is a `p`-group acting on a finite set `α`, then the number of fixed points
@@ -190,6 +163,45 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 
 end is_p_group
 
+namespace is_p_group
+
+lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
+begin
+  let ϕ : quotient_group.quotient ((H ⊓ K).comap H.subtype) ≃*
+    quotient_group.quotient (K.comap (H ⊔ K).subtype) :=
+  quotient_group.quotient_inf_equiv_prod_normal_quotient H K,
+  have key1 : is_p_group p (quotient_group.quotient ((H ⊓ K).comap H.subtype)),
+  { exact hH.to_quotient ((H ⊓ K).comap H.subtype), },
+  have key2 : is_p_group p (quotient_group.quotient (K.comap (H ⊔ K).subtype)),
+  { -- is_p_group.of_equiv
+    sorry },
+  intro g,
+  obtain ⟨k, hk⟩ := key2 g,
+  have hk' : g ^ (p ^ k) ∈ (K.comap (H ⊔ K).subtype),
+  { -- follows from hk
+    sorry },
+  sorry
+end
+
+lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
+begin
+  replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
+  let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
+  let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
+  have hH' : is_p_group p H' := sorry,
+  have hK' : is_p_group p K' := sorry,
+  have key := to_sup_left_aux hH' hK',
+  sorry
+end
+
+lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
+(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)
+
+end is_p_group
+
 end temp
 
 variables (p : ℕ) (G : Type*) [group G]
@@ -199,6 +211,8 @@ def sylow : set (subgroup G) :=
 
 variables {p} {G}
 
+/-- A generalisation of **Sylow's first theorem**.
+  Every `p`-subgroup is contained in a Sylow `p`-subgroup -/
 lemma is_p_group.exists_le_sylow {H : subgroup G} (hH : is_p_group p H) :
   ∃ K : sylow p G, H ≤ K :=
 begin
@@ -222,7 +236,7 @@ end
 instance sylow_nonempty : nonempty (sylow p G) :=
 nonempty_of_exists is_p_group.of_bot.exists_le_sylow
 
---note: fintype.of_injective makes this noncomputable, so might as well use classical
+--note: maybe there's a way to avoid fintype.of_injective, so that this can be made computable
 noncomputable instance [fintype G] : fintype (sylow p G) :=
 @subtype.fintype _ _ (λ _, classical.prop_decidable _)
   (fintype.of_injective subgroup.carrier (λ _ _ h, subgroup.ext (set.ext_iff.mp h)))
@@ -284,6 +298,6 @@ begin
   haveI : fintype (mul_action.fixed_points H.1 (sylow p G)) :=
   by { rw key, exact set.fintype_singleton H },
   calc fintype.card (sylow p G) ≡ fintype.card (mul_action.fixed_points H.1 (sylow p G)) [MOD p] :
-    mul_action.card_modeq_card_fixed_points (sylow p G) H.2.1
+    H.2.1.card_modeq_card_fixed_points (sylow p G)
   ... = 1 : by simp_rw key; convert set.card_singleton H,
 end
