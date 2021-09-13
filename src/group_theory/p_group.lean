@@ -59,34 +59,32 @@ begin
   exact (hq1.pow_eq_iff.mp (hg.symm.trans hk).symm).1.symm,
 end
 
-lemma to_le {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
-begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow] at hK ⊢,
-  exact λ h, hK ⟨h, hHK h.2⟩,
-end
-
-lemma to_inf_left {H K : subgroup G} (hH : is_p_group p H) : is_p_group p (H ⊓ K : subgroup G) :=
-hH.to_le inf_le_left
-
-lemma to_inf_right {H K : subgroup G} (hK : is_p_group p K) : is_p_group p (H ⊓ K : subgroup G) :=
-hK.to_le inf_le_right
+section G_is_p_group
 
 variables (hG : is_p_group p G)
 
 include hG
 
-lemma to_subgroup (H : subgroup G) : is_p_group p H :=
+lemma to_injective {H : Type*} [group H] (ϕ : H →* G) (hϕ : function.injective ϕ) :
+  is_p_group p H :=
 begin
-  simp_rw [is_p_group, subtype.ext_iff, subgroup.coe_pow],
-  exact λ h, hG h,
+  simp_rw [is_p_group, ←hϕ.eq_iff, ϕ.map_pow, ϕ.map_one],
+  exact λ h, hG (ϕ h),
+end
+
+lemma to_subgroup (H : subgroup G) : is_p_group p H :=
+hG.to_injective H.subtype subtype.coe_injective
+
+lemma to_surjective {H : Type*} [group H] (ϕ : G →* H) (hϕ : function.surjective ϕ) :
+  is_p_group p H :=
+begin
+  refine λ h, exists.elim (hϕ h) (λ g hg, exists_imp_exists (λ k hk, _) (hG g)),
+  rw [←hg, ←ϕ.map_pow, hk, ϕ.map_one],
 end
 
 lemma to_quotient (H : subgroup G) [H.normal] :
   is_p_group p (quotient_group.quotient H) :=
-begin
-  refine quotient.ind' (forall_imp (λ g, _) hG),
-  exact exists_imp_exists (λ k h, (quotient_group.coe_pow H g _).symm.trans (congr_arg coe h)),
-end
+hG.to_surjective (quotient_group.mk' H) quotient.surjective_quotient_mk'
 
 variables [hp : fact p.prime]
 
@@ -161,9 +159,16 @@ have hα : 1 < card (fixed_points G α) :=
 let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 ⟨b, hb, λ hab, hba (by simp_rw [hab])⟩
 
-end is_p_group
+end G_is_p_group
 
-namespace is_p_group
+lemma to_le {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
+hK.to_injective (subgroup.inclusion hHK) (λ a b h, subtype.ext (show _, from subtype.ext_iff.mp h))
+
+lemma to_inf_left {H K : subgroup G} (hH : is_p_group p H) : is_p_group p (H ⊓ K : subgroup G) :=
+hH.to_le inf_le_left
+
+lemma to_inf_right {H K : subgroup G} (hK : is_p_group p K) : is_p_group p (H ⊓ K : subgroup G) :=
+hK.to_le inf_le_right
 
 lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
@@ -177,11 +182,14 @@ begin
   { -- is_p_group.of_equiv
     sorry },
   intro g,
-  obtain ⟨k, hk⟩ := key2 g,
-  have hk' : g ^ (p ^ k) ∈ (K.comap (H ⊔ K).subtype),
-  { -- follows from hk
-    sorry },
-  sorry
+  obtain ⟨j, hj⟩ := key2 g,
+  obtain ⟨k, hk⟩ := hK ⟨g ^ (p ^ j), (congr_arg (∈ K) ((H ⊔ K).coe_pow g (p ^ j))).mp
+    ((quotient_group.eq_one_iff (g ^ (p ^ j))).mp
+      ((quotient_group.coe_pow (K.comap (H ⊔ K).subtype) g (p ^ j)).trans hj))⟩,
+  refine ⟨j + k, _⟩,
+  rw [subtype.ext_iff, (H ⊔ K).coe_pow],
+  rw [subtype.ext_iff, K.coe_pow, subtype.coe_mk, ←pow_mul, ←pow_add] at hk,
+  exact hk,
 end
 
 lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
