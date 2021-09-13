@@ -69,11 +69,7 @@ hH.to_le inf_le_left
 lemma to_inf_right {H K : subgroup G} (hK : is_p_group p K) : is_p_group p (H ⊓ K : subgroup G) :=
 hK.to_le inf_le_right
 
-lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
-  (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
-(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)
-
-section p_group
+section G_is_p_group
 
 variables (hG : is_p_group p G)
 
@@ -114,27 +110,34 @@ begin
   exact index hG (mul_action.stabilizer G a),
 end
 
-end p_group
+end G_is_p_group
+
+lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
+begin
+  let ϕ : quotient_group.quotient ((H ⊓ K).comap H.subtype) ≃*
+    quotient_group.quotient (K.comap (H ⊔ K).subtype) :=
+  quotient_group.quotient_inf_equiv_prod_normal_quotient H K,
+  have key : is_p_group p (quotient_group.quotient (K.comap (H ⊔ K).subtype)),
+  { sorry },
+  sorry
+end
 
 lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
 begin
   replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
-  let N := K.comap (H ⊔ K).subtype,
-  haveI : N.normal := begin
-    -- opposite of le_normalizer_of_normal ?
-    sorry
-  end,
-  let Q := quotient_group.quotient N,
-  have key : is_p_group p Q,
-  { -- ? generalize this isomorphism theorem to the case where `H ⊔ K ≤ K.normalizer`
-    have key := quotient_group.quotient_inf_equiv_prod_normal_quotient, },
-  -- K is a normal subgroup of H ⊔ K
-  -- quotient by K
-  -- iso theorem!
-  -- etc...
+  let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
+  let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
+  have hH' : is_p_group p H' := sorry,
+  have hK' : is_p_group p K' := sorry,
+  have key := to_sup_left_aux hH' hK',
   sorry
 end
+
+lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
+(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)
 
 end is_p_group
 
