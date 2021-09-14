@@ -173,7 +173,7 @@ hH.to_le inf_le_left
 lemma to_inf_right {H K : subgroup G} (hK : is_p_group p K) : is_p_group p (H ⊓ K : subgroup G) :=
 hK.to_le inf_le_right
 
-lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+lemma to_sup_of_normal_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
 begin
   intro g,
@@ -186,15 +186,21 @@ begin
   refine ⟨j + k, by rwa [subtype.ext_iff, (H ⊔ K).coe_pow]⟩,
 end
 
+lemma to_sup_of_normal_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+  [H.normal] : is_p_group p (H ⊔ K : subgroup G) :=
+(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_of_normal_right hK hH)
+
 lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
 begin
-  replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
   let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
   let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
-  have hH' : is_p_group p H' := sorry,
-  have hK' : is_p_group p K' := sorry,
-  have key := to_sup_left_aux hH' hK',
+  have hH' : is_p_group p H' :=
+  hH.to_equiv (subgroup.comap_subtype_equiv_of_le hHK).symm,
+  have hK' : is_p_group p K' :=
+  hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
+  replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
+  have key := to_sup_of_normal_right hH' hK',
   sorry
 end
 
