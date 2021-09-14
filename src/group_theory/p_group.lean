@@ -41,7 +41,7 @@ lemma of_card [fintype G] {n : ℕ} (hG : card G = p ^ n) : is_p_group p G :=
 λ g, ⟨n, by rw [←hG, pow_card_eq_one]⟩
 
 lemma of_bot : is_p_group p (⊥ : subgroup G) :=
-of_card (show card (⊥ : subgroup G) = p ^ 0, from subgroup.card_bot)
+of_card (subgroup.card_bot.trans (pow_zero p).symm)
 
 lemma iff_card [fact p.prime] [fintype G] :
   is_p_group p G ↔ ∃ n : ℕ, card G = p ^ n :=
@@ -60,6 +60,14 @@ begin
 end
 
 section G_is_p_group
+
+lemma to_inf_left {H : subgroup G} (hH : is_p_group p H) (K : subgroup G) :
+  is_p_group p (H ⊓ K : subgroup G) :=
+hH.to_le inf_le_left
+
+lemma to_inf_right {K : subgroup G} (hK : is_p_group p K) (H : subgroup G) :
+  is_p_group p (H ⊓ K : subgroup G) :=
+hK.to_le inf_le_right
 
 variables (hG : is_p_group p G)
 
@@ -101,13 +109,13 @@ end
 
 variables {α : Type*} [mul_action G α]
 
-lemma card_orbit (a : α) [fintype (mul_action.orbit G a)] :
-  ∃ n : ℕ, card (mul_action.orbit G a) = p ^ n :=
+lemma card_orbit (a : α) [fintype (orbit G a)] :
+  ∃ n : ℕ, card (orbit G a) = p ^ n :=
 begin
-  let ϕ := mul_action.orbit_equiv_quotient_stabilizer G a,
-  haveI := of_equiv (mul_action.orbit G a) ϕ,
+  let ϕ := orbit_equiv_quotient_stabilizer G a,
+  haveI := of_equiv (orbit G a) ϕ,
   rw [card_congr ϕ, ←subgroup.index_eq_card],
-  exact index hG (mul_action.stabilizer G a),
+  exact hG.index (stabilizer G a),
 end
 
 variables (α) [fintype α] [fintype (fixed_points G α)]
