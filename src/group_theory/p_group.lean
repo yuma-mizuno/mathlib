@@ -61,14 +61,6 @@ end
 
 section G_is_p_group
 
-lemma to_inf_left {H : subgroup G} (hH : is_p_group p H) (K : subgroup G) :
-  is_p_group p (H ⊓ K : subgroup G) :=
-hH.to_le inf_le_left
-
-lemma to_inf_right {K : subgroup G} (hK : is_p_group p K) (H : subgroup G) :
-  is_p_group p (H ⊓ K : subgroup G) :=
-hK.to_le inf_le_right
-
 variables (hG : is_p_group p G)
 
 include hG
@@ -93,6 +85,9 @@ end
 lemma to_quotient (H : subgroup G) [H.normal] :
   is_p_group p (quotient_group.quotient H) :=
 hG.to_surjective (quotient_group.mk' H) quotient.surjective_quotient_mk'
+
+lemma to_equiv {H : Type*} [group H] (ϕ : G ≃* H) : is_p_group p H :=
+hG.to_surjective ϕ.to_monoid_hom ϕ.surjective
 
 variables [hp : fact p.prime]
 
@@ -181,23 +176,14 @@ hK.to_le inf_le_right
 lemma to_sup_left_aux {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
 begin
-  let ϕ : quotient_group.quotient ((H ⊓ K).comap H.subtype) ≃*
-    quotient_group.quotient (K.comap (H ⊔ K).subtype) :=
-  quotient_group.quotient_inf_equiv_prod_normal_quotient H K,
-  have key1 : is_p_group p (quotient_group.quotient ((H ⊓ K).comap H.subtype)),
-  { exact hH.to_quotient ((H ⊓ K).comap H.subtype), },
-  have key2 : is_p_group p (quotient_group.quotient (K.comap (H ⊔ K).subtype)),
-  { -- is_p_group.of_equiv
-    sorry },
   intro g,
-  obtain ⟨j, hj⟩ := key2 g,
+  obtain ⟨j, hj⟩ := (hH.to_quotient ((H ⊓ K).comap H.subtype)).to_equiv
+    (quotient_group.quotient_inf_equiv_prod_normal_quotient H K) g,
   obtain ⟨k, hk⟩ := hK ⟨g ^ (p ^ j), (congr_arg (∈ K) ((H ⊔ K).coe_pow g (p ^ j))).mp
     ((quotient_group.eq_one_iff (g ^ (p ^ j))).mp
       ((quotient_group.coe_pow (K.comap (H ⊔ K).subtype) g (p ^ j)).trans hj))⟩,
-  refine ⟨j + k, _⟩,
-  rw [subtype.ext_iff, (H ⊔ K).coe_pow],
   rw [subtype.ext_iff, K.coe_pow, subtype.coe_mk, ←pow_mul, ←pow_add] at hk,
-  exact hk,
+  refine ⟨j + k, by rwa [subtype.ext_iff, (H ⊔ K).coe_pow]⟩,
 end
 
 lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
