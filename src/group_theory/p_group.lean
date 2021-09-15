@@ -247,9 +247,9 @@ instance sylow_nonempty : nonempty (sylow p G) :=
 nonempty_of_exists is_p_group.of_bot.exists_le_sylow
 
 --note: maybe there's a way to avoid fintype.of_injective, so that this can be made computable
-noncomputable instance [fintype G] : fintype (sylow p G) :=
+/-noncomputable instance [fintype G] : fintype (sylow p G) :=
 @subtype.fintype _ _ (λ _, classical.prop_decidable _)
-  (fintype.of_injective subgroup.carrier (λ _ _ h, subgroup.ext (set.ext_iff.mp h)))
+  (fintype.of_injective subgroup.carrier (λ _ _ h, subgroup.ext (set.ext_iff.mp h)))-/
 
 instance mul_action' : mul_action G (subgroup G) :=
 { smul := λ g H, H.comap (mul_aut.conj g)⁻¹.to_monoid_hom,
@@ -296,7 +296,14 @@ lemma is_p_group.sylow_mem_fixed_points_iff
   Q ∈ mul_action.fixed_points P (sylow p G) ↔ P ≤ Q :=
 by rw [P.sylow_mem_fixed_points_iff, ←inf_eq_left, hP.inf_normalizer_sylow, inf_eq_left]
 
-lemma sylow_aux {X : set (sylow p G)} [fintype X] [fact p.prime] (P : X)
+/-lemma sylow_fixed_points_eq_self (P : sylow p G) :
+  mul_action.fixed_points P (sylow p G) = {P} :=
+set.ext (λ Q, calc Q ∈ mul_action.fixed_points P (sylow p G)
+    ↔ P ≤ Q : P.2.1.sylow_mem_fixed_points_iff
+... ↔ Q = P : ⟨subtype.ext ∘ P.2.2 Q Q.2.1, ge_of_eq⟩
+... ↔ Q ∈ {P} : set.mem_singleton_iff.symm)-/
+
+lemma sylow_aux (X : set (sylow p G)) [fintype X] [fact p.prime] (P : X)
   (h : ∀ (a : P) (Q : X), a • Q.1 ∈ X) : fintype.card X ≡ 1 [MOD p] :=
 begin
   letI : mul_action P.1.1 X :=
@@ -305,8 +312,7 @@ begin
     mul_smul := λ a b Q, subtype.ext (mul_smul a b Q) },
   have key : mul_action.fixed_points P.1.1 X = {P} :=
   set.ext (λ Q, calc Q ∈ mul_action.fixed_points P.1.1 X
-  ↔ Q.1 ∈ mul_action.fixed_points P.1.1 (sylow p G) :
-    ⟨λ h a, subtype.ext_iff.mp (h a), λ h a, subtype.ext (h a)⟩
+  ↔ Q.1 ∈ mul_action.fixed_points P.1.1 (sylow p G) : forall_congr (λ a, subtype.ext_iff)
   ... ↔ P ≤ Q : P.1.2.1.sylow_mem_fixed_points_iff
   ... ↔ Q = P : ⟨λ h, subtype.ext (subtype.ext (P.1.2.2 Q Q.1.2.1 h)), ge_of_eq⟩
   ... ↔ Q ∈ {P} : set.mem_singleton_iff.symm),
@@ -319,9 +325,30 @@ end
 
 variables (p) (G)
 
+/-- A generalisation of **Sylow's second theorem**.
+  If the number of Sylow `p`-subgroups is finite, then all Sylow `p`-subgroups are conjugate. -/
+lemma tada [hp : fact p.prime] [fintype (sylow p G)] (P Q : sylow p G) : ∃ g : G, g • P = Q :=
+begin
+  refine mul_action.orbit_eq_iff.mp (not_not.mp (λ h, _)),
+  replace h : disjoint (mul_action.orbit G P) (mul_action.orbit G Q),
+  { sorry },
+  classical,
+  let OP := mul_action.orbit G P,
+  let OQ := mul_action.orbit G Q,
+  have h1 := sylow_aux OP ⟨P, mul_action.mem_orbit_self P⟩ sorry,
+  have h2 := sylow_aux OQ ⟨Q, mul_action.mem_orbit_self Q⟩ sorry,
+  have h3 := sylow_aux (OP ∪ OQ) sorry sorry,
+  have key := calc 1 ≡ fintype.card (OP ∪ OQ : set (sylow p G)) [MOD p] : h3.symm
+  ... = fintype.card OP + fintype.card OQ : sorry
+  ... ≡ 1 + 1 [MOD p] : nat.modeq.add h1 h2,
+  have key := (nat.modeq_iff_dvd' one_le_two).mp key,
+  have key' := hp.out.not_dvd_one key,
+  exact key'
+end
+
 /-- A generalisation of **Sylow's third theorem**.
   If the number of Sylow `p`-subgroups is finite, then it is congruent to `1` modulo `p`. -/
 lemma card_sylow_modeq_one [fact p.prime] [fintype (sylow p G)] :
   fintype.card (sylow p G) ≡ 1 [MOD p] :=
-sylow_nonempty.elim (λ P, (congr_arg (λ n, n ≡ 1 [MOD p]) (fintype.card_congr
-  (equiv.set.univ (sylow p G)))).mp (sylow_aux ⟨P, set.mem_univ P⟩ (λ a Q, set.mem_univ (a • Q))))
+sylow_nonempty.elim (λ P, (congr_arg (λ n, n ≡ 1 [MOD p]) (fintype.card_congr (equiv.set.univ
+  (sylow p G)))).mp (sylow_aux set.univ ⟨P, set.mem_univ P⟩ (λ a Q, set.mem_univ (a • Q))))
