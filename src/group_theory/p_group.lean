@@ -199,10 +199,10 @@ begin
   have h2 := hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
   have h3 := to_sup_of_normal_right h1 h2,
   have key' : H' ⊔ K' = (H ⊔ K).comap K.normalizer.subtype,
-  { exact comap_subtype_sup_eq H K K.normalizer hHK subgroup.le_normalizer },
+  { exact subgroup.comap_subtype_sup_eq hHK subgroup.le_normalizer },
   replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
-  exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp
-    h3).to_equiv (subgroup.comap_subtype_equiv_of_le hHK),
+  exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp h3).to_equiv
+    (subgroup.comap_subtype_equiv_of_le hHK),
 end
 
 lemma to_sup_of_normal_left' {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
@@ -287,7 +287,7 @@ end
 lemma is_p_group.inf_normalizer_sylow {P : subgroup G} (hP : is_p_group p P) (Q : sylow p G) :
   P ⊓ Q.1.normalizer = P ⊓ Q :=
 le_antisymm (le_inf inf_le_left (sup_eq_right.mp (Q.2.2 (P ⊓ Q.1.normalizer ⊔ Q)
-  (hP.to_inf_left.to_sup_left Q.2.1 inf_le_right) le_sup_right)))
+  (hP.to_inf_left.to_sup_of_normal_right' Q.2.1 inf_le_right) le_sup_right)))
   (inf_le_inf_left P subgroup.le_normalizer)
 
 lemma is_p_group.sylow_mem_fixed_points_iff
