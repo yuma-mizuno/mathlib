@@ -190,25 +190,24 @@ lemma to_sup_of_normal_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_
   [H.normal] : is_p_group p (H ⊔ K : subgroup G) :=
 (congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_of_normal_right hK hH)
 
-lemma to_sup_left {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+lemma to_sup_of_normal_right' {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   (hHK : H ≤ K.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
 begin
   let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
   let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
-  have hH' : is_p_group p H' :=
-  hH.to_equiv (subgroup.comap_subtype_equiv_of_le hHK).symm,
-  have hK' : is_p_group p K' :=
-  hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
+  have h1 := hH.to_equiv (subgroup.comap_subtype_equiv_of_le hHK).symm,
+  have h2 := hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
+  have h3 := to_sup_of_normal_right h1 h2,
+  have key' : H' ⊔ K' = (H ⊔ K).comap K.normalizer.subtype,
+  { exact comap_subtype_sup_eq H K K.normalizer hHK subgroup.le_normalizer },
   replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
-  have key' : H' ⊔ K' = (H ⊔ K).comap K.normalizer.subtype := sorry,
   exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp
-    (to_sup_of_normal_right hH' hK')).to_equiv
-    (subgroup.comap_subtype_equiv_of_le hHK),
+    h3).to_equiv (subgroup.comap_subtype_equiv_of_le hHK),
 end
 
-lemma to_sup_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
+lemma to_sup_of_normal_left' {H K : subgroup G} (hH : is_p_group p H) (hK : is_p_group p K)
   (hHK : K ≤ H.normalizer) : is_p_group p (H ⊔ K : subgroup G) :=
-(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_left hK hH hHK)
+(congr_arg (λ H : subgroup G, is_p_group p H) sup_comm).mp (to_sup_of_normal_right' hK hH hHK)
 
 end is_p_group
 
