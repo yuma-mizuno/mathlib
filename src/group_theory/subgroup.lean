@@ -1687,21 +1687,20 @@ begin
 end
 
 @[to_additive] lemma comap_sup_eq_of_le_range
-  (H K : subgroup N) (hH : H ≤ f.range) (hK : K ≤ f.range):
+  {H K : subgroup N} (hH : H ≤ f.range) (hK : K ≤ f.range) :
   comap f H ⊔ comap f K = comap f (H ⊔ K) :=
 map_injective_of_ker_le f ((ker_le_comap f H).trans le_sup_left) (ker_le_comap f (H ⊔ K))
   (by rw [map_comap_eq, map_sup, map_comap_eq, map_comap_eq, inf_eq_right.mpr hH,
     inf_eq_right.mpr hK, inf_eq_right.mpr (sup_le hH hK)])
 
-@[to_additive] lemma comap_sup_eq
-  (H K : subgroup N) (hf : function.surjective f):
+@[to_additive] lemma comap_sup_eq (H K : subgroup N) (hf : function.surjective f) :
   comap f H ⊔ comap f K = comap f (H ⊔ K) :=
-comap_sup_eq_of_le_range f H K (le_top.trans (ge_of_eq (f.range_top_of_surjective hf)))
+comap_sup_eq_of_le_range f (le_top.trans (ge_of_eq (f.range_top_of_surjective hf)))
   (le_top.trans (ge_of_eq (f.range_top_of_surjective hf)))
 
-lemma comap_subtype_sup_eq {G : Type*} [group G] {H K L : subgroup G} (hH : H ≤ L) (hK : K ≤ L) :
-  H.comap L.subtype ⊔ K.comap L.subtype = (H ⊔ K).comap L.subtype :=
-comap_sup_eq_of_le_range L.subtype H K (hH.trans (ge_of_eq L.subtype_range))
+@[to_additive] lemma sup_subgroup_of_eq {H K L : subgroup G} (hH : H ≤ L) (hK : K ≤ L) :
+  H.subgroup_of L ⊔ K.subgroup_of L = (H ⊔ K).subgroup_of L :=
+comap_sup_eq_of_le_range L.subtype (hH.trans (ge_of_eq L.subtype_range))
   (hK.trans (ge_of_eq L.subtype_range))
 
 /-- A subgroup is isomorphic to its image under an injective function -/
