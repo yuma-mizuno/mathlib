@@ -165,7 +165,7 @@ let ⟨⟨b, hb⟩, hba⟩ := exists_ne_of_one_lt_card hα ⟨a, ha⟩ in
 end G_is_p_group
 
 lemma to_le {H K : subgroup G} (hK : is_p_group p K) (hHK : H ≤ K) : is_p_group p H :=
-hK.to_injective (subgroup.inclusion hHK) (λ a b h, subtype.ext (show _, from subtype.ext_iff.mp h))
+hK.of_injective (subgroup.inclusion hHK) (λ a b h, subtype.ext (show _, from subtype.ext_iff.mp h))
 
 lemma to_inf_left {H K : subgroup G} (hH : is_p_group p H) : is_p_group p (H ⊓ K : subgroup G) :=
 hH.to_le inf_le_left
@@ -177,7 +177,7 @@ lemma to_sup_of_normal_right {H K : subgroup G} (hH : is_p_group p H) (hK : is_p
   [K.normal] : is_p_group p (H ⊔ K : subgroup G) :=
 begin
   intro g,
-  obtain ⟨j, hj⟩ := (hH.to_quotient ((H ⊓ K).comap H.subtype)).to_equiv
+  obtain ⟨j, hj⟩ := (hH.to_quotient ((H ⊓ K).comap H.subtype)).of_equiv
     (quotient_group.quotient_inf_equiv_prod_normal_quotient H K) g,
   obtain ⟨k, hk⟩ := hK ⟨g ^ (p ^ j), (congr_arg (∈ K) ((H ⊔ K).coe_pow g (p ^ j))).mp
     ((quotient_group.eq_one_iff (g ^ (p ^ j))).mp
@@ -195,13 +195,13 @@ lemma to_sup_of_normal_right' {H K : subgroup G} (hH : is_p_group p H) (hK : is_
 begin
   let H' : subgroup K.normalizer := H.comap K.normalizer.subtype,
   let K' : subgroup K.normalizer := K.comap K.normalizer.subtype,
-  have h1 := hH.to_equiv (subgroup.comap_subtype_equiv_of_le hHK).symm,
-  have h2 := hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
+  have h1 := hH.of_equiv (subgroup.comap_subtype_equiv_of_le hHK).symm,
+  have h2 := hK.of_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
   have h3 := to_sup_of_normal_right h1 h2,
   have key' : H' ⊔ K' = (H ⊔ K).comap K.normalizer.subtype,
   { exact subgroup.sup_subgroup_of_eq hHK subgroup.le_normalizer },
   replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
-  exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp h3).to_equiv
+  exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp h3).of_equiv
     (subgroup.comap_subtype_equiv_of_le hHK),
 end
 
