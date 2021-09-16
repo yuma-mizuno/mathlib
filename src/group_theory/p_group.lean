@@ -199,7 +199,7 @@ begin
   have h2 := hK.to_equiv (subgroup.comap_subtype_equiv_of_le subgroup.le_normalizer).symm,
   have h3 := to_sup_of_normal_right h1 h2,
   have key' : H' ⊔ K' = (H ⊔ K).comap K.normalizer.subtype,
-  { exact subgroup.comap_subtype_sup_eq hHK subgroup.le_normalizer },
+  { exact subgroup.sup_subgroup_of_eq hHK subgroup.le_normalizer },
   replace hHK : H ⊔ K ≤ K.normalizer := sup_le hHK subgroup.le_normalizer,
   exact ((congr_arg (λ H : subgroup K.normalizer, is_p_group p H) key').mp h3).to_equiv
     (subgroup.comap_subtype_equiv_of_le hHK),
