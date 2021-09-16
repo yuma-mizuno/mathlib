@@ -299,32 +299,25 @@ variables (p) (G)
 
 /-- A generalization of **Sylow's second theorem**.
   If the number of Sylow `p`-subgroups is finite, then all Sylow `p`-subgroups are conjugate. -/
-lemma tada [hp : fact p.prime] [fintype (sylow p G)] (P Q : sylow p G) : ∃ g : G, g • P = Q :=
+lemma sylow_conjugate [hp : fact p.prime] [fintype (sylow p G)] (P Q : sylow p G) :
+  ∃ g : G, g • P = Q :=
 begin
   classical,
-  refine mul_action.mem_orbit_iff.mp _,
-  have key : ∀ (R : sylow p G) (S : mul_action.orbit G P),
-    S ∈ mul_action.fixed_points R (mul_action.orbit G P) ↔ S.1 = R :=
-  λ R S, calc S ∈ mul_action.fixed_points R (mul_action.orbit G P) ↔
-    S.1 ∈ mul_action.fixed_points R (sylow p G) : forall_congr (λ a, subtype.ext_iff)
-    ... ↔ R ≤ S.1 : R.2.1.sylow_mem_fixed_points_iff
-    ... ↔ S.1 = R : ⟨λ h, subtype.ext (R.2.2 S S.1.2.1 h), ge_of_eq⟩,
-  have key1 : mul_action.fixed_points P (mul_action.orbit G P) = {⟨P, mul_action.mem_orbit_self P⟩} :=
-  set.ext (λ R, calc R ∈ mul_action.fixed_points P (mul_action.orbit G P)
-    ↔ R.1 = P : key P R
-    ... ↔ R = ⟨P, mul_action.mem_orbit_self P⟩ : iff.trans (by refl) subtype.ext_iff.symm
-    ... ↔ R ∈ {(⟨P, mul_action.mem_orbit_self P⟩ : mul_action.orbit G P)} :
-      set.mem_singleton_iff.symm),
-  have key2 : fintype.card (mul_action.orbit G P) ≡ 1 [MOD p] :=
-  calc fintype.card (mul_action.orbit G P) ≡
-    fintype.card (mul_action.fixed_points P (mul_action.orbit G P)) [MOD p] :
-      P.2.1.card_modeq_card_fixed_points (mul_action.orbit G P)
-  ... = 1 : by simp_rw key1; convert set.card_singleton _,
-  have key3 : ¬ p ∣ fintype.card (mul_action.orbit G P),
-  { sorry },
-  obtain ⟨R, hR⟩ := Q.2.1.nonempty_fixed_point_of_prime_not_dvd_card (mul_action.orbit G P) key3,
-  rw ← (key Q R).mp hR,
-  exact R.2,
+  have key := λ {R : sylow p G} {S : mul_action.orbit G P},
+  calc S ∈ mul_action.fixed_points R (mul_action.orbit G P)
+      ↔ S.1 ∈ mul_action.fixed_points R (sylow p G) : forall_congr (λ a, subtype.ext_iff)
+  ... ↔ R ≤ S : R.2.1.sylow_mem_fixed_points_iff
+  ... ↔ S.1 = R : ⟨λ h, subtype.ext (R.2.2 S S.1.2.1 h), ge_of_eq⟩,
+  suffices : set.nonempty (mul_action.fixed_points Q (mul_action.orbit G P)),
+  { exact exists.elim this (λ R hR, (congr_arg _ (key.mp hR)).mp R.2) },
+  apply Q.2.1.nonempty_fixed_point_of_prime_not_dvd_card,
+  refine λ h, hp.out.not_dvd_one (nat.modeq_zero_iff_dvd.mp _),
+  calc 1 = fintype.card (mul_action.fixed_points P (mul_action.orbit G P)) : _
+    ... ≡ fintype.card (mul_action.orbit G P) [MOD p] :
+      (P.2.1.card_modeq_card_fixed_points (mul_action.orbit G P)).symm
+    ... ≡ 0 [MOD p] : nat.modeq_zero_iff_dvd.mpr h,
+  convert (set.card_singleton (⟨P, mul_action.mem_orbit_self P⟩ : mul_action.orbit G P)).symm,
+  exact set.eq_singleton_iff_unique_mem.mpr ⟨key.mpr rfl, λ R hR, subtype.ext (key.mp hR)⟩,
 end
 
 /-- A generalization of **Sylow's third theorem**.
