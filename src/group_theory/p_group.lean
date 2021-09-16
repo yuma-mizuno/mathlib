@@ -65,7 +65,7 @@ variables (hG : is_p_group p G)
 
 include hG
 
-lemma to_injective {H : Type*} [group H] (ϕ : H →* G) (hϕ : function.injective ϕ) :
+lemma of_injective {H : Type*} [group H] (ϕ : H →* G) (hϕ : function.injective ϕ) :
   is_p_group p H :=
 begin
   simp_rw [is_p_group, ←hϕ.eq_iff, ϕ.map_pow, ϕ.map_one],
@@ -73,9 +73,9 @@ begin
 end
 
 lemma to_subgroup (H : subgroup G) : is_p_group p H :=
-hG.to_injective H.subtype subtype.coe_injective
+hG.of_injective H.subtype subtype.coe_injective
 
-lemma to_surjective {H : Type*} [group H] (ϕ : G →* H) (hϕ : function.surjective ϕ) :
+lemma of_surjective {H : Type*} [group H] (ϕ : G →* H) (hϕ : function.surjective ϕ) :
   is_p_group p H :=
 begin
   refine λ h, exists.elim (hϕ h) (λ g hg, exists_imp_exists (λ k hk, _) (hG g)),
@@ -84,10 +84,10 @@ end
 
 lemma to_quotient (H : subgroup G) [H.normal] :
   is_p_group p (quotient_group.quotient H) :=
-hG.to_surjective (quotient_group.mk' H) quotient.surjective_quotient_mk'
+hG.of_surjective (quotient_group.mk' H) quotient.surjective_quotient_mk'
 
-lemma to_equiv {H : Type*} [group H] (ϕ : G ≃* H) : is_p_group p H :=
-hG.to_surjective ϕ.to_monoid_hom ϕ.surjective
+lemma of_equiv {H : Type*} [group H] (ϕ : G ≃* H) : is_p_group p H :=
+hG.of_surjective ϕ.to_monoid_hom ϕ.surjective
 
 variables [hp : fact p.prime]
 
@@ -108,7 +108,7 @@ lemma card_orbit (a : α) [fintype (orbit G a)] :
   ∃ n : ℕ, card (orbit G a) = p ^ n :=
 begin
   let ϕ := orbit_equiv_quotient_stabilizer G a,
-  haveI := of_equiv (orbit G a) ϕ,
+  haveI := fintype.of_equiv (orbit G a) ϕ,
   rw [card_congr ϕ, ←subgroup.index_eq_card],
   exact hG.index (stabilizer G a),
 end
