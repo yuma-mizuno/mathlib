@@ -162,19 +162,30 @@ begin
   ... = 1 : by simp_rw key; convert set.card_singleton P,
 end
 
-def sylow.tada [fintype (sylow p G)] (P : sylow p G) :
+-- orbit eq top
+
+-- stablizer eq normalizer
+
+variables {p} {G}
+
+noncomputable def sylow_equiv_quotient_normalizer [fintype (sylow p G)] (P : sylow p G) :
   sylow p G ≃ quotient_group.quotient P.1.normalizer :=
-begin
-  have key := mul_action.orbit_equiv_quotient_stabilizer G P,
-end
+calc sylow p G ≃ mul_action.orbit G P : sorry
+... ≃ quotient_group.quotient (mul_action.stabilizer G P) :
+  mul_action.orbit_equiv_quotient_stabilizer G P
+... ≃ quotient_group.quotient P.1.normalizer : sorry
 
--- orbit stabilizer equiv
+noncomputable instance [fintype (sylow p G)] (P : sylow p G) :
+  fintype (quotient_group.quotient P.1.normalizer) :=
+fintype.of_equiv (sylow p G) (sylow_equiv_quotient_normalizer P)
 
--- fintype quotient normalizer = np
+lemma card_sylow_eq_card_quotient_normalizer [fintype (sylow p G)] (P : sylow p G) :
+  fintype.card (sylow p G) = fintype.card (quotient_group.quotient P.1.normalizer) :=
+fintype.card_congr (sylow_equiv_quotient_normalizer P)
 
--- card quotient normalizer = np
-
--- index normalizer = np
+lemma card_sylow_eq_index_normalizer [fintype (sylow p G)] (P : sylow p G) :
+  fintype.card (sylow p G) = P.1.normalizer.index :=
+(card_sylow_eq_card_quotient_normalizer P).trans P.1.normalizer.index_eq_card.symm
 
 end infinite_sylow
 
