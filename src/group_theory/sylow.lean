@@ -77,13 +77,22 @@ instance mul_action' : mul_action G (subgroup G) :=
     rw mul_aut.conj.map_mul,
     refl } }
 
--- is_p_group preserved under smul
--- mem_sylow preserved under smul
+def aux : mul_aut G →* function.End (sylow p G) :=
+{ to_fun := λ ϕ P, ⟨P.1.comap ϕ⁻¹.to_monoid_hom, by
+  { refine ⟨λ g, _, λ Q hQ hPQ, _⟩,
+    { refine exists_imp_exists (λ k hk, _) (P.2.1 ⟨ϕ⁻¹.to_monoid_hom g, g.2⟩),
+      rw [subtype.ext_iff, subgroup.coe_pow] at hk ⊢,
+      exact (ϕ⁻¹.map_eq_one_iff).mp ((monoid_hom.map_pow _ _ _).trans hk) },
+    { have key := P.2.2 (Q.comap ϕ.to_monoid_hom),
+      sorry } }⟩,
+  map_one' := funext (λ P, subtype.ext (subgroup.ext (λ g, iff.rfl))),
+  map_mul' := λ ϕ ψ, funext (λ P, subtype.ext (by
+  { change P.1.comap _ = (P.1.comap _).comap _,
+    rw [subgroup.comap_comap, mul_inv_rev],
+    refl })) }
 
 instance : mul_action G (sylow p G) :=
-{ smul := λ g P, ⟨g • P, sorry⟩,
-  one_smul := sorry,
-  mul_smul := sorry }
+mul_action.of_End_hom (aux.comp mul_aut.conj)
 
 --mem_smul lemma
 
@@ -151,6 +160,12 @@ begin
   calc fintype.card (sylow p G) ≡ fintype.card (mul_action.fixed_points P (sylow p G)) [MOD p] :
     P.2.1.card_modeq_card_fixed_points (sylow p G)
   ... = 1 : by simp_rw key; convert set.card_singleton P,
+end
+
+def sylow.tada [fintype (sylow p G)] (P : sylow p G) :
+  sylow p G ≃ quotient_group.quotient P.1.normalizer :=
+begin
+  have key := mul_action.orbit_equiv_quotient_stabilizer G P,
 end
 
 -- orbit stabilizer equiv
