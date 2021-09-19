@@ -828,7 +828,7 @@ begin
   by_cases hp_zero : p = 0,
   { simp [hp_zero], },
   by_cases hp_top : p = ∞,
-  { simp [hp_top],
+  { simp_rw [hp_top, snorm_exponent_top],
     exact snorm_ess_sup_measure_map hg hf, },
   simp_rw snorm_eq_lintegral_rpow_nnnorm hp_zero hp_top,
   rw lintegral_map' (hg.ennnorm.pow_const p.to_real) hf,
