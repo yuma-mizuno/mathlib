@@ -205,13 +205,11 @@ by simpa [has_finite_integral] using hfi
 
 @[simp] lemma has_finite_integral_neg_iff {f : α → β} :
   has_finite_integral (-f) μ ↔ has_finite_integral f μ :=
-⟨λ h, neg_neg f ▸ h.neg, has_finite_integral.neg⟩
+by simp [has_finite_integral]
 
 lemma has_finite_integral.norm {f : α → β} (hfi : has_finite_integral f μ) :
   has_finite_integral (λ a, ∥f a∥) μ :=
-have eq : (λ a, (nnnorm ∥f a∥ : ℝ≥0∞)) = λ a, (nnnorm (f a) : ℝ≥0∞),
-  by { funext, rw nnnorm_norm },
-by rwa [has_finite_integral, snorm_one_eq_lintegral_nnnorm, eq, ← snorm_one_eq_lintegral_nnnorm]
+by rwa [has_finite_integral, snorm_norm]
 
 lemma has_finite_integral_norm_iff (f : α → β) :
   has_finite_integral (λ a, ∥f a∥) μ ↔ has_finite_integral f μ :=
@@ -331,28 +329,14 @@ end pos_part
 section normed_space
 variables {𝕜 : Type*} [normed_field 𝕜] [normed_space 𝕜 β]
 
-lemma has_finite_integral.smul (c : 𝕜) {f : α → β} : has_finite_integral f μ →
+lemma has_finite_integral.smul (c : 𝕜) {f : α → β} (hf : has_finite_integral f μ) :
   has_finite_integral (c • f) μ :=
-begin
-  simp only [has_finite_integral, snorm_one_eq_lintegral_nnnorm], assume hfi,
-  calc
-    ∫⁻ (a : α), nnnorm (c • f a) ∂μ = ∫⁻ (a : α), (nnnorm c) * nnnorm (f a) ∂μ :
-      by simp only [nnnorm_smul, ennreal.coe_mul]
-    ... < ∞ :
-    begin
-      rw lintegral_const_mul',
-      exacts [mul_lt_top coe_lt_top hfi, coe_ne_top]
-    end
-end
+by { rw [has_finite_integral, snorm_const_smul c], exact ennreal.mul_lt_top ennreal.coe_lt_top hf, }
 
 lemma has_finite_integral_smul_iff {c : 𝕜} (hc : c ≠ 0) (f : α → β) :
   has_finite_integral (c • f) μ ↔ has_finite_integral f μ :=
-begin
-  split,
-  { assume h,
-    simpa only [smul_smul, inv_mul_cancel hc, one_smul] using h.smul c⁻¹ },
-  exact has_finite_integral.smul _
-end
+⟨λ h, by simpa only [smul_smul, inv_mul_cancel hc, one_smul] using h.smul c⁻¹,
+  has_finite_integral.smul _⟩
 
 lemma has_finite_integral.const_mul {f : α → ℝ} (h : has_finite_integral f μ) (c : ℝ) :
   has_finite_integral (λ x, c * f x) μ :=
@@ -361,6 +345,7 @@ lemma has_finite_integral.const_mul {f : α → ℝ} (h : has_finite_integral f 
 lemma has_finite_integral.mul_const {f : α → ℝ} (h : has_finite_integral f μ) (c : ℝ) :
   has_finite_integral (λ x, f x * c) μ :=
 by simp_rw [mul_comm, h.const_mul _]
+
 end normed_space
 
 /-! ### The predicate `integrable` -/
