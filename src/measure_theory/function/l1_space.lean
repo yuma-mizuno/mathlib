@@ -213,7 +213,7 @@ by rwa [has_finite_integral, snorm_norm]
 
 lemma has_finite_integral_norm_iff (f : α → β) :
   has_finite_integral (λ a, ∥f a∥) μ ↔ has_finite_integral f μ :=
-has_finite_integral_congr' $ eventually_of_forall $ λ x, norm_norm (f x)
+by rwa [has_finite_integral, has_finite_integral, snorm_norm]
 
 section dominated_convergence
 
