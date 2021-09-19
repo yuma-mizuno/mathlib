@@ -215,6 +215,28 @@ lemma has_finite_integral_norm_iff (f : α → β) :
   has_finite_integral (λ a, ∥f a∥) μ ↔ has_finite_integral f μ :=
 by rwa [has_finite_integral, has_finite_integral, snorm_norm]
 
+lemma has_finite_integral_to_real_of_lintegral_ne_top
+  {f : α → ℝ≥0∞} (hf : ∫⁻ x, f x ∂μ ≠ ∞) :
+  has_finite_integral (λ x, (f x).to_real) μ :=
+begin
+  have : ∀ x, (∥(f x).to_real∥₊ : ℝ≥0∞) =
+    @coe ℝ≥0 ℝ≥0∞ _ (⟨(f x).to_real, ennreal.to_real_nonneg⟩ : ℝ≥0),
+  { intro x, rw real.nnnorm_of_nonneg },
+  simp_rw [has_finite_integral, this],
+  refine lt_of_le_of_lt (lintegral_mono (λ x, _)) (lt_top_iff_ne_top.2 hf),
+  by_cases hfx : f x = ∞,
+  { simp [hfx] },
+  { lift f x to ℝ≥0 using hfx with fx,
+    simp [← h] }
+end
+
+lemma is_finite_measure_with_density_of_real {f : α → ℝ} (hfi : has_finite_integral f μ) :
+  is_finite_measure (μ.with_density (λ x, ennreal.of_real $ f x)) :=
+begin
+  refine is_finite_measure_with_density ((lintegral_mono $ λ x, _).trans_lt hfi).ne,
+  exact real.of_real_le_ennnorm (f x)
+end
+
 section dominated_convergence
 
 variables {F : ℕ → α → β} {f : α → β} {bound : α → ℝ}
@@ -304,7 +326,7 @@ begin
   { rw has_finite_integral_iff_of_real at bound_has_finite_integral,
     { calc ∫⁻ a, b a ∂μ = 2 * ∫⁻ a, ennreal.of_real (bound a) ∂μ :
         by { rw lintegral_const_mul', exact coe_ne_top }
-        ... < ∞ : mul_lt_top (coe_lt_top) bound_has_finite_integral },
+        ... ≠ ∞ : mul_ne_top coe_ne_top bound_has_finite_integral.ne },
     filter_upwards [h_bound 0] λ a h, le_trans (norm_nonneg _) h },
   -- Show `∥f a - F n a∥ --> 0`
   { exact h }
@@ -413,7 +435,7 @@ h.mono_measure $ measure.le_add_left $ le_refl _
   integrable f (μ + ν) ↔ integrable f μ ∧ integrable f ν :=
 ⟨λ h, ⟨h.left_of_add_measure, h.right_of_add_measure⟩, λ h, h.1.add_measure h.2⟩
 
-lemma integrable.smul_measure {f : α → β} (h : integrable f μ) {c : ℝ≥0∞} (hc : c < ∞) :
+lemma integrable.smul_measure {f : α → β} (h : integrable f μ) {c : ℝ≥0∞} (hc : c ≠ ∞) :
   integrable f (c • μ) :=
 ⟨h.ae_measurable.smul_measure c, h.has_finite_integral.smul_measure hc⟩
 
@@ -519,6 +541,19 @@ begin
   assume x,
   simp [real.norm_eq_abs, ennreal.of_real_le_of_real, abs_le, abs_nonneg, le_abs_self],
 end
+
+lemma mem_ℒ1_to_real_of_lintegral_ne_top
+  {f : α → ℝ≥0∞} (hfm : ae_measurable f μ) (hfi : ∫⁻ x, f x ∂μ ≠ ∞) :
+  mem_ℒp (λ x, (f x).to_real) 1 μ :=
+begin
+  rw [mem_ℒp, snorm_one_eq_lintegral_nnnorm],
+  exact ⟨ae_measurable.ennreal_to_real hfm, has_finite_integral_to_real_of_lintegral_ne_top hfi⟩
+end
+
+lemma integrable_to_real_of_lintegral_ne_top
+  {f : α → ℝ≥0∞} (hfm : ae_measurable f μ) (hfi : ∫⁻ x, f x ∂μ ≠ ∞) :
+  integrable (λ x, (f x).to_real) μ :=
+mem_ℒp_one_iff_integrable.1 $ mem_ℒ1_to_real_of_lintegral_ne_top hfm hfi
 
 section pos_part
 /-! ### Lemmas used for defining the positive part of a `L¹` function -/
