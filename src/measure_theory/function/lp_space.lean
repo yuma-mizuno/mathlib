@@ -601,6 +601,37 @@ lemma snorm_one_smul_measure {f : α → F} (c : ℝ≥0∞) :
   snorm f 1 (c • μ) = c * snorm f 1 μ :=
 by { rw @snorm_smul_measure_of_ne_top _ _ _ μ _ 1 (@ennreal.coe_ne_top 1) f c, simp, }
 
+lemma mem_ℒp.smul_measure {f : α → E} {c : ℝ≥0∞} (hf : mem_ℒp f p μ) (hc : c ≠ ∞) :
+  mem_ℒp f p (c • μ) :=
+begin
+  by_cases hp_zero : p = 0,
+  { rw [hp_zero, mem_ℒp_zero_iff_ae_measurable], exact hf.1.smul_measure c, },
+  refine ⟨ae_measurable.smul_measure hf.1 c, _⟩,
+  by_cases hp_top : p = ∞,
+  { by_cases hc_zero : c = 0,
+    { simp [hc_zero], },
+    rw [hp_top, snorm_exponent_top, snorm_ess_sup_smul_measure hc_zero, ← snorm_exponent_top],
+    rw hp_top at hf,
+    exact hf.2, },
+  rw snorm_smul_measure_of_ne_top hp_top,
+  exact ennreal.mul_lt_top (ennreal.rpow_ne_top_of_nonneg ennreal.to_real_nonneg hc) hf.2.ne,
+end
+
+lemma snorm_one_add_measure {f : α → F} : snorm f 1 (μ + ν) = snorm f 1 μ + snorm f 1 ν :=
+by { simp_rw snorm_one_eq_lintegral_nnnorm, rw lintegral_add_measure _ μ ν, }
+
+lemma snorm_le_add_measure_right {f : α → F} {p : ℝ≥0∞} : snorm f p μ ≤ snorm f p (μ + ν) :=
+snorm_mono_measure f $ measure.le_add_right $ le_refl _
+
+lemma snorm_le_add_measure_left {f : α → F} {p : ℝ≥0∞} : snorm f p ν ≤ snorm f p (μ + ν) :=
+snorm_mono_measure f $ measure.le_add_left $ le_refl _
+
+lemma mem_ℒp.left_of_add_measure {f : α → E} (h : mem_ℒp f p (μ + ν)) : mem_ℒp f p μ :=
+h.mono_measure $ measure.le_add_right $ le_refl _
+
+lemma mem_ℒp.right_of_add_measure {f : α → E} (h : mem_ℒp f p (μ + ν)) : mem_ℒp f p ν :=
+h.mono_measure $ measure.le_add_left $ le_refl _
+
 section opens_measurable_space
 variable [opens_measurable_space E]
 
@@ -752,6 +783,61 @@ begin
   rw [mem_ℒp, snorm_eq_snorm' h0 hp_top] at hf hg,
   exact snorm'_add_lt_top_of_le_one hf.1 hg.1 hf.2 hg.2 hp_pos hp1_real,
 end
+
+lemma ess_sup_measure_map_of_measurable {β γ} [measurable_space β] [measurable_space γ]
+  [complete_lattice γ] [topological_space γ] [second_countable_topology γ] [order_closed_topology γ]
+  [opens_measurable_space γ]
+  {f : α → β} {g : β → γ} (hg : measurable g) (hf : measurable f) :
+  ess_sup g (measure.map f μ) = ess_sup (g ∘ f) μ :=
+begin
+  refine le_antisymm _ _,
+  { refine Limsup_le_Limsup (by is_bounded_default) (by is_bounded_default) (λ c h_le, _),
+    rw eventually_map at h_le ⊢,
+    rw ae_map_iff hf (measurable_set_le hg measurable_const),
+    exact h_le, },
+  { refine Limsup_le_Limsup_of_le _ (by is_bounded_default) (by is_bounded_default),
+    intro t,
+    simp_rw filter.mem_map,
+    have : (g ∘ f) ⁻¹' t = f ⁻¹' (g ⁻¹' t), by { ext1 x, simp, },
+    rw this,
+    exact λ h, mem_ae_of_mem_ae_map hf h, },
+end
+
+lemma ess_sup_measure_map {β γ} [measurable_space β] [measurable_space γ]
+  [complete_lattice γ] [topological_space γ] [second_countable_topology γ] [order_closed_topology γ]
+  [opens_measurable_space γ]
+  {f : α → β} {g : β → γ} (hg : ae_measurable g (measure.map f μ)) (hf : measurable f) :
+  ess_sup g (measure.map f μ) = ess_sup (g ∘ f) μ :=
+begin
+  rw [ess_sup_congr_ae hg.ae_eq_mk, ess_sup_measure_map_of_measurable hg.measurable_mk hf],
+  refine ess_sup_congr_ae _,
+  have h_eq := ae_of_ae_map hf hg.ae_eq_mk,
+  rw ← eventually_eq at h_eq,
+  exact h_eq.symm,
+end
+
+lemma snorm_ess_sup_measure_map {β} [measurable_space β] {f : α → β} {g : β → E}
+  (hg : ae_measurable g (measure.map f μ)) (hf : measurable f) :
+  snorm_ess_sup g (measure.map f μ) = snorm_ess_sup (g ∘ f) μ :=
+ess_sup_measure_map hg.ennnorm hf
+
+lemma snorm_map_measure {β} [measurable_space β] {f : α → β} {g : β → E}
+  (hg : ae_measurable g (measure.map f μ)) (hf : measurable f) :
+  snorm g p (measure.map f μ) = snorm (g ∘ f) p μ :=
+begin
+  by_cases hp_zero : p = 0,
+  { simp [hp_zero], },
+  by_cases hp_top : p = ∞,
+  { simp [hp_top],
+    exact snorm_ess_sup_measure_map hg hf, },
+  simp_rw snorm_eq_lintegral_rpow_nnnorm hp_zero hp_top,
+  rw lintegral_map' (hg.ennnorm.pow_const p.to_real) hf,
+end
+
+lemma mem_ℒp_map_measure_iff (p : ℝ≥0∞) {β} [measurable_space β] {f : α → β} {g : β → E}
+  (hg : ae_measurable g (measure.map f μ)) (hf : measurable f) :
+  mem_ℒp g p (measure.map f μ) ↔ mem_ℒp (g ∘ f) p μ :=
+by simp [mem_ℒp, snorm_map_measure hg hf, hg.comp_measurable hf, hg]
 
 section trim
 

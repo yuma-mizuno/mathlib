@@ -160,16 +160,6 @@ lemma has_finite_integral.mono_measure {f : α → β} (h : has_finite_integral 
   has_finite_integral f μ :=
 (snorm_mono_measure f hμ).trans_lt h
 
-lemma snorm_one_add_measure {f : α → β} :
-  snorm f 1 (μ + ν) = snorm f 1 μ + snorm f 1 ν :=
-by { simp_rw snorm_one_eq_lintegral_nnnorm, rw lintegral_add_measure _ μ ν, }
-
-lemma snorm_le_add_measure_right {f : α → β} {p : ℝ≥0∞} : snorm f p μ ≤ snorm f p (μ + ν) :=
-snorm_mono_measure f $ measure.le_add_right $ le_refl _
-
-lemma snorm_le_add_measure_left {f : α → β} {p : ℝ≥0∞} : snorm f p ν ≤ snorm f p (μ + ν) :=
-snorm_mono_measure f $ measure.le_add_left $ le_refl _
-
 lemma has_finite_integral.add_measure {f : α → β} (hμ : has_finite_integral f μ)
   (hν : has_finite_integral f ν) : has_finite_integral f (μ + ν) :=
 by { simp only [has_finite_integral, snorm_one_add_measure] at *, exact add_lt_top.2 ⟨hμ, hν⟩ }
@@ -426,10 +416,10 @@ lemma integrable.add_measure {f : α → β} (hμ : integrable f μ) (hν : inte
   hμ.has_finite_integral.add_measure hν.has_finite_integral⟩
 
 lemma integrable.left_of_add_measure {f : α → β} (h : integrable f (μ + ν)) : integrable f μ :=
-h.mono_measure $ measure.le_add_right $ le_refl _
+h.left_of_add_measure
 
 lemma integrable.right_of_add_measure {f : α → β} (h : integrable f (μ + ν)) : integrable f ν :=
-h.mono_measure $ measure.le_add_left $ le_refl _
+h.right_of_add_measure
 
 @[simp] lemma integrable_add_measure {f : α → β} :
   integrable f (μ + ν) ↔ integrable f μ ∧ integrable f ν :=
@@ -437,13 +427,12 @@ h.mono_measure $ measure.le_add_left $ le_refl _
 
 lemma integrable.smul_measure {f : α → β} (h : integrable f μ) {c : ℝ≥0∞} (hc : c ≠ ∞) :
   integrable f (c • μ) :=
-⟨h.ae_measurable.smul_measure c, h.has_finite_integral.smul_measure hc⟩
+h.smul_measure hc
 
 lemma integrable_map_measure [opens_measurable_space β] {f : α → δ} {g : δ → β}
   (hg : ae_measurable g (measure.map f μ)) (hf : measurable f) :
   integrable g (measure.map f μ) ↔ integrable (g ∘ f) μ :=
-by simp [integrable, mem_ℒp, hg, hg.comp_measurable hf, snorm_one_eq_lintegral_nnnorm,
-  lintegral_map' hg.ennnorm hf]
+mem_ℒp_map_measure_iff 1 hg hf
 
 lemma lintegral_edist_lt_top [second_countable_topology β] [opens_measurable_space β] {f g : α → β}
   (hf : integrable f μ) (hg : integrable g μ) :
@@ -469,7 +458,7 @@ hf.add hg
 
 lemma integrable_finset_sum {ι} [borel_space β] [second_countable_topology β] (s : finset ι)
   {f : ι → α → β} (hf : ∀ i, integrable (f i) μ) : integrable (λ a, ∑ i in s, f i a) μ :=
-mem_ℒp_finset_sum s hf
+mem_ℒp_finset_sum s (λ i _, hf i)
 
 lemma integrable.neg [borel_space β] {f : α → β} (hf : integrable f μ) : integrable (-f) μ :=
 hf.neg
