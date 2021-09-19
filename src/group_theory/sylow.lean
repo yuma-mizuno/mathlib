@@ -31,59 +31,38 @@ In this file, currently only the first of these results is proven.
   If the number of Sylow `p`-subgroups is finite, then it is congruent to `1` modulo `p`.
 -/
 
+--todo: move
+instance subgroup.normal_in_normalizer' {G : Type*} [group G] {H : subgroup G} :
+  (H.subgroup_of H.normalizer).normal :=
+subgroup.normal_in_normalizer
+
 section infinite_sylow
 
 variables (p : ℕ) (G : Type*) [group G]
 
-def sylow : set (subgroup G) :=
-{P | is_p_group p P ∧ ∀ Q : subgroup G, is_p_group p Q → P ≤ Q → Q = P}
+def sylow :=
+{P : subgroup G // is_p_group p P ∧ ∀ Q : subgroup G, is_p_group p Q → P ≤ Q → Q = P}
+
+instance : has_coe (sylow p G) (subgroup G) := ⟨subtype.val⟩
 
 variables {p} {G}
 
-/-- A generalization of **Sylow's first theorem**.
-  Every `p`-subgroup is contained in a Sylow `p`-subgroup. -/
-lemma is_p_group.exists_le_sylow {P : subgroup G} (hP : is_p_group p P) :
-  ∃ Q : sylow p G, P ≤ Q :=
+lemma tada1 {P : subgroup G} (hP : is_p_group p P) {ϕ : G → H} (hϕ : fu) :
+  is_p_group p (P.comap ϕ.to_monoid_hom) :=
 begin
-  suffices : ∃ (Q : subgroup G) (hQ : is_p_group p Q), P ≤ Q ∧ ∀ R : subgroup G,
-    is_p_group p R → Q ≤ R → R = Q,
-  { obtain ⟨Q, hQ1, hQ2, hQ3⟩ := this,
-    exact ⟨⟨Q, hQ1, hQ3⟩, hQ2⟩ },
-  refine zorn.zorn_nonempty_partial_order₀ {Q | is_p_group p Q} (λ c hc1 hc2 Q hQ, _) P hP,
-  let R : subgroup G :=
-  { carrier := ⋃ (R : c), R,
-    one_mem' := ⟨Q, ⟨⟨Q, hQ⟩, rfl⟩, Q.one_mem⟩,
-    inv_mem' := λ g ⟨_, ⟨R, rfl⟩, hg⟩, ⟨R, ⟨R, rfl⟩, R.1.inv_mem hg⟩,
-    mul_mem' := λ g h ⟨_, ⟨R, rfl⟩, hg⟩ ⟨_, ⟨S, rfl⟩, hh⟩, (hc2.total_of_refl R.2 S.2).elim
-      (λ T, ⟨S, ⟨S, rfl⟩, S.1.mul_mem (T hg) hh⟩) (λ T, ⟨R, ⟨R, rfl⟩, R.1.mul_mem hg (T hh)⟩) },
-  exact ⟨R, λ ⟨g, _, ⟨S, rfl⟩, hg⟩, by
-  { refine exists_imp_exists (λ k hk, subtype.ext _) (hc1 S.2 ⟨g, hg⟩),
-    exact (R.coe_pow _ _).trans ((S.1.coe_pow _ _).symm.trans (subtype.ext_iff.mp hk)) },
-  λ M hM g hg, ⟨M, ⟨⟨M, hM⟩, rfl⟩, hg⟩⟩,
+  refine λ g, exists_imp_exists (λ k hk, _) (hP ⟨ϕ.to_monoid_hom g, g.2⟩),
+  rw [subtype.ext_iff, subgroup.coe_pow] at hk ⊢,
+  exact (ϕ.map_eq_one_iff).mp ((ϕ.to_monoid_hom.map_pow g (p ^ k)).trans hk),
 end
 
-instance sylow_nonempty : nonempty (sylow p G) :=
-nonempty_of_exists is_p_group.of_bot.exists_le_sylow
-
-instance mul_action' : mul_action G (subgroup G) :=
-{ smul := λ g H, H.comap (mul_aut.conj g)⁻¹.to_monoid_hom,
-  one_smul := λ H, by
-  { change H.comap (mul_aut.conj (1 : G))⁻¹.to_monoid_hom = H,
-    rw mul_aut.conj.map_one,
-    ext,
-    refl },
-  mul_smul := λ g h H, by
-  { change H.comap (mul_aut.conj (g * h))⁻¹.to_monoid_hom = _,
-    rw mul_aut.conj.map_mul,
-    refl } }
-
-def aux : mul_aut G →* function.End (sylow p G) :=
+/-- Action of automorphism on sylow subgroups -/
+def sylow_action : mul_aut G →* function.End (sylow p G) :=
 { to_fun := λ ϕ P, ⟨P.1.comap ϕ⁻¹.to_monoid_hom, by
   { refine ⟨λ g, _, λ Q hQ hPQ, _⟩,
     { refine exists_imp_exists (λ k hk, _) (P.2.1 ⟨ϕ⁻¹.to_monoid_hom g, g.2⟩),
       rw [subtype.ext_iff, subgroup.coe_pow] at hk ⊢,
       exact (ϕ⁻¹.map_eq_one_iff).mp ((monoid_hom.map_pow _ _ _).trans hk) },
-    { have key := P.2.2 (Q.comap ϕ.to_monoid_hom),
+    { rw [←P.2.2 (Q.comap ϕ.to_monoid_hom), subgroup.comap_comap],
       sorry } }⟩,
   map_one' := funext (λ P, subtype.ext (subgroup.ext (λ g, iff.rfl))),
   map_mul' := λ ϕ ψ, funext (λ P, subtype.ext (by
@@ -91,8 +70,30 @@ def aux : mul_aut G →* function.End (sylow p G) :=
     rw [subgroup.comap_comap, mul_inv_rev],
     refl })) }
 
+/-- A generalization of **Sylow's first theorem**.
+  Every `p`-subgroup is contained in a Sylow `p`-subgroup. -/
+lemma is_p_group.exists_le_sylow {P : subgroup G} (hP : is_p_group p P) :
+  ∃ Q : sylow p G, P ≤ Q :=
+exists.elim (zorn.zorn_nonempty_partial_order₀ {Q : subgroup G | is_p_group p Q} (λ c hc1 hc2 Q hQ,
+⟨ { carrier := ⋃ (R : c), R,
+    one_mem' := ⟨Q, ⟨⟨Q, hQ⟩, rfl⟩, Q.one_mem⟩,
+    inv_mem' := λ g ⟨_, ⟨R, rfl⟩, hg⟩, ⟨R, ⟨R, rfl⟩, R.1.inv_mem hg⟩,
+    mul_mem' := λ g h ⟨_, ⟨R, rfl⟩, hg⟩ ⟨_, ⟨S, rfl⟩, hh⟩, (hc2.total_of_refl R.2 S.2).elim
+      (λ T, ⟨S, ⟨S, rfl⟩, S.1.mul_mem (T hg) hh⟩) (λ T, ⟨R, ⟨R, rfl⟩, R.1.mul_mem hg (T hh)⟩) },
+  λ ⟨g, _, ⟨S, rfl⟩, hg⟩, by
+  { refine exists_imp_exists (λ k hk, _) (hc1 S.2 ⟨g, hg⟩),
+    rwa [subtype.ext_iff, subgroup.coe_pow] at hk ⊢ },
+  λ M hM g hg, ⟨M, ⟨⟨M, hM⟩, rfl⟩, hg⟩⟩) P hP) (λ Q ⟨hQ1, hQ2, hQ3⟩, ⟨⟨Q, hQ1, hQ3⟩, hQ2⟩)
+
+instance sylow_nonempty : nonempty (sylow p G) :=
+nonempty_of_exists is_p_group.of_bot.exists_le_sylow
+
+
+
+
+
 instance : mul_action G (sylow p G) :=
-mul_action.of_End_hom (aux.comp mul_aut.conj)
+mul_action.of_End_hom (sylow_action.comp mul_aut.conj)
 
 --mem_smul lemma
 
@@ -119,8 +120,6 @@ lemma is_p_group.sylow_mem_fixed_points_iff
   Q ∈ mul_action.fixed_points P (sylow p G) ↔ P ≤ Q :=
 by rw [P.sylow_mem_fixed_points_iff, ←inf_eq_left, hP.inf_normalizer_sylow, inf_eq_left]
 
-variables (p) (G)
-
 /-- A generalization of **Sylow's second theorem**.
   If the number of Sylow `p`-subgroups is finite, then all Sylow `p`-subgroups are conjugate. -/
 lemma sylow_conjugate [hp : fact p.prime] [fintype (sylow p G)] (P Q : sylow p G) :
@@ -130,10 +129,10 @@ begin
   have key := λ {R : sylow p G} {S : mul_action.orbit G P},
   calc S ∈ mul_action.fixed_points R (mul_action.orbit G P)
       ↔ S.1 ∈ mul_action.fixed_points R (sylow p G) : forall_congr (λ a, subtype.ext_iff)
-  ... ↔ R ≤ S : R.2.1.sylow_mem_fixed_points_iff
-  ... ↔ S.1 = R : ⟨λ h, subtype.ext (R.2.2 S S.1.2.1 h), ge_of_eq⟩,
+  ... ↔ R.1 ≤ S : R.2.1.sylow_mem_fixed_points_iff
+  ... ↔ S.1.1 = R : ⟨λ h, R.2.2 S S.1.2.1 h, ge_of_eq⟩,
   suffices : set.nonempty (mul_action.fixed_points Q (mul_action.orbit G P)),
-  { exact exists.elim this (λ R hR, (congr_arg _ (key.mp hR)).mp R.2) },
+  { exact exists.elim this (λ R hR, (congr_arg _ (subtype.ext (key.mp hR))).mp R.2) },
   apply Q.2.1.nonempty_fixed_point_of_prime_not_dvd_card,
   refine λ h, hp.out.not_dvd_one (nat.modeq_zero_iff_dvd.mp _),
   calc 1 = fintype.card (mul_action.fixed_points P (mul_action.orbit G P)) : _
@@ -141,8 +140,11 @@ begin
       (P.2.1.card_modeq_card_fixed_points (mul_action.orbit G P)).symm
     ... ≡ 0 [MOD p] : nat.modeq_zero_iff_dvd.mpr h,
   convert (set.card_singleton (⟨P, mul_action.mem_orbit_self P⟩ : mul_action.orbit G P)).symm,
-  exact set.eq_singleton_iff_unique_mem.mpr ⟨key.mpr rfl, λ R hR, subtype.ext (key.mp hR)⟩,
+  exact set.eq_singleton_iff_unique_mem.mpr
+    ⟨key.mpr rfl, λ R hR, subtype.ext (subtype.ext (key.mp hR))⟩,
 end
+
+variables (p) (G)
 
 /-- A generalization of **Sylow's third theorem**.
   If the number of Sylow `p`-subgroups is finite, then it is congruent to `1` modulo `p`. -/
@@ -150,23 +152,31 @@ lemma card_sylow_modeq_one [fact p.prime] [fintype (sylow p G)] :
   fintype.card (sylow p G) ≡ 1 [MOD p] :=
 begin
   refine sylow_nonempty.elim (λ P : sylow p G, _),
-  have key : mul_action.fixed_points P (sylow p G) = {P} :=
-  set.ext (λ Q, calc Q ∈ mul_action.fixed_points P (sylow p G)
-      ↔ P ≤ Q : P.2.1.sylow_mem_fixed_points_iff
-  ... ↔ Q = P : ⟨λ h, subtype.ext (P.2.2 Q Q.2.1 h), ge_of_eq⟩
+  have := set.ext (λ Q, calc Q ∈ mul_action.fixed_points P (sylow p G)
+      ↔ P.1 ≤ Q : P.2.1.sylow_mem_fixed_points_iff
+  ... ↔ Q.1 = P.1 : ⟨P.2.2 Q Q.2.1, ge_of_eq⟩
+  ... ↔ Q = P : subtype.ext_iff.symm
   ... ↔ Q ∈ {P} : set.mem_singleton_iff.symm),
   haveI : fintype (mul_action.fixed_points P (sylow p G)) :=
-  by { rw key, exact set.fintype_singleton P },
+  by convert set.fintype_singleton P,
   calc fintype.card (sylow p G) ≡ fintype.card (mul_action.fixed_points P (sylow p G)) [MOD p] :
     P.2.1.card_modeq_card_fixed_points (sylow p G)
-  ... = 1 : by simp_rw key; convert set.card_singleton P,
+  ... = 1 : by convert set.card_singleton P,
 end
 
--- orbit eq top
-
--- stablizer eq normalizer
-
 variables {p} {G}
+
+lemma orbit_sylow_eq_top [fact p.prime] [fintype (sylow p G)] (P : sylow p G) :
+  mul_action.orbit G P = ⊤ :=
+top_le_iff.mp (λ Q hQ, sylow_conjugate P Q)
+
+-- maybe move earlier
+lemma stabilizer_sylow_eq_normalizer [fintype (sylow p G)] (P : sylow p G) :
+  mul_action.stabilizer G P = P.1.normalizer :=
+begin
+
+  sorry
+end
 
 noncomputable def sylow_equiv_quotient_normalizer [fintype (sylow p G)] (P : sylow p G) :
   sylow p G ≃ quotient_group.quotient P.1.normalizer :=
@@ -186,6 +196,20 @@ fintype.card_congr (sylow_equiv_quotient_normalizer P)
 lemma card_sylow_eq_index_normalizer [fintype (sylow p G)] (P : sylow p G) :
   fintype.card (sylow p G) = P.1.normalizer.index :=
 (card_sylow_eq_card_quotient_normalizer P).trans P.1.normalizer.index_eq_card.symm
+
+lemma tada (P : sylow p G) {g : quotient_group.quotient (P.1.subgroup_of P.1.normalizer)}
+  (hg : g ^ p = 1) : g = 1 :=
+begin
+  sorry
+end
+
+-- quotient of normalizer by sylow has no elements of order p (or a power of p)
+
+-- quotient of normalizer by sylow has cardinality indivisibile by p
+
+-- index of sylow in normalizer indivisible by p
+
+-- index of sylow indivisible by p!!!
 
 end infinite_sylow
 
