@@ -40,35 +40,13 @@ section infinite_sylow
 
 variables (p : ℕ) (G : Type*) [group G]
 
+/-- A Sylow `p`-subgroup is a maximal `p`-subgroup. -/
 def sylow :=
-{P : subgroup G // is_p_group p P ∧ ∀ Q : subgroup G, is_p_group p Q → P ≤ Q → Q = P}
+{P : subgroup G // is_p_group p P ∧ ∀ {Q : subgroup G}, is_p_group p Q → P ≤ Q → Q = P}
 
 instance : has_coe (sylow p G) (subgroup G) := ⟨subtype.val⟩
 
 variables {p} {G}
-
-lemma tada1 {P : subgroup G} (hP : is_p_group p P) {ϕ : G → H} (hϕ : fu) :
-  is_p_group p (P.comap ϕ.to_monoid_hom) :=
-begin
-  refine λ g, exists_imp_exists (λ k hk, _) (hP ⟨ϕ.to_monoid_hom g, g.2⟩),
-  rw [subtype.ext_iff, subgroup.coe_pow] at hk ⊢,
-  exact (ϕ.map_eq_one_iff).mp ((ϕ.to_monoid_hom.map_pow g (p ^ k)).trans hk),
-end
-
-/-- Action of automorphism on sylow subgroups -/
-def sylow_action : mul_aut G →* function.End (sylow p G) :=
-{ to_fun := λ ϕ P, ⟨P.1.comap ϕ⁻¹.to_monoid_hom, by
-  { refine ⟨λ g, _, λ Q hQ hPQ, _⟩,
-    { refine exists_imp_exists (λ k hk, _) (P.2.1 ⟨ϕ⁻¹.to_monoid_hom g, g.2⟩),
-      rw [subtype.ext_iff, subgroup.coe_pow] at hk ⊢,
-      exact (ϕ⁻¹.map_eq_one_iff).mp ((monoid_hom.map_pow _ _ _).trans hk) },
-    { rw [←P.2.2 (Q.comap ϕ.to_monoid_hom), subgroup.comap_comap],
-      sorry } }⟩,
-  map_one' := funext (λ P, subtype.ext (subgroup.ext (λ g, iff.rfl))),
-  map_mul' := λ ϕ ψ, funext (λ P, subtype.ext (by
-  { change P.1.comap _ = (P.1.comap _).comap _,
-    rw [subgroup.comap_comap, mul_inv_rev],
-    refl })) }
 
 /-- A generalization of **Sylow's first theorem**.
   Every `p`-subgroup is contained in a Sylow `p`-subgroup. -/
@@ -88,32 +66,51 @@ exists.elim (zorn.zorn_nonempty_partial_order₀ {Q : subgroup G | is_p_group p 
 instance sylow_nonempty : nonempty (sylow p G) :=
 nonempty_of_exists is_p_group.of_bot.exists_le_sylow
 
+noncomputable instance sylow_inhabited : inhabited (sylow p G) :=
+classical.inhabited_of_nonempty sylow_nonempty
 
+instance sylow.mul_aut_mul_action : mul_action (mul_aut G) (sylow p G) :=
+{ smul := λ ϕ P, ⟨P.1.comap ϕ⁻¹.to_monoid_hom, by
+  { refine ⟨P.2.1.comap_injective ϕ⁻¹.to_monoid_hom ϕ⁻¹.injective, λ Q hQ hPQ, _⟩,
+    { rw [←P.2.2 (hQ.comap_injective ϕ.to_monoid_hom ϕ.injective)],
+      { refine subgroup.ext (λ g, _),
+        change g ∈ Q ↔ ϕ (ϕ⁻¹ g) ∈ Q,
+        exact iff_of_eq (congr_arg (∈ Q) (ϕ.apply_inv_self G g).symm) },
+      { refine le_trans (ge_of_eq (subgroup.ext (λ g, _))) (subgroup.comap_mono hPQ),
+        change ϕ⁻¹ (ϕ g) ∈ P.1 ↔ g ∈ P.1,
+        exact iff_of_eq (congr_arg (∈ P.1) (ϕ.inv_apply_self G g)) } } }⟩,
+  one_smul := λ P, subtype.ext (subgroup.ext (λ g, iff.rfl)),
+  mul_smul := λ ϕ ψ P, subtype.ext (P.1.comap_comap ψ⁻¹.to_monoid_hom ϕ⁻¹.to_monoid_hom).symm }
 
+lemma mul_aut_coe_smul_sylow {ϕ : mul_aut G} {P : sylow p G} :
+  ↑(ϕ • P) = P.1.comap ϕ⁻¹.to_monoid_hom := rfl
 
+instance sylow.mul_action : mul_action G (sylow p G) :=
+mul_action.of_End_hom (mul_action.to_End_hom.comp mul_aut.conj)
 
-instance : mul_action G (sylow p G) :=
-mul_action.of_End_hom (sylow_action.comp mul_aut.conj)
+lemma coe_smul_sylow {g : G} {P : sylow p G} :
+  ↑(g • P) = P.1.comap (mul_aut.conj g)⁻¹.to_monoid_hom := rfl
 
---mem_smul lemma
+lemma smul_eq_iff_mem_normalizer {g : G} {P : sylow p G} :
+  g • P = P ↔ g ∈ P.1.normalizer :=
+begin
+  rw [←subgroup.inv_mem_iff, subgroup.mem_normalizer_iff, inv_inv, eq_comm, subtype.ext_iff],
+  exact set_like.ext_iff,
+end
 
 lemma subgroup.sylow_mem_fixed_points_iff
   (H : subgroup G) {P : sylow p G} :
   P ∈ mul_action.fixed_points H (sylow p G) ↔ H ≤ P.1.normalizer :=
 begin
-  refine ⟨λ h g hg k, _, λ h g, _⟩,
-  have key := h ⟨g, hg⟩,
-  sorry,
-  have key := h g.2,
-  refine subtype.ext (subgroup.ext (λ k, _)),
-  sorry
+  change (∀ h : H, h • P = P) ↔ (∀ g : G, g ∈ H → g ∈ P.1.normalizer),
+  simp_rw ← smul_eq_iff_mem_normalizer,
+  exact subtype.forall,
 end
 
 lemma is_p_group.inf_normalizer_sylow {P : subgroup G} (hP : is_p_group p P) (Q : sylow p G) :
   P ⊓ Q.1.normalizer = P ⊓ Q :=
-le_antisymm (le_inf inf_le_left (sup_eq_right.mp (Q.2.2 (P ⊓ Q.1.normalizer ⊔ Q)
-  (hP.to_inf_left.to_sup_of_normal_right' Q.2.1 inf_le_right) le_sup_right)))
-  (inf_le_inf_left P subgroup.le_normalizer)
+le_antisymm (le_inf inf_le_left (sup_eq_right.mp (Q.2.2 (hP.to_inf_left.to_sup_of_normal_right'
+  Q.2.1 inf_le_right) le_sup_right))) (inf_le_inf_left P subgroup.le_normalizer)
 
 lemma is_p_group.sylow_mem_fixed_points_iff
   {P : subgroup G} (hP : is_p_group p P) {Q : sylow p G} :
@@ -130,7 +127,7 @@ begin
   calc S ∈ mul_action.fixed_points R (mul_action.orbit G P)
       ↔ S.1 ∈ mul_action.fixed_points R (sylow p G) : forall_congr (λ a, subtype.ext_iff)
   ... ↔ R.1 ≤ S : R.2.1.sylow_mem_fixed_points_iff
-  ... ↔ S.1.1 = R : ⟨λ h, R.2.2 S S.1.2.1 h, ge_of_eq⟩,
+  ... ↔ S.1.1 = R : ⟨λ h, R.2.2 S.1.2.1 h, ge_of_eq⟩,
   suffices : set.nonempty (mul_action.fixed_points Q (mul_action.orbit G P)),
   { exact exists.elim this (λ R hR, (congr_arg _ (subtype.ext (key.mp hR))).mp R.2) },
   apply Q.2.1.nonempty_fixed_point_of_prime_not_dvd_card,
@@ -154,7 +151,7 @@ begin
   refine sylow_nonempty.elim (λ P : sylow p G, _),
   have := set.ext (λ Q, calc Q ∈ mul_action.fixed_points P (sylow p G)
       ↔ P.1 ≤ Q : P.2.1.sylow_mem_fixed_points_iff
-  ... ↔ Q.1 = P.1 : ⟨P.2.2 Q Q.2.1, ge_of_eq⟩
+  ... ↔ Q.1 = P.1 : ⟨P.2.2 Q.2.1, ge_of_eq⟩
   ... ↔ Q = P : subtype.ext_iff.symm
   ... ↔ Q ∈ {P} : set.mem_singleton_iff.symm),
   haveI : fintype (mul_action.fixed_points P (sylow p G)) :=
