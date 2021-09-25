@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2018 Scott Morrison. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Scott Morrison
+Authors: Scott Morrison
 
 Case bashing:
 * on `x ∈ A`, for `A : finset α` or `A : list α`, or
@@ -54,7 +54,7 @@ private meta def fin_cases_at_aux : Π (with_list : list expr) (e : expr), tacti
         -- because it's helpful for the `interval_cases` tactic.
         | _ := try $ tactic.interactive.conv (some sn) none $
                to_rhs >> conv.interactive.norm_num
-                 [simp_arg_type.expr ``(max), simp_arg_type.expr ``(min)]
+                 [simp_arg_type.expr ``(max_def), simp_arg_type.expr ``(min_def)]
         end,
         s ← get_local sn,
         try `[subst %%s],
@@ -115,9 +115,11 @@ end
 after `fin_cases p; simp`, there are three goals, `f 0`, `f 1`, and `f 2`.
 -/
 meta def fin_cases : parse hyp → parse (tk "with" *> texpr)? → tactic unit
-| none none := focus1 $
-               do ctx ← local_context,
-                  ctx.mfirst (fin_cases_at none) <|> fail "No hypothesis of the forms `x ∈ A`, where `A : finset X`, `A : list X`, or `A : multiset X`, or `x : A`, with `[fintype A]`."
+| none none := focus1 $ do
+    ctx ← local_context,
+    ctx.mfirst (fin_cases_at none) <|>
+      fail ("No hypothesis of the forms `x ∈ A`, where " ++
+        "`A : finset X`, `A : list X`, or `A : multiset X`, or `x : A`, with `[fintype A]`.")
 | none (some _) := fail "Specify a single hypothesis when using a `with` argument."
 | (some n) with_list :=
   do

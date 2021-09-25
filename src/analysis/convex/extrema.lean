@@ -3,9 +3,10 @@ Copyright (c) 2020 Frédéric Dupuis. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Frédéric Dupuis
 -/
-
-import analysis.calculus.local_extr
+import analysis.convex.function
 import topology.algebra.affine
+import topology.local_extr
+import topology.instances.real
 
 /-!
 # Minima and maxima of convex functions
@@ -14,9 +15,9 @@ We show that if a function `f : E → β` is convex, then a local minimum is als
 a global minimum, and likewise for concave functions.
 -/
 
-variables {E β: Type*} [add_comm_group E] [topological_space E]
-  [module ℝ E] [topological_add_group E] [topological_vector_space ℝ E]
-  [linear_ordered_add_comm_group β] [semimodule ℝ β] [ordered_semimodule ℝ β]
+variables {E β : Type*} [add_comm_group E] [topological_space E]
+  [module ℝ E] [topological_add_group E] [has_continuous_smul ℝ E]
+  [linear_ordered_add_comm_group β] [module ℝ β] [ordered_smul ℝ β]
   {s : set E}
 
 open set filter
@@ -25,8 +26,8 @@ open_locale classical
 /--
 Helper lemma for the more general case: `is_min_on.of_is_local_min_on_of_convex_on`.
 -/
-lemma is_min_on.of_is_local_min_on_of_convex_on_Icc {f : ℝ → β} {a b : ℝ}
-  (a_lt_b : a < b) (h_local_min : is_local_min_on f (Icc a b) a) (h_conv : convex_on (Icc a b) f) :
+lemma is_min_on.of_is_local_min_on_of_convex_on_Icc {f : ℝ → β} {a b : ℝ} (a_lt_b : a < b)
+  (h_local_min : is_local_min_on f (Icc a b) a) (h_conv : convex_on (Icc a b) f) :
   ∀ x ∈ Icc a b, f a ≤ f x :=
 begin
   by_contradiction H_cont,
@@ -60,7 +61,7 @@ end
 A local minimum of a convex function is a global minimum, restricted to a set `s`.
 -/
 lemma is_min_on.of_is_local_min_on_of_convex_on {f : E → β} {a : E}
-  (a_in_s : a ∈ s) (h_localmin: is_local_min_on f s a) (h_conv : convex_on s f) :
+  (a_in_s : a ∈ s) (h_localmin : is_local_min_on f s a) (h_conv : convex_on s f) :
   ∀ x ∈ s, f a ≤ f x :=
 begin
   by_contradiction H_cont,
@@ -93,7 +94,8 @@ end
 lemma is_max_on.of_is_local_max_on_of_concave_on {f : E → β} {a : E}
   (a_in_s : a ∈ s) (h_localmax: is_local_max_on f s a) (h_conc : concave_on s f) :
   ∀ x ∈ s, f x ≤ f a :=
-@is_min_on.of_is_local_min_on_of_convex_on _ (order_dual β) _ _ _ _ _ _ _ _ s f a a_in_s h_localmax h_conc
+@is_min_on.of_is_local_min_on_of_convex_on
+  _ (order_dual β) _ _ _ _ _ _ _ _ s f a a_in_s h_localmax h_conc
 
 /-- A local minimum of a convex function is a global minimum. -/
 lemma is_min_on.of_is_local_min_of_convex_univ {f : E → β} {a : E}

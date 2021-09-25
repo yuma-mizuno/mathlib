@@ -56,7 +56,7 @@ iff.intro (assume h a, h ▸ rfl) funext
 protected lemma bijective.injective {f : α → β} (hf : bijective f) : injective f := hf.1
 protected lemma bijective.surjective {f : α → β} (hf : bijective f) : surjective f := hf.2
 
-@[simp] theorem injective.eq_iff (I : injective f) {a b : α} :
+theorem injective.eq_iff (I : injective f) {a b : α} :
   f a = f b ↔ a = b :=
 ⟨@I _ _, congr_arg f⟩
 
@@ -91,6 +91,10 @@ lemma injective.of_comp_iff' (f : α → β) {g : γ → α} (hg : bijective g) 
 ⟨ λ h x y, let ⟨x', hx⟩ := hg.surjective x, ⟨y', hy⟩ := hg.surjective y in
     hx ▸ hy ▸ λ hf, h hf ▸ rfl,
   λ h, h.comp hg.injective⟩
+
+lemma injective_of_subsingleton [subsingleton α] (f : α → β) :
+  injective f :=
+λ a b ab, subsingleton.elim _ _
 
 lemma injective.dite (p : α → Prop) [decidable_pred p]
   {f : {a : α // p a} → β} {f' : {a : α // ¬ p a} → β}
@@ -164,13 +168,14 @@ lemma bijective.of_comp_iff' {f : α → β} (hf : bijective f) (g : γ → α) 
   function.bijective (f ∘ g) ↔ function.bijective g :=
 and_congr (injective.of_comp_iff hf.injective _) (surjective.of_comp_iff' hf _)
 
-/-- Cantor's diagonal argument implies that there are no surjective functions from `α`
+/-- **Cantor's diagonal argument** implies that there are no surjective functions from `α`
 to `set α`. -/
 theorem cantor_surjective {α} (f : α → set α) : ¬ function.surjective f | h :=
 let ⟨D, e⟩ := h (λ a, ¬ f a a) in
 (iff_not_self (f D D)).1 $ iff_of_eq (congr_fun e D)
 
-/-- Cantor's diagonal argument implies that there are no injective functions from `set α` to `α`. -/
+/-- **Cantor's diagonal argument** implies that there are no injective functions from `set α`
+to `α`. -/
 theorem cantor_injective {α : Type*} (f : (set α) → α) :
   ¬ function.injective f | i :=
 cantor_surjective (λ a b, ∀ U, a = f U → U b) $
@@ -350,6 +355,10 @@ lemma bijective_iff_has_inverse : bijective f ↔ ∃ g, left_inverse g f ∧ ri
 lemma injective_surj_inv (h : surjective f) : injective (surj_inv h) :=
 (right_inverse_surj_inv h).injective
 
+lemma surjective_to_subsingleton [na : nonempty α] [subsingleton β] (f : α → β) :
+  surjective f :=
+λ y, let ⟨a⟩ := na in ⟨a, subsingleton.elim _ _⟩
+
 end surj_inv
 
 section update
@@ -372,18 +381,21 @@ end
 @[simp] lemma update_same (a : α) (v : β a) (f : Πa, β a) : update f a v a = v :=
 dif_pos rfl
 
+lemma surjective_eval {α : Sort u} {β : α → Sort v} [h : Π a, nonempty (β a)] (a : α) :
+  surjective (eval a : (Π a, β a) → β a) :=
+λ b, ⟨@update _ _ (classical.dec_eq α) (λ a, (h a).some) a b,
+  @update_same _ _ (classical.dec_eq α) _ _ _⟩
+
 lemma update_injective (f : Πa, β a) (a' : α) : injective (update f a') :=
 λ v v' h, have _ := congr_fun h a', by rwa [update_same, update_same] at this
 
-@[simp] lemma update_noteq {a a' : α} (h : a ≠ a') (v : β a') (f : Πa, β a) : update f a' v a = f a :=
+@[simp] lemma update_noteq {a a' : α} (h : a ≠ a') (v : β a') (f : Πa, β a) :
+  update f a' v a = f a :=
 dif_neg h
 
 lemma forall_update_iff (f : Π a, β a) {a : α} {b : β a} (p : Π a, β a → Prop) :
   (∀ x, p x (update f a b x)) ↔ p a b ∧ ∀ x ≠ a, p x (f x) :=
-calc (∀ x, p x (update f a b x)) ↔ ∀ x, (x = a ∨ x ≠ a) → p x (update f a b x) :
-  by simp only [ne.def, classical.em, forall_prop_of_true]
-... ↔ p a b ∧ ∀ x ≠ a, p x (f x) :
-  by simp [or_imp_distrib, forall_and_distrib] { contextual := tt }
+by { rw [← and_forall_ne a, update_same], simp { contextual := tt } }
 
 lemma update_eq_iff {a : α} {b : β a} {f g : Π a, β a} :
   update f a b = g ↔ b = g a ∧ ∀ x ≠ a, f x = g x :=
@@ -462,14 +474,29 @@ Mostly useful when `f` is injective. -/
 def extend (f : α → β) (g : α → γ) (e' : β → γ) : β → γ :=
 λ b, if h : ∃ a, f a = b then g (classical.some h) else e' b
 
-lemma extend_def (f : α → β) (g : α → γ) (e' : β → γ) (b : β) :
-  extend f g e' b = if h : ∃ a, f a = b then g (classical.some h) else e' b := rfl
+lemma extend_def (f : α → β) (g : α → γ) (e' : β → γ) (b : β) [decidable (∃ a, f a = b)] :
+  extend f g e' b = if h : ∃ a, f a = b then g (classical.some h) else e' b :=
+by { unfold extend, congr }
 
 @[simp] lemma extend_apply (hf : injective f) (g : α → γ) (e' : β → γ) (a : α) :
   extend f g e' (f a) = g a :=
 begin
   simp only [extend_def, dif_pos, exists_apply_eq_apply],
   exact congr_arg g (hf $ classical.some_spec (exists_apply_eq_apply f a))
+end
+
+@[simp] lemma extend_apply' (g : α → γ) (e' : β → γ) (b : β) (hb : ¬∃ a, f a = b) :
+  extend f g e' b = e' b :=
+by simp [function.extend_def, hb]
+
+lemma extend_injective (hf : injective f) (e' : β → γ) :
+  injective (λ g, extend f g e') :=
+begin
+  intros g₁ g₂ hg,
+  refine funext (λ x, _),
+  have H := congr_fun hg (f x),
+  simp only [hf, extend_apply] at H,
+  exact H
 end
 
 @[simp] lemma extend_comp (hf : injective f) (g : α → γ) (e' : β → γ) :
@@ -561,10 +588,14 @@ protected lemma ite_not (P : Prop) [decidable P] (x : α) :
   f (ite P x (f x)) = ite (¬ P) x (f x) :=
 by rw [apply_ite f, h, ite_not]
 
+/-- An involution commutes across an equality. Compare to `function.injective.eq_iff`. -/
+protected lemma eq_iff {x y : α} : f x = y ↔ x = f y :=
+h.injective.eq_iff' (h y)
+
 end involutive
 
 /-- The property of a binary function `f : α → β → γ` being injective.
-  Mathematically this should be thought of as the corresponding function `α × β → γ` being injective.
+Mathematically this should be thought of as the corresponding function `α × β → γ` being injective.
 -/
 @[reducible] def injective2 {α β γ} (f : α → β → γ) : Prop :=
 ∀ ⦃a₁ a₂ b₁ b₂⦄, f a₁ b₁ = f a₂ b₂ → a₁ = a₂ ∧ b₁ = b₂
@@ -604,6 +635,42 @@ end sometimes
 end function
 
 /-- `s.piecewise f g` is the function equal to `f` on the set `s`, and to `g` on its complement. -/
-def set.piecewise {α : Type u} {β : α → Sort v} (s : set α) (f g : Πi, β i) [∀j, decidable (j ∈ s)] :
+def set.piecewise {α : Type u} {β : α → Sort v} (s : set α) (f g : Πi, β i)
+  [∀j, decidable (j ∈ s)] :
   Πi, β i :=
 λi, if i ∈ s then f i else g i
+
+/-! ### Bijectivity of `eq.rec`, `eq.mp`, `eq.mpr`, and `cast` -/
+
+lemma eq_rec_on_bijective {α : Sort*} {C : α → Sort*} :
+  ∀ {a a' : α} (h : a = a'), function.bijective (@eq.rec_on _ _ C _ h)
+| _ _ rfl := ⟨λ x y, id, λ x, ⟨x, rfl⟩⟩
+
+lemma eq_mp_bijective {α β : Sort*} (h : α = β) : function.bijective (eq.mp h) :=
+eq_rec_on_bijective h
+
+lemma eq_mpr_bijective {α β : Sort*} (h : α = β) : function.bijective (eq.mpr h) :=
+eq_rec_on_bijective h.symm
+
+lemma cast_bijective {α β : Sort*} (h : α = β) : function.bijective (cast h) :=
+eq_rec_on_bijective h
+
+/-! Note these lemmas apply to `Type*` not `Sort*`, as the latter interferes with `simp`, and
+is trivial anyway.-/
+
+@[simp]
+lemma eq_rec_inj {α : Sort*} {a a' : α} (h : a = a') {C : α → Type*} (x y : C a) :
+  (eq.rec x h : C a') = eq.rec y h ↔ x = y :=
+(eq_rec_on_bijective h).injective.eq_iff
+
+@[simp]
+lemma cast_inj {α β : Type*} (h : α = β) {x y : α} : cast h x = cast h y ↔ x = y :=
+(cast_bijective h).injective.eq_iff
+
+/-- A set of functions "separates points"
+if for each pair of distinct points there is a function taking different values on them. -/
+def set.separates_points {α β : Type*} (A : set (α → β)) : Prop :=
+∀ ⦃x y : α⦄, x ≠ y → ∃ f ∈ A, (f x : β) ≠ f y
+
+lemma is_symm_op.flip_eq {α β} (op) [is_symm_op α β op] : flip op = op :=
+funext $ λ a, funext $ λ b, (is_symm_op.symm_op a b).symm

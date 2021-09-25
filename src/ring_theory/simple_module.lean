@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2020 Aaron Anderson. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors : Aaron Anderson
+Authors: Aaron Anderson
 -/
 
 import linear_algebra.basic
@@ -115,7 +115,7 @@ theorem surjective_of_ne_zero [is_simple_module R N] {f : M →ₗ[R] N} (h : f 
   function.surjective f :=
 f.surjective_or_eq_zero.resolve_right h
 
-/-- Schur's Lemma for linear maps between (possibly distinct) simple modules -/
+/-- **Schur's Lemma** for linear maps between (possibly distinct) simple modules -/
 theorem bijective_or_eq_zero [is_simple_module R M] [is_simple_module R N]
   (f : M →ₗ[R] N) :
   function.bijective f ∨ f = 0 :=
@@ -132,7 +132,8 @@ theorem bijective_of_ne_zero [is_simple_module R M] [is_simple_module R N]
 f.bijective_or_eq_zero.resolve_right h
 
 /-- Schur's Lemma makes the endomorphism ring of a simple module a division ring. -/
-noncomputable instance [decidable_eq (module.End R M)] [is_simple_module R M] :
+noncomputable instance _root_.module.End.division_ring
+  [decidable_eq (module.End R M)] [is_simple_module R M] :
   division_ring (module.End R M) :=
 { inv := λ f, if h : f = 0 then 0 else (linear_map.inverse f
     (equiv.of_bijective _ (bijective_of_ne_zero h)).inv_fun
@@ -143,17 +144,17 @@ noncomputable instance [decidable_eq (module.End R M)] [is_simple_module R M] :
     have h := exists_pair_ne M,
     contrapose! h,
     intros x y,
-    simp_rw [ext_iff, one_app, zero_apply] at h,
+    simp_rw [ext_iff, one_apply, zero_apply] at h,
     rw [← h x, h y],
   end⟩,
   mul_inv_cancel := begin
     intros a a0,
     change (a * (dite _ _ _)) = 1,
     ext,
-    rw [dif_neg a0, mul_eq_comp, one_app, comp_apply],
+    rw [dif_neg a0, mul_eq_comp, one_apply, comp_apply],
     exact (equiv.of_bijective _ (bijective_of_ne_zero a0)).right_inv x,
   end,
   inv_zero := dif_pos rfl,
-.. (linear_map.endomorphism_ring : ring (module.End R M))}
+.. (module.End.ring : ring (module.End R M))}
 
 end linear_map
