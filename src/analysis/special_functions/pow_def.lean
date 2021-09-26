@@ -122,6 +122,32 @@ open complex
 
 variables {α : Type*}
 
+lemma continuous_at_const_cpow {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
+  continuous_at (cpow a) b :=
+begin
+  have ha_ne_zero : a ≠ 0, by { intro h, cases ha; { rw h at ha, simpa using ha, }, },
+  have cpow_eq : cpow a = λ b, exp (log a * b),
+    by { ext1 b, rw [cpow_eq_pow, cpow_def_of_ne_zero ha_ne_zero], },
+  rw cpow_eq,
+  exact continuous_exp.continuous_at.comp (continuous_at.mul continuous_at_const continuous_at_id),
+end
+
+lemma cpow_eq_nhds {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
+  (λ x, x.cpow b) =ᶠ[𝓝 a] λ x, exp (log x * b) :=
+begin
+  sorry,
+end
+
+lemma continuous_at_cpow {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
+  continuous_at cpow a :=
+begin
+  rw continuous_at_pi,
+  intro b,
+  rw continuous_at_congr (cpow_eq_nhds ha),
+  refine continuous_exp.continuous_at.comp _,
+  exact continuous_at.mul (continuous_at_clog ha) continuous_at_const,
+end
+
 lemma filter.tendsto.cpow {l : filter α} {f g : α → ℂ} {a b : ℂ} (hf : tendsto f l (𝓝 a))
   (hg : tendsto g l (𝓝 b)) (ha : 0 < a.re ∨ a.im ≠ 0) :
   tendsto (λ x, f x ^ g x) l (𝓝 (a ^ b)) :=
