@@ -1838,17 +1838,19 @@ by simp only [arg, hx_re.not_le, hx_im.not_le, if_false]
 lemma arg_eq_nhds_of_re_pos {x : ℂ} (hx : 0 < x.re) :
   arg =ᶠ[𝓝 x] λ x, real.arcsin (x.im / x.abs) :=
 begin
-  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), 0 ≤ y.re,
-    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_nonneg hy),
-  sorry,
+  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), 0 < y.re,
+    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_nonneg hy.le),
+  exact is_open.eventually_mem (is_open_lt continuous_zero continuous_re) hx,
 end
 
 lemma arg_eq_nhds_of_re_neg_of_im_pos {x : ℂ} (hx_re : x.re < 0) (hx_im : 0 < x.im) :
   arg =ᶠ[𝓝 x] λ x, real.arcsin ((-x).im / x.abs) + real.pi :=
 begin
-  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ 0 ≤ y.im,
-    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_neg_of_im_nonneg hy.1 hy.2),
-  sorry,
+  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ 0 < y.im,
+    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_neg_of_im_nonneg hy.1 hy.2.le),
+  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ 0 < x.im),
+  exact is_open.and (is_open_lt continuous_re continuous_zero)
+    (is_open_lt continuous_zero continuous_im),
 end
 
 lemma arg_eq_nhds_of_re_neg_of_im_neg {x : ℂ} (hx_re : x.re < 0) (hx_im : x.im < 0) :
@@ -1856,7 +1858,9 @@ lemma arg_eq_nhds_of_re_neg_of_im_neg {x : ℂ} (hx_re : x.re < 0) (hx_im : x.im
 begin
   suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ y.im < 0,
     from h_forall_nhds.mono (λ y hy, arg_eq_of_re_neg_of_im_neg hy.1 hy.2),
-  sorry,
+  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ x.im < 0),
+  exact is_open.and (is_open_lt continuous_re continuous_zero)
+    (is_open_lt continuous_im continuous_zero),
 end
 
 lemma continuous_at_arg_of_re_pos {x : ℂ} (h : 0 < x.re) :
@@ -1923,9 +1927,8 @@ lemma arg_of_re_zero_of_im_pos {x : ℂ} (h_re : x.re = 0) (h_im : 0 < x.im) :
 begin
   have hx_ne_zero : x ≠ 0, by { intro hx, rw hx at h_im, simpa using h_im, },
   rw ← arg_I,
-  rw arg_eq_arg_iff _ I_ne_zero,
+  rw arg_eq_arg_iff hx_ne_zero I_ne_zero,
   sorry,
-  { intro hx, rw hx at h_im, simpa using h_im, },
 end
 
 lemma arg_of_re_zero_of_im_neg {x : ℂ} (h_re : x.re = 0) (h_im : x.im < 0) :
@@ -1934,9 +1937,8 @@ begin
   have hx_ne_zero : x ≠ 0, by { intro hx, rw hx at h_im, simpa using h_im, },
   rw neg_div,
   rw ← arg_neg_I,
-  rw arg_eq_arg_iff _ _,
+  rw arg_eq_arg_iff hx_ne_zero _,
   sorry,
-  { intro hx, rw hx at h_im, simpa using h_im, },
   { simp [I_ne_zero], },
 end
 
