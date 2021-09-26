@@ -11,13 +11,12 @@ import analysis.calculus.extend_deriv
 /-!
 # Power function on `ℂ`, `ℝ`, `ℝ≥0`, and `ℝ≥0∞`
 
-We construct the power functions `x ^ y` where
+We prove analytic properties of the power functions `x ^ y` where
 * `x` and `y` are complex numbers,
 * or `x` and `y` are real numbers,
 * or `x` is a nonnegative real number and `y` is a real number;
 * or `x` is a number from `[0, +∞]` (a.k.a. `ℝ≥0∞`) and `y` is a real number.
 
-We also prove basic properties of these functions.
 -/
 
 noncomputable theory

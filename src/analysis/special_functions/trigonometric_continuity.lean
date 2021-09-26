@@ -22,11 +22,7 @@ This file contains the following definitions:
 
 Many basic inequalities on trigonometric functions are established.
 
-The continuity and differentiability of the usual trigonometric functions are proved, and their
-derivatives are computed.
-
-* `polynomial.chebyshev.T_complex_cos`: the `n`-th Chebyshev polynomial evaluates on `complex.cos θ`
-  to the value `complex.cos (n * θ)`.
+The continuity of the usual trigonometric functions are proved.
 
 ## Tags
 

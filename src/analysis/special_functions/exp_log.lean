@@ -13,14 +13,10 @@ import analysis.special_functions.exp_log_continuity
 ## Main statements
 
 This file establishes the basic analytical properties of the complex and real exponential functions
-(continuity, differentiability, computation of the derivative).
+(differentiability, computation of the derivative).
 
-It also contains the definition of the real logarithm function (as the inverse of the
-exponential on `(0, +∞)`, extended to `ℝ` by setting `log (-x) = log x`) and its basic
-properties (continuity, differentiability, formula for the derivative).
-
-The complex logarithm is *not* defined in this file as it relies on trigonometric functions. See
-instead `trigonometric.lean`.
+It also contains basic properties of the real logarithm function (continuity, differentiability,
+formula for the derivative).
 
 ## Tags
 

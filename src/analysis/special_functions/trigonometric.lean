@@ -3,26 +3,17 @@ Copyright (c) 2018 Chris Hughes. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes, Abhimanyu Pallavi Sudhir, Jean Lo, Calle Sönne, Benjamin Davidson
 -/
-import analysis.special_functions.trigo_without_deriv
+import analysis.special_functions.trigonometric_continuity
 import ring_theory.polynomial.chebyshev
 import analysis.special_functions.exp_log
 
 /-!
 # Trigonometric functions
 
-## Main definitions
-
-This file contains the following definitions:
-* π, arcsin, arccos, arctan
-* argument of a complex number
-* logarithm on complex numbers
-
 ## Main statements
 
-Many basic inequalities on trigonometric functions are established.
-
-The continuity and differentiability of the usual trigonometric functions are proved, and their
-derivatives are computed.
+The differentiability of the usual trigonometric functions are proved, and their derivatives are
+computed.
 
 * `polynomial.chebyshev.T_complex_cos`: the `n`-th Chebyshev polynomial evaluates on `complex.cos θ`
   to the value `complex.cos (n * θ)`.

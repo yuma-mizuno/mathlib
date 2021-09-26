@@ -1,5 +1,28 @@
+/-
+Copyright (c) 2018 Chris Hughes. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Hughes, Abhimanyu Pallavi Sudhir, Jean Lo, Calle Sönne
+-/
 import data.complex.exponential
 import analysis.complex.basic
+
+/-!
+# Complex and real exponential, real logarithm
+
+## Main statements
+
+This file establishes the continuity of the complex and real exponential functions.
+
+It also contains the definition of the real logarithm function (as the inverse of the
+exponential on `(0, +∞)`, extended to `ℝ` by setting `log (-x) = log x`) and its continuity.
+
+The complex logarithm is *not* defined in this file as it relies on trigonometric functions. See
+instead `trigonometric_continuity.lean`.
+
+## Tags
+
+exp, log
+-/
 
 open metric filter finset function set
 open_locale classical topological_space
