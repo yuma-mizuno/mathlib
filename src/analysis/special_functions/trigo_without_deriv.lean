@@ -1925,21 +1925,31 @@ end
 lemma arg_of_re_zero_of_im_pos {x : ℂ} (h_re : x.re = 0) (h_im : 0 < x.im) :
   arg x = real.pi / 2 :=
 begin
-  have hx_ne_zero : x ≠ 0, by { intro hx, rw hx at h_im, simpa using h_im, },
-  rw ← arg_I,
-  rw arg_eq_arg_iff hx_ne_zero I_ne_zero,
-  sorry,
+  rw arg_eq_of_re_nonneg h_re.symm.le,
+  have h_im_eq_abs : x.im = abs x,
+  { refine le_antisymm (im_le_abs x) _,
+    refine (abs_le_abs_re_add_abs_im x).trans (le_of_eq _),
+    rw [h_re, _root_.abs_zero, zero_add, _root_.abs_eq_self],
+    exact h_im.le, },
+  rw [h_im_eq_abs, div_self],
+  { exact real.arcsin_one, },
+  { rw [ne.def, complex.abs_eq_zero], intro hx, rw hx at h_im, simpa using h_im, },
 end
 
 lemma arg_of_re_zero_of_im_neg {x : ℂ} (h_re : x.re = 0) (h_im : x.im < 0) :
   arg x = - real.pi / 2 :=
 begin
-  have hx_ne_zero : x ≠ 0, by { intro hx, rw hx at h_im, simpa using h_im, },
-  rw neg_div,
-  rw ← arg_neg_I,
-  rw arg_eq_arg_iff hx_ne_zero _,
-  sorry,
-  { simp [I_ne_zero], },
+  rw arg_eq_of_re_nonneg h_re.symm.le,
+  have h_im_eq_abs : x.im = - abs x,
+  { rw eq_neg_iff_eq_neg,
+    have : - x.im = _root_.abs x.im,
+    { symmetry, rw _root_.abs_eq_neg_self.mpr h_im.le, },
+    rw this,
+    refine le_antisymm ((abs_le_abs_re_add_abs_im x).trans (le_of_eq _)) (abs_im_le_abs x),
+    rw [h_re, _root_.abs_zero, zero_add], },
+  rw [h_im_eq_abs, neg_div, div_self, neg_div],
+  { exact real.arcsin_neg_one, },
+  { rw [ne.def, complex.abs_eq_zero], intro hx, rw hx at h_im, simpa using h_im, },
 end
 
 lemma continuous_at_arg_of_re_zero {x : ℂ} (h_re : x.re = 0) (h_im : x.im ≠ 0) :
@@ -1969,17 +1979,17 @@ begin
     ring, },
   rw metric.continuous_at_iff at ⊢ h_cont_1 h_cont_2 h_cont_3,
   intros ε hε_pos,
-  specialize h_cont_1 ε hε_pos,
-  specialize h_cont_2 ε hε_pos,
-  specialize h_cont_3 ε hε_pos,
-  rcases h_cont_1 with ⟨δ₁, hδ₁, h1_x⟩,
-  rcases h_cont_2 with ⟨δ₂, hδ₂, h2_x⟩,
-  rcases h_cont_3 with ⟨δ₃, hδ₃, h3_x⟩,
+  rcases h_cont_1 ε hε_pos with ⟨δ₁, hδ₁, h1_x⟩,
+  rcases h_cont_2 ε hε_pos with ⟨δ₂, hδ₂, h2_x⟩,
+  rcases h_cont_3 ε hε_pos with ⟨δ₃, hδ₃, h3_x⟩,
   refine ⟨min (min δ₁ δ₂) (min δ₃ (_root_.abs x.im)), lt_min (lt_min hδ₁ hδ₂) (lt_min hδ₃ hx_abs),
     λ y hy, _⟩,
   specialize h1_x (hy.trans_le ((min_le_left _ _).trans (min_le_left _ _))),
   specialize h2_x (hy.trans_le ((min_le_left _ _).trans (min_le_right _ _))),
   specialize h3_x (hy.trans_le ((min_le_right _ _).trans (min_le_left _ _))),
+  have hy_lt_abs : abs (y - x) < _root_.abs x.im,
+  { refine (le_of_eq _).trans_lt (hy.trans_le ((min_le_right _ _).trans (min_le_right _ _))),
+    rw dist_eq, },
   rw arg_eq_of_re_nonneg h_re.symm.le,
   by_cases hy_re : 0 ≤ y.re,
   { rwa arg_eq_of_re_nonneg hy_re, },
@@ -1987,12 +1997,21 @@ begin
   rw ne_iff_lt_or_gt at h_im,
   cases h_im,
   { have hy_im : y.im < 0,
-    { sorry, },
+      calc y.im = x.im + (y - x).im : by simp
+      ... ≤ x.im + abs (y - x) : add_le_add_left (im_le_abs _) _
+      ... < x.im + _root_.abs x.im : add_lt_add_left hy_lt_abs _
+      ... = x.im - x.im : by { rw [abs_eq_neg_self.mpr, ← sub_eq_add_neg], exact h_im.le, }
+      ... = 0 : sub_self x.im,
     rw [arg_eq_of_re_neg_of_im_neg hy_re hy_im, h_val1_x_neg h_im],
     rwa h_val3_x h_im at h3_x, },
-  { have hy_im : 0 ≤ y.im,
-    { sorry, },
-    rw [arg_eq_of_re_neg_of_im_nonneg hy_re hy_im, h_val1_x_pos h_im],
+  { have hy_im : 0 < y.im,
+      calc 0 = x.im - x.im : (sub_self x.im).symm
+      ... = x.im - _root_.abs x.im : by { rw [abs_eq_self.mpr], exact h_im.lt.le, }
+      ... < x.im - abs (y - x) : sub_lt_sub_left hy_lt_abs _
+      ... = x.im - abs (x - y) : by rw complex.abs_sub_comm _ _
+      ... ≤ x.im - (x - y).im : sub_le_sub_left (im_le_abs _) _
+      ... = y.im : by simp,
+    rw [arg_eq_of_re_neg_of_im_nonneg hy_re hy_im.le, h_val1_x_pos h_im],
     rwa h_val2_x h_im at h2_x, },
 end
 
