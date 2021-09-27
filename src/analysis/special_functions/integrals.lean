@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Benjamin Davidson
 -/
 import measure_theory.integral.interval_integral
+import analysis.special_functions.trigonometric.arctan_calculus
 
 /-!
 # Integration of specific interval integrals
@@ -267,8 +268,8 @@ lemma integral_inv_one_add_sq : ∫ x : ℝ in a..b, (1 + x^2)⁻¹ = arctan b -
 begin
   simp only [← one_div],
   refine integral_deriv_eq_sub' _ _ _ (continuous_const.div _ (λ x, _)).continuous_on,
-  { norm_num },
-  { norm_num },
+  { exact deriv_arctan, },
+  { exact λ _ _, differentiable_at_arctan _, },
   { continuity },
   { nlinarith },
 end
