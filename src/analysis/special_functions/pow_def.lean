@@ -138,6 +138,17 @@ begin
   exact is_open.eventually_mem is_open_ne ha,
 end
 
+lemma cpow_eq_nhds' {a b : ℂ} (ha : a ≠ 0) :
+  (λ x, x.1 ^ x.2) =ᶠ[𝓝 (a,b)] λ x, exp (log x.1 * x.2) :=
+begin
+  suffices : ∀ᶠ (x : ℂ × ℂ) in (𝓝 (a,b)), x.1 ≠ 0,
+    from this.mono (λ x hx, by { dsimp only, rw cpow_def_of_ne_zero hx, }),
+  refine is_open.eventually_mem _ ha,
+  change is_open {x : ℂ × ℂ | x.1 = 0}ᶜ,
+  rw is_open_compl_iff,
+  exact is_closed_eq continuous_fst continuous_const,
+end
+
 lemma continuous_at_const_cpow {a b : ℂ} (ha : a ≠ 0) : continuous_at (cpow a) b :=
 begin
   have cpow_eq : cpow a = λ b, exp (log a * b),
@@ -153,24 +164,30 @@ begin
   { exact continuous_at_const_cpow ha, },
 end
 
-lemma continuous_at_cpow {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
-  continuous_at cpow a :=
+lemma continuous_at_cpow_const {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
+  continuous_at (λ x, cpow x b) a :=
 begin
   have ha_ne_zero : a ≠ 0, by { intro h, cases ha; { rw h at ha, simpa using ha, }, },
-  rw continuous_at_pi,
-  intro b,
   rw continuous_at_congr (cpow_eq_nhds ha_ne_zero),
   refine continuous_exp.continuous_at.comp _,
   exact continuous_at.mul (continuous_at_clog ha) continuous_at_const,
 end
 
+lemma continuous_at_cpow {a b : ℂ} (ha : 0 < a.re ∨ a.im ≠ 0) :
+  continuous_at (λ x : ℂ × ℂ, x.1 ^ x.2) (a, b) :=
+begin
+  have ha_ne_zero : a ≠ 0, by { intro h, cases ha; { rw h at ha, simpa using ha, }, },
+  rw continuous_at_congr (cpow_eq_nhds' ha_ne_zero),
+  refine continuous_exp.continuous_at.comp _,
+  refine continuous_at.mul (continuous_at.comp _ continuous_fst.continuous_at)
+    continuous_snd.continuous_at,
+  exact continuous_at_clog ha,
+end
+
 lemma filter.tendsto.cpow {l : filter α} {f g : α → ℂ} {a b : ℂ} (hf : tendsto f l (𝓝 a))
   (hg : tendsto g l (𝓝 b)) (ha : 0 < a.re ∨ a.im ≠ 0) :
   tendsto (λ x, f x ^ g x) l (𝓝 (a ^ b)) :=
-begin
-  sorry,
-end
---(@has_fderiv_at_cpow (a, b) ha).continuous_at.tendsto.comp (hf.prod_mk_nhds hg)
+(continuous_at_cpow ha).tendsto.comp (hf.prod_mk_nhds hg)
 
 lemma filter.tendsto.const_cpow {l : filter α} {f : α → ℂ} {a b : ℂ} (hf : tendsto f l (𝓝 b))
   (h : a ≠ 0 ∨ b ≠ 0) :
@@ -587,9 +604,62 @@ lemma rpow_nat_inv_pow_nat {x : ℝ} (hx : 0 ≤ x) {n : ℕ} (hn : 0 < n) :
 have hn0 : (n : ℝ) ≠ 0, by simpa [pos_iff_ne_zero] using hn,
 by rw [← rpow_nat_cast, ← rpow_mul hx, inv_mul_cancel hn0, rpow_one]
 
+lemma continuous_at_const_rpow {a b : ℝ} (h : a ≠ 0) : continuous_at (rpow a) b :=
+begin
+  have : rpow a = λ x : ℝ, ((a : ℂ) ^ (x : ℂ)).re, by { ext1 x, rw [rpow_eq_pow, rpow_def], },
+  rw this,
+  refine complex.continuous_re.continuous_at.comp _,
+  refine (continuous_at_const_cpow _).comp complex.continuous_of_real.continuous_at,
+  norm_cast,
+  exact h,
+end
+
+lemma continuous_at_const_rpow' {a b : ℝ} (h : b ≠ 0) : continuous_at (rpow a) b :=
+begin
+  have : rpow a = λ x : ℝ, ((a : ℂ) ^ (x : ℂ)).re, by { ext1 x, rw [rpow_eq_pow, rpow_def], },
+  rw this,
+  refine complex.continuous_re.continuous_at.comp _,
+  refine (continuous_at_const_cpow' _).comp complex.continuous_of_real.continuous_at,
+  norm_cast,
+  exact h,
+end
+
+lemma rpow_eq_nhds_of_neg {a b : ℝ} (ha : a < 0) :
+  (λ x : ℝ × ℝ, x.1 ^ x.2) =ᶠ[𝓝 (a,b)] λ x, exp (log x.1 * x.2) * cos (x.2 * π) :=
+begin
+  suffices : ∀ᶠ (x : ℝ × ℝ) in (𝓝 (a,b)), x.1 < 0,
+    from this.mono (λ x hx, by { dsimp only, rw rpow_def_of_neg hx, }),
+  exact is_open.eventually_mem (is_open_lt continuous_fst continuous_const) ha,
+end
+
+lemma rpow_eq_nhds_of_pos {a b : ℝ} (ha : 0 < a) :
+  (λ x : ℝ × ℝ, x.1 ^ x.2) =ᶠ[𝓝 (a,b)] λ x, exp (log x.1 * x.2) :=
+begin
+  suffices : ∀ᶠ (x : ℝ × ℝ) in (𝓝 (a,b)), 0 < x.1,
+    from this.mono (λ x hx, by { dsimp only, rw rpow_def_of_pos hx, }),
+  exact is_open.eventually_mem (is_open_lt continuous_const continuous_fst) ha,
+end
+
 lemma continuous_at_rpow_of_ne (p : ℝ × ℝ) (hp : p.1 ≠ 0) :
   continuous_at (λ p : ℝ × ℝ, p.1 ^ p.2) p :=
-(@times_cont_diff_at_rpow_of_ne p hp 0).continuous_at
+begin
+  rw ne_iff_lt_or_gt at hp,
+  have : p = (p.fst, p.snd), from prod.ext rfl rfl,
+  rw this,
+  cases hp,
+  { rw continuous_at_congr (rpow_eq_nhds_of_neg hp),
+    refine continuous_at.mul _ (continuous_cos.continuous_at.comp _),
+    { refine continuous_exp.continuous_at.comp (continuous_at.mul _ continuous_snd.continuous_at),
+      refine (continuous_at_log _).comp continuous_fst.continuous_at,
+      rw ← this,
+      exact hp.ne, },
+    { exact continuous_snd.continuous_at.mul continuous_at_const, }, },
+  { rw continuous_at_congr (rpow_eq_nhds_of_pos hp),
+    refine continuous_exp.continuous_at.comp (continuous_at.mul _ continuous_snd.continuous_at),
+    refine (continuous_at_log _).comp continuous_fst.continuous_at,
+    rw ← this,
+    exact hp.lt.ne.symm, },
+end
 
 lemma continuous_at_rpow_of_pos (p : ℝ × ℝ) (hp : 0 < p.2) :
   continuous_at (λ p : ℝ × ℝ, p.1 ^ p.2) p :=
