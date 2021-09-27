@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes, Abhimanyu Pallavi Sudhir, Jean Lo, Calle Sönne, Sébastien Gouëzel,
   Rémy Degenne
 -/
-import analysis.special_functions.trigonometric_continuity
+import analysis.special_functions.trigonometric.trigonometric_continuity
 
 /-!
 # Power function on `ℂ`, `ℝ`, `ℝ≥0`, and `ℝ≥0∞`
