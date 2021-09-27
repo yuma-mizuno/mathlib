@@ -5,7 +5,7 @@ Authors: Mario Carneiro, Joseph Myers
 -/
 
 import data.complex.exponential
-import analysis.special_functions.exp_log
+import analysis.special_functions.exp_log_calculus
 import algebra.continued_fractions.computation.approximation_corollaries
 
 /-!
