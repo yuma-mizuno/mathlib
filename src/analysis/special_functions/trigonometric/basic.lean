@@ -898,6 +898,67 @@ lemma times_cont_diff_within_at.sinh {n} (hf : times_cont_diff_within_at ℝ n f
 real.times_cont_diff_sinh.times_cont_diff_at.comp_times_cont_diff_within_at x hf
 
 end
+namespace real
+
+lemma exists_cos_eq_zero : 0 ∈ cos '' Icc (1:ℝ) 2 :=
+intermediate_value_Icc' (by norm_num) continuous_on_cos
+  ⟨le_of_lt cos_two_neg, le_of_lt cos_one_pos⟩
+
+/-- The number π = 3.14159265... Defined here using choice as twice a zero of cos in [1,2], from
+which one can derive all its properties. For explicit bounds on π, see `data.real.pi.bounds`. -/
+protected noncomputable def pi : ℝ := 2 * classical.some exists_cos_eq_zero
+
+localized "notation `π` := real.pi" in real
+
+@[simp] lemma cos_pi_div_two : cos (π / 2) = 0 :=
+by rw [real.pi, mul_div_cancel_left _ (@two_ne_zero' ℝ _ _ _)];
+  exact (classical.some_spec exists_cos_eq_zero).2
+
+lemma one_le_pi_div_two : (1 : ℝ) ≤ π / 2 :=
+by rw [real.pi, mul_div_cancel_left _ (@two_ne_zero' ℝ _ _ _)];
+  exact (classical.some_spec exists_cos_eq_zero).1.1
+
+lemma pi_div_two_le_two : π / 2 ≤ 2 :=
+by rw [real.pi, mul_div_cancel_left _ (@two_ne_zero' ℝ _ _ _)];
+  exact (classical.some_spec exists_cos_eq_zero).1.2
+
+lemma two_le_pi : (2 : ℝ) ≤ π :=
+(div_le_div_right (show (0 : ℝ) < 2, by norm_num)).1
+  (by rw div_self (@two_ne_zero' ℝ _ _ _); exact one_le_pi_div_two)
+
+lemma pi_le_four : π ≤ 4 :=
+(div_le_div_right (show (0 : ℝ) < 2, by norm_num)).1
+  (calc π / 2 ≤ 2 : pi_div_two_le_two
+    ... = 4 / 2 : by norm_num)
+
+lemma pi_pos : 0 < π :=
+lt_of_lt_of_le (by norm_num) two_le_pi
+
+lemma pi_ne_zero : π ≠ 0 :=
+ne_of_gt pi_pos
+
+lemma pi_div_two_pos : 0 < π / 2 :=
+half_pos pi_pos
+
+lemma two_pi_pos : 0 < 2 * π :=
+by linarith [pi_pos]
+
+end real
+
+namespace nnreal
+open real
+open_locale real nnreal
+
+/-- `π` considered as a nonnegative real. -/
+noncomputable def pi : ℝ≥0 := ⟨π, real.pi_pos.le⟩
+
+@[simp] lemma coe_real_pi : (pi : ℝ) = π := rfl
+
+lemma pi_pos : 0 < pi := by exact_mod_cast real.pi_pos
+
+lemma pi_ne_zero : pi ≠ 0 := pi_pos.ne'
+
+end nnreal
 
 namespace real
 open_locale real
