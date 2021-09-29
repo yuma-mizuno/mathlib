@@ -222,11 +222,6 @@ noncomputable instance [fintype G] : fintype (sylow p G) :=
 
 end finite_sylow
 
-open equiv finset function
-open equiv.perm list quotient_group
-
-end infinite_sylow
-
 open equiv equiv.perm finset function list quotient_group
 open_locale big_operators
 universes u v w
