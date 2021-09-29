@@ -152,14 +152,14 @@ variables (p) (G)
   If the number of Sylow `p`-subgroups is finite, then it is congruent to `1` modulo `p`. -/
 lemma card_sylow_modeq_one [fact p.prime] [fintype (sylow p G)] : card (sylow p G) ≡ 1 [MOD p] :=
 begin
-  refine sylow_nonempty.elim (λ P : sylow p G, _),
+  refine sylow.nonempty.elim (λ P : sylow p G, _),
   have := set.ext (λ Q : sylow p G, calc Q ∈ fixed_points P (sylow p G)
-      ↔ P.1 ≤ Q : P.2.1.sylow_mem_fixed_points_iff
-  ... ↔ Q.1 = P.1 : ⟨P.2.2 Q.2.1, ge_of_eq⟩
-  ... ↔ Q ∈ {P} : subtype.ext_iff.symm.trans set.mem_singleton_iff.symm),
+      ↔ P.1 ≤ Q : P.2.sylow_mem_fixed_points_iff
+  ... ↔ Q.1 = P.1 : ⟨P.3 Q.2, ge_of_eq⟩
+  ... ↔ Q ∈ {P} : sylow.ext_iff.symm.trans set.mem_singleton_iff.symm),
   haveI : fintype (fixed_points P.1 (sylow p G)) := by convert set.fintype_singleton P,
   have : card (fixed_points P.1 (sylow p G)) = 1 := by convert set.card_singleton P,
-  exact (P.2.1.card_modeq_card_fixed_points (sylow p G)).trans (by rw this),
+  exact (P.2.card_modeq_card_fixed_points (sylow p G)).trans (by rw this),
 end
 
 variables {p} {G}
@@ -224,15 +224,6 @@ end finite_sylow
 
 open equiv finset function
 open equiv.perm list quotient_group
-  refine sylow.nonempty.elim (λ P : sylow p G, _),
-  have := set.ext (λ Q : sylow p G, calc Q ∈ fixed_points P (sylow p G)
-      ↔ P.1 ≤ Q : P.2.sylow_mem_fixed_points_iff
-  ... ↔ Q.1 = P.1 : ⟨P.3 Q.2, ge_of_eq⟩
-  ... ↔ Q ∈ {P} : sylow.ext_iff.symm.trans set.mem_singleton_iff.symm),
-  haveI : fintype (fixed_points P.1 (sylow p G)) := by convert set.fintype_singleton P,
-  have : card (fixed_points P.1 (sylow p G)) = 1 := by convert set.card_singleton P,
-  exact (P.2.card_modeq_card_fixed_points (sylow p G)).trans (by rw this),
-end
 
 end infinite_sylow
 
