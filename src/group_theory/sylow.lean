@@ -46,21 +46,6 @@ section infinite_sylow
 variables (p : ℕ) (G : Type*) [group G]
 
 /-- A Sylow `p`-subgroup is a maximal `p`-subgroup. -/
-def sylow :=
-{P : subgroup G // is_p_group p P ∧ ∀ {Q : subgroup G}, is_p_group p Q → P ≤ Q → Q = P}
-
-instance : has_coe (sylow p G) (subgroup G) := ⟨subtype.val⟩
-
-variables {p} {G}
-
-
-open fintype mul_action subgroup
-
-section infinite_sylow
-
-variables (p : ℕ) (G : Type*) [group G]
-
-/-- A Sylow `p`-subgroup is a maximal `p`-subgroup. -/
 structure sylow extends subgroup G :=
 (is_p_group' : is_p_group p to_subgroup)
 (is_maximal' : ∀ {Q : subgroup G}, is_p_group p Q → to_subgroup ≤ Q → Q = to_subgroup)
