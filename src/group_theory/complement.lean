@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning
 -/
 
+import group_theory.index
 import group_theory.group_action
 import group_theory.order_of_element
-import group_theory.quotient_group
 
 /-!
 # Complements
@@ -73,6 +73,16 @@ end
 @[to_additive] lemma is_complement_comm :
   is_complement (H : set G) (K : set G) ↔ is_complement (K : set G) (H : set G) :=
 ⟨is_complement.symm, is_complement.symm⟩
+
+@[to_additive] lemma is_complement_top_singleton {g : G} :
+  is_complement (⊤ : set G) {g} :=
+⟨λ ⟨x, _, rfl⟩ ⟨y, _, rfl⟩ h, prod.ext (subtype.ext (mul_right_cancel h)) rfl,
+  λ x, ⟨⟨⟨x * g⁻¹, ⟨⟩⟩, g, rfl⟩, inv_mul_cancel_right x g⟩⟩
+
+@[to_additive] lemma is_complement_singleton_top {g : G} :
+  is_complement ({g} : set G) (⊤ : set G) :=
+⟨λ ⟨⟨_, rfl⟩, x⟩ ⟨⟨_, rfl⟩, y⟩ h, prod.ext rfl (subtype.ext (mul_left_cancel h)),
+  λ x, ⟨⟨⟨g, rfl⟩, g⁻¹ * x, ⟨⟩⟩, mul_inv_cancel_left g x⟩⟩
 
 @[to_additive] lemma mem_left_transversals_iff_exists_unique_inv_mul_mem :
   S ∈ left_transversals T ↔ ∀ g : G, ∃! s : S, (s : G)⁻¹ * g ∈ T :=
@@ -301,20 +311,96 @@ end
 /-- **Schur-Zassenhaus** for abelian normal subgroups:
   If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
   a subgroup `K` which is a (right) complement of `H`. -/
-theorem exists_right_complement_of_coprime [fintype G] [H.normal]
+theorem exists_right_complement_aux0 [fintype G] [H.normal]
   (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
   ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
 nonempty_of_inhabited.elim
   (λ α : H.quotient_diff, ⟨mul_action.stabilizer G α, is_complement_stabilizer_of_coprime hH⟩)
 
-/-- **Schur-Zassenhaus** for abelian normal subgroups:
+end schur_zassenhaus
+
+end subgroup
+
+namespace subgroup
+
+open_locale classical
+
+universe u
+
+  -- idea 1: If P is a Sylow p-subgroup of H, then G = N H, where N = N_G(P).
+  --         If N < G, then take a complement K of H ∩ N in N.
+  --         G = N H = K (H ∩ N) H = K H
+  --         K ∩ H = K ∩ N ∩ H = 1
+  -- idea 2: H is a minimal normal subgroup of G (apply to P and Z(P))
+
+  -- plan: extract the necessary Frattini lemma
+  -- PR Frattini
+  -- PR SZ
+
+lemma exists_right_complement_aux1 {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
+  (hN1 : ⊥ < N) (hN2 : N < ⊤) (hN3 : ∀ K : subgroup G, K.normal → K < N → K = ⊥)
+  (ih : ∀ (G' : Type u) (hG'1 : group G') (hG'2 : fintype G'), by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') (_ : normal N')
+    (hN' : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+begin
+  -- first use Frattini argument to show that
+  sorry
+end
+
+lemma exists_right_complement_aux2 {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
+  (ih : ∀ (G' : Type u) (hG'1 : group G') (hG'2 : fintype G'), by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') (_ : normal N')
+    (hN' : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+begin
+  by_cases hN1 : N = ⊥,
+  { rw hN1, exact ⟨⊤, is_complement_singleton_top⟩ },
+  rw [←ne, ←bot_lt_iff_ne_bot] at hN1,
+  by_cases hN2 : N = ⊤,
+  { rw hN2, exact ⟨⊥, is_complement_top_singleton⟩ },
+  rw [←ne, ←lt_top_iff_ne_top] at hN2,
+  by_cases hN3 : ∀ K : subgroup G, K.normal → K < N → K = ⊥,
+  { exact exists_right_complement_aux1 hN hN1 hN2 hN3 ih },
+  push_neg at hN3,
+  obtain ⟨K, hK1, hK2, hK3⟩ := hN3,
+  rw ← bot_lt_iff_ne_bot at hK3,
+  sorry
+end
+
+lemma exists_right_complement_aux3
+  {n : ℕ} {G : Type u} [group G] [fintype G] (hG : fintype.card G = n)
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+begin
+  tactic.unfreeze_local_instances,
+  revert G,
+  apply nat.strong_induction_on n,
+  rintros n ih G _ _ rfl N _ hN,
+  apply exists_right_complement_aux2 hN,
+  intros G' _ _ hG',
+  apply ih _ hG',
+  refl,
+end
+
+/-- **Schur-Zassenhaus** for normal subgroups:
+  If `H : subgroup G` is normal, and has order coprime to its index, then there exists
+  a subgroup `K` which is a (right) complement of `H`. -/
+theorem exists_right_complement_of_coprime {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+exists_right_complement_aux3 rfl hN
+
+/-- **Schur-Zassenhaus** for normal subgroups:
   If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
   a subgroup `K` which is a (left) complement of `H`. -/
-theorem exists_left_complement_of_coprime [fintype G] [H.normal]
-  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
-  ∃ K : subgroup G, is_complement (K : set G) (H : set G) :=
-Exists.imp (λ _, is_complement.symm) (exists_right_complement_of_coprime hH)
-
-end schur_zassenhaus
+theorem exists_left_complement_of_coprime {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  ∃ H : subgroup G, is_complement (H : set G) (N : set G) :=
+Exists.imp (λ _, is_complement.symm) (exists_right_complement_of_coprime hN)
 
 end subgroup
