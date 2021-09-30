@@ -134,44 +134,6 @@ end
 
 alias countable_preimage_exp ↔ _ set.countable.preimage_cexp
 
-/-- `complex.exp` as a `local_homeomorph` with `source = {z | -π < im z < π}` and
-`target = {z | 0 < re z} ∪ {z | im z ≠ 0}`. This definition is used to prove that `complex.log`
-is complex differentiable at all points but the negative real semi-axis. -/
-def exp_local_homeomorph : local_homeomorph ℂ ℂ :=
-local_homeomorph.of_continuous_open
-{ to_fun := exp,
-  inv_fun := log,
-  source := {z : ℂ | z.im ∈ Ioo (- π) π},
-  target := {z : ℂ | 0 < z.re} ∪ {z : ℂ | z.im ≠ 0},
-  map_source' :=
-    begin
-      rintro ⟨x, y⟩ ⟨h₁ : -π < y, h₂ : y < π⟩,
-      refine (not_or_of_imp $ λ hz, _).symm,
-      obtain rfl : y = 0,
-      { rw exp_im at hz,
-        simpa [(real.exp_pos _).ne', real.sin_eq_zero_iff_of_lt_of_lt h₁ h₂] using hz },
-      rw [mem_set_of_eq, ← of_real_def, exp_of_real_re],
-      exact real.exp_pos x
-    end,
-  map_target' := λ z h,
-    suffices 0 ≤ z.re ∨ z.im ≠ 0,
-      by simpa [log_im, neg_pi_lt_arg, (arg_le_pi _).lt_iff_ne, arg_eq_pi_iff, not_and_distrib],
-    h.imp (λ h, le_of_lt h) id,
-  left_inv' := λ x hx, log_exp hx.1 (le_of_lt hx.2),
-  right_inv' := λ x hx, exp_log $ by { rintro rfl, simpa [lt_irrefl] using hx } }
-continuous_exp.continuous_on is_open_map_exp (is_open_Ioo.preimage continuous_im)
-
-lemma has_strict_deriv_at_log {x : ℂ} (h : 0 < x.re ∨ x.im ≠ 0) :
-  has_strict_deriv_at log x⁻¹ x :=
-have h0 :  x ≠ 0, by { rintro rfl, simpa [lt_irrefl] using h },
-exp_local_homeomorph.has_strict_deriv_at_symm h h0 $
-  by simpa [exp_log h0] using has_strict_deriv_at_exp (log x)
-
-lemma times_cont_diff_at_log {x : ℂ} (h : 0 < x.re ∨ x.im ≠ 0) {n : with_top ℕ} :
-  times_cont_diff_at ℂ n log x :=
-exp_local_homeomorph.times_cont_diff_at_symm_deriv (exp_ne_zero $ log x) h
-  (has_deriv_at_exp _) times_cont_diff_exp.times_cont_diff_at
-
 lemma tendsto_log_nhds_within_im_neg_of_re_neg_of_im_zero
   {z : ℂ} (hre : z.re < 0) (him : z.im = 0) :
   tendsto log (𝓝[{z : ℂ | z.im < 0}] z) (𝓝 $ real.log (abs z) - π * I) :=
