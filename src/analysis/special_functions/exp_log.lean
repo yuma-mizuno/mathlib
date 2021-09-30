@@ -27,11 +27,12 @@ exp, log
 open metric filter finset function set
 open_locale classical topological_space
 
-variables {z y x : ℝ}
 
 section continuity
 
 namespace complex
+
+variables {z y x : ℝ}
 
 lemma exp_bound_first_order (x z : ℂ) (hz : ∥z∥ ≤ 1) :
   ∥exp (x + z) - exp x - z • exp x∥ ≤ ∥exp x∥ * ∥z∥ ^ 2 :=
@@ -89,84 +90,7 @@ continuous_exp.continuous_on
 
 end complex
 
-section
-variables {f : ℂ → ℂ} {f' x : ℂ} {s : set ℂ}
-
-lemma has_strict_deriv_at.cexp (hf : has_strict_deriv_at f f' x) :
-  has_strict_deriv_at (λ x, complex.exp (f x)) (complex.exp (f x) * f') x :=
-(complex.has_strict_deriv_at_exp (f x)).comp x hf
-
-lemma has_deriv_at.cexp (hf : has_deriv_at f f' x) :
-  has_deriv_at (λ x, complex.exp (f x)) (complex.exp (f x) * f') x :=
-(complex.has_deriv_at_exp (f x)).comp x hf
-
-lemma has_deriv_within_at.cexp (hf : has_deriv_within_at f f' s x) :
-  has_deriv_within_at (λ x, complex.exp (f x)) (complex.exp (f x) * f') s x :=
-(complex.has_deriv_at_exp (f x)).comp_has_deriv_within_at x hf
-
-lemma deriv_within_cexp (hf : differentiable_within_at ℂ f s x)
-  (hxs : unique_diff_within_at ℂ s x) :
-  deriv_within (λx, complex.exp (f x)) s x = complex.exp (f x) * (deriv_within f s x) :=
-hf.has_deriv_within_at.cexp.deriv_within hxs
-
-@[simp] lemma deriv_cexp (hc : differentiable_at ℂ f x) :
-  deriv (λx, complex.exp (f x)) x = complex.exp (f x) * (deriv f x) :=
-hc.has_deriv_at.cexp.deriv
-
-end
-
-section
-
-variables {E : Type*} [normed_group E] [normed_space ℂ E] {f : E → ℂ} {f' : E →L[ℂ] ℂ}
-  {x : E} {s : set E}
-
-lemma has_strict_fderiv_at.cexp (hf : has_strict_fderiv_at f f' x) :
-  has_strict_fderiv_at (λ x, complex.exp (f x)) (complex.exp (f x) • f') x :=
-(complex.has_strict_deriv_at_exp (f x)).comp_has_strict_fderiv_at x hf
-
-lemma has_fderiv_within_at.cexp (hf : has_fderiv_within_at f f' s x) :
-  has_fderiv_within_at (λ x, complex.exp (f x)) (complex.exp (f x) • f') s x :=
-(complex.has_deriv_at_exp (f x)).comp_has_fderiv_within_at x hf
-
-lemma has_fderiv_at.cexp (hf : has_fderiv_at f f' x) :
-  has_fderiv_at (λ x, complex.exp (f x)) (complex.exp (f x) • f') x :=
-has_fderiv_within_at_univ.1 $ hf.has_fderiv_within_at.cexp
-
-lemma differentiable_within_at.cexp (hf : differentiable_within_at ℂ f s x) :
-  differentiable_within_at ℂ (λ x, complex.exp (f x)) s x :=
-hf.has_fderiv_within_at.cexp.differentiable_within_at
-
-@[simp] lemma differentiable_at.cexp (hc : differentiable_at ℂ f x) :
-  differentiable_at ℂ (λx, complex.exp (f x)) x :=
-hc.has_fderiv_at.cexp.differentiable_at
-
-lemma differentiable_on.cexp (hc : differentiable_on ℂ f s) :
-  differentiable_on ℂ (λx, complex.exp (f x)) s :=
-λx h, (hc x h).cexp
-
-@[simp] lemma differentiable.cexp (hc : differentiable ℂ f) :
-  differentiable ℂ (λx, complex.exp (f x)) :=
-λx, (hc x).cexp
-
-lemma times_cont_diff.cexp {n} (h : times_cont_diff ℂ n f) :
-  times_cont_diff ℂ n (λ x, complex.exp (f x)) :=
-complex.times_cont_diff_exp.comp h
-
-lemma times_cont_diff_at.cexp {n} (hf : times_cont_diff_at ℂ n f x) :
-  times_cont_diff_at ℂ n (λ x, complex.exp (f x)) x :=
-complex.times_cont_diff_exp.times_cont_diff_at.comp x hf
-
-lemma times_cont_diff_on.cexp {n} (hf : times_cont_diff_on ℂ n f s) :
-  times_cont_diff_on ℂ n (λ x, complex.exp (f x)) s :=
-complex.times_cont_diff_exp.comp_times_cont_diff_on  hf
-
-lemma times_cont_diff_within_at.cexp {n} (hf : times_cont_diff_within_at ℂ n f s x) :
-  times_cont_diff_within_at ℂ n (λ x, complex.exp (f x)) s x :=
-complex.times_cont_diff_exp.times_cont_diff_at.comp_times_cont_diff_within_at x hf
-
-end
-
-section
+section complex_continuous_exp_comp
 
 variable {α : Type*}
 
@@ -191,7 +115,7 @@ lemma continuous_on.cexp (h : continuous_on f s) : continuous_on (λ y, exp (f y
 lemma continuous.cexp (h : continuous f) : continuous (λ y, exp (f y)) :=
 continuous_iff_continuous_at.2 $ λ x, h.continuous_at.cexp
 
-end
+end complex_continuous_exp_comp
 
 namespace real
 
@@ -285,6 +209,8 @@ end real
 
 
 namespace real
+
+variables {x y : ℝ}
 
 /-- The real logarithm function, equal to the inverse of the exponential for `x > 0`,
 to `log |x|` for `x < 0`, and to `0` for `0`. We use this unconventional extension to
