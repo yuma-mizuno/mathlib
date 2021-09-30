@@ -152,6 +152,11 @@ mem_right_transversals_iff_exists_unique_quotient_mk'_eq.trans
 { rintros ⟨_, q₁, rfl⟩ ⟨_, q₂, rfl⟩ hg,
   rw (q₁.out_eq'.symm.trans hg).trans q₂.out_eq' }, λ q, ⟨⟨q.out', q, rfl⟩, quotient.out_eq' q⟩⟩⟩⟩
 
+lemma is_complement.card_mul [fintype G] [fintype H] [fintype K]
+  (h : is_complement (H : set G) (K : set G)) :
+  fintype.card H * fintype.card K = fintype.card G :=
+(fintype.card_prod _ _).symm.trans (fintype.card_of_bijective h)
+
 lemma is_complement_of_disjoint [fintype G] [fintype H] [fintype K]
   (h1 : fintype.card H * fintype.card K = fintype.card G)
   (h2 : disjoint H K) :
@@ -237,9 +242,9 @@ begin
 end
 
 lemma smul_diff [H.normal] (h : H) :
-  diff (h • α) β = h ^ (fintype.card (quotient_group.quotient H)) * diff α β :=
+  diff (h • α) β = h ^ H.index * diff α β :=
 begin
-  rw [diff, diff, ←finset.card_univ, ←finset.prod_const, ←finset.prod_mul_distrib],
+  rw [diff, diff, index_eq_card, ←finset.card_univ, ←finset.prod_const, ←finset.prod_mul_distrib],
   refine finset.prod_congr rfl (λ q _, _),
   rw [subtype.ext_iff, coe_mul, coe_mk, coe_mk, ←mul_assoc, mul_right_cancel_iff],
   rw [show h • α = (h : G) • α, from rfl, smul_symm_apply_eq_mul_symm_apply_inv_smul],
@@ -271,7 +276,7 @@ instance [H.normal] : mul_action G H.quotient_diff :=
 variables [fintype H]
 
 lemma exists_smul_eq [H.normal] (α β : H.quotient_diff)
-  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
+  (hH : nat.coprime (fintype.card H) H.index) :
   ∃ h : H, h • α = β :=
 quotient.induction_on α (quotient.induction_on β
   (λ β α, exists_imp_exists (λ n, quotient.sound)
@@ -282,7 +287,7 @@ quotient.induction_on α (quotient.induction_on β
       rw [equiv.apply_symm_apply, inv_mul_self] }⟩))
 
 lemma smul_left_injective [H.normal] (α : H.quotient_diff)
-  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
+  (hH : nat.coprime (fintype.card H) H.index) :
   function.injective (λ h : H, h • α) :=
 λ h₁ h₂, begin
   refine quotient.induction_on α (λ α hα, _),
@@ -292,7 +297,7 @@ lemma smul_left_injective [H.normal] (α : H.quotient_diff)
 end
 
 lemma is_complement_stabilizer_of_coprime [fintype G] [H.normal] {α : H.quotient_diff}
-  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
+  (hH : nat.coprime (fintype.card H) H.index) :
   is_complement (H : set G) (mul_action.stabilizer G α : set G) :=
 begin
   classical,
@@ -303,7 +308,7 @@ begin
   rw ← fintype.card_congr (ϕ.trans (mul_action.orbit_equiv_quotient_stabilizer G α)) at key,
   apply is_complement_of_coprime key.symm,
   rw [card_eq_card_quotient_mul_card_subgroup H, mul_comm, mul_right_inj'] at key,
-  { rw ← key, convert hH },
+  { rwa [←key, ←index_eq_card] },
   { rw [←pos_iff_ne_zero, fintype.card_pos_iff],
     apply_instance },
 end
@@ -312,7 +317,7 @@ end
   If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
   a subgroup `K` which is a (right) complement of `H`. -/
 theorem exists_right_complement_aux0 [fintype G] [H.normal]
-  (hH : nat.coprime (fintype.card H) (fintype.card (quotient_group.quotient H))) :
+  (hH : nat.coprime (fintype.card H) H.index) :
   ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
 nonempty_of_inhabited.elim
   (λ α : H.quotient_diff, ⟨mul_action.stabilizer G α, is_complement_stabilizer_of_coprime hH⟩)
@@ -327,61 +332,111 @@ open_locale classical
 
 universe u
 
-  -- idea 1: If P is a Sylow p-subgroup of H, then G = N H, where N = N_G(P).
-  --         If N < G, then take a complement K of H ∩ N in N.
-  --         G = N H = K (H ∩ N) H = K H
-  --         K ∩ H = K ∩ N ∩ H = 1
-  -- idea 2: H is a minimal normal subgroup of G (apply to P and Z(P))
-
-  -- plan: extract the necessary Frattini lemma
-  -- PR Frattini
-  -- PR SZ
-
 lemma exists_right_complement_aux1 {G : Type u} [group G] [fintype G]
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
-  (hN1 : ⊥ < N) (hN2 : N < ⊤) (hN3 : ∀ K : subgroup G, K.normal → K < N → K = ⊥)
-  (ih : ∀ (G' : Type u) (hG'1 : group G') (hG'2 : fintype G'), by exactI
-    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') (_ : normal N')
+  {N : subgroup G} [normal N] (hN1 : nat.coprime (fintype.card N) N.index)
+  (hN2 : ∀ K, K ⊔ N = ⊤ → K = ⊤) (hN3 : ∀ K : subgroup G, K.normal → K ≤ N → (K = ⊥ ∨ K = N))
+  (ih : ∀ (G' : Type u) [hG'1 : group G'] [hG'2 : fintype G'], by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') [N'.normal]
     (hN' : nat.coprime (fintype.card N') N'.index),
     ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
   ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
 begin
-  -- first use Frattini argument to show that
-  sorry
-end
-
-lemma exists_right_complement_aux2 {G : Type u} [group G] [fintype G]
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
-  (ih : ∀ (G' : Type u) (hG'1 : group G') (hG'2 : fintype G'), by exactI
-    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') (_ : normal N')
-    (hN' : nat.coprime (fintype.card N') N'.index),
-    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
-  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
-begin
-  by_cases hN1 : N = ⊥,
+  /-by_cases hN1 : N = ⊥,
   { rw hN1, exact ⟨⊤, is_complement_singleton_top⟩ },
   rw [←ne, ←bot_lt_iff_ne_bot] at hN1,
   by_cases hN2 : N = ⊤,
   { rw hN2, exact ⟨⊥, is_complement_top_singleton⟩ },
-  rw [←ne, ←lt_top_iff_ne_top] at hN2,
-  by_cases hN3 : ∀ K : subgroup G, K.normal → K < N → K = ⊥,
-  { exact exists_right_complement_aux1 hN hN1 hN2 hN3 ih },
-  push_neg at hN3,
-  obtain ⟨K, hK1, hK2, hK3⟩ := hN3,
-  rw ← bot_lt_iff_ne_bot at hK3,
+  rw [←ne, ←lt_top_iff_ne_top] at hN2,-/
+  -- pick prime dividing N, so that Sylow p-subgroup P is nontrivial
+  -- use hN2 with Frattini argument, to conclude that P is normal
+  -- use HN3 with P to conclude that P = N (uses nontrivial!)
+  -- use hN3 with Z(P) to conclude that P is abelian
+  -- use exists_right_complement_aux0
+  -- might not need N ≠ ⊤
   sorry
 end
 
-lemma exists_right_complement_aux3
+lemma exists_right_complement_aux2 {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [N.normal] (hN1 : nat.coprime (fintype.card N) N.index)
+  (hN2 : ∀ K, K ⊔ N = ⊤ → K = ⊤)
+  (ih : ∀ (G' : Type u) [hG'1 : group G'] [hG'2 : fintype G'], by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') [N'.normal]
+    (hN' : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+begin
+  by_cases hN3 : ∀ K : subgroup G, K.normal → K ≤ N → (K = ⊥ ∨ K = N),
+  { exact exists_right_complement_aux1 hN1 hN2 hN3 ih },
+  push_neg at hN3,
+  obtain ⟨K, hK1, hK2, hK3, hK4⟩ := hN3,
+  haveI := hK1,
+  let Q := quotient_group.quotient K,
+  let ϕ := quotient_group.mk' K,
+  obtain ⟨H, hH⟩ := ih Q _ (N.map ϕ) _,
+  have key := hN2 (H.comap ϕ) _,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+end
+
+lemma exists_right_complement_aux3 {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [N.normal] (hN1 : nat.coprime (fintype.card N) N.index)
+  (ih : ∀ (G' : Type u) [hG'1 : group G'] [hG'2 : fintype G'], by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) (N' : subgroup G') [N'.normal]
+    (hN' : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G')) :
+  ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
+begin
+  by_cases hN2 : ∀ K : subgroup G, K ⊔ N = ⊤ → K = ⊤,
+  { exact exists_right_complement_aux2 hN1 hN2 ih },
+  push_neg at hN2,
+  obtain ⟨K, hK1, hK2⟩ := hN2,
+
+  let x := fintype.card ↥(K ⊓ N),
+  let y := N.index,
+  let z := K.index,
+
+  have h1 : nat.coprime x y := sorry,
+
+  have h2 : fintype.card (N.comap K.subtype) = x := sorry,
+  have h3 : (N.comap K.subtype).index = y := sorry,
+  have h4 : fintype.card K = x * y := sorry,
+
+
+  --rw ← lt_top_iff_ne_top at hK2,
+
+
+  have h0 : fintype.card K < fintype.card G := sorry,
+
+  obtain ⟨H, hH⟩ := ih K h0 (N.comap K.subtype) (by rwa [h2, h3]),
+  use H.map K.subtype,
+
+  have h4 : fintype.card (H.map K.subtype) = y := sorry,
+
+  --have h4 : fintype.card (H.map K.subtype) = fintype.card H := sorry,
+  have h5 : fintype.card N * fintype.card (H.map K.subtype) = fintype.card G,
+  { sorry },
+  have h8 : fintype.card (H.map K.subtype) = N.index,
+  { rw [mul_comm, ←index_mul_card N] at h5,
+    exact mul_right_cancel' (ne_of_gt (fintype.card_pos_iff.mpr has_one.nonempty)) h5 },
+  have h7 : fintype.card (H.map K.subtype) ∣ N.index,
+  { rw h8 },
+  have h6 : nat.coprime (fintype.card N) (fintype.card (H.map K.subtype)),
+  { exact hN1.coprime_dvd_right h7 },
+  exact is_complement_of_coprime h5 h6,
+end
+
+lemma exists_right_complement_aux4
   {n : ℕ} {G : Type u} [group G] [fintype G] (hG : fintype.card G = n)
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  {N : subgroup G} [N.normal] (hN : nat.coprime (fintype.card N) N.index) :
   ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
 begin
   tactic.unfreeze_local_instances,
   revert G,
   apply nat.strong_induction_on n,
   rintros n ih G _ _ rfl N _ hN,
-  apply exists_right_complement_aux2 hN,
+  apply exists_right_complement_aux3 hN,
   intros G' _ _ hG',
   apply ih _ hG',
   refl,
@@ -391,15 +446,15 @@ end
   If `H : subgroup G` is normal, and has order coprime to its index, then there exists
   a subgroup `K` which is a (right) complement of `H`. -/
 theorem exists_right_complement_of_coprime {G : Type u} [group G] [fintype G]
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  {N : subgroup G} [N.normal] (hN : nat.coprime (fintype.card N) N.index) :
   ∃ H : subgroup G, is_complement (N : set G) (H : set G) :=
-exists_right_complement_aux3 rfl hN
+exists_right_complement_aux4 rfl hN
 
 /-- **Schur-Zassenhaus** for normal subgroups:
   If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
   a subgroup `K` which is a (left) complement of `H`. -/
 theorem exists_left_complement_of_coprime {G : Type u} [group G] [fintype G]
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index) :
+  {N : subgroup G} [N.normal] (hN : nat.coprime (fintype.card N) N.index) :
   ∃ H : subgroup G, is_complement (H : set G) (N : set G) :=
 Exists.imp (λ _, is_complement.symm) (exists_right_complement_of_coprime hN)
 
