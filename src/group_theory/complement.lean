@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning
 -/
 
-import group_theory.index
 import group_theory.group_action
 import group_theory.order_of_element
+import group_theory.quotient_group
 
 /-!
 # Complements
@@ -181,8 +181,5 @@ lemma is_complement_of_coprime [fintype G] [fintype H] [fintype K]
   (h2 : nat.coprime (fintype.card H) (fintype.card K)) :
   is_complement (H : set G) (K : set G) :=
 is_complement_of_card_mul_and_disjoint h1 (disjoint_iff.mpr (inf_eq_bot_of_coprime h2))
-
-
-end schur_zassenhaus
 
 end subgroup
