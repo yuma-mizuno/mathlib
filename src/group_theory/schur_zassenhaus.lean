@@ -162,22 +162,11 @@ begin
     apply_instance },
 end
 
-/-- **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (right) complement of `H`. -/
-theorem exists_right_complement_of_coprime [fintype G] [H.normal]
+theorem exists_right_complement_of_coprime_aux0 [fintype G] [H.normal]
   (hH : nat.coprime (fintype.card H) H.index) :
   ∃ K : subgroup G, is_complement (H : set G) (K : set G) :=
 nonempty_of_inhabited.elim
   (λ α : H.quotient_diff, ⟨mul_action.stabilizer G α, is_complement_stabilizer_of_coprime hH⟩)
-
-/-- **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (left) complement of `H`. -/
-theorem exists_left_complement_of_coprime [fintype G] [H.normal]
-  (hH : nat.coprime (fintype.card H) H.index) :
-  ∃ K : subgroup G, is_complement (K : set G) (H : set G) :=
-Exists.imp (λ _, is_complement.symm) (exists_right_complement_of_coprime hH)
 
 end subgroup
 
@@ -282,6 +271,21 @@ begin
   exact is_complement_of_coprime h5 h6,
 end
 
+lemma exists_right_complement_aux5 {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [N.normal] (hN1 : nat.coprime (fintype.card N) N.index)
+  (ih : ∀ (G' : Type u) [hG'1 : group G'] [hG'2 : fintype G'], by exactI
+    ∀ (hG' : fintype.card G' < fintype.card G) {N' : subgroup G'} [N'.normal]
+    (hN' : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G'))
+  (ic : ∀ H : subgroup G, ¬ is_complement (N : set G) (H : set G)) :
+  false :=
+begin
+  tactic.unfreeze_local_instances,
+  have h1 : N ≠ ⊥,
+  { rintro rfl,
+    exact ic ⊤ is_complement_bot_top },
+end
+
 lemma exists_right_complement_aux4
   {n : ℕ} {G : Type u} [group G] [fintype G] (hG : fintype.card G = n)
   {N : subgroup G} [N.normal] (hN : nat.coprime (fintype.card N) N.index) :
@@ -291,8 +295,7 @@ begin
   revert G,
   apply nat.strong_induction_on n,
   rintros n ih G _ _ rfl N _ hN,
-  apply exists_right_complement_aux3 hN,
-  intros G' _ _ hG',
+  refine not_forall_not.mp (exists_right_complement_aux5 hN (λ G' _ _ hG', _)),
   apply ih _ hG',
   refl,
 end
