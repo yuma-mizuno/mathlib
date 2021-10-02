@@ -173,6 +173,42 @@ end subgroup
 
 namespace subgroup
 
+lemma _root_.sylow.frattini {G : Type*} [group G] {N : subgroup G} [N.normal] {p : ℕ} (P : sylow p N) :
+  (P.1.map N.subtype).normalizer ⊔ N = ⊤ :=
+begin
+  refine top_le_iff.mp (λ g _, _),
+  --have key : ∀ g : G, ∃ n : N,
+end
+
+-- todo: prove sylow_comap lemma
+
+lemma sylow.normal_eq_top_of_normalizer_le {G : Type*} [group G] {N : subgroup G} [N.normal]
+  {p : ℕ} {P : sylow p G} (h : P.1.normalizer ≤ N) : N = ⊤ :=
+begin
+  let Q : sylow p N := ⟨P.1.comap N.subtype, _, _⟩,
+  have key := Q.frattini,
+  change ((P.1.comap N.subtype).map N.subtype).normalizer ⊔ N = ⊤ at key,
+  rwa [map_comap_eq_self, sup_eq_right.mpr h] at key,
+  rw subtype_range,
+  exact le_normalizer.trans h,
+  exact P.2.comap_injective N.subtype subtype.coe_injective,
+  sorry,
+end
+
+lemma sylow.normalizer_eq_self_of_normalizer_le {G : Type*} [group G] {p : ℕ} {P : sylow p G} {H : subgroup G}
+  (h : P.1.normalizer ≤ H) : H.normalizer = H :=
+begin
+  let Q : sylow p H.normalizer := ⟨P.1.comap H.normalizer.subtype, _, _⟩,
+
+  let Q : sylow p _ := ⟨(P.1.comap H.normalizer.subtype).comap
+    (H.comap H.normalizer.subtype).subtype, _, _⟩,
+  have key := Q.frattini,
+end
+
+end subgroup
+
+namespace subgroup
+
 open_locale classical
 
 universe u

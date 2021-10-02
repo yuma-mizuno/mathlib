@@ -190,6 +190,14 @@ lemma card_sylow_dvd_index [fact p.prime] [fintype (sylow p G)] (P : sylow p G) 
   card (sylow p G) ∣ P.1.index :=
 ((congr_arg _ (card_sylow_eq_index_normalizer P)).mp dvd_rfl).trans (index_dvd_of_le le_normalizer)
 
+def sylow.comap_of_le_normalizer (P : sylow p G) {H : Type*} [group H] (ϕ : H →* G)
+  (hϕ1 : is_p_group p ϕ.ker) (hϕ2 : P.1 ≤ ϕ.range.normalizer) : sylow p H :=
+⟨P.1.comap ϕ, is_p_group.comap_ker_is_p_group P.2 ϕ hϕ1, begin
+  intros Q hQ1 hQ2,
+  refine le_antisymm (map_le_iff_le_comap.mp _) hQ2,
+  sorry,
+end⟩
+
 end infinite_sylow
 
 open equiv equiv.perm finset function list quotient_group
