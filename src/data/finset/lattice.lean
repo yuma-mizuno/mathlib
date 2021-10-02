@@ -1073,7 +1073,9 @@ begin
     by { intro i, simp_rw g, split_ifs, simpa [h] using hf i, simp, },
   cases hs g hg with tg htg,
   use insert i_a tg,
-  calc (⨆ i, f i) = a ⊔ (⨆ i, g i) : by rw supr_eq_sup_supr_if_ne f a i_a hia
+  calc (⨆ i, f i) = (f i_a) ⊔ (⨆ i, g i) :
+      by { rw supr_eq_sup_supr_if_ne i_a, simp [g, hia], apply_instance, }
+    ... = a ⊔ (⨆ i, g i) : by rw hia
     ... = a ⊔ (⨆ i (h : i ∈ tg), g i) : by rw htg
     ... = a ⊔ (⨆ i (h : i ∈ insert i_a tg), g i) :
   begin
@@ -1082,8 +1084,11 @@ begin
     exact @le_bsupr _ _ _ (λ i, i ∈ insert i_a tg) (λ i _, g i) i (mem_insert.mpr (or.inr him)),
   end
     ... = (⨆ i (h : i ∈ insert i_a tg), f i) :
-  by rw bsupr_eq_sup_bsupr_if_ne f (λ i, i ∈ insert i_a tg) a i_a
-    ⟨hia, mem_insert.mpr (or.inl rfl)⟩,
+  begin
+    rw @bsupr_eq_sup_bsupr_if_ne _ _ _ f _ _ i_a,
+    { simp [hia, g], },
+    { exact (mem_insert_self i_a tg), },
+  end
 end
 
 lemma infi_eq_binfi_finset {α ι} [complete_lattice α] (s : finset α) (f : ι → α)
