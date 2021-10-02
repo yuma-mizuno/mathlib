@@ -235,103 +235,13 @@ end
 lemma arg_of_real_of_neg {x : ℝ} (hx : x < 0) : arg x = π :=
 arg_eq_pi_iff.2 ⟨hx, rfl⟩
 
-section continuity
-
-lemma arg_eq_of_re_nonneg {x : ℂ} (hx : 0 ≤ x.re) : arg x = real.arcsin (x.im / x.abs) :=
+lemma arg_of_re_nonneg {x : ℂ} (hx : 0 ≤ x.re) : arg x = real.arcsin (x.im / x.abs) :=
 if_pos hx
-
-lemma arg_eq_of_re_neg_of_im_nonneg {x : ℂ} (hx_re : x.re < 0) (hx_im : 0 ≤ x.im) :
-  arg x = real.arcsin ((-x).im / x.abs) + real.pi :=
-by simp only [arg, hx_re.not_le, hx_im, if_true, if_false]
-
-lemma arg_eq_of_re_neg_of_im_neg {x : ℂ} (hx_re : x.re < 0) (hx_im : x.im < 0) :
-  arg x = real.arcsin ((-x).im / x.abs) - real.pi :=
-by simp only [arg, hx_re.not_le, hx_im.not_le, if_false]
-
-lemma arg_eq_nhds_of_re_pos {x : ℂ} (hx : 0 < x.re) :
-  arg =ᶠ[𝓝 x] λ x, real.arcsin (x.im / x.abs) :=
-begin
-  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), 0 < y.re,
-    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_nonneg hy.le),
-  exact is_open.eventually_mem (is_open_lt continuous_zero continuous_re) hx,
-end
-
-lemma arg_eq_nhds_of_re_neg_of_im_pos {x : ℂ} (hx_re : x.re < 0) (hx_im : 0 < x.im) :
-  arg =ᶠ[𝓝 x] λ x, real.arcsin ((-x).im / x.abs) + real.pi :=
-begin
-  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ 0 < y.im,
-    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_neg_of_im_nonneg hy.1 hy.2.le),
-  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ 0 < x.im),
-  exact is_open.and (is_open_lt continuous_re continuous_zero)
-    (is_open_lt continuous_zero continuous_im),
-end
-
-lemma arg_eq_nhds_of_re_neg_of_im_neg {x : ℂ} (hx_re : x.re < 0) (hx_im : x.im < 0) :
-  arg =ᶠ[𝓝 x] λ x, real.arcsin ((-x).im / x.abs) - real.pi :=
-begin
-  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ y.im < 0,
-    from h_forall_nhds.mono (λ y hy, arg_eq_of_re_neg_of_im_neg hy.1 hy.2),
-  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ x.im < 0),
-  exact is_open.and (is_open_lt continuous_re continuous_zero)
-    (is_open_lt continuous_im continuous_zero),
-end
-
-lemma continuous_at_arg_of_re_pos {x : ℂ} (h : 0 < x.re) :
-  continuous_at arg x :=
-begin
-  rw continuous_at_congr (arg_eq_nhds_of_re_pos h),
-  refine real.continuous_arcsin.continuous_at.comp _,
-  refine continuous_at.div continuous_im.continuous_at complex.continuous_abs.continuous_at _,
-  rw abs_ne_zero,
-  intro hx,
-  rw hx at h,
-  simpa using h,
-end
-
-lemma continuous_at_arg_of_re_neg_of_im_pos {x : ℂ} (h_re : x.re < 0) (h_im : 0 < x.im) :
-  continuous_at arg x :=
-begin
-  rw continuous_at_congr (arg_eq_nhds_of_re_neg_of_im_pos h_re h_im),
-  refine continuous_at.add (real.continuous_arcsin.continuous_at.comp _) continuous_at_const,
-  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
-  { continuity, },
-  { rw abs_ne_zero, intro hx, rw hx at h_re, simpa using h_re, },
-end
-
-lemma continuous_at_arg_of_re_neg_of_im_neg {x : ℂ} (h_re : x.re < 0) (h_im : x.im < 0) :
-  continuous_at arg x :=
-begin
-  rw continuous_at_congr (arg_eq_nhds_of_re_neg_of_im_neg h_re h_im),
-  refine continuous_at.add (real.continuous_arcsin.continuous_at.comp _) continuous_at_const,
-  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
-  { continuity, },
-  { rw abs_ne_zero, intro hx, rw hx at h_re, simpa using h_re, },
-end
-
-private lemma continuous_at_arcsin_im_div_abs {x : ℂ} (h : x ≠ 0) :
-  continuous_at (λ y : ℂ, real.arcsin (y.im / abs y)) x :=
-begin
-  refine real.continuous_arcsin.continuous_at.comp _,
-  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
-  { continuity, },
-  { rw abs_ne_zero, exact λ hx, h hx, },
-end
-
-private lemma continuous_at_arcsin_im_neg_div_abs_add {x : ℂ} (h : x ≠ 0) {r : ℝ} :
-  continuous_at (λ y : ℂ, real.arcsin ((-y).im / abs y) + r) x :=
-begin
-  refine continuous_at.add _ continuous_at_const,
-  have : (λ (y : ℂ), real.arcsin ((-y).im / abs y)) =
-      (λ (y : ℂ), real.arcsin (y.im / abs y)) ∘ (λ y, - y),
-    by { ext1 y, simp, },
-  rw this,
-  exact continuous_at.comp (continuous_at_arcsin_im_div_abs (neg_ne_zero.mpr h)) continuous_at_neg,
-end
 
 lemma arg_of_re_zero_of_im_pos {x : ℂ} (h_re : x.re = 0) (h_im : 0 < x.im) :
   arg x = real.pi / 2 :=
 begin
-  rw arg_eq_of_re_nonneg h_re.symm.le,
+  rw arg_of_re_nonneg h_re.symm.le,
   have h_im_eq_abs : x.im = abs x,
   { refine le_antisymm (im_le_abs x) _,
     refine (abs_le_abs_re_add_abs_im x).trans (le_of_eq _),
@@ -345,7 +255,7 @@ end
 lemma arg_of_re_zero_of_im_neg {x : ℂ} (h_re : x.re = 0) (h_im : x.im < 0) :
   arg x = - real.pi / 2 :=
 begin
-  rw arg_eq_of_re_nonneg h_re.symm.le,
+  rw arg_of_re_nonneg h_re.symm.le,
   have h_im_eq_abs : x.im = - abs x,
   { rw eq_neg_iff_eq_neg,
     have : - x.im = _root_.abs x.im,
@@ -358,8 +268,101 @@ begin
   { rw [ne.def, complex.abs_eq_zero], intro hx, rw hx at h_im, simpa using h_im, },
 end
 
-lemma continuous_at_arg_of_re_zero {x : ℂ} (h_re : x.re = 0) (h_im : x.im ≠ 0) :
+lemma arg_of_re_neg_of_im_nonneg {x : ℂ} (hx_re : x.re < 0) (hx_im : 0 ≤ x.im) :
+  arg x = real.arcsin ((-x).im / x.abs) + real.pi :=
+by simp only [arg, hx_re.not_le, hx_im, if_true, if_false]
+
+lemma arg_of_re_neg_of_im_neg {x : ℂ} (hx_re : x.re < 0) (hx_im : x.im < 0) :
+  arg x = real.arcsin ((-x).im / x.abs) - real.pi :=
+by simp only [arg, hx_re.not_le, hx_im.not_le, if_false]
+
+section continuity
+
+variables {x z : ℂ}
+
+lemma arg_eq_nhds_of_re_pos (hx : 0 < x.re) : arg =ᶠ[𝓝 x] λ x, real.arcsin (x.im / x.abs) :=
+begin
+  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), 0 < y.re,
+    from h_forall_nhds.mono (λ y hy, arg_of_re_nonneg hy.le),
+  exact is_open.eventually_mem (is_open_lt continuous_zero continuous_re) hx,
+end
+
+lemma arg_eq_nhds_of_re_neg_of_im_pos (hx_re : x.re < 0) (hx_im : 0 < x.im) :
+  arg =ᶠ[𝓝 x] λ x, real.arcsin ((-x).im / x.abs) + real.pi :=
+begin
+  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ 0 < y.im,
+    from h_forall_nhds.mono (λ y hy, arg_of_re_neg_of_im_nonneg hy.1 hy.2.le),
+  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ 0 < x.im),
+  exact is_open.and (is_open_lt continuous_re continuous_zero)
+    (is_open_lt continuous_zero continuous_im),
+end
+
+lemma arg_eq_nhds_of_re_neg_of_im_neg (hx_re : x.re < 0) (hx_im : x.im < 0) :
+  arg =ᶠ[𝓝 x] λ x, real.arcsin ((-x).im / x.abs) - real.pi :=
+begin
+  suffices h_forall_nhds : ∀ᶠ (y : ℂ) in (𝓝 x), y.re < 0 ∧ y.im < 0,
+    from h_forall_nhds.mono (λ y hy, arg_of_re_neg_of_im_neg hy.1 hy.2),
+  refine is_open.eventually_mem _ (⟨hx_re, hx_im⟩ : x.re < 0 ∧ x.im < 0),
+  exact is_open.and (is_open_lt continuous_re continuous_zero)
+    (is_open_lt continuous_im continuous_zero),
+end
+
+/-- Auxiliary lemma for `continuous_at_arg`. -/
+lemma continuous_at_arg_of_re_pos (h : 0 < x.re) : continuous_at arg x :=
+begin
+  rw continuous_at_congr (arg_eq_nhds_of_re_pos h),
+  refine real.continuous_arcsin.continuous_at.comp _,
+  refine continuous_at.div continuous_im.continuous_at complex.continuous_abs.continuous_at _,
+  rw abs_ne_zero,
+  intro hx,
+  rw hx at h,
+  simpa using h,
+end
+
+/-- Auxiliary lemma for `continuous_at_arg`. -/
+lemma continuous_at_arg_of_re_neg_of_im_pos (h_re : x.re < 0) (h_im : 0 < x.im) :
   continuous_at arg x :=
+begin
+  rw continuous_at_congr (arg_eq_nhds_of_re_neg_of_im_pos h_re h_im),
+  refine continuous_at.add (real.continuous_arcsin.continuous_at.comp _) continuous_at_const,
+  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
+  { continuity, },
+  { rw abs_ne_zero, intro hx, rw hx at h_re, simpa using h_re, },
+end
+
+/-- Auxiliary lemma for `continuous_at_arg`. -/
+lemma continuous_at_arg_of_re_neg_of_im_neg (h_re : x.re < 0) (h_im : x.im < 0) :
+  continuous_at arg x :=
+begin
+  rw continuous_at_congr (arg_eq_nhds_of_re_neg_of_im_neg h_re h_im),
+  refine continuous_at.add (real.continuous_arcsin.continuous_at.comp _) continuous_at_const,
+  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
+  { continuity, },
+  { rw abs_ne_zero, intro hx, rw hx at h_re, simpa using h_re, },
+end
+
+private lemma continuous_at_arcsin_im_div_abs (h : x ≠ 0) :
+  continuous_at (λ y : ℂ, real.arcsin (y.im / abs y)) x :=
+begin
+  refine real.continuous_arcsin.continuous_at.comp _,
+  refine continuous_at.div (continuous.continuous_at _) complex.continuous_abs.continuous_at _,
+  { continuity, },
+  { rw abs_ne_zero, exact λ hx, h hx, },
+end
+
+private lemma continuous_at_arcsin_im_neg_div_abs_add (h : x ≠ 0) {r : ℝ} :
+  continuous_at (λ y : ℂ, real.arcsin ((-y).im / abs y) + r) x :=
+begin
+  refine continuous_at.add _ continuous_at_const,
+  have : (λ (y : ℂ), real.arcsin ((-y).im / abs y)) =
+      (λ (y : ℂ), real.arcsin (y.im / abs y)) ∘ (λ y, - y),
+    by { ext1 y, simp, },
+  rw this,
+  exact continuous_at.comp (continuous_at_arcsin_im_div_abs (neg_ne_zero.mpr h)) continuous_at_neg,
+end
+
+/-- Auxiliary lemma for `continuous_at_arg`. -/
+lemma continuous_at_arg_of_re_zero (h_re : x.re = 0) (h_im : x.im ≠ 0) : continuous_at arg x :=
 begin
   have hx_ne_zero : x ≠ 0, by { intro hx, rw hx at h_im, simpa using h_im, },
   have hx_abs : 0 < _root_.abs x.im, by rwa _root_.abs_pos,
@@ -370,17 +373,17 @@ begin
   have h_cont_3 : continuous_at (λ y : ℂ, real.arcsin ((-y).im / abs y) - real.pi) x,
     by { simp_rw sub_eq_add_neg, exact continuous_at_arcsin_im_neg_div_abs_add hx_ne_zero, },
   have h_val1_x_pos : 0 < x.im → real.arcsin (x.im / abs x) = real.pi / 2,
-    by { rw ← arg_eq_of_re_nonneg h_re.symm.le, exact arg_of_re_zero_of_im_pos h_re, },
+    by { rw ← arg_of_re_nonneg h_re.symm.le, exact arg_of_re_zero_of_im_pos h_re, },
   have h_val1_x_neg : x.im < 0 → real.arcsin (x.im / abs x) = - real.pi / 2,
-    by { rw ← arg_eq_of_re_nonneg h_re.symm.le, exact arg_of_re_zero_of_im_neg h_re, },
+    by { rw ← arg_of_re_nonneg h_re.symm.le, exact arg_of_re_zero_of_im_neg h_re, },
   have h_val2_x : 0 < x.im → real.arcsin ((-x).im / abs x) + real.pi = real.pi / 2,
   { intro h_im_pos,
-    rw [complex.neg_im, neg_div, real.arcsin_neg, ← arg_eq_of_re_nonneg h_re.symm.le,
+    rw [complex.neg_im, neg_div, real.arcsin_neg, ← arg_of_re_nonneg h_re.symm.le,
       arg_of_re_zero_of_im_pos h_re h_im_pos],
     ring, },
   have h_val3_x : x.im < 0 → real.arcsin ((-x).im / abs x) - real.pi = - real.pi / 2,
   { intro h_im_neg,
-    rw [complex.neg_im, neg_div, real.arcsin_neg, ← arg_eq_of_re_nonneg h_re.symm.le,
+    rw [complex.neg_im, neg_div, real.arcsin_neg, ← arg_of_re_nonneg h_re.symm.le,
       arg_of_re_zero_of_im_neg h_re h_im_neg],
     ring, },
   rw metric.continuous_at_iff at ⊢ h_cont_1 h_cont_2 h_cont_3,
@@ -396,9 +399,9 @@ begin
   have hy_lt_abs : abs (y - x) < _root_.abs x.im,
   { refine (le_of_eq _).trans_lt (hy.trans_le ((min_le_right _ _).trans (min_le_right _ _))),
     rw dist_eq, },
-  rw arg_eq_of_re_nonneg h_re.symm.le,
+  rw arg_of_re_nonneg h_re.symm.le,
   by_cases hy_re : 0 ≤ y.re,
-  { rwa arg_eq_of_re_nonneg hy_re, },
+  { rwa arg_of_re_nonneg hy_re, },
   push_neg at hy_re,
   rw ne_iff_lt_or_gt at h_im,
   cases h_im,
@@ -408,7 +411,7 @@ begin
       ... < x.im + _root_.abs x.im : add_lt_add_left hy_lt_abs _
       ... = x.im - x.im : by { rw [abs_eq_neg_self.mpr, ← sub_eq_add_neg], exact h_im.le, }
       ... = 0 : sub_self x.im,
-    rw [arg_eq_of_re_neg_of_im_neg hy_re hy_im, h_val1_x_neg h_im],
+    rw [arg_of_re_neg_of_im_neg hy_re hy_im, h_val1_x_neg h_im],
     rwa h_val3_x h_im at h3_x, },
   { have hy_im : 0 < y.im,
       calc 0 = x.im - x.im : (sub_self x.im).symm
@@ -417,12 +420,11 @@ begin
       ... = x.im - abs (x - y) : by rw complex.abs_sub_comm _ _
       ... ≤ x.im - (x - y).im : sub_le_sub_left (im_le_abs _) _
       ... = y.im : by simp,
-    rw [arg_eq_of_re_neg_of_im_nonneg hy_re hy_im.le, h_val1_x_pos h_im],
+    rw [arg_of_re_neg_of_im_nonneg hy_re hy_im.le, h_val1_x_pos h_im],
     rwa h_val2_x h_im at h2_x, },
 end
 
-lemma continuous_at_arg {x : ℂ} (h : 0 < x.re ∨ x.im ≠ 0) :
-  continuous_at arg x :=
+lemma continuous_at_arg (h : 0 < x.re ∨ x.im ≠ 0) : continuous_at arg x :=
 begin
   by_cases h_re : 0 < x.re,
   { exact continuous_at_arg_of_re_pos h_re, },
@@ -436,7 +438,6 @@ begin
     { exact continuous_at_arg_of_re_neg_of_im_pos h_re h_im, }, },
 end
 
-end continuity
 lemma tendsto_arg_nhds_within_im_neg_of_re_neg_of_im_zero
   {z : ℂ} (hre : z.re < 0) (him : z.im = 0) :
   tendsto arg (𝓝[{z : ℂ | z.im < 0}] z) (𝓝 (-π)) :=
@@ -477,5 +478,7 @@ lemma tendsto_arg_nhds_within_im_nonneg_of_re_neg_of_im_zero
   tendsto arg (𝓝[{z : ℂ | 0 ≤ z.im}] z) (𝓝 π) :=
 by simpa only [arg_eq_pi_iff.2 ⟨hre, him⟩]
   using (continuous_within_at_arg_of_re_neg_of_im_zero hre him).tendsto
+
+end continuity
 
 end complex
