@@ -723,6 +723,64 @@ instance normalization_monoid_of_unique_units : normalization_monoid α :=
 
 end unique_unit
 
+section associates
+
+private lemma associates.quot_out {α : Type*} [comm_monoid α] (a : associates α):
+(associates.mk (quot.out (a))) = a :=
+by rw [←associates.quot_mk_eq_mk, quot.out_eq]
+
+private lemma associates.quot_out' {α : Type*} [comm_monoid α] (a : α) :
+associated (quot.out (associates.mk a)) a :=
+by rw [←associates.mk_eq_mk_iff_associated, associates.quot_out]
+
+variables [comm_cancel_monoid_with_zero α] [gcd_monoid α]
+noncomputable instance : gcd_monoid (associates α) :=
+{ gcd := λ a b, associates.mk (gcd (quot.out a) (quot.out b)),
+  lcm := λ a b, associates.mk (lcm (quot.out a) (quot.out b)),
+  gcd_dvd_left := λ a b, by {
+    conv_rhs { rw [←associates.quot_out a] },
+    rw [associates.mk_dvd_mk],
+    exact gcd_dvd_left _ _ },
+  gcd_dvd_right := λ a b, by {
+    obtain ⟨a⟩ := a,
+    obtain ⟨b⟩ := b,
+    simp only [associates.quot_mk_eq_mk] at *,
+    conv_rhs { rw [←associates.quot_out (associates.mk b)] },
+    rw [associates.mk_dvd_mk],
+    exact gcd_dvd_right _ _ },
+  dvd_gcd := λ a b c hac hab, by {
+    obtain ⟨a⟩ := a,
+    obtain ⟨b⟩ := b,
+    obtain ⟨c⟩ := c,
+    simp only [associates.quot_mk_eq_mk, associates.mk_dvd_mk] at *,
+    apply dvd_gcd; apply dvd_trans _ (associates.quot_out' _).symm.dvd; assumption },
+  gcd_mul_lcm := λ a b, by {
+    obtain ⟨a⟩ := a,
+    obtain ⟨b⟩ := b,
+    simp only [associates.quot_mk_eq_mk] at *,
+    rw [associates.mk_mul_mk, associates.mk_mul_mk, associated_eq_eq,
+      associates.mk_eq_mk_iff_associated],
+    refine associated.trans _ (gcd_mul_lcm a b),
+    apply associated.mul_mul; apply associated_of_dvd_dvd,
+    { apply gcd_dvd_gcd; exact (associates.quot_out' _).dvd },
+    { apply gcd_dvd_gcd; exact (associates.quot_out' _).symm.dvd },
+    { apply lcm_dvd_lcm; exact (associates.quot_out' _).dvd },
+    { apply lcm_dvd_lcm; exact (associates.quot_out' _).symm.dvd } },
+  lcm_zero_left := λ a, by {
+    obtain ⟨a⟩ := a,
+    simp only [associates.quot_mk_eq_mk] at *,
+    rw associates.mk_eq_zero,
+    convert lcm_zero_left _,
+    rw [←associates.mk_eq_zero, associates.quot_out] },
+  lcm_zero_right :=  λ a, by {
+    obtain ⟨a⟩ := a,
+    simp only [associates.quot_mk_eq_mk] at *,
+    rw associates.mk_eq_zero,
+    convert lcm_zero_right _,
+    rw [←associates.mk_eq_zero, associates.quot_out] } }
+
+end associates
+
 section integral_domain
 
 variables [integral_domain α] [normalized_gcd_monoid α]
