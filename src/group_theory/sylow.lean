@@ -190,13 +190,45 @@ lemma card_sylow_dvd_index [fact p.prime] [fintype (sylow p G)] (P : sylow p G) 
   card (sylow p G) ∣ P.1.index :=
 ((congr_arg _ (card_sylow_eq_index_normalizer P)).mp dvd_rfl).trans (index_dvd_of_le le_normalizer)
 
-def sylow.comap_of_le_normalizer (P : sylow p G) {H : Type*} [group H] (ϕ : H →* G)
+lemma sylow.frattini {G : Type u} [group G] {N : subgroup G} [N.normal] {p : ℕ} [fact p.prime]
+  [fintype (sylow p N)] (P : sylow p N) :
+  (P.1.map N.subtype).normalizer ⊔ N = ⊤ :=
+begin
+  let ϕ : G →* mul_aut N := mul_aut.conj_normal,
+  letI : mul_action G (sylow p N) := comp_hom _ ϕ,
+  refine top_le_iff.mp (λ g _, _),
+  obtain ⟨n, hn⟩ := exists_smul_eq N (g • P) P,
+  replace hn := (mul_smul _ _ _).trans hn,
+  have key : ϕ (n * g) = mul_aut.conj n * ϕ g,
+  { exact ϕ.map_mul n g, },
+  rw ← key at hn,
+  suffices : ↑n * g ∈ (P.1.map N.subtype).normalizer,
+  { rw ← inv_mul_cancel_left ↑n g,
+    refine subgroup.mul_mem _ _ _,
+    refine subgroup.inv_mem _ _,
+    sorry,
+    sorry },
+end
+
+/-def sylow.comap (P : sylow p G) {H : Type*} [group H] (ϕ : H →* G)
+  [fact p.prime] [fintype (sylow p ϕ.range.normalizer)]
   (hϕ1 : is_p_group p ϕ.ker) (hϕ2 : P.1 ≤ ϕ.range.normalizer) : sylow p H :=
 ⟨P.1.comap ϕ, is_p_group.comap_ker_is_p_group P.2 ϕ hϕ1, begin
   intros Q hQ1 hQ2,
-  refine le_antisymm (map_le_iff_le_comap.mp _) hQ2,
+
+  let R := (Q.map ϕ).comap ϕ.range.normalizer.subtype,
+  have hR : is_p_group p R := sorry,
+  let S : sylow p ϕ.range.normalizer := ⟨P.1.comap ϕ.range.normalizer.subtype, sorry, sorry⟩,
+  obtain ⟨T, hT⟩ := hR.exists_le_sylow,
+  obtain ⟨g, hg⟩ := exists_smul_eq ϕ.range.normalizer S T,
+  have key : g⁻¹ • R ≤ S,
+
+
+
+  refine le_antisymm (map_le_iff_le_comap.mp (le_of_eq (P.3 (hQ1.map ϕ) _))) hQ2,
+  have key := map_comap_eq ϕ P.1,
   sorry,
-end⟩
+end⟩-/
 
 end infinite_sylow
 
