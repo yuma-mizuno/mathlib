@@ -143,10 +143,54 @@ begin
   exact lt_of_le_of_ne hm (ne.symm hm0),
 end
 
+lemma two_le_add_inv {x : ℝ} (hx : 0 < x) : 2 ≤ x + x⁻¹ := sorry
+
 /-- `x^m`, `m : ℤ` is convex on `(0, +∞)` for all `m` -/
 lemma convex_on_fpow (m : ℤ) : convex_on ℝ (Ioi 0) (λ x : ℝ, x^m) :=
 begin
   by_cases hm_nonneg : 0 ≤ m,
   { exact convex_on_fpow_of_nonneg m hm_nonneg, },
-  sorry,
+  have h_neg_m_nonneg : 0 ≤ - m, from neg_nonneg.mpr (le_of_not_le hm_nonneg),
+  refine ⟨convex_Ioi 0, λ x y hx hy a b ha hb hab_add, _⟩,
+  rw mem_Ioi at hx hy,
+  dsimp only,
+  by_cases ha0 : a = 0,
+  { have hb : b = 1, by rwa [ha0, zero_add] at hab_add,
+    simp [ha0, hb], },
+  have ha_pos : 0 < a, from lt_of_le_of_ne ha (ne.symm ha0),
+  suffices : 1 ≤ a • (a + b • (y/x)) ^ (-m) + b • (a • (x/y) + b) ^ (-m),
+  { have h_eq_div : ∀ r : ℝ, r ^ m = (1 / r) ^ (-m), by {intro r, simp, },
+    simp_rw smul_eq_mul at this ⊢,
+    rw [h_eq_div (a * x + b * y), div_fpow, one_fpow, div_le_iff, add_mul, h_eq_div x, h_eq_div y,
+      mul_assoc, ← mul_fpow, mul_assoc, ← mul_fpow, mul_add, mul_add],
+    swap, { refine fpow_pos_of_pos _ _,
+      exact add_pos_of_pos_of_nonneg (mul_pos ha_pos hx) (mul_nonneg hb hy.le), },
+    refine this.trans (le_of_eq _),
+    congr' 4,
+    { rw [one_div, mul_comm, mul_assoc, mul_inv_cancel hx.ne.symm, mul_one], },
+    { rw [one_div, div_eq_mul_inv, ← mul_assoc, mul_comm], },
+    { rw [one_div, div_eq_mul_inv, ← mul_assoc, mul_comm], },
+    { rw [one_div, mul_comm, mul_assoc, mul_inv_cancel hy.ne.symm, mul_one], }, },
+  have h_sq_le : (a + b) ^ 2 ≤ a • (a + b • (y / x)) + b • (a • (x / y) + b),
+  { have h_two_le : 2 ≤ y/x + x/y, by { convert two_le_add_inv (div_pos hy hx), rw inv_div, },
+    simp_rw smul_eq_mul,
+    calc (a + b) ^ 2 = a * a + 2 * a * b + b * b : by ring
+    ... ≤ a * a + (y/x + x/y) * a * b + b * b : by {
+      refine add_le_add (add_le_add le_rfl _) le_rfl,
+      rw [mul_assoc, mul_assoc],
+      refine mul_le_mul h_two_le le_rfl (mul_nonneg ha hb) _,
+      exact (add_nonneg (div_nonneg hy.le hx.le) (div_nonneg hx.le hy.le)), }
+    ... = a * (a + b * (y / x)) + b * (a * (x / y) + b) : by ring, },
+  calc 1 = ((a + b) ^ 2) ^ (-m) : by { simp [hab_add], }
+  ... ≤ (a • (a + b • (y/x)) + b • (a • (x/y) + b)) ^ (-m) : by {
+    suffices : ((a + b) ^ 2) ^ (-m : ℝ) ≤ (a • (a + b • (y/x)) + b • (a • (x/y) + b)) ^ (-m : ℝ),
+    { have hm_cast : ((-m : ℤ) : ℝ) = - m, by norm_cast,
+      simp_rw [← hm_cast, rpow_int_cast] at this, exact this, },
+    refine rpow_le_rpow (sq_nonneg _) h_sq_le _,
+    norm_cast,
+    exact h_neg_m_nonneg, }
+  ... ≤ a • (a + b • (y/x)) ^ (-m) + b • (a • (x/y) + b) ^ (-m) :
+    (convex_on_fpow_of_nonneg (-m) h_neg_m_nonneg).2 (mem_Ioi.mpr _) (mem_Ioi.mpr _) ha hb hab_add,
+  { exact add_pos_of_pos_of_nonneg ha_pos (mul_nonneg hb (div_nonneg hy.le hx.le)), },
+  { exact add_pos_of_pos_of_nonneg (mul_pos ha_pos (div_pos hx hy)) hb, },
 end
