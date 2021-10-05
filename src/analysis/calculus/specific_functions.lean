@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Sébastien Gouëzel
 -/
 import analysis.calculus.iterated_deriv
+import analysis.calculus.extend_deriv
 import analysis.inner_product_space.euclidean_dist
+import analysis.special_functions.exp_log_calculus
 
 /-!
 # Infinitely smooth bump function
