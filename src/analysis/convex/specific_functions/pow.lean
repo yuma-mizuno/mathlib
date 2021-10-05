@@ -143,13 +143,12 @@ begin
   exact lt_of_le_of_ne hm (ne.symm hm0),
 end
 
-lemma two_le_add_inv {x : ℝ} (hx : 0 < x) : 2 ≤ x + x⁻¹ :=
+lemma two_le_add_inv {R : Type*} [linear_ordered_field R] {x : R} (hx : 0 < x) : 2 ≤ x + x⁻¹ :=
 le_of_mul_le_mul_left
   (sub_nonneg.1 $
     calc 0 ≤ (x - 1) ^ 2 : pow_two_nonneg _
        ... = _ : by field_simp [ne_of_gt hx]; ring)
   hx
-
 
 /-- `x^m`, `m : ℤ` is convex on `(0, +∞)` for all `m` -/
 lemma convex_on_fpow (m : ℤ) : convex_on ℝ (Ioi 0) (λ x : ℝ, x^m) :=
