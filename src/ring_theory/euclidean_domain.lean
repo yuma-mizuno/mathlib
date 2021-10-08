@@ -19,6 +19,32 @@ euclidean domain, gcd
 
 namespace euclidean_domain
 
+section gcd_monoid
+
+variables {R : Type*} [euclidean_domain R] [gcd_monoid R]
+
+open gcd_monoid
+
+lemma left_div_gcd_ne_zero {p q : R} (hp : p ≠ 0) :
+  p / gcd_monoid.gcd p q ≠ 0 :=
+begin
+  obtain ⟨r, hr⟩ := gcd_monoid.gcd_dvd_left p q,
+  obtain ⟨pq0, r0⟩ : gcd_monoid.gcd p q ≠ 0 ∧ r ≠ 0 := mul_ne_zero_iff.mp (hr ▸ hp),
+  rw [hr, mul_comm, mul_div_cancel _ pq0] { occs := occurrences.pos [1] },
+  exact r0,
+end
+
+lemma right_div_gcd_ne_zero {p q : R} (hq : q ≠ 0) :
+  q / gcd_monoid.gcd p q ≠ 0 :=
+begin
+  obtain ⟨r, hr⟩ := gcd_monoid.gcd_dvd_right p q,
+  obtain ⟨pq0, r0⟩ : gcd_monoid.gcd p q ≠ 0 ∧ r ≠ 0 := mul_ne_zero_iff.mp (hr ▸ hq),
+  rw [hr, mul_comm, mul_div_cancel _ pq0] { occs := occurrences.pos [1] },
+  exact r0,
+end
+
+end gcd_monoid
+
 variables {α : Type*} [euclidean_domain α] [decidable_eq α]
 
 @[priority 100]  -- see Note [lower instance priority]
