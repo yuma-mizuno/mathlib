@@ -486,112 +486,6 @@ section num_denom
 
 /-! ### Numerator and denominator -/
 
-instance : normalization_monoid K :=
-{ norm_unit := λ x, if hx : x = 0 then 1 else (units.mk0 x hx)⁻¹,
-  norm_unit_zero := dif_pos rfl,
-  norm_unit_mul := λ x y hx hy,
-    by rw [dif_neg hx, dif_neg hy, dif_neg (mul_ne_zero hx hy), units.mk0_mul, mul_inv],
-  norm_unit_coe_units := λ u, by rw [dif_neg u.ne_zero, units.mk0_coe] }
-
-lemma norm_unit_eq_inv {x : K} (hx : x ≠ 0) : norm_unit x = (units.mk0 x hx)⁻¹ :=
-dif_neg hx
-
-lemma norm_unit_eq_leading_coeff_inv {p : polynomial K} (hx : p ≠ 0) :
-  (norm_unit p : polynomial K) = polynomial.C (p.leading_coeff⁻¹) :=
-by { rw [polynomial.coe_norm_unit, norm_unit_eq_inv, units.coe_inv', units.coe_mk0],
-     exact polynomial.leading_coeff_ne_zero.mpr hx }
-
-instance : gcd_monoid K :=
-gcd_monoid_of_lcm (λ a b, if a = 0 ∨ b = 0 then 0 else 1)
-  (λ a b, if h : a = 0 then by rw [h, if_pos (or.inl rfl)] else (is_unit.mk0 _ h).dvd)
-  (λ a b, if h : b = 0 then by rw [h, if_pos (or.inr rfl)] else (is_unit.mk0 _ h).dvd)
-  (λ a b c hca hba, if hc : c = 0 then by rw [hc, if_pos (or.inl rfl)]; exact hc ▸ hca
-    else if hb : b = 0 then by rw [hb, if_pos (or.inr rfl)]; exact hb ▸ hba
-    else by rw [if_neg (not_or hc hb)]; exact one_dvd _)
-  (λ a b, by split_ifs; simp)
-
-lemma leading_coeff_div {p q : polynomial K} (hpq : q.degree ≤ p.degree) :
-  (p / q).leading_coeff = p.leading_coeff / q.leading_coeff :=
-begin
-  by_cases hq : q = 0, { simp [hq] },
-  rw [polynomial.div_def, polynomial.leading_coeff_mul, polynomial.leading_coeff_C,
-      polynomial.leading_coeff_div_by_monic_of_monic (polynomial.monic_mul_leading_coeff_inv hq) _,
-      mul_comm, div_eq_mul_inv],
-  rwa [polynomial.degree_mul_leading_coeff_inv q hq]
-end
-
-lemma mul_div_mul_cancel {M : Type*} [euclidean_domain M] (a b c : M)
-  (ha : a ≠ 0) (hcb : c ∣ b) :
-  a * b / (a * c) = b / c :=
-begin
-  by_cases hc : c = 0, { simp [hc] },
-  refine euclidean_domain.eq_div_of_mul_eq_right hc (mul_left_cancel₀ ha _),
-  rw [← mul_assoc, ← euclidean_domain.mul_div_assoc _ (mul_dvd_mul_left a hcb),
-         euclidean_domain.mul_div_cancel_left _ (mul_ne_zero ha hc)]
-end
-
-lemma div_C_mul (c : K) (p q : polynomial K) :
-  p / (polynomial.C c * q) = polynomial.C c⁻¹ * (p / q) :=
-begin
-  by_cases hc : c = 0,
-  { simp [hc] },
-  simp only [polynomial.div_def, polynomial.leading_coeff_mul, mul_inv₀,
-    polynomial.leading_coeff_C, polynomial.C.map_mul, mul_assoc],
-  congr' 3,
-  rw [mul_left_comm q, ← mul_assoc, ← polynomial.C.map_mul, _root_.mul_inv_cancel hc,
-      polynomial.C.map_one, one_mul]
-end
-
-lemma degree_gcd_le_left {p : polynomial K} (hp : p ≠ 0) (q) : (gcd p q).degree ≤ p.degree :=
-begin
-  by_cases hq : q = 0,
-  { simp [hq] },
-  have := polynomial.nat_degree_le_iff_degree_le.mp
-    (polynomial.nat_degree_le_of_dvd (gcd_dvd_left p q) hp),
-  rwa polynomial.degree_eq_nat_degree hp
-end
-
-lemma degree_gcd_le_right (p) {q : polynomial K} (hq : q ≠ 0) : (gcd p q).degree ≤ q.degree :=
-by { rw [gcd_comm], exact degree_gcd_le_left hq p }
-
-lemma C_mul_dvd {a : K} (ha : a ≠ 0) {p q : polynomial K} :
-  polynomial.C a * p ∣ q ↔ p ∣ q :=
-⟨λ h, dvd_trans (dvd_mul_left _ _) h, λ ⟨r, hr⟩, ⟨polynomial.C a⁻¹ * r,
-  by rw [mul_assoc, mul_left_comm p, ← mul_assoc, ← polynomial.C.map_mul, _root_.mul_inv_cancel ha,
-         polynomial.C.map_one, one_mul, hr]⟩⟩
-
-lemma dvd_C_mul {a : K} (ha : a ≠ 0) {p q : polynomial K} :
-  p ∣ polynomial.C a * q ↔ p ∣ q :=
-⟨λ ⟨r, hr⟩, ⟨polynomial.C a⁻¹ * r,
-  by rw [mul_left_comm p, ← hr, ← mul_assoc, ← polynomial.C.map_mul, _root_.inv_mul_cancel ha,
-         polynomial.C.map_one, one_mul]⟩,
- λ h, dvd_trans h (dvd_mul_left _ _)⟩
-
-lemma right_dvd_gcd_ne_zero {M : Type*} [euclidean_domain M] [gcd_monoid M] {p q : M}
-  (hq : q ≠ 0) : q / gcd p q ≠ 0 :=
-begin
-  obtain ⟨r, hr⟩ := gcd_dvd_right p q,
-  obtain ⟨pq0, r0⟩ : gcd p q ≠ 0 ∧ r ≠ 0 := mul_ne_zero_iff.mp (hr ▸ hq),
-  rw [hr, mul_comm, euclidean_domain.mul_div_cancel _ pq0] { occs := occurrences.pos [1] },
-  exact r0,
-end
-
-@[simp] lemma div_one {M : Type*} [euclidean_domain M] (p : M) :
-  p / 1 = p :=
-(euclidean_domain.eq_div_of_mul_eq_left (@one_ne_zero M _ _) (mul_one p)).symm
-
-lemma div_dvd_of_dvd {M : Type*} [euclidean_domain M] {p q : M} (hpq : q ∣ p) :
-  p / q ∣ p :=
-begin
-  by_cases hq : q = 0,
-  { rw [hq, zero_dvd_iff] at hpq,
-    rw hpq,
-    exact dvd_zero _ },
-  use q,
-  rw [mul_comm, ← euclidean_domain.mul_div_assoc _ hpq, mul_comm,
-      euclidean_domain.mul_div_cancel _ hq]
-end
-
 /-- `ratfunc.num_denom` are numerator and denominator of a rational funcion,
 normalized such that the denominator is monic. -/
 def num_denom (x : ratfunc K) : polynomial K × polynomial K :=
@@ -605,19 +499,19 @@ x.lift_on' (λ p q, if q = 0 then ⟨0, 1⟩ else let r := gcd p q in
     have ha' : a.leading_coeff ≠ 0 := polynomial.leading_coeff_ne_zero.mpr ha,
     have hainv : (a.leading_coeff)⁻¹ ≠ 0 := inv_ne_zero ha',
     simp only [prod.ext_iff, gcd_mul_left, normalize_apply, polynomial.coe_norm_unit, mul_assoc,
-      comm_group_with_zero.coe_norm_unit ha'],
-    have hdeg : (gcd p q).degree ≤ q.degree := degree_gcd_le_right _ hq,
+      comm_group_with_zero.coe_norm_unit _ ha'],
+    have hdeg : (gcd p q).degree ≤ q.degree := polynomial.degree_gcd_le_right _ hq,
     have hdeg' : (polynomial.C (a.leading_coeff⁻¹) * gcd p q).degree ≤ q.degree,
     { rw [polynomial.degree_mul, polynomial.degree_C hainv, zero_add],
       exact hdeg },
     have hdivp : (polynomial.C a.leading_coeff⁻¹) * gcd p q ∣ p :=
-      (C_mul_dvd hainv).mpr (gcd_dvd_left p q),
+      (polynomial.C_mul_dvd hainv).mpr (gcd_dvd_left p q),
     have hdivq : (polynomial.C a.leading_coeff⁻¹) * gcd p q ∣ q :=
-      (C_mul_dvd hainv).mpr (gcd_dvd_right p q),
+      (polynomial.C_mul_dvd hainv).mpr (gcd_dvd_right p q),
     rw [euclidean_domain.mul_div_mul_cancel ha hdivp, euclidean_domain.mul_div_mul_cancel ha hdivq,
-        leading_coeff_div hdeg, leading_coeff_div hdeg', polynomial.leading_coeff_mul,
-        polynomial.leading_coeff_C, div_C_mul, div_C_mul,
-        ← mul_assoc, ← polynomial.C_mul, ← mul_assoc, ← polynomial.C_mul],
+        polynomial.leading_coeff_div hdeg, polynomial.leading_coeff_div hdeg',
+        polynomial.leading_coeff_mul, polynomial.leading_coeff_C, polynomial.div_C_mul,
+        polynomial.div_C_mul, ← mul_assoc, ← polynomial.C_mul, ← mul_assoc, ← polynomial.C_mul],
     split; congr; rw [inv_div, mul_comm, mul_div_assoc, ← mul_assoc, inv_inv₀,
       _root_.mul_inv_cancel ha', one_mul, inv_div],
   end
@@ -655,7 +549,7 @@ by { convert num_div p one_ne_zero; simp }
 @[simp] lemma num_div_dvd (p : polynomial K) {q : polynomial K} (hq : q ≠ 0) :
   num (algebra_map _ _ p / algebra_map _ _ q) ∣ p :=
 begin
-  rw [num_div _ hq, C_mul_dvd],
+  rw [num_div _ hq, polynomial.C_mul_dvd],
   { exact euclidean_domain.div_dvd_of_dvd (gcd_dvd_left p q) },
   { simpa only [ne.def, inv_eq_zero, polynomial.leading_coeff_eq_zero]
       using euclidean_domain.right_div_gcd_ne_zero hq },
@@ -692,7 +586,7 @@ by { convert denom_div p one_ne_zero; simp }
 @[simp] lemma denom_div_dvd (p : polynomial K) {q : polynomial K} (hq : q ≠ 0) :
   denom (algebra_map _ _ p / algebra_map _ _ q) ∣ q :=
 begin
-  rw [denom_div _ hq, C_mul_dvd],
+  rw [denom_div _ hq, polynomial.C_mul_dvd],
   { exact euclidean_domain.div_dvd_of_dvd (gcd_dvd_right p q) },
   { simpa only [ne.def, inv_eq_zero, polynomial.leading_coeff_eq_zero]
       using euclidean_domain.right_div_gcd_ne_zero hq },

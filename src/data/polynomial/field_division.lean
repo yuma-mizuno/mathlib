@@ -362,8 +362,7 @@ lemma dvd_C_mul (ha : a ≠ 0) : p ∣ polynomial.C a * q ↔ p ∣ q :=
  λ h, dvd_trans h (dvd_mul_left _ _)⟩
 
 lemma coe_norm_unit_of_ne_zero (hp : p ≠ 0) : (norm_unit p : polynomial R) = C p.leading_coeff⁻¹ :=
-have p.leading_coeff ≠ 0 := mt leading_coeff_eq_zero.mp hp,
-by simp [comm_group_with_zero.coe_norm_unit this]
+by simp [hp]
 
 lemma normalize_monic (h : monic p) : normalize p = p := by simp [h]
 
