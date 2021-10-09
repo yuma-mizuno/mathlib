@@ -211,6 +211,9 @@ begin
   exact (apply_mem_map_injective (mul_aut.conj (↑n * g)).injective).symm,
 end
 
+noncomputable instance [fintype G] : fintype (sylow p G) :=
+fintype.of_injective (coe : sylow p G → set G) (λ P Q, sylow.ext ∘ subgroup.ext ∘ set.ext_iff.mp)
+
 end infinite_sylow
 
 open equiv equiv.perm finset function list quotient_group
