@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning
 -/
 
+import data.set_like.fintype
 import group_theory.complement
 import group_theory.index
 import group_theory.sylow
