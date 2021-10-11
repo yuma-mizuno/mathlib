@@ -199,7 +199,8 @@ lemma card_sylow_dvd_index [fact p.prime] [fintype (sylow p G)] (P : sylow p G) 
   card (sylow p G) ∣ P.1.index :=
 ((congr_arg _ (card_sylow_eq_index_normalizer P)).mp dvd_rfl).trans (index_dvd_of_le le_normalizer)
 
-lemma sylow.frattini {p : ℕ} [fact p.prime] {N : subgroup G} [N.normal]
+/-- Frattini's Argument -/
+lemma sylow.normalizer_sup_eq_top {p : ℕ} [fact p.prime] {N : subgroup G} [N.normal]
   [fintype (sylow p N)] (P : sylow p N) : (P.1.map N.subtype).normalizer ⊔ N = ⊤ :=
 begin
   let ψ : G →* mul_aut N := mul_aut.conj_normal,
@@ -216,7 +217,8 @@ begin
   rw map_map,
   change _ ↔ _ ∈ P.1.map ((mul_aut.conj (↑n * g)).to_monoid_hom.comp N.subtype),
   rw ←map_map,
-  exact (apply_mem_map_injective (mul_aut.conj (↑n * g)).injective).symm,
+  refine (mem_map_iff_mem _).symm,
+  exact (mul_aut.conj (↑n * g)).injective,
 end
 
 end infinite_sylow
