@@ -413,80 +413,83 @@ end module
 set_option old_structure_cmd true
 /-- Defining the homomorphism in the category R-Alg. -/
 @[nolint has_inhabited_instance]
-structure alg_hom (R : Type u) (A : Type v) (B : Type w)
-  [comm_semiring R] [semiring A] [semiring B] [algebra R A] [algebra R B] extends ring_hom A B :=
-(commutes' : ∀ r : R, to_fun (algebra_map R A r) = algebra_map R B r)
+structure alg_hom {R : Type u} {S : Type u₁} [comm_semiring R] [comm_semiring S] (σ : R →+* S)
+  (A : Type v) (B : Type w)
+  [semiring A] [semiring B] [algebra R A] [algebra S B] extends ring_hom A B :=
+(commutes' : ∀ r : R, to_fun (algebra_map R A r) = algebra_map S B (σ r))
 
 run_cmd tactic.add_doc_string `alg_hom.to_ring_hom "Reinterpret an `alg_hom` as a `ring_hom`"
 
 infixr ` →ₐ `:25 := alg_hom _
-notation A ` →ₐ[`:25 R `] ` B := alg_hom R A B
+notation A ` →ₛₐ[`:25 σ `] ` B := alg_hom σ A B
+notation A ` →ₐ[`:25 R `] ` B := alg_hom (ring_hom.id R) A B
 
 namespace alg_hom
 
-variables {R : Type u} {A : Type v} {B : Type w} {C : Type u₁} {D : Type v₁}
+variables {R : Type u} {S : Type u₁} {A : Type v} {B : Type w} {C : Type u₁} {D : Type v₁}
 
 section semiring
 
-variables [comm_semiring R] [semiring A] [semiring B] [semiring C] [semiring D]
-variables [algebra R A] [algebra R B] [algebra R C] [algebra R D]
+variables [comm_semiring R] [comm_semiring S] [semiring A] [semiring B] [semiring C] [semiring D]
+variables {σ : R →+* S}
+variables [algebra R A] [algebra S B] [algebra R C] [algebra R D]
 
-instance : has_coe_to_fun (A →ₐ[R] B) := ⟨_, λ f, f.to_fun⟩
+instance : has_coe_to_fun (A →ₛₐ[σ] B) := ⟨_, λ f, f.to_fun⟩
 
 initialize_simps_projections alg_hom (to_fun → apply)
 
-@[simp] lemma to_fun_eq_coe (f : A →ₐ[R] B) : f.to_fun = f := rfl
+@[simp] lemma to_fun_eq_coe (f : A →ₛₐ[σ] B) : f.to_fun = f := rfl
 
-instance coe_ring_hom : has_coe (A →ₐ[R] B) (A →+* B) := ⟨alg_hom.to_ring_hom⟩
+instance coe_ring_hom : has_coe (A →ₛₐ[σ] B) (A →+* B) := ⟨alg_hom.to_ring_hom⟩
 
-instance coe_monoid_hom : has_coe (A →ₐ[R] B) (A →* B) := ⟨λ f, ↑(f : A →+* B)⟩
+instance coe_monoid_hom : has_coe (A →ₛₐ[σ] B) (A →* B) := ⟨λ f, ↑(f : A →+* B)⟩
 
-instance coe_add_monoid_hom : has_coe (A →ₐ[R] B) (A →+ B) := ⟨λ f, ↑(f : A →+* B)⟩
+instance coe_add_monoid_hom : has_coe (A →ₛₐ[σ] B) (A →+ B) := ⟨λ f, ↑(f : A →+* B)⟩
 
 @[simp, norm_cast] lemma coe_mk {f : A → B} (h₁ h₂ h₃ h₄ h₅) :
-  ⇑(⟨f, h₁, h₂, h₃, h₄, h₅⟩ : A →ₐ[R] B) = f := rfl
+  ⇑(⟨f, h₁, h₂, h₃, h₄, h₅⟩ : A →ₛₐ[σ] B) = f := rfl
 
 -- make the coercion the simp-normal form
-@[simp] lemma to_ring_hom_eq_coe (f : A →ₐ[R] B) : f.to_ring_hom = f := rfl
+@[simp] lemma to_ring_hom_eq_coe (f : A →ₛₐ[σ] B) : f.to_ring_hom = f := rfl
 
-@[simp, norm_cast] lemma coe_to_ring_hom (f : A →ₐ[R] B) : ⇑(f : A →+* B) = f := rfl
-
--- as `simp` can already prove this lemma, it is not tagged with the `simp` attribute.
-@[norm_cast] lemma coe_to_monoid_hom (f : A →ₐ[R] B) : ⇑(f : A →* B) = f := rfl
+@[simp, norm_cast] lemma coe_to_ring_hom (f : A →ₛₐ[σ] B) : ⇑(f : A →+* B) = f := rfl
 
 -- as `simp` can already prove this lemma, it is not tagged with the `simp` attribute.
-@[norm_cast] lemma coe_to_add_monoid_hom (f : A →ₐ[R] B) : ⇑(f : A →+ B) = f := rfl
+@[norm_cast] lemma coe_to_monoid_hom (f : A →ₛₐ[σ] B) : ⇑(f : A →* B) = f := rfl
 
-variables (φ : A →ₐ[R] B)
+-- as `simp` can already prove this lemma, it is not tagged with the `simp` attribute.
+@[norm_cast] lemma coe_to_add_monoid_hom (f : A →ₛₐ[σ] B) : ⇑(f : A →+ B) = f := rfl
 
-theorem coe_fn_injective : @function.injective (A →ₐ[R] B) (A → B) coe_fn :=
+variables (φ : A →ₛₐ[σ] B)
+
+theorem coe_fn_injective : @function.injective (A →ₛₐ[σ] B) (A → B) coe_fn :=
 by { intros φ₁ φ₂ H, cases φ₁, cases φ₂, congr, exact H }
 
-theorem coe_ring_hom_injective : function.injective (coe : (A →ₐ[R] B) → (A →+* B)) :=
+theorem coe_ring_hom_injective : function.injective (coe : (A →ₛₐ[σ] B) → (A →+* B)) :=
 λ φ₁ φ₂ H, coe_fn_injective $ show ((φ₁ : (A →+* B)) : A → B) = ((φ₂ : (A →+* B)) : A → B),
   from congr_arg _ H
 
-theorem coe_monoid_hom_injective : function.injective (coe : (A →ₐ[R] B)  → (A →* B)) :=
+theorem coe_monoid_hom_injective : function.injective (coe : (A →ₛₐ[σ] B)  → (A →* B)) :=
 ring_hom.coe_monoid_hom_injective.comp coe_ring_hom_injective
 
-theorem coe_add_monoid_hom_injective : function.injective (coe : (A →ₐ[R] B)  → (A →+ B)) :=
+theorem coe_add_monoid_hom_injective : function.injective (coe : (A →ₛₐ[σ] B)  → (A →+ B)) :=
 ring_hom.coe_add_monoid_hom_injective.comp coe_ring_hom_injective
 
-protected lemma congr_fun {φ₁ φ₂ : A →ₐ[R] B} (H : φ₁ = φ₂) (x : A) : φ₁ x = φ₂ x := H ▸ rfl
-protected lemma congr_arg (φ : A →ₐ[R] B) {x y : A} (h : x = y) : φ x = φ y := h ▸ rfl
+protected lemma congr_fun {φ₁ φ₂ : A →ₛₐ[σ] B} (H : φ₁ = φ₂) (x : A) : φ₁ x = φ₂ x := H ▸ rfl
+protected lemma congr_arg (φ : A →ₛₐ[σ] B) {x y : A} (h : x = y) : φ x = φ y := h ▸ rfl
 
 @[ext]
-theorem ext {φ₁ φ₂ : A →ₐ[R] B} (H : ∀ x, φ₁ x = φ₂ x) : φ₁ = φ₂ :=
+theorem ext {φ₁ φ₂ : A →ₛₐ[σ] B} (H : ∀ x, φ₁ x = φ₂ x) : φ₁ = φ₂ :=
 coe_fn_injective $ funext H
 
-theorem ext_iff {φ₁ φ₂ : A →ₐ[R] B} : φ₁ = φ₂ ↔ ∀ x, φ₁ x = φ₂ x :=
+theorem ext_iff {φ₁ φ₂ : A →ₛₐ[σ] B} : φ₁ = φ₂ ↔ ∀ x, φ₁ x = φ₂ x :=
 ⟨alg_hom.congr_fun, ext⟩
 
-@[simp] theorem mk_coe {f : A →ₐ[R] B} (h₁ h₂ h₃ h₄ h₅) :
-  (⟨f, h₁, h₂, h₃, h₄, h₅⟩ : A →ₐ[R] B) = f := ext $ λ _, rfl
+@[simp] theorem mk_coe {f : A →ₛₐ[σ] B} (h₁ h₂ h₃ h₄ h₅) :
+  (⟨f, h₁, h₂, h₃, h₄, h₅⟩ : A →ₛₐ[σ] B) = f := ext $ λ _, rfl
 
 @[simp]
-theorem commutes (r : R) : φ (algebra_map R A r) = algebra_map R B r := φ.commutes' r
+theorem commutes (r : R) : φ (algebra_map R A r) = algebra_map S B (σ r) := φ.commutes' r
 
 theorem comp_algebra_map : (φ : A →+* B).comp (algebra_map R A) = algebra_map R B :=
 ring_hom.ext $ φ.commutes
