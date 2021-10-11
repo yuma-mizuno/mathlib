@@ -6,27 +6,26 @@ Authors: Thomas Browning
 
 import data.set_like.fintype
 import group_theory.complement
-import group_theory.index
 import group_theory.sylow
 
 /-!
 # Complements
 
-In this file we prove the Schur-Zassenhaus theorem for abelian normal subgroups.
+In this file we prove the Schur-Zassenhaus theorem.
 
 ## Main results
 
-- `exists_right_complement_of_coprime` : **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (right) complement of `H`.
-- `exists_left_complement_of_coprime` : **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (left) complement of `H`.
+- `exists_right_complement_of_coprime` : If `H : subgroup G` is normal and has order coprime to
+  its index, then there exists a subgroup `K` which is a (right) complement of `H`.
+- `exists_left_complement_of_coprime` : If `H : subgroup G` is normal and has order coprime to
+  its index, then there exists a subgroup `K` which is a (left) complement of `H`.
 -/
 
 open_locale big_operators
 
 namespace subgroup
+
+section schur_zassenhaus_abelian
 
 variables {G : Type*} [group G] {H : subgroup G}
 
@@ -170,13 +169,74 @@ theorem exists_right_complement_of_coprime_aux0 [fintype G] [H.normal]
 nonempty_of_inhabited.elim
   (λ α : H.quotient_diff, ⟨mul_action.stabilizer G α, is_complement_stabilizer_of_coprime hH⟩)
 
-end subgroup
+end schur_zassenhaus_abelian
 
-namespace subgroup
+namespace schur_zassenhaus_induction
 
 open_locale classical
 
 universe u
+
+variables {G : Type u} [group G] [fintype G]
+  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
+  (ih : ∀ (G' : Type u) [group G'] [fintype G'], by exactI
+    ∀ (hG'3 : fintype.card G' < fintype.card G)
+    {N' : subgroup G'} [N'.normal] (hN : nat.coprime (fintype.card N') N'.index),
+    ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G'))
+  (ch : ∀ H : subgroup G, ¬ is_complement (N : set G) (H : set G))
+
+include hN ih ch
+
+lemma N_ne_bot : N ≠ ⊥ :=
+begin
+  tactic.unfreeze_local_instances,
+  rintro rfl,
+  exact ch ⊤ is_complement_singleton_top,
+end
+
+lemma N_ne_top : N ≠ ⊤ :=
+begin
+  tactic.unfreeze_local_instances,
+  rintro rfl,
+  exact ch ⊥ is_complement_top_singleton,
+end
+
+lemma step1 (K : subgroup G) (hK1 : K ⊔ N = ⊤) : K = ⊤ :=
+begin
+  contrapose! ch with hK2,
+  have h31 : fintype.card K < fintype.card G,
+  { sorry },
+  have h32 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
+  { sorry },
+  obtain ⟨H, hH⟩ := ih K h31 h32,
+  refine ⟨H.map K.subtype, _⟩,
+  sorry
+end
+
+lemma step2 (K : subgroup G) [K.normal] (hK1 : K ≤ N) : K = ⊥ ∨ K = N :=
+begin
+  have h3 := step1 hN ih ch,
+  contrapose! h3 with hK2,
+    have h41 : fintype.card (quotient_group.quotient K) < fintype.card G,
+    { sorry },
+    have h42 : nat.coprime (fintype.card (N.map (quotient_group.mk' K)))
+      (N.map (quotient_group.mk' K)).index,
+    { sorry },
+    obtain ⟨H, hh⟩ := ih (quotient_group.quotient K) h41 h42,
+    refine ⟨H.comap (quotient_group.mk' K), _, _⟩,
+    { sorry },
+    { sorry }
+end
+
+end schur_zassenhaus_induction
+
+end subgroup
+
+namespace subgroup
+
+universe u
+
+-- maybe add section with all the below hypotheses, and then split proof into series of lemmas?
 
 lemma exists_right_complement_of_coprime_aux5 {G : Type u} [group G] [fintype G]
   {N : subgroup G} [N.normal] (hN1 : nat.coprime (fintype.card N) N.index)
