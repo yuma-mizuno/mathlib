@@ -84,6 +84,19 @@ private def refl_trans_symm_aux (x : I × I) : I :=
 --   to_fun_one := by norm_num [refl_trans_symm_aux, refl_trans_symm_aux', path.trans],
 --   prop' := _ }
 
+def symm₂ {p q : path x₀ x₁} (h : p.homotopy q) : p.symm.homotopy q.symm :=
+{ to_fun := λ x, h ⟨x.1, σ x.2⟩,
+  continuous_to_fun := by continuity,
+  to_fun_zero := by simp [path.symm],
+  to_fun_one := by simp [path.symm],
+  prop' := λ t x hx, begin
+    cases hx,
+    { rw hx, simp },
+    { rw set.mem_singleton_iff at hx,
+      rw hx,
+      simp }
+  end }
+
 end homotopy
 
 end path
@@ -107,7 +120,7 @@ instance : category_theory.groupoid (fundamental_groupoid X) :=
   inv := λ x y p, quotient.lift (λ l : path x y, ⟦l.symm⟧) begin
     rintros a b ⟨h⟩,
     rw quotient.eq,
-    sorry,
+    exact ⟨h.symm₂⟩,
   end p,
   inv_comp' := _,
   comp_inv' := _ }
