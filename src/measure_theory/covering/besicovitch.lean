@@ -881,6 +881,7 @@ protected def vitali_family [second_countable_topology α] [has_besicovitch_cove
       by simpa only [mem_image, mem_Ioi] using hy,
     simp only [nonempty.mono ball_subset_interior_closed_ball, rpos, nonempty_ball],
   end,
+  nontrivial := λ x ε εpos, ⟨closed_ball x ε, mem_image_of_mem _ εpos, subset.refl _⟩,
   covering := begin
     assume s f fsubset ffine,
     let g : α → set ℝ := λ x, {r | 0 < r ∧ closed_ball x r ∈ f x},

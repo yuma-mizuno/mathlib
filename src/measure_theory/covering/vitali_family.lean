@@ -36,11 +36,13 @@ Vitali families are provided by covering theorems such as the Besicovitch coveri
 Vitali covering theorem. They make it possible to formulate general versions of theorems on
 differentiations of measure that apply in both contexts.
 -/
+@[nolint has_inhabited_instance]
 structure vitali_family {m : measurable_space α} (μ : measure α) :=
 (sets_at : Π (x : α), set (set α))
 (center_mem : ∀ (x : α), ∀ (y : set α), y ∈ sets_at x → x ∈ y)
 (is_closed : ∀ (x : α), ∀ (y : set α), y ∈ sets_at x → is_closed y)
 (nonempty_interior : ∀ (x : α), ∀ (y : set α), y ∈ sets_at x → (interior y).nonempty)
+(nontrivial : ∀ (x : α) (ε > (0 : ℝ)), ∃ y ∈ sets_at x, y ⊆ closed_ball x ε)
 (covering : ∀ (s : set α) (f : Π (x : α), set (set α)), (∀ x ∈ s, f x ⊆ sets_at x) →
   (∀ (x ∈ s) (ε > (0 : ℝ)), ∃ t ∈ f x, t ⊆ closed_ball x ε) →
   ∃ (t : set α) (u : α → set α), t ⊆ s ∧ pairwise_on t (disjoint on u) ∧ (∀ x ∈ t, u x ∈ f x)

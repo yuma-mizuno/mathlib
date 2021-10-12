@@ -228,7 +228,6 @@ begin
       linarith } }
 end
 
-
 /-- The measurable Vitali covering theorem. Assume one is given a family `t` of closed sets with
 nonempty interior, such that each `a ∈ t` is included in a ball `B (x, r)` and covers a definite
 proportion of the ball `B (x, 6 r)` for a given measure `μ` (think of the situation where `μ` is
@@ -439,17 +438,29 @@ begin
   ... ≤ ε : ennreal.mul_div_le,
 end
 
-/-- The set of closed sets `a` with nonempty interior covering a fixed proportion `1/C` of the ball
-`closed_ball x (3 * diam a)` forms a Vitali family. This is essentially a restatement of the
-measurable Vitali theorem. -/
+/-- Assume that around every point there are arbitrarily small scales at which the measure is
+doubling. Then the set of closed sets `a` with nonempty interior covering a fixed proportion `1/C`
+of the ball `closed_ball x (3 * diam a)` forms a Vitali family. This is essentially a restatement
+of the measurable Vitali theorem. -/
 protected def vitali_family [metric_space α] [measurable_space α] [opens_measurable_space α]
-  [second_countable_topology α] (μ : measure α) [is_locally_finite_measure μ] (C : ℝ≥0) :
+  [second_countable_topology α] (μ : measure α) [is_locally_finite_measure μ] (C : ℝ≥0)
+  (h : ∀ x (ε > 0), ∃ r ∈ Ioc (0 : ℝ) ε, μ (closed_ball x (6 * r)) ≤ C * μ (closed_ball x r)) :
   vitali_family μ :=
 { sets_at := λ x, {a | x ∈ a ∧ is_closed a ∧ (interior a).nonempty ∧
                       μ (closed_ball x (3 * diam a)) ≤ C * μ a},
   center_mem := λ x a ha, ha.1,
   is_closed := λ x a ha, ha.2.1,
   nonempty_interior := λ x a ha, ha.2.2.1,
+  nontrivial := λ x ε εpos, begin
+    obtain ⟨r, ⟨rpos, rε⟩, μr⟩ : ∃ r ∈ Ioc (0 : ℝ) ε,
+      μ (closed_ball x (6 * r)) ≤ C * μ (closed_ball x r) := h x ε εpos,
+    refine ⟨closed_ball x r, ⟨_, is_closed_ball, _, _⟩, closed_ball_subset_closed_ball rε⟩,
+    { simp only [rpos.le, mem_closed_ball, dist_self] },
+    { exact (nonempty_ball.2 rpos).mono (ball_subset_interior_closed_ball) },
+    { apply le_trans (measure_mono (closed_ball_subset_closed_ball _)) μr,
+      have : diam (closed_ball x r) ≤ 2 * r := diam_closed_ball rpos.le,
+      linarith }
+  end,
   covering := begin
     assume s f fsubset ffine,
     rcases eq_empty_or_nonempty s with rfl|H,
