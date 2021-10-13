@@ -173,6 +173,11 @@ end schur_zassenhaus_abelian
 
 namespace schur_zassenhaus_induction
 
+/- All of the results in this namespace assume:
+  - `ih`: Schur-Zassenhaus is true for smaller groups G (induction hypothesis)
+  - `ch`: Schur-Zassenhaus is false for G (contradiction hypothesis)
+  These results are made obsolete by the full Schur-Zassenhaus theorem -/
+
 open_locale classical
 
 universe u
