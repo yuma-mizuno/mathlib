@@ -28,7 +28,7 @@ The measurable Besicovitch theorem ensures that, in the same class of metric spa
 point one considers a class of balls of arbitrarily small radii, called admissible balls, then
 one can cover almost all the space by a family of disjoint admissible balls.
 It is deduced from the topological Besicovitch theorem, and proved
-in `besicovitch.exists_disjoint_closed_ball_covering`.
+in `besicovitch.exists_disjoint_closed_ball_covering_ae`.
 
 ## Main definitions and results
 
@@ -44,9 +44,6 @@ in `besicovitch.exists_disjoint_closed_ball_covering`.
   statement of the topological Besicovitch theorem, it becomes irrelevant for the measurable one.
   Therefore, this statement is expressed using the `Prop`-valued
   typeclass `has_besicovitch_covering`.
-`besicovitch.vitali_family`: the family of closed balls forms a Vitali family in a space with
-  the Besicovitch covering property. This is essentially a restatement of the measurable
-  Besicovitch covering theorem.
 
 ## Implementation
 
@@ -628,10 +625,10 @@ This version requires that the underlying measure is finite, and that the space 
 covering property (which is satisfied for instance by normed real vector spaces). It expresses the
 conclusion in a slightly awkward form (with a subset of `α × ℝ`) coming from the proof technique.
 For a version assuming that the measure is sigma-finite,
-see `exists_disjoint_closed_ball_covering_aux`.
-For a version giving the conclusion in a nicer form, see `exists_disjoint_closed_ball_covering`.
+see `exists_disjoint_closed_ball_covering_ae_aux`.
+For a version giving the conclusion in a nicer form, see `exists_disjoint_closed_ball_covering_ae`.
 -/
-theorem exists_disjoint_closed_ball_covering_of_finite_measure_aux
+theorem exists_disjoint_closed_ball_covering_ae_of_finite_measure_aux
   [second_countable_topology α] [hb : has_besicovitch_covering α]
   [measurable_space α] [opens_measurable_space α] (μ : measure α) [is_finite_measure μ]
   (f : α → set ℝ) (s : set α)
@@ -765,7 +762,6 @@ begin
     exact (hF (u n) (Pu n)).1 }
 end
 
-
 /-- The measurable Besicovitch covering theorem. Assume that, for any `x` in a set `s`,
 one is given a set of admissible closed balls centered at `x`, with arbitrarily small radii.
 Then there exists a disjoint covering of almost all `s` by admissible closed balls centered at some
@@ -774,9 +770,9 @@ This version requires that the underlying measure is sigma-finite, and that the 
 Besicovitch covering property (which is satisfied for instance by normed real vector spaces).
 It expresses the conclusion in a slightly awkward form (with a subset of `α × ℝ`) coming from the
 proof technique.
-For a version giving the conclusion in a nicer form, see `exists_disjoint_closed_ball_covering`.
+For a version giving the conclusion in a nicer form, see `exists_disjoint_closed_ball_covering_ae`.
 -/
-theorem exists_disjoint_closed_ball_covering_aux
+theorem exists_disjoint_closed_ball_covering_ae_aux
   [second_countable_topology α] [has_besicovitch_covering α]
   [measurable_space α] [opens_measurable_space α] (μ : measure α) [sigma_finite μ]
   (f : α → set ℝ) (s : set α)
@@ -789,11 +785,10 @@ begin
   /- This is deduced from the finite measure case, by using a finite measure with respect to which
   the initial sigma-finite measure is absolutely continuous. -/
   unfreezingI { rcases exists_absolutely_continuous_is_finite_measure μ with ⟨ν, hν, hμν⟩ },
-  rcases exists_disjoint_closed_ball_covering_of_finite_measure_aux ν f s hf hf' hf''
+  rcases exists_disjoint_closed_ball_covering_ae_of_finite_measure_aux ν f s hf hf' hf''
     with ⟨t, t_count, ts, tr, tν, tdisj⟩,
   exact ⟨t, t_count, ts, tr, hμν tν, tdisj⟩,
 end
-
 
 /-- The measurable Besicovitch covering theorem. Assume that, for any `x` in a set `s`,
 one is given a set of admissible closed balls centered at `x`, with arbitrarily small radii.
@@ -811,7 +806,7 @@ theorem exists_disjoint_closed_ball_covering_ae
     ∧ μ (s \ (⋃ (x ∈ t), closed_ball x (r x))) = 0
     ∧ t.pairwise_on (disjoint on (λ x, closed_ball x (r x))) :=
 begin
-  rcases exists_disjoint_closed_ball_covering_aux μ f s hf hf' hf''
+  rcases exists_disjoint_closed_ball_covering_ae_aux μ f s hf hf' hf''
     with ⟨v, v_count, vs, vf, μv, v_disj⟩,
   let t := prod.fst '' v,
   have : ∀ x ∈ t, ∃ (r : ℝ), (x, r) ∈ v,
