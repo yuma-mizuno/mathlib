@@ -692,12 +692,16 @@ end alg_hom
   m • (1 : A) = ↑m :=
 by rw [algebra.smul_def, mul_one, ring_hom.eq_rat_cast]
 
-set_option old_structure_cmd true
 /-- An equivalence of algebras is an equivalence of rings commuting with the actions of scalars. -/
 structure alg_equiv (R : Type u) (A : Type v) (B : Type w)
   [comm_semiring R] [semiring A] [semiring B] [algebra R A] [algebra R B]
-  extends A ≃ B, A ≃* B, A ≃+ B, A ≃+* B :=
-(commutes' : ∀ r : R, to_fun (algebra_map R A r) = algebra_map R B r)
+  extends to_ring_equiv : A ≃+* B :=
+(commutes' : ∀ r : R, to_ring_equiv.to_fun (algebra_map R A r) = algebra_map R B r)
+
+#print alg_equiv
+
+
+#exit
 
 attribute [nolint doc_blame] alg_equiv.to_ring_equiv
 attribute [nolint doc_blame] alg_equiv.to_equiv
