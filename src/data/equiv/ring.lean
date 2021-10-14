@@ -40,22 +40,14 @@ open_locale big_operators
 
 variables {R : Type*} {S : Type*} {S' : Type*}
 
-set_option old_structure_cmd true
-
 /-- An equivalence between two (semi)rings that preserves the algebraic structure. -/
-structure ring_equiv (R S : Type*) [has_mul R] [has_add R] [has_mul S] [has_add S]
-  extends R ≃ S, R ≃* S, R ≃+ S
+structure ring_equiv (R S : Type*) [has_mul R] [has_add R] [has_mul S] [has_add S] extends R ≃+ S :=
+(map_mul' : ∀ x y, to_fun (x * y) = to_fun x * to_fun y)
 
 infix ` ≃+* `:25 := ring_equiv
 
-/-- The "plain" equivalence of types underlying an equivalence of (semi)rings. -/
-add_decl_doc ring_equiv.to_equiv
-
 /-- The equivalence of additive monoids underlying an equivalence of (semi)rings. -/
 add_decl_doc ring_equiv.to_add_equiv
-
-/-- The equivalence of multiplicative monoids underlying an equivalence of (semi)rings. -/
-add_decl_doc ring_equiv.to_mul_equiv
 
 namespace ring_equiv
 
@@ -63,7 +55,15 @@ section basic
 
 variables [has_mul R] [has_add R] [has_mul S] [has_add S] [has_mul S'] [has_add S']
 
-instance : has_coe_to_fun (R ≃+* S) := ⟨_, ring_equiv.to_fun⟩
+/-- The "plain" equivalence of types underlying an equivalence of (semi)rings. -/
+@[ancestor]
+def to_equiv (e : R ≃+* S) : R ≃ S := e.to_add_equiv.to_equiv
+
+/-- The equivalence of multiplicative monoids underlying an equivalence of (semi)rings. -/
+@[ancestor]
+def to_mul_equiv (e : R ≃+* S) : R ≃* S := { ..e }
+
+instance : has_coe_to_fun (R ≃+* S) := ⟨_, λ e, e.to_equiv.to_fun⟩
 
 @[simp] lemma to_fun_eq_coe (f : R ≃+* S) : f.to_fun = f := rfl
 
@@ -78,16 +78,16 @@ instance : has_coe_to_fun (R ≃+* S) := ⟨_, ring_equiv.to_fun⟩
 @[ext] lemma ext {f g : R ≃+* S} (h : ∀ x, f x = g x) : f = g :=
 begin
   have h₁ : f.to_equiv = g.to_equiv := equiv.ext h,
-  cases f, cases g, congr,
+  rcases f with ⟨⟨⟩⟩, rcases g with ⟨⟨⟩⟩, congr,
   { exact (funext h) },
   { exact congr_arg equiv.inv_fun h₁ }
 end
 
-@[simp] theorem coe_mk (e e' h₁ h₂ h₃ h₄) :
-  ⇑(⟨e, e', h₁, h₂, h₃, h₄⟩ : R ≃+* S) = e := rfl
+@[simp] theorem coe_mk (e h) :
+  ⇑(⟨e, h⟩ : R ≃+* S) = e := rfl
 
-@[simp] theorem mk_coe (e : R ≃+* S) (e' h₁ h₂ h₃ h₄) :
-  (⟨e, e', h₁, h₂, h₃, h₄⟩ : R ≃+* S) = e := ext $ λ _, rfl
+-- @[simp] theorem mk_coe (e : R ≃+* S) (e' h₁ h₂ h₃ h₄) :
+--   (⟨e, e', h₁, h₂, h₃, h₄⟩ : R ≃+* S) = e := ext $ λ _, rfl
 
 protected lemma congr_arg {f : R ≃+* S} : Π {x x' : R}, x = x' → f x = f x'
 | _ _ rfl := rfl
@@ -142,20 +142,21 @@ variables {R}
 /-- See Note [custom simps projection] -/
 def simps.symm_apply (e : R ≃+* S) : S → R := e.symm
 
-initialize_simps_projections ring_equiv (to_fun → apply, inv_fun → symm_apply)
+initialize_simps_projections ring_equiv
+  (to_add_equiv_to_fun → apply, to_add_equiv_inv_fun → symm_apply)
 
 @[simp] lemma symm_symm (e : R ≃+* S) : e.symm.symm = e := ext $ λ x, rfl
 
 lemma symm_bijective : function.bijective (ring_equiv.symm : (R ≃+* S) → (S ≃+* R)) :=
 equiv.bijective ⟨ring_equiv.symm, ring_equiv.symm, symm_symm, symm_symm⟩
 
-@[simp] lemma mk_coe' (e : R ≃+* S) (f h₁ h₂ h₃ h₄) :
-  (ring_equiv.mk f ⇑e h₁ h₂ h₃ h₄ : S ≃+* R) = e.symm :=
-symm_bijective.injective $ ext $ λ x, rfl
+-- @[simp] lemma mk_coe' (e : R ≃+* S) (f h₁ h₂ h₃ h₄) :
+--   (ring_equiv.mk f ⇑e h₁ h₂ h₃ h₄ : S ≃+* R) = e.symm :=
+-- symm_bijective.injective $ ext $ λ x, rfl
 
-@[simp] lemma symm_mk (f : R → S) (g h₁ h₂ h₃ h₄) :
-  (mk f g h₁ h₂ h₃ h₄).symm =
-  { to_fun := g, inv_fun := f, ..(mk f g h₁ h₂ h₃ h₄).symm} := rfl
+-- @[simp] lemma symm_mk (f : R → S) (g h₁ h₂ h₃ h₄) :
+--   (mk f g h₁ h₂ h₃ h₄).symm =
+--   { to_fun := g, inv_fun := f, ..(mk f g h₁ h₂ h₃ h₄).symm} := rfl
 
 /-- Transitivity of `ring_equiv`. -/
 @[trans] protected def trans (e₁ : R ≃+* S) (e₂ : S ≃+* S') : R ≃+* S' :=
@@ -422,8 +423,10 @@ namespace ring_equiv
 
 variables [has_add R] [has_add S] [has_mul R] [has_mul S]
 
-@[simp] theorem trans_symm (e : R ≃+* S) : e.trans e.symm = ring_equiv.refl R := ext e.3
-@[simp] theorem symm_trans (e : R ≃+* S) : e.symm.trans e = ring_equiv.refl S := ext e.4
+@[simp] theorem trans_symm (e : R ≃+* S) : e.trans e.symm = ring_equiv.refl R :=
+ext e.to_equiv.left_inv
+@[simp] theorem symm_trans (e : R ≃+* S) : e.symm.trans e = ring_equiv.refl S :=
+ext e.to_equiv.right_inv
 
 /-- If two rings are isomorphic, and the second is an integral domain, then so is the first. -/
 protected lemma is_integral_domain {A : Type*} (B : Type*) [ring A] [ring B]
