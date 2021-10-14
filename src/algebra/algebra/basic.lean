@@ -700,7 +700,6 @@ structure alg_equiv (R : Type u) (A : Type v) (B : Type w)
 
 #print alg_equiv
 
-
 #exit
 
 attribute [nolint doc_blame] alg_equiv.to_ring_equiv
