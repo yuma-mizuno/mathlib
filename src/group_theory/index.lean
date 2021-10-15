@@ -30,6 +30,28 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 namespace subgroup
 
+instance {G : Type*} [group G] : (unique (⊥ : subgroup G)) :=
+⟨⟨1⟩, λ g, subtype.ext g.2⟩
+
+lemma ker_subtype {G : Type*} [group G] (H : subgroup G) : H.subtype.ker = ⊥ :=
+H.subtype.ker_eq_bot_iff.mpr subtype.coe_injective
+
+lemma bot_subgroup_of {G : Type*} [group G] (H : subgroup G) :
+  (⊥ : subgroup G).subgroup_of H = ⊥ :=
+eq.symm (subgroup.ext (λ g, subtype.ext_iff))
+
+lemma top_subgroup_of {G : Type*} [group G] (H : subgroup G) :
+  (⊤ : subgroup G).subgroup_of H = ⊤ :=
+rfl
+
+lemma subgroup_of_bot_eq_bot {G : Type*} [group G] (H : subgroup G) :
+  H.subgroup_of ⊥ = ⊥ :=
+subsingleton.elim _ _
+
+lemma subgroup_of_bot_eq_top {G : Type*} [group G] (H : subgroup G) :
+  H.subgroup_of ⊥ = ⊤ :=
+subsingleton.elim _ _
+
 variables {G : Type*} [group G] (H K L : subgroup G)
 
 /-- The index of a subgroup as a natural number, and returns 0 if the index is infinite. -/
@@ -74,11 +96,11 @@ variables {H K L}
 @[to_additive] lemma index_dvd_of_le (h : H ≤ K) : K.index ∣ H.index :=
 ⟨H.rel_index K, index_eq_mul_of_le h⟩
 
-lemma rel_index_subgroup_of (hKL : K ≤ L) :
+@[to_additive] lemma rel_index_subgroup_of (hKL : K ≤ L) :
   H.rel_index K = (H.subgroup_of L).rel_index (K.subgroup_of L) :=
 (index_comap (H.subgroup_of L) (inclusion hKL)).trans (congr_arg _ (inclusion_range hKL))
 
-lemma rel_index_mul_rel_index (hHK : H ≤ K) (hKL : K ≤ L) :
+@[to_additive] lemma rel_index_mul_rel_index (hHK : H ≤ K) (hKL : K ≤ L) :
   H.rel_index K * K.rel_index L = H.rel_index L :=
 begin
   rw [rel_index_subgroup_of hKL, mul_comm, eq_comm],
@@ -90,6 +112,34 @@ variables (H K L)
 @[to_additive] lemma index_eq_card [fintype (quotient_group.quotient H)] :
   H.index = fintype.card (quotient_group.quotient H) :=
 cardinal.mk_to_nat_eq_card
+
+lemma index_bot [fintype G] : index (⊥ : subgroup G) = fintype.card G :=
+begin
+  classical,
+  exact (index_eq_card ⊥).trans (fintype.card_congr quotient_group.quotient_bot.to_equiv),
+end
+
+lemma index_top : index (⊤ : subgroup G) = 1 :=
+begin
+  haveI : subsingleton (quotient_group.quotient (⊤ : subgroup G)) :=
+    quotient_group.subsingleton_quotient_top,
+  refine (index_eq_card (⊤ : subgroup G)).trans _,
+  convert fintype.card_of_subsingleton (1 : quotient_group.quotient (⊤ : subgroup G)),
+end
+
+lemma rel_index_bot_left [fintype H] : rel_index ⊥ H = fintype.card H :=
+by rw [rel_index, bot_subgroup_of, index_bot]
+
+lemma rel_index_bot_right : rel_index H ⊥ = 1 :=
+by rw [rel_index, subgroup_of_bot_eq_top, index_top]
+
+lemma rel_index_top_left : rel_index ⊤ H = 1 :=
+index_top
+
+lemma rel_index_top_right : rel_index H ⊤ = index H :=
+sorry
+
+--TODO: Use previous stuff
 
 @[to_additive] lemma index_mul_card [fintype G] [hH : fintype H] :
   H.index * fintype.card H = fintype.card G :=
@@ -103,23 +153,6 @@ end
 begin
   classical,
   exact ⟨fintype.card H, H.index_mul_card.symm⟩,
-end
-
-
-
-
-lemma ker_subtype : H.subtype.ker = ⊥ :=
-H.subtype.ker_eq_bot_iff.mpr subtype.coe_injective
-
-lemma bot_subgroup_of : (⊥ : subgroup G).subgroup_of H = ⊥ :=
-H.subtype.comap_bot.trans H.ker_subtype
-
-lemma rel_index_bot [fintype H] : rel_index ⊥ H = fintype.card H :=
-begin
-  rw rel_index,
-  rw bot_subgroup_of,
-  rw index_bot,
-  --change (⊥ : subgroup H).index = _,
 end
 
 end subgroup
