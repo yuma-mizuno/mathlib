@@ -30,10 +30,6 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 namespace subgroup
 
-lemma range_inclusion {G : Type*} [group G] {H K : subgroup G} (h_le : H ≤ K) :
-  (inclusion h_le).range = H.subgroup_of K :=
-subgroup.ext (λ g, set.ext_iff.mp (set.range_inclusion h_le) g)
-
 variables {G : Type*} [group G] (H K L : subgroup G)
 
 /-- The index of a subgroup as a natural number, and returns 0 if the index is infinite. -/
@@ -80,7 +76,7 @@ variables {H K L}
 
 lemma rel_index_subgroup_of (hKL : K ≤ L) :
   H.rel_index K = (H.subgroup_of L).rel_index (K.subgroup_of L) :=
-(index_comap (H.subgroup_of L) (inclusion hKL)).trans (congr_arg _ (range_inclusion hKL))
+(index_comap (H.subgroup_of L) (inclusion hKL)).trans (congr_arg _ (inclusion_range hKL))
 
 lemma rel_index_mul_rel_index (hHK : H ≤ K) (hKL : K ≤ L) :
   H.rel_index K * K.rel_index L = H.rel_index L :=
