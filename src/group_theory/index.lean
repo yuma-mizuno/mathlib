@@ -28,8 +28,6 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 -/
 
-universes u v
-
 namespace subgroup
 
 lemma range_inclusion {G : Type*} [group G] {H K : subgroup G} (h_le : H ≤ K) :
@@ -63,7 +61,7 @@ begin
     ⟨by { refine quotient.ind' (λ x, _), refine quotient.ind' (λ y, _), exact (h2 x y).mpr },
     by { refine quotient.ind' (λ x, _), obtain ⟨y, hy⟩ := hf x,
       exact ⟨y, (quotient.map'_mk' f _ y).trans (congr_arg quotient.mk' hy)⟩ }⟩,
-  rw [index, ←cardinal.to_nat_lift, cardinal.lift_mk_eq.mpr ⟨ϕ⟩, cardinal.to_nat_lift, ←index],
+  exact cardinal.to_nat_congr ϕ,
 end
 
 @[to_additive] lemma index_comap {G' : Type*} [group G'] (f : G' →* G) :
