@@ -1277,6 +1277,9 @@ protected lemma rfl : μ ≪ μ := λ s hs, hs
 if hf : measurable f then absolutely_continuous.mk $ λ s hs, by simpa [hf, hs] using @h _
 else by simp only [map_of_not_measurable hf]
 
+protected lemma smul (h : μ ≪ ν) (c : ℝ≥0∞) : c • μ ≪ ν :=
+mk (λ s hs hνs, by simp only [h hνs, algebra.id.smul_eq_mul, coe_smul, pi.smul_apply, mul_zero])
+
 end absolutely_continuous
 
 lemma ae_le_iff_absolutely_continuous : μ.ae ≤ ν.ae ↔ μ ≪ ν :=
@@ -2080,6 +2083,16 @@ lemma measure.exists_is_open_measure_lt_top [topological_space α] (μ : measure
   ∃ s : set α, x ∈ s ∧ is_open s ∧ μ s < ∞ :=
 by simpa only [exists_prop, and.assoc]
   using (μ.finite_at_nhds x).exists_mem_basis (nhds_basis_opens x)
+
+instance is_locally_finite_measure_smul_nnreal [topological_space α] (μ : measure α)
+  [is_locally_finite_measure μ] (c : ℝ≥0) : is_locally_finite_measure (c • μ) :=
+begin
+  refine ⟨λ x, _⟩,
+  rcases μ.exists_is_open_measure_lt_top x with ⟨o, xo, o_open, μo⟩,
+  refine ⟨o, o_open.mem_nhds xo, _⟩,
+  apply ennreal.mul_lt_top _ μo.ne,
+  simp only [ennreal.coe_ne_top, ennreal.coe_of_nnreal_hom, ne.def, not_false_iff],
+end
 
 omit m0
 
