@@ -174,9 +174,10 @@ end schur_zassenhaus_abelian
 namespace schur_zassenhaus_induction
 
 /- All of the results in this namespace assume:
-  - `ih`: Schur-Zassenhaus is true for smaller groups G (induction hypothesis)
-  - `ch`: Schur-Zassenhaus is false for G (contradiction hypothesis)
-  These results are made obsolete by the full Schur-Zassenhaus theorem -/
+  - `ih`: Schur-Zassenhaus is true for smaller groups G (induction hypothesis),
+  - `ch`: Schur-Zassenhaus is false for G (contradiction hypothesis).
+  The full Schur-Zassenhaus theorem shows that these results are all vacuously true.
+  Therefore, none of these results should be used outside this file. -/
 
 open_locale classical
 
@@ -212,9 +213,11 @@ begin
   have h31 : fintype.card K < fintype.card G,
   { sorry },
   have h32 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
-  { sorry },
+  {
+    sorry },
   obtain ⟨H, hH⟩ := ih K h31 h32,
   refine ⟨H.map K.subtype, _⟩,
+  refine is_complement_of_coprime _ _,
   sorry
 end
 
