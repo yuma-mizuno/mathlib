@@ -119,9 +119,6 @@ lemma t_countable [second_countable_topology α] : countable h.t :=
 countable_of_nonempty_interior_of_disjoint h.u (λ x hx, v.nonempty_interior _ _ (h.u_mem_v hx))
   h.u_disjoint
 
-noncomputable instance [second_countable_topology α] : encodable h.t :=
-h.t_countable.to_encodable
-
 protected lemma is_closed_u {x : α} (hx : x ∈ h.t) : _root_.is_closed (h.u x) :=
 v.is_closed x _ (h.u_mem_v hx)
 
@@ -251,6 +248,7 @@ begin
     apply frequently.mono this,
     rintros a ⟨ρa, av, aU⟩,
     exact ⟨ρa, aU⟩ },
+  haveI : encodable h.t := h.t_countable.to_encodable,
   calc ρ s ≤ ∑' (x : h.t), ρ (h.u x) : h.measure_le_tsum_of_absolutely_continuous hρ
   ... ≤ ∑' (x : h.t), ν (h.u x) : ennreal.tsum_le_tsum (λ x, (h.u_mem_f x.2).1)
   ... = ν (⋃ (x : h.t), h.u x) :
@@ -336,6 +334,50 @@ begin
   end
   ... ≤ ρ s' : v.measure_le_of_frequently_le ρ
     ((measure.absolutely_continuous.refl μ).smul d) s' (λ x hx, hd x hx.1)
+end
+
+/-- If `ρ` is absolutely continuous with respect to `μ`, then for almost every `x`, the
+ratio `ρ a / μ a` converges to a limit as `a` shrinks to `x` along a Vitali family for `μ`. -/
+theorem ae_tendsto_div [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
+  {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ] :
+  ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
+begin
+  let w : set ℝ≥0∞ := {x | ∃ a : ℚ, x = ennreal.of_real a},
+  have w_count : countable w,
+  { have : w = range (λ (a : ℚ), ennreal.of_real a),
+      by { ext x, simp only [eq_comm, mem_range, mem_set_of_eq] },
+    rw this,
+    exact countable_range _ },
+  have w_dense : dense w,
+  { refine dense_iff_forall_lt_exists_mem.2 (λ c d hcd, _),
+    rcases ennreal.lt_iff_exists_rat_btwn.1 hcd with ⟨q, hq⟩,
+    exact ⟨ennreal.of_real q, ⟨q, rfl⟩, hq.2⟩ },
+  have A : ∀ (c ∈ w) (d ∈ w), (c < d) → ∀ᵐ x ∂μ,
+    ¬((∃ᶠ a in v.filter_at x, ρ a / μ a < c) ∧ (∃ᶠ a in v.filter_at x, d < ρ a / μ a)),
+  { assume c hc d hd hcd,
+    rcases hc with ⟨c, rfl⟩,
+    rcases hd with ⟨d, rfl⟩,
+    apply v.null_of_frequently_le_of_frequently_ge hρ (ennreal.coe_lt_coe.1 hcd),
+    { simp only [and_imp, exists_prop, not_frequently, not_and, not_lt, not_le, not_eventually,
+        mem_set_of_eq, mem_compl_eq, not_forall],
+      assume x h1x h2x,
+      apply h1x.mono (λ a ha, _),
+      refine (ennreal.div_le_iff_le_mul _ (or.inr _)).1 ha.le,
+      { simp only [ennreal.coe_ne_top, ne.def, or_true, not_false_iff] },
+      { suffices : 0 < ennreal.of_real c, by simpa only [rat.cast_pos, real.to_nnreal_eq_zero,
+          ennreal.of_real_pos, not_le, ennreal.coe_eq_zero, ne.def],
+        exact bot_le.trans_lt ha } },
+    { simp only [and_imp, exists_prop, not_frequently, not_and, not_lt, not_le, not_eventually,
+        mem_set_of_eq, mem_compl_eq, not_forall],
+      assume x h1x h2x,
+      apply h2x.mono (λ a ha, _),
+      exact ennreal.mul_le_of_le_div ha.le } },
+  have B : ∀ᵐ x ∂μ, ∀ (c ∈ w) (d ∈ w), (c < d) →
+    ¬((∃ᶠ a in v.filter_at x, ρ a / μ a < c) ∧ (∃ᶠ a in v.filter_at x, d < ρ a / μ a)),
+    by simpa only [ae_ball_iff w_count, ae_imp_iff],
+  filter_upwards [B],
+  assume a ha,
+  exact tendsto_of_no_upcrossings w_dense ha,
 end
 
 end vitali_family

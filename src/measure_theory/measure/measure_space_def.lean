@@ -249,6 +249,9 @@ theorem measure_union_le (s₁ s₂ : set α) : μ (s₁ ∪ s₂) ≤ μ s₁ +
 lemma measure_union_null : μ s₁ = 0 → μ s₂ = 0 → μ (s₁ ∪ s₂) = 0 :=
 μ.to_outer_measure.union_null
 
+lemma null_of_subset_null (h : μ s₁ = 0) (h' : s₂ ⊆ s₁) : μ s₂ = 0 :=
+le_antisymm ((measure_mono h').trans (le_of_eq h)) bot_le
+
 lemma measure_union_null_iff : μ (s₁ ∪ s₂) = 0 ↔ μ s₁ = 0 ∧ μ s₂ = 0:=
 ⟨λ h, ⟨measure_mono_null (subset_union_left _ _) h, measure_mono_null (subset_union_right _ _) h⟩,
   λ h, measure_union_null h.1 h.2⟩
