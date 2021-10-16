@@ -6,6 +6,7 @@ Authors: Johannes Hölzl, Callum Sutton, Yury Kudryashov
 import data.equiv.mul_add
 import algebra.field
 import algebra.opposites
+import algebra.big_operators.basic
 
 /-!
 # (Semi)ring equivs
@@ -34,6 +35,8 @@ multiplication in `equiv.perm`, and multiplication in `category_theory.End`, not
 
 equiv, mul_equiv, add_equiv, ring_equiv, mul_aut, add_aut, ring_aut
 -/
+
+open_locale big_operators
 
 variables {R : Type*} {S : Type*} {S' : Type*}
 
@@ -173,8 +176,23 @@ e.to_equiv.image_eq_preimage s
 
 end basic
 
-section comm_semiring
+section opposite
 open opposite
+
+/-- A ring iso `α ≃+* β` can equivalently be viewed as a ring iso `αᵒᵖ ≃+* βᵒᵖ`. -/
+@[simps]
+protected def op {α β} [has_add α] [has_mul α] [has_add β] [has_mul β] :
+  (α ≃+* β) ≃ (αᵒᵖ ≃+* βᵒᵖ) :=
+{ to_fun    := λ f, { ..f.to_add_equiv.op, ..f.to_mul_equiv.op},
+  inv_fun   := λ f, { ..(add_equiv.op.symm f.to_add_equiv), ..(mul_equiv.op.symm f.to_mul_equiv) },
+  left_inv  := λ f, by { ext, refl },
+  right_inv := λ f, by { ext, refl } }
+
+/-- The 'unopposite' of a ring iso `αᵒᵖ ≃+* βᵒᵖ`. Inverse to `ring_equiv.op`. -/
+@[simp] protected def unop {α β} [has_add α] [has_mul α] [has_add β] [has_mul β] :
+  (αᵒᵖ ≃+* βᵒᵖ) ≃ (α ≃+* β) := ring_equiv.op.symm
+
+section comm_semiring
 
 variables (R) [comm_semiring R]
 
@@ -191,6 +209,8 @@ lemma to_opposite_apply (r : R) : to_opposite R r = op r := rfl
 lemma to_opposite_symm_apply (r : Rᵒᵖ) : (to_opposite R).symm r = unop r := rfl
 
 end comm_semiring
+
+end opposite
 
 section non_unital_semiring
 
@@ -224,6 +244,12 @@ lemma map_ne_one_iff : f x ≠ 1 ↔ x ≠ 1 := (f : R ≃* S).map_ne_one_iff
 /-- Produce a ring isomorphism from a bijective ring homomorphism. -/
 noncomputable def of_bijective (f : R →+* S) (hf : function.bijective f) : R ≃+* S :=
 { .. equiv.of_bijective f hf, .. f }
+
+@[simp] lemma coe_of_bijective (f : R →+* S) (hf : function.bijective f) :
+  (of_bijective f hf : R → S) = f := rfl
+
+lemma of_bijective_apply (f : R →+* S) (hf : function.bijective f) (x : R) :
+  of_bijective f hf x = f x := rfl
 
 end semiring
 
@@ -335,6 +361,51 @@ lemma of_hom_inv_symm_apply (hom : R →+* S) (inv : S →+* R) (hom_inv_id inv_
   (of_hom_inv hom inv hom_inv_id inv_hom_id).symm s = inv s := rfl
 
 end semiring_hom
+
+section big_operators
+
+lemma map_list_prod [semiring R] [semiring S] (f : R ≃+* S) (l : list R) :
+  f l.prod = (l.map f).prod := f.to_ring_hom.map_list_prod l
+
+lemma map_list_sum [non_assoc_semiring R] [non_assoc_semiring S] (f : R ≃+* S) (l : list R) :
+  f l.sum = (l.map f).sum := f.to_ring_hom.map_list_sum l
+
+lemma map_multiset_prod [comm_semiring R] [comm_semiring S] (f : R ≃+* S) (s : multiset R) :
+  f s.prod = (s.map f).prod := f.to_ring_hom.map_multiset_prod s
+
+lemma map_multiset_sum [non_assoc_semiring R] [non_assoc_semiring S]
+  (f : R ≃+* S) (s : multiset R) : f s.sum = (s.map f).sum := f.to_ring_hom.map_multiset_sum s
+
+lemma map_prod {α : Type*} [comm_semiring R] [comm_semiring S] (g : R ≃+* S) (f : α → R)
+  (s : finset α) : g (∏ x in s, f x) = ∏ x in s, g (f x) :=
+g.to_ring_hom.map_prod f s
+
+lemma map_sum {α : Type*} [non_assoc_semiring R] [non_assoc_semiring S]
+  (g : R ≃+* S) (f : α → R) (s : finset α) : g (∑ x in s, f x) = ∑ x in s, g (f x) :=
+g.to_ring_hom.map_sum f s
+
+end big_operators
+
+section division_ring
+
+variables {K K' : Type*} [division_ring K] [division_ring K']
+  (g : K ≃+* K') (x y : K)
+
+lemma map_inv : g x⁻¹ = (g x)⁻¹ := g.to_ring_hom.map_inv x
+
+lemma map_div : g (x / y) = g x / g y := g.to_ring_hom.map_div x y
+
+end division_ring
+
+section group_power
+
+variables [semiring R] [semiring S]
+
+@[simp] lemma map_pow (f : R ≃+* S) (a) :
+  ∀ n : ℕ, f (a ^ n) = (f a) ^ n :=
+f.to_ring_hom.map_pow a
+
+end group_power
 
 end ring_equiv
 

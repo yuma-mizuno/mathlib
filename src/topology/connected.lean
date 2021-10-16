@@ -122,18 +122,35 @@ begin
     Hs.is_preconnected Ht.is_preconnected
 end
 
+/-- Theorem of bark and tree :
+if a set is within a (pre)connected set and its closure,
+then it is (pre)connected as well. -/
+theorem is_preconnected.subset_closure {s : set α} {t : set α}
+  (H : is_preconnected s) (Kst : s ⊆ t) (Ktcs : t ⊆ closure s) :
+  is_preconnected t :=
+λ u v hu hv htuv ⟨y, hyt, hyu⟩ ⟨z, hzt, hzv⟩,
+let ⟨p, hpu, hps⟩ := mem_closure_iff.1 (Ktcs hyt) u hu hyu,
+    ⟨q, hqv, hqs⟩ := mem_closure_iff.1 (Ktcs hzt) v hv hzv,
+    ⟨r, hrs, hruv⟩ := H u v hu hv (subset.trans Kst htuv) ⟨p, hps, hpu⟩ ⟨q, hqs, hqv⟩ in
+  ⟨r, Kst hrs, hruv⟩
+
+theorem is_connected.subset_closure {s : set α}  {t : set α}
+  (H : is_connected s) (Kst : s ⊆ t) (Ktcs : t ⊆ closure s): is_connected t :=
+let hsne := H.left,
+    ht := Kst,
+    htne := nonempty.mono ht hsne in
+    ⟨nonempty.mono Kst H.left, is_preconnected.subset_closure H.right Kst Ktcs ⟩
+
+/-- The closure of a (pre)connected set is (pre)connected as well. -/
 theorem is_preconnected.closure {s : set α} (H : is_preconnected s) :
   is_preconnected (closure s) :=
-λ u v hu hv hcsuv ⟨y, hycs, hyu⟩ ⟨z, hzcs, hzv⟩,
-let ⟨p, hpu, hps⟩ := mem_closure_iff.1 hycs u hu hyu in
-let ⟨q, hqv, hqs⟩ := mem_closure_iff.1 hzcs v hv hzv in
-let ⟨r, hrs, hruv⟩ := H u v hu hv (subset.trans subset_closure hcsuv) ⟨p, hps, hpu⟩ ⟨q, hqs, hqv⟩ in
-⟨r, subset_closure hrs, hruv⟩
+is_preconnected.subset_closure H subset_closure $ subset.refl $ closure s
 
 theorem is_connected.closure {s : set α} (H : is_connected s) :
   is_connected (closure s) :=
-⟨H.nonempty.closure, H.is_preconnected.closure⟩
+is_connected.subset_closure H subset_closure $ subset.refl $ closure s
 
+/-- The image of a (pre)connected set is (pre)connected as well. -/
 theorem is_preconnected.image [topological_space β] {s : set α} (H : is_preconnected s)
   (f : α → β) (hf : continuous_on f s) : is_preconnected (f '' s) :=
 begin
@@ -254,14 +271,18 @@ class connected_space (α : Type u) [topological_space α] extends preconnected_
 
 attribute [instance, priority 50] connected_space.to_nonempty -- see Note [lower instance priority]
 
+lemma is_preconnected_range [topological_space β] [preconnected_space α] {f : α → β}
+  (h : continuous f) : is_preconnected (range f) :=
+@image_univ _ _ f ▸ is_preconnected_univ.image _ h.continuous_on
+
 lemma is_connected_range [topological_space β] [connected_space α] {f : α → β} (h : continuous f) :
   is_connected (range f) :=
-begin
-  inhabit α,
-  rw ← image_univ,
-  exact ⟨⟨f (default α), mem_image_of_mem _ (mem_univ _)⟩,
-         is_preconnected.image is_preconnected_univ _ h.continuous_on⟩
-end
+⟨range_nonempty f, is_preconnected_range h⟩
+
+lemma dense_range.preconnected_space [topological_space β] [preconnected_space α] {f : α → β}
+  (hf : dense_range f) (hc : continuous f) :
+  preconnected_space β :=
+⟨hf.closure_eq ▸ (is_preconnected_range hc).closure⟩
 
 lemma connected_space_iff_connected_component :
   connected_space α ↔ ∃ x : α, connected_component x = univ :=
@@ -508,7 +529,7 @@ begin
     apply nonempty.ne_empty
       (nonempty_of_mem (mem_inter (@mem_connected_component _ _ x) Z.2.2)),
     rw inter_comm,
-    exact h  },
+    exact h },
   exact h,
 end
 

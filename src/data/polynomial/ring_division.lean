@@ -3,11 +3,9 @@ Copyright (c) 2018 Chris Hughes. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes, Johannes Hölzl, Scott Morrison, Jens Wagemaker, Johan Commelin
 -/
-
-import data.polynomial.basic
-import data.polynomial.div
 import data.polynomial.algebra_map
-import data.set.finite
+import data.polynomial.degree.lemmas
+import data.polynomial.div
 
 /-!
 # Theory of univariate polynomials
@@ -44,6 +42,40 @@ lemma aeval_mod_by_monic_eq_self_of_root [algebra R S]
   {p q : polynomial R} (hq : q.monic) {x : S} (hx : aeval x q = 0) :
   aeval x (p %ₘ q) = aeval x p :=
 eval₂_mod_by_monic_eq_self_of_root hq hx
+
+lemma mod_by_monic_eq_of_dvd_sub [nontrivial R] (hq : q.monic) {p₁ p₂ : polynomial R}
+  (h : q ∣ (p₁ - p₂)) :
+  p₁ %ₘ q = p₂ %ₘ q :=
+begin
+  obtain ⟨f, sub_eq⟩ := h,
+  refine (div_mod_by_monic_unique (p₂ /ₘ q + f) _ hq
+    ⟨_, degree_mod_by_monic_lt _ hq⟩).2,
+  rw [sub_eq_iff_eq_add.mp sub_eq, mul_add, ← add_assoc, mod_by_monic_add_div _ hq, add_comm]
+end
+
+lemma add_mod_by_monic [nontrivial R] (hq : q.monic)
+  (p₁ p₂ : polynomial R) : (p₁ + p₂) %ₘ q = p₁ %ₘ q + p₂ %ₘ q :=
+(div_mod_by_monic_unique (p₁ /ₘ q + p₂ /ₘ q) _ hq
+  ⟨by rw [mul_add, add_left_comm, add_assoc, mod_by_monic_add_div _ hq, ← add_assoc,
+          add_comm (q * _), mod_by_monic_add_div _ hq],
+    (degree_add_le _ _).trans_lt (max_lt (degree_mod_by_monic_lt _ hq)
+      (degree_mod_by_monic_lt _ hq))⟩).2
+
+lemma smul_mod_by_monic [nontrivial R] (hq : q.monic)
+  (c : R) (p : polynomial R) : (c • p) %ₘ q = c • (p %ₘ q) :=
+(div_mod_by_monic_unique (c • (p /ₘ q)) (c • (p %ₘ q)) hq
+  ⟨by rw [mul_smul_comm, ← smul_add, mod_by_monic_add_div p hq],
+   (degree_smul_le _ _).trans_lt (degree_mod_by_monic_lt _ hq)⟩).2
+
+/--
+`polynomial.mod_by_monic_hom (hq : monic (q : polynomial R))` is `_ %ₘ q` as a `R`-linear map.
+-/
+@[simps]
+def mod_by_monic_hom [nontrivial R] (hq : q.monic) :
+  polynomial R →ₗ[R] polynomial R :=
+{ to_fun := λ p, p %ₘ q,
+  map_add' := add_mod_by_monic hq,
+  map_smul' := smul_mod_by_monic hq }
 
 end comm_ring
 
@@ -103,7 +135,7 @@ instance : integral_domain (polynomial R) :=
 lemma nat_trailing_degree_mul (hp : p ≠ 0) (hq : q ≠ 0) :
   (p * q).nat_trailing_degree = p.nat_trailing_degree + q.nat_trailing_degree :=
 begin
-  simp only [←nat.sub_eq_of_eq_add (nat_degree_eq_reverse_nat_degree_add_nat_trailing_degree _)],
+  simp only [←sub_eq_of_eq_add_rev (nat_degree_eq_reverse_nat_degree_add_nat_trailing_degree _)],
   rw [reverse_mul_of_domain, nat_degree_mul hp hq, nat_degree_mul (mt reverse_eq_zero.mp hp)
     (mt reverse_eq_zero.mp hq), reverse_nat_degree, reverse_nat_degree, ←nat.sub_sub, nat.add_comm,
     nat.add_sub_assoc (nat.sub_le _ _), add_comm, nat.add_sub_assoc (nat.sub_le _ _)],
@@ -112,8 +144,6 @@ end
 section roots
 
 open multiset
-
-local attribute [semireducible] with_zero
 
 lemma degree_eq_zero_of_is_unit (h : is_unit p) : degree p = 0 :=
 let ⟨q, hq⟩ := is_unit_iff_dvd_one.1 h in
@@ -130,28 +160,28 @@ by rw [nat_degree_one, nat_degree_mul hp0 hq0, eq_comm,
   degree (u : polynomial R) = 0 :=
 degree_eq_zero_of_is_unit ⟨u, rfl⟩
 
-theorem prime_X_sub_C {r : R} : prime (X - C r) :=
+theorem prime_X_sub_C (r : R) : prime (X - C r) :=
 ⟨X_sub_C_ne_zero r, not_is_unit_X_sub_C,
  λ _ _, by { simp_rw [dvd_iff_is_root, is_root.def, eval_mul, mul_eq_zero], exact id }⟩
 
 theorem prime_X : prime (X : polynomial R) :=
-by { convert (prime_X_sub_C : prime (X - C 0 : polynomial R)), simp }
+by { convert (prime_X_sub_C (0 : R)), simp }
 
-lemma prime_of_degree_eq_one_of_monic (hp1 : degree p = 1)
-  (hm : monic p) : prime p :=
+lemma monic.prime_of_degree_eq_one (hp1 : degree p = 1) (hm : monic p) :
+  prime p :=
 have p = X - C (- p.coeff 0),
   by simpa [hm.leading_coeff] using eq_X_add_C_of_degree_eq_one hp1,
-this.symm ▸ prime_X_sub_C
+this.symm ▸ prime_X_sub_C _
 
 theorem irreducible_X_sub_C (r : R) : irreducible (X - C r) :=
-irreducible_of_prime prime_X_sub_C
+(prime_X_sub_C r).irreducible
 
 theorem irreducible_X : irreducible (X : polynomial R) :=
-irreducible_of_prime prime_X
+prime.irreducible prime_X
 
-lemma irreducible_of_degree_eq_one_of_monic (hp1 : degree p = 1)
-  (hm : monic p) : irreducible p :=
-irreducible_of_prime (prime_of_degree_eq_one_of_monic hp1 hm)
+lemma monic.irreducible_of_degree_eq_one (hp1 : degree p = 1) (hm : monic p) :
+  irreducible p :=
+(hm.prime_of_degree_eq_one hp1).irreducible
 
 theorem eq_of_monic_of_associated (hp : p.monic) (hq : q.monic) (hpq : associated p q) : p = q :=
 begin
@@ -169,7 +199,7 @@ lemma root_multiplicity_eq_zero {p : polynomial R} {x : R} (h : ¬ is_root p x) 
 begin
   rw root_multiplicity_eq_multiplicity,
   split_ifs, { refl },
-  rw [← enat.coe_inj, enat.coe_get, multiplicity.multiplicity_eq_zero_of_not_dvd, enat.coe_zero],
+  rw [← enat.coe_inj, enat.coe_get, multiplicity.multiplicity_eq_zero_of_not_dvd, nat.cast_zero],
   intro hdvd,
   exact h (dvd_iff_is_root.mp hdvd)
 end
@@ -190,7 +220,7 @@ begin
   rw [root_multiplicity_eq_multiplicity (p * q), dif_neg hpq,
       root_multiplicity_eq_multiplicity p, dif_neg hp,
       root_multiplicity_eq_multiplicity q, dif_neg hq,
-      @multiplicity.mul' _ _ _ (X - C x) _ _ prime_X_sub_C],
+      multiplicity.mul' (prime_X_sub_C x)],
 end
 
 lemma root_multiplicity_X_sub_C_self {x : R} :
@@ -257,8 +287,8 @@ then
     rw degree_eq_nat_degree hp at hpd,
     exact with_bot.coe_le_coe.2 (with_bot.coe_lt_coe.1 hpd)
   end,
-  have hdiv0 : p /ₘ (X - C x) ≠ 0 := mt (div_by_monic_eq_zero_iff (monic_X_sub_C x)
-    (ne_zero_of_monic (monic_X_sub_C x))).1 $ not_lt.2 hdeg,
+  have hdiv0 : p /ₘ (X - C x) ≠ 0 := mt (div_by_monic_eq_zero_iff (monic_X_sub_C x)).1 $
+    not_lt.2 hdeg,
   ⟨x ::ₘ t, calc (card (x ::ₘ t) : with_bot ℕ) = t.card + 1 :
       by exact_mod_cast card_cons _ _
     ... ≤ degree p :
@@ -351,13 +381,13 @@ multiset.ext.mpr $ λ r,
     not_le_of_gt hp0 $ h.symm ▸ degree_C_le)).trans
   (by rw [is_root.def, eval_sub, eval_C, sub_eq_zero])
 
-@[simp] lemma roots_X_sub_C (r : R) : roots (X - C r) = r ::ₘ 0 :=
+@[simp] lemma roots_X_sub_C (r : R) : roots (X - C r) = {r} :=
 begin
   ext s,
   rw [count_roots (X_sub_C_ne_zero r), root_multiplicity_X_sub_C],
   split_ifs with h,
-  { rw [h, count_singleton] },
-  { rw [count_cons_of_ne h, count_zero] }
+  { rw [h, count_singleton_self] },
+  { rw [singleton_eq_cons, count_cons_of_ne h, count_zero] }
 end
 
 @[simp] lemma roots_C (x : R) : (C x).roots = 0 :=
@@ -392,7 +422,7 @@ end
 lemma roots_prod_X_sub_C (s : finset R) :
   (s.prod (λ a, X - C a)).roots = s.val :=
 (roots_prod (λ a, X - C a) s (prod_ne_zero_iff.mpr (λ a _, X_sub_C_ne_zero a))).trans
-  (by simp_rw [roots_X_sub_C, bind_cons, bind_zero, add_zero, multiset.map_id'])
+  (by simp_rw [roots_X_sub_C, multiset.bind_singleton, multiset.map_id'])
 
 lemma card_roots_X_pow_sub_C {n : ℕ} (hn : 0 < n) (a : R) :
   (roots ((X : polynomial R) ^ n - C a)).card ≤ n :=
@@ -421,8 +451,8 @@ if hn : n = 0
 then if h : (X : polynomial R) ^ n - C a = 0
   then by simp only [nat.zero_le, nth_roots, roots, h, dif_pos rfl, empty_eq_zero, card_zero]
   else with_bot.coe_le_coe.1 (le_trans (card_roots h)
-   (by rw [hn, pow_zero, ← C_1, ← @is_ring_hom.map_sub _ _ _ _ (@C R _)];
-      exact degree_C_le))
+   (by { rw [hn, pow_zero, ← C_1, ← ring_hom.map_sub ],
+         exact degree_C_le }))
 else by rw [← with_bot.coe_le_coe, ← degree_X_pow_sub_C (nat.pos_of_ne_zero hn) a];
   exact card_roots (X_pow_sub_C_ne_zero (nat.pos_of_ne_zero hn) a)
 
@@ -581,10 +611,10 @@ begin
   have hp := mod_by_monic_add_div p hmonic,
   have hzero : (p /ₘ q) ≠ 0,
   { intro h,
-    exact not_lt_of_le hdegree ((div_by_monic_eq_zero_iff hmonic (monic.ne_zero hmonic)).1 h) },
+    exact not_lt_of_le hdegree ((div_by_monic_eq_zero_iff hmonic).1 h) },
   have deglt : (p %ₘ q).degree < (q * (p /ₘ q)).degree,
   { rw degree_mul,
-    refine lt_of_lt_of_le (degree_mod_by_monic_lt p hmonic (monic.ne_zero hmonic)) _,
+    refine lt_of_lt_of_le (degree_mod_by_monic_lt p hmonic) _,
     rw [degree_eq_nat_degree (monic.ne_zero hmonic), degree_eq_nat_degree hzero],
     norm_cast,
     simp only [zero_le, le_add_iff_nonneg_right] },
@@ -631,13 +661,13 @@ begin
   have dz := degree_eq_zero_of_is_unit H,
   rw degree_map_eq_of_leading_coeff_ne_zero at dz,
   { rw eq_C_of_degree_eq_zero dz,
-    apply is_unit.map',
+    refine is_unit.map (C.to_monoid_hom : R →* polynomial R) _,
     convert hf,
     rw (degree_eq_iff_nat_degree_eq _).1 dz,
     rintro rfl,
     simpa using H, },
   { intro h,
-    have u : is_unit (φ f.leading_coeff) := is_unit.map' _ hf,
+    have u : is_unit (φ f.leading_coeff) := is_unit.map φ.to_monoid_hom hf,
     rw h at u,
     simpa using u, }
 end
@@ -659,7 +689,7 @@ lemma monic.irreducible_of_irreducible_map (f : polynomial R)
 begin
   fsplit,
   { intro h,
-    exact h_irr.not_unit (is_unit.map (monoid_hom.of (map φ)) h), },
+    exact h_irr.not_unit (is_unit.map (map_ring_hom φ).to_monoid_hom h), },
   { intros a b h,
 
     have q := (leading_coeff_mul a b).symm,

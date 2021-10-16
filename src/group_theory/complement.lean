@@ -23,9 +23,6 @@ In this file we define the complement of a subgroup.
 ## Main results
 
 - `is_complement_of_coprime` : Subgroups of coprime order are complements.
-- `exists_right_complement_of_coprime` : **Schur-Zassenhaus** for abelian normal subgroups:
-  If `H : subgroup G` is abelian, normal, and has order coprime to its index, then there exists
-  a subgroup `K` which is a (right) complement of `H`.
 -/
 
 open_locale big_operators
@@ -71,6 +68,16 @@ end
 @[to_additive] lemma is_complement_comm :
   is_complement (H : set G) (K : set G) ↔ is_complement (K : set G) (H : set G) :=
 ⟨is_complement.symm, is_complement.symm⟩
+
+@[to_additive] lemma is_complement_top_singleton {g : G} :
+  is_complement (⊤ : set G) {g} :=
+⟨λ ⟨x, _, rfl⟩ ⟨y, _, rfl⟩ h, prod.ext (subtype.ext (mul_right_cancel h)) rfl,
+  λ x, ⟨⟨⟨x * g⁻¹, ⟨⟩⟩, g, rfl⟩, inv_mul_cancel_right x g⟩⟩
+
+@[to_additive] lemma is_complement_singleton_top {g : G} :
+  is_complement ({g} : set G) (⊤ : set G) :=
+⟨λ ⟨⟨_, rfl⟩, x⟩ ⟨⟨_, rfl⟩, y⟩ h, prod.ext rfl (subtype.ext (mul_left_cancel h)),
+  λ x, ⟨⟨⟨g, rfl⟩, g⁻¹ * x, ⟨⟩⟩, mul_inv_cancel_left g x⟩⟩
 
 @[to_additive] lemma is_complement_bot_top :
   is_complement ((⊥ : subgroup G) : set G) ((⊤ : subgroup G) : set G) :=
@@ -152,9 +159,17 @@ mem_right_transversals_iff_exists_unique_quotient_mk'_eq.trans
 { rintros ⟨_, q₁, rfl⟩ ⟨_, q₂, rfl⟩ hg,
   rw (q₁.out_eq'.symm.trans hg).trans q₂.out_eq' }, λ q, ⟨⟨q.out', q, rfl⟩, quotient.out_eq' q⟩⟩⟩⟩
 
-lemma is_complement_of_disjoint [fintype G] [fintype H] [fintype K]
-  (h1 : fintype.card H * fintype.card K = fintype.card G)
-  (h2 : disjoint H K) :
+lemma is_complement.card_mul [fintype G] [fintype H] [fintype K]
+  (h : is_complement (H : set G) (K : set G)) :
+  fintype.card H * fintype.card K = fintype.card G :=
+(fintype.card_prod _ _).symm.trans (fintype.card_of_bijective h)
+
+lemma is_complement.disjoint (h : is_complement (H : set G) (K : set G)) : disjoint H K :=
+λ g hg, let x : H × K := ⟨⟨g, hg.1⟩, 1⟩, y : H × K := ⟨1, ⟨g, hg.2⟩⟩ in subtype.ext_iff.mp
+  (prod.ext_iff.mp (h.1 (show x.1.1 * _ = y.1.1 * _, from (mul_one g).trans (one_mul g).symm))).1
+
+lemma is_complement_of_card_mul_and_disjoint [fintype G] [fintype H] [fintype K]
+  (h1 : fintype.card H * fintype.card K = fintype.card G) (h2 : disjoint H K) :
   is_complement (H : set G) (K : set G) :=
 begin
   refine (fintype.bijective_iff_injective_and_card _).mpr
@@ -165,6 +180,11 @@ begin
       subtype.ext_iff, coe_one, coe_one, h, and_self, ←mem_bot, ←h2.eq_bot, mem_inf],
   exact ⟨subtype.mem ((x.1)⁻¹ * (y.1)), (congr_arg (∈ K) h).mp (subtype.mem (x.2 * (y.2)⁻¹))⟩,
 end
+
+lemma is_complement_iff_card_mul_and_disjoint [fintype G] [fintype H] [fintype K] :
+  is_complement (H : set G) (K : set G) ↔
+    fintype.card H * fintype.card K = fintype.card G ∧ disjoint H K :=
+⟨λ h, ⟨h.card_mul, h.disjoint⟩, λ h, is_complement_of_card_mul_and_disjoint h.1 h.2⟩
 
 lemma is_complement_of_coprime [fintype G] [fintype H] [fintype K]
   (h1 : fintype.card H * fintype.card K = fintype.card G)

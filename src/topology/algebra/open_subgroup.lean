@@ -10,8 +10,6 @@ import topology.algebra.ring
 open topological_space
 open_locale topological_space
 
-set_option old_structure_cmd true
-
 /-- The type of open subgroups of a topological additive group. -/
 @[ancestor add_subgroup]
 structure open_add_subgroup  (G : Type*) [add_group G] [topological_space G]
@@ -59,7 +57,7 @@ attribute [norm_cast] mem_coe mem_coe_opens mem_coe_subgroup open_add_subgroup.m
   open_add_subgroup.mem_coe_opens open_add_subgroup.mem_coe_add_subgroup
 
 @[to_additive] lemma coe_injective : injective (coe : open_subgroup G → set G) :=
-λ U V h, by cases U; cases V; congr; assumption
+by { rintros ⟨⟨⟩⟩ ⟨⟨⟩⟩ ⟨h⟩, congr, }
 
 @[ext, to_additive]
 lemma ext (h : ∀ x, x ∈ U ↔ x ∈ V) : (U = V) := coe_injective $ set.ext h
@@ -181,7 +179,7 @@ begin
   have : filter.tendsto (λ y, y * (x⁻¹ * g)) (𝓝 x) (𝓝 $ x * (x⁻¹ * g)) :=
     (continuous_id.mul continuous_const).tendsto _,
   rw [mul_inv_cancel_left] at this,
-  have := filter.mem_map.1 (this hg),
+  have := filter.mem_map'.1 (this hg),
   replace hg : g ∈ H := set_like.mem_coe.1 (mem_of_mem_nhds hg),
   simp only [set_like.mem_coe, H.mul_mem_cancel_right (H.mul_mem (H.inv_mem hx) hg)] at this,
   exact this
@@ -190,7 +188,7 @@ end
 @[to_additive]
 lemma is_open_of_open_subgroup {U : open_subgroup G} (h : U.1 ≤ H) :
   is_open (H : set G) :=
-H.is_open_of_mem_nhds (filter.mem_sets_of_superset U.mem_nhds_one h)
+H.is_open_of_mem_nhds (filter.mem_of_superset U.mem_nhds_one h)
 
 @[to_additive]
 lemma is_open_mono {H₁ H₂ : subgroup G} (h : H₁ ≤ H₂) (h₁ : is_open (H₁  :set G)) :
