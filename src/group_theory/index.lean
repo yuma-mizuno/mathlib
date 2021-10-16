@@ -30,9 +30,6 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 namespace subgroup
 
-@[to_additive] lemma ker_subtype {G : Type*} [group G] (H : subgroup G) : H.subtype.ker = ⊥ :=
-H.subtype.ker_eq_bot_iff.mpr subtype.coe_injective
-
 @[to_additive] lemma bot_subgroup_of {G : Type*} [group G] (H : subgroup G) :
   (⊥ : subgroup G).subgroup_of H = ⊥ :=
 eq.symm (subgroup.ext (λ g, subtype.ext_iff))
