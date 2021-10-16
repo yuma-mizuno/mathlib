@@ -512,7 +512,7 @@ rfl
   ⇑(c • μ) = c • μ :=
 rfl
 
-theorem smul_apply {m : measurable_space α} (c : ℝ≥0∞) (μ : measure α) (s : set α) :
+@[simp] theorem smul_apply {m : measurable_space α} (c : ℝ≥0∞) (μ : measure α) (s : set α) :
   (c • μ) s = c * μ s :=
 rfl
 

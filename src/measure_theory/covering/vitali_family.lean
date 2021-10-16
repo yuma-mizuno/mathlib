@@ -233,7 +233,7 @@ begin
 end
 
 /-- If two measures `ρ` and `ν` have, at every point of a set `s`, arbitrarily small sets in a
-Vitali family satisfying `ρ a ≤ ν a`, then `ρ s ≤ ν s`.-/
+Vitali family satisfying `ρ a ≤ ν a`, then `ρ s ≤ ν s` if `ρ ≪ μ`.-/
 theorem measure_le_of_frequently_le [sigma_compact_space α] [borel_space α]
   {ρ : measure α} (ν : measure α) [is_locally_finite_measure ν]
   (hρ : ρ ≪ μ) (s : set α) (hs : ∀ x ∈ s, ∃ᶠ a in v.filter_at x, ρ a ≤ ν a) :
@@ -257,6 +257,58 @@ begin
     by rw [measure_Union h.u_disjoint_subtype (λ i, (h.is_closed_u i.2).measurable_set)]
   ... ≤ ν U : measure_mono (Union_subset (λ i, (h.u_mem_f i.2).2))
   ... ≤ ν s + ε : νU
+end
+
+/-- If a measure `ρ` is singular with respect to `μ`, then for `μ` almost every `x`, the ratio
+`ρ a / μ a` tends to zero when `a` shrinks to `x` along the Vitali family. This makes sense
+as `μ a` is eventually positive by `ae_eventually_measure_pos`. -/
+lemma ae_eventually_measure_zero_of_singular [sigma_compact_space α] [borel_space α]
+  {ρ : measure α} (hρ : ρ ⊥ₘ μ) [is_locally_finite_measure ρ] [is_locally_finite_measure μ] :
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 0) :=
+begin
+  have A : ∀ ε > (0 : ℝ≥0), ∀ᵐ x ∂μ, ∀ᶠ a in v.filter_at x, ρ a < ε * μ a,
+  { assume ε εpos,
+    set s := {x | ¬(∀ᶠ a in v.filter_at x, ρ a < ε * μ a) } with hs,
+    change μ s = 0,
+    obtain ⟨o, o_meas, ρo, μo⟩ : ∃ (o : set α), measurable_set o ∧ ρ o = 0 ∧ μ oᶜ = 0 := hρ,
+    apply le_antisymm _ bot_le,
+    calc μ s ≤ μ ((s ∩ o) ∪ oᶜ) : begin
+      conv_lhs { rw ← inter_union_compl s o },
+      exact measure_mono (union_subset_union_right _ (inter_subset_right _ _))
+    end
+    ... ≤ μ (s ∩ o) + μ (oᶜ) : measure_union_le _ _
+    ... = μ (s ∩ o) : by rw [μo, add_zero]
+    ... = ε⁻¹ * (ε • μ) (s ∩ o) : begin
+      simp only [measure.coe_nnreal_smul, algebra.mul_smul_comm, pi.smul_apply],
+      simp only [has_scalar.smul, has_scalar.comp.smul, ennreal.coe_of_nnreal_hom, ← mul_assoc],
+      rw [ennreal.mul_inv_cancel (ennreal.coe_pos.2 εpos).ne' ennreal.coe_ne_top, one_mul],
+    end
+    ... ≤ ε⁻¹ * ρ (s ∩ o) : begin
+      apply ennreal.mul_le_mul le_rfl,
+      refine v.measure_le_of_frequently_le ρ ((measure.absolutely_continuous.refl μ).smul ε) _ _,
+      assume x hx,
+      rw hs at hx,
+      simp only [mem_inter_eq, not_lt, not_eventually, mem_set_of_eq] at hx,
+      exact hx.1
+    end
+    ... ≤ ε⁻¹ * ρ o : ennreal.mul_le_mul le_rfl (measure_mono (inter_subset_right _ _))
+    ... = 0 : by rw [ρo, mul_zero] },
+  obtain ⟨u, u_anti, u_pos, u_lim⟩ :
+    ∃ (u : ℕ → ℝ≥0), strict_anti u ∧ (∀ (n : ℕ), 0 < u n) ∧ tendsto u at_top (𝓝 0) :=
+      exists_seq_strict_anti_tendsto (0 : ℝ≥0),
+  have B : ∀ᵐ x ∂μ, ∀ n, ∀ᶠ a in v.filter_at x, ρ a < u n * μ a :=
+    ae_all_iff.2 (λ n, A (u n) (u_pos n)),
+  filter_upwards [B, v.ae_eventually_measure_pos],
+  assume x hx h'x,
+  refine tendsto_order.2 ⟨λ z hz, (ennreal.not_lt_zero hz).elim, λ z hz, _⟩,
+  obtain ⟨w, w_pos, w_lt⟩ : ∃ (w : ℝ≥0), (0 : ℝ≥0∞) < w ∧ (w : ℝ≥0∞) < z :=
+    ennreal.lt_iff_exists_nnreal_btwn.1 hz,
+  obtain ⟨n, hn⟩ : ∃ n, u n < w :=
+    ((tendsto_order.1 u_lim).2 w (ennreal.coe_pos.1 w_pos)).exists,
+  filter_upwards [hx n, h'x, v.eventually_measure_lt_top x],
+  assume a ha μa_pos μa_lt_top,
+  rw ennreal.div_lt_iff (or.inl μa_pos.ne') (or.inl μa_lt_top.ne),
+  exact ha.trans_le (ennreal.mul_le_mul ((ennreal.coe_le_coe.2 hn.le).trans w_lt.le) le_rfl)
 end
 
 /-- A set of points `s` satisfying both `ρ a ≤ c * μ a` and `ρ a ≥ d * μ a` at arbitrarily small
