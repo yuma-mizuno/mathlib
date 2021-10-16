@@ -30,9 +30,6 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 namespace subgroup
 
-instance {G : Type*} [group G] : (unique (⊥ : subgroup G)) :=
-⟨⟨1⟩, λ g, subtype.ext g.2⟩
-
 lemma ker_subtype {G : Type*} [group G] (H : subgroup G) : H.subtype.ker = ⊥ :=
 H.subtype.ker_eq_bot_iff.mpr subtype.coe_injective
 
