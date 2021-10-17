@@ -64,16 +64,18 @@ noncomputable def rel_index : ℕ :=
 @[to_additive] lemma index_comap_of_surjective {G' : Type*} [group G'] {f : G' →* G}
   (hf : function.surjective f) : (H.comap f).index = H.index :=
 begin
-  have h1 : ∀ x y : G', @setoid.r G' (quotient_group.left_rel (H.comap f)) x y ↔
-    @setoid.r G (quotient_group.left_rel H) (f x) (f y) :=
+  letI := quotient_group.left_rel H,
+  letI := quotient_group.left_rel (H.comap f),
+  have key : ∀ x y : G', setoid.r x y ↔ setoid.r (f x) (f y) :=
   λ x y, iff_of_eq (congr_arg (∈ H) (by rw [f.map_mul, f.map_inv])),
-  have h2 := λ x y, (quotient.eq'.trans (h1 x y)).trans quotient.eq'.symm,
-  let ϕ : quotient_group.quotient (H.comap f) ≃ quotient_group.quotient H :=
-  equiv.of_bijective (quotient.map' f (λ x y, (h1 x y).mp))
-    ⟨by { refine quotient.ind' (λ x, _), refine quotient.ind' (λ y, _), exact (h2 x y).mpr },
-    by { refine quotient.ind' (λ x, _), obtain ⟨y, hy⟩ := hf x,
-      exact ⟨y, (quotient.map'_mk' f _ y).trans (congr_arg quotient.mk' hy)⟩ }⟩,
-  exact cardinal.to_nat_congr ϕ,
+  refine cardinal.to_nat_congr (equiv.of_bijective (quotient.map' f (λ x y, (key x y).mp)) ⟨_, _⟩),
+  { simp_rw [←quotient.eq'] at key,
+    refine quotient.ind' (λ x, _),
+    refine quotient.ind' (λ y, _),
+    exact (key x y).mpr },
+  { refine quotient.ind' (λ x, _),
+    obtain ⟨y, hy⟩ := hf x,
+    exact ⟨y, (quotient.map'_mk' f _ y).trans (congr_arg quotient.mk' hy)⟩ },
 end
 
 @[to_additive] lemma index_comap {G' : Type*} [group G'] (f : G' →* G) :
