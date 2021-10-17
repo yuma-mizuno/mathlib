@@ -30,22 +30,6 @@ In this file we define the index of a subgroup, and prove several divisibility p
 
 namespace subgroup
 
-@[to_additive] lemma bot_subgroup_of {G : Type*} [group G] (H : subgroup G) :
-  (⊥ : subgroup G).subgroup_of H = ⊥ :=
-eq.symm (subgroup.ext (λ g, subtype.ext_iff))
-
-@[to_additive] lemma top_subgroup_of {G : Type*} [group G] (H : subgroup G) :
-  (⊤ : subgroup G).subgroup_of H = ⊤ :=
-rfl
-
-@[to_additive] lemma subgroup_of_bot_eq_bot {G : Type*} [group G] (H : subgroup G) :
-  H.subgroup_of ⊥ = ⊥ :=
-subsingleton.elim _ _
-
-@[to_additive] lemma subgroup_of_bot_eq_top {G : Type*} [group G] (H : subgroup G) :
-  H.subgroup_of ⊥ = ⊤ :=
-subsingleton.elim _ _
-
 variables {G : Type*} [group G] (H K L : subgroup G)
 
 /-- The index of a subgroup as a natural number, and returns 0 if the index is infinite. -/
