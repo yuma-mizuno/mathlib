@@ -460,6 +460,32 @@ protected lemma caratheodory {m : measurable_space α} (μ : measure α) (hs : m
   μ (t ∩ s) + μ (t \ s) = μ t :=
 (le_to_outer_measure_caratheodory μ s hs t).symm
 
+/-- If `c` is a measurable superset of a non-measurable set `b`, with the same measure, then for any
+measurable set `a` one also has `μ (b ∩ a) = μ (c ∩ a)`. -/
+lemma measure_inter_eq_of_measure_eq
+  {a b c : set α} (ha : measurable_set a) (hc : measurable_set c) (h : μ b = μ c)
+  (hbc : b ⊆ c) (hc_ne_top : μ c ≠ ∞) :
+  μ (b ∩ a) = μ (c ∩ a) :=
+begin
+  refine le_antisymm (measure_mono (inter_subset_inter_left _ hbc)) _,
+  have A : μ (c ∩ a) + μ (c \ a) ≤ μ (b ∩ a) + μ (c \ a) := calc
+    μ (c ∩ a) + μ (c \ a) = μ c : measure.caratheodory μ ha
+    ... = μ b : h.symm
+    ... = μ (b ∩ a) + μ (b \ a) : (measure.caratheodory μ ha).symm
+    ... ≤ μ (b ∩ a) + μ (c \ a) :
+      add_le_add le_rfl (measure_mono (diff_subset_diff hbc subset.rfl)),
+  have B : μ (c \ a) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) hc_ne_top.lt_top).ne,
+  exact ennreal.le_of_add_le_add_right B A
+end
+
+lemma measure_to_measurable_inter {a b : set α} (c : set α) (ha : measurable_set a) (hb : μ b ≠ ∞) :
+  μ (to_measurable μ b ∩ a) = μ (b ∩ a) :=
+begin
+  apply (measure_inter_eq_of_measure_eq ha (measurable_set_to_measurable μ b)
+    (measure_to_measurable b).symm (subset_to_measurable μ b) _).symm,
+  rwa measure_to_measurable b,
+end
+
 /-! ### The `ℝ≥0∞`-module of measures -/
 
 instance [measurable_space α] : has_zero (measure α) :=

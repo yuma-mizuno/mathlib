@@ -162,6 +162,15 @@ begin
   { exact ⟨(1 : ℝ), mem_Ioi.2 zero_lt_one⟩ }
 end
 
+instance filter_at_ne_bot (x : α) : (v.filter_at x).ne_bot :=
+begin
+  simp only [ne_bot_iff, ←empty_mem_iff_bot, mem_filter_at_iff, not_exists, exists_prop,
+    mem_empty_eq, and_true, gt_iff_lt, not_and, ne.def, not_false_iff, not_forall],
+  assume ε εpos,
+  obtain ⟨w, w_sets, hw⟩ : ∃ (w ∈ v.sets_at x), w ⊆ closed_ball x ε := v.nontrivial x ε εpos,
+  exact ⟨w, w_sets, hw⟩
+end
+
 lemma eventually_filter_at_iff {x : α} {P : set α → Prop} :
   (∀ᶠ a in v.filter_at x, P a) ↔ ∃ (ε > (0 : ℝ)), ∀ a ∈ v.sets_at x, a ⊆ closed_ball x ε → P a :=
 v.mem_filter_at_iff
@@ -309,6 +318,46 @@ begin
   exact ha.trans_le (ennreal.mul_le_mul ((ennreal.coe_le_coe.2 hn.le).trans w_lt.le) le_rfl)
 end
 
+lemma ae_not_tendsto_top [sigma_compact_space α] [borel_space α]
+  (ρ : measure α) [is_locally_finite_measure ρ] :
+  μ {x | tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (∞))} = 0 :=
+begin
+  refine null_of_locally_null _ (λ x hx, _),
+  obtain ⟨o, xo, o_open, μo⟩ : ∃ o : set α, x ∈ o ∧ is_open o ∧ ρ o < ∞ :=
+    measure.exists_is_open_measure_lt_top ρ x,
+  refine ⟨o, mem_nhds_within_of_mem_nhds (o_open.mem_nhds xo), le_antisymm _ bot_le⟩,
+  apply ennreal.le_of_forall_pos_le_add (λ ε εpos hzero, _),
+  rw zero_add,
+  set δ : ℝ≥0 := ε / (1 + (ρ o).to_nnreal) with hδ,
+  have δpos : 0 < δ := nnreal.div_pos εpos (add_pos_of_pos_of_nonneg zero_lt_one bot_le),
+  set s := {x : α | tendsto (λ (a : set α), ρ a / μ a) (v.filter_at x) (𝓝 ∞)} ∩ o with hs,
+  have A : μ s ≤ (δ • ρ) s,
+  { refine v.measure_le_of_frequently_le (δ • ρ) measure.absolutely_continuous.rfl s (λ x hx, _),
+    apply eventually.frequently,
+    simp only [mem_inter_eq, mem_set_of_eq] at hx,
+    filter_upwards [(tendsto_order.1 hx.1).1 (δ⁻¹ : ℝ≥0) ennreal.coe_lt_top],
+    assume a ha,
+    have : ((δ⁻¹ : ℝ≥0) : ℝ≥0∞) * μ a < ρ a,
+    { apply (ennreal.lt_div_iff_mul_lt _ _).1 ha,
+      { simp only [ennreal.coe_ne_top, ne.def, or_true, not_false_iff] },
+      { simp only [div_eq_zero_iff, inv_eq_zero, or_false, ennreal.coe_eq_zero, add_eq_zero_iff,
+          ne.def, one_ne_zero, false_and, εpos.ne', or_true, not_false_iff] } },
+    rw [ennreal.coe_inv δpos.ne', mul_comm, ← div_eq_mul_inv, ennreal.div_lt_iff, mul_comm] at this,
+    { exact this.le },
+    { simp only [δpos.ne', true_or, ennreal.coe_eq_zero, ne.def, not_false_iff] },
+    { simp only [ennreal.coe_ne_top, ne.def, true_or, not_false_iff] } },
+  calc μ s ≤ δ * ρ s : A
+  ... ≤ δ * ρ o : ennreal.mul_le_mul le_rfl (measure_mono (inter_subset_right _ _))
+  ... ≤ ε : begin
+    have I : 1 + (ρ o).to_nnreal ≠ 0,
+      by simp only [add_eq_zero_iff, ne.def, not_false_iff, one_ne_zero, false_and],
+    rw [(ennreal.coe_to_nnreal μo.ne).symm, ← ennreal.coe_mul, ennreal.coe_le_coe, hδ,
+         mul_comm, ← mul_div_assoc, nnreal.div_le_iff I, mul_comm, mul_add, mul_one,
+         le_add_iff_nonneg_left],
+    exact zero_le'
+  end
+end
+
 /-- A set of points `s` satisfying both `ρ a ≤ c * μ a` and `ρ a ≥ d * μ a` at arbitrarily small
 sets in a Vitali family has measure `0` if `c < d`. Indeed, the first inequality should imply
 that `ρ s ≤ c * μ s`, and the second one that `ρ s ≥ d * μ s`, a contradiction if `0 < μ s`. -/
@@ -336,11 +385,29 @@ begin
     ((measure.absolutely_continuous.refl μ).smul d) s' (λ x hx, hd x hx.1)
 end
 
+lemma measure_inter_eq_of_measure_eq
+  (a b c : set α) (ha : measurable_set a) (hc : measurable_set c) (h : μ b = μ c)
+  (h' : b ⊆ c) (h'' : μ c ≠ ∞) :
+  μ (b ∩ a) = μ (c ∩ a) :=
+begin
+  refine le_antisymm (measure_mono (inter_subset_inter_left _ h')) _,
+  have A : μ (c ∩ a) + μ (c \ a) ≤ μ (b ∩ a) + μ (c \ a) := calc
+    μ (c ∩ a) + μ (c \ a) = μ c : measure.caratheodory μ ha
+    ... = μ b : h.symm
+    ... = μ (b ∩ a) + μ (b \ a) : (measure.caratheodory μ ha).symm
+    ... ≤ μ (b ∩ a) + μ (c \ a) : add_le_add le_rfl (measure_mono (diff_subset_diff h' subset.rfl)),
+  have B : μ (c \ a) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) h''.lt_top).ne,
+  exact ennreal.le_of_add_le_add_right B A
+end
+
+#exit
+
 /-- If `ρ` is absolutely continuous with respect to `μ`, then for almost every `x`, the
-ratio `ρ a / μ a` converges to a limit as `a` shrinks to `x` along a Vitali family for `μ`. -/
+ratio `ρ a / μ a` converges to a finite limit as `a` shrinks to `x` along a
+Vitali family for `μ`. -/
 theorem ae_tendsto_div [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
   {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ] :
-  ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
+  ∀ᵐ x ∂μ, ∃ (c : ℝ≥0), tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
 begin
   let w : set ℝ≥0∞ := {x | ∃ a : ℚ, x = ennreal.of_real a},
   have w_count : countable w,
@@ -375,9 +442,21 @@ begin
   have B : ∀ᵐ x ∂μ, ∀ (c ∈ w) (d ∈ w), (c < d) →
     ¬((∃ᶠ a in v.filter_at x, ρ a / μ a < c) ∧ (∃ᶠ a in v.filter_at x, d < ρ a / μ a)),
     by simpa only [ae_ball_iff w_count, ae_imp_iff],
-  filter_upwards [B],
-  assume a ha,
-  exact tendsto_of_no_upcrossings w_dense ha,
+  have C : ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c),
+  { filter_upwards [B],
+    assume x hx,
+    exact tendsto_of_no_upcrossings w_dense hx },
+  have D : ∀ᵐ x ∂μ, ¬(tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 ∞)),
+  { change μ _ = 0,
+    convert v.ae_not_tendsto_top ρ,
+    ext x,
+    simp only [not_not, mem_set_of_eq, mem_compl_eq], },
+  filter_upwards [C, D],
+  rintros x ⟨c, hxc⟩ hx,
+  have : c ≠ ∞, by { rintros rfl, exact hx hxc },
+  refine ⟨c.to_nnreal, _⟩,
+  convert hxc,
+  exact ennreal.coe_to_nnreal this
 end
 
 end vitali_family
