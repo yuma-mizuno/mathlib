@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2020 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Yury Kudryashov
+Authors: Yury Kudryashov
 -/
 import logic.function.conjugate
 
@@ -42,12 +42,12 @@ theorem iterate_zero_apply (x : α) : f^[0] x = x := rfl
 
 theorem iterate_succ_apply (n : ℕ) (x : α) : f^[n.succ] x = (f^[n]) (f x) := rfl
 
-theorem iterate_id (n : ℕ) : nat.iterate (id : α → α) n = id :=
+@[simp] theorem iterate_id (n : ℕ) : (id : α → α)^[n] = id :=
 nat.rec_on n rfl $ λ n ihn, by rw [iterate_succ, ihn, comp.left_id]
 
 theorem iterate_add : ∀ (m n : ℕ), f^[m + n] = (f^[m]) ∘ (f^[n])
 | m 0 := rfl
-| m (nat.succ n) := by rw [iterate_succ, iterate_succ, iterate_add]
+| m (nat.succ n) := by rw [nat.add_succ, iterate_succ, iterate_succ, iterate_add]
 
 theorem iterate_add_apply (m n : ℕ) (x : α) : f^[m + n] x = (f^[m] (f^[n] x)) :=
 by rw iterate_add
@@ -104,6 +104,21 @@ lemma iterate_eq_of_map_eq (h : commute f g) (n : ℕ) {x} (hx : f x = g x) : f^
 nat.rec_on n rfl $ λ n ihn,
 by simp only [iterate_succ_apply, hx, (h.iterate_left n).eq, ihn, ((refl g).iterate_right n).eq]
 
+lemma comp_iterate (h : commute f g) (n : ℕ) : (f ∘ g)^[n] = (f^[n]) ∘ (g^[n]) :=
+begin
+  induction n with n ihn, { refl },
+  funext x,
+  simp only [ihn, (h.iterate_right n).eq, iterate_succ, comp_app]
+end
+
+variable (f)
+
+lemma iterate_self (n : ℕ) : commute (f^[n]) f := (refl f).iterate_left n
+
+lemma self_iterate (n : ℕ) : commute f (f^[n]) := (refl f).iterate_right n
+
+lemma iterate_iterate_self (m n : ℕ) : commute (f^[m]) (f^[n]) := (refl f).iterate_iterate m n
+
 end commute
 
 lemma semiconj₂.iterate {f : α → α} {op : α → α → α} (hf : semiconj₂ f op op) (n : ℕ) :
@@ -113,10 +128,25 @@ nat.rec_on n (semiconj₂.id_left op) (λ n ihn, ihn.comp hf)
 variable (f)
 
 theorem iterate_succ' (n : ℕ) : f^[n.succ] = f ∘ (f^[n]) :=
-by rw [iterate_succ, ((commute.refl f).iterate_right n).comp_eq]
+by rw [iterate_succ, (commute.self_iterate f n).comp_eq]
 
 theorem iterate_succ_apply' (n : ℕ) (x : α) : f^[n.succ] x = f (f^[n] x) :=
 by rw [iterate_succ']
+
+theorem iterate_pred_comp_of_pos {n : ℕ} (hn : 0 < n) : f^[n.pred] ∘ f = (f^[n]) :=
+by rw [← iterate_succ, nat.succ_pred_eq_of_pos hn]
+
+theorem comp_iterate_pred_of_pos {n : ℕ} (hn : 0 < n) : f ∘ (f^[n.pred]) = (f^[n]) :=
+by rw [← iterate_succ', nat.succ_pred_eq_of_pos hn]
+
+/-- A recursor for the iterate of a function. -/
+def iterate.rec (p : α → Sort*) {f : α → α} (h : ∀ a, p a → p (f a)) {a : α} (ha : p a) (n : ℕ) :
+  p (f^[n] a) :=
+nat.rec ha (λ m, by { rw iterate_succ', exact h _ }) n
+
+lemma iterate.rec_zero (p : α → Sort*) {f : α → α} (h : ∀ a, p a → p (f a)) {a : α} (ha : p a) :
+  iterate.rec p h ha 0 = ha :=
+rfl
 
 variable {f}
 
@@ -127,5 +157,11 @@ nat.rec_on n (λ _, rfl) $ λ n ihn, by { rw [iterate_succ', iterate_succ], exac
 theorem right_inverse.iterate {g : α → α} (hg : right_inverse g f) (n : ℕ) :
   right_inverse (g^[n]) (f^[n]) :=
 hg.iterate n
+
+lemma iterate_comm (f : α → α) (m n : ℕ) : f^[n]^[m] = (f^[m]^[n]) :=
+(iterate_mul _ _ _).symm.trans (eq.trans (by rw nat.mul_comm) (iterate_mul _ _ _))
+
+lemma iterate_commute (m n : ℕ) : commute (λ f : α → α, f^[m]) (λ f, f^[n]) :=
+λ f, iterate_comm f m n
 
 end function

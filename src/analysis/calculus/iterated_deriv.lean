@@ -41,7 +41,7 @@ iterated Fréchet derivative.
 -/
 
 noncomputable theory
-open_locale classical topological_space
+open_locale classical topological_space big_operators
 open filter asymptotics set
 
 
@@ -74,7 +74,8 @@ lemma iterated_deriv_within_eq_iterated_fderiv_within :
 Fréchet derivative -/
 lemma iterated_deriv_within_eq_equiv_comp :
   iterated_deriv_within n f s
-  = (continuous_multilinear_map.pi_field_equiv 𝕜 (fin n) F).symm ∘ (iterated_fderiv_within 𝕜 n f s) :=
+  = (continuous_multilinear_map.pi_field_equiv 𝕜 (fin n) F).symm ∘
+    (iterated_fderiv_within 𝕜 n f s) :=
 by { ext x, refl }
 
 /-- Write the iterated Fréchet derivative as the composition of a continuous linear equiv and the
@@ -92,7 +93,7 @@ end
 multiplied by the product of the `m i`s. -/
 lemma iterated_fderiv_within_apply_eq_iterated_deriv_within_mul_prod {m : (fin n) → 𝕜} :
   (iterated_fderiv_within 𝕜 n f s x : ((fin n) → 𝕜) → F) m
-  = finset.univ.prod m • iterated_deriv_within n f s x :=
+  = (∏ i, m i) • iterated_deriv_within n f s x :=
 begin
   rw [iterated_deriv_within_eq_iterated_fderiv_within, ← continuous_multilinear_map.map_smul_univ],
   simp
@@ -119,7 +120,8 @@ lemma times_cont_diff_on_of_continuous_on_differentiable_on_deriv {n : with_top 
 begin
   apply times_cont_diff_on_of_continuous_on_differentiable_on,
   { simpa [iterated_fderiv_within_eq_equiv_comp, continuous_linear_equiv.comp_continuous_on_iff] },
-  { simpa [iterated_fderiv_within_eq_equiv_comp, continuous_linear_equiv.comp_differentiable_on_iff] }
+  { simpa [iterated_fderiv_within_eq_equiv_comp,
+      continuous_linear_equiv.comp_differentiable_on_iff] }
 end
 
 /-- To check that a function is `n` times continuously differentiable, it suffices to check that its
@@ -229,7 +231,7 @@ end
 /-- The `n`-th Fréchet derivative applied to a vector `(m 0, ..., m (n-1))` is the derivative
 multiplied by the product of the `m i`s. -/
 lemma iterated_fderiv_apply_eq_iterated_deriv_mul_prod {m : (fin n) → 𝕜} :
-  (iterated_fderiv 𝕜 n f x : ((fin n) → 𝕜) → F) m = finset.univ.prod m • iterated_deriv n f x :=
+  (iterated_fderiv 𝕜 n f x : ((fin n) → 𝕜) → F) m = (∏ i, m i) • iterated_deriv n f x :=
 by { rw [iterated_deriv_eq_iterated_fderiv, ← continuous_multilinear_map.map_smul_univ], simp }
 
 @[simp] lemma iterated_deriv_zero :

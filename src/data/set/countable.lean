@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2017 Johannes Hölzl. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Johannes Hölzl
+Authors: Johannes Hölzl
 -/
 import data.equiv.list
 import data.set.finite
@@ -32,11 +32,13 @@ lemma countable_iff_exists_injective {s : set α} :
 ⟨λ ⟨h⟩, by exactI ⟨encode, encode_injective⟩,
  λ ⟨f, h⟩, ⟨⟨f, partial_inv f, partial_inv_left h⟩⟩⟩
 
+/-- A set `s : set α` is countable if and only if there exists a function `α → ℕ` injective
+on `s`. -/
 lemma countable_iff_exists_inj_on {s : set α} :
   countable s ↔ ∃ f : α → ℕ, inj_on f s :=
 countable_iff_exists_injective.trans
 ⟨λ ⟨f, hf⟩, ⟨λ a, if h : a ∈ s then f ⟨a, h⟩ else 0,
-   λ a b as bs h, congr_arg subtype.val $
+   λ a as b bs h, congr_arg subtype.val $
      hf $ by simpa [as, bs] using h⟩,
  λ ⟨f, hf⟩, ⟨_, inj_on_iff_injective.1 hf⟩⟩
 
@@ -81,15 +83,13 @@ lemma countable_encodable [encodable α] (s : set α) : countable s :=
 lemma countable.exists_surjective {s : set α} (hc : countable s) (hs : s.nonempty) :
   ∃f:ℕ → α, s = range f :=
 begin
-  rcases hs with ⟨x, hx⟩,
   letI : encodable s := countable.to_encodable hc,
-  letI : inhabited s := ⟨⟨x, hx⟩⟩,
+  letI : nonempty s := hs.to_subtype,
   have : countable (univ : set s) := countable_encodable _,
   rcases countable_iff_exists_surjective.1 this with ⟨g, hg⟩,
   have : range g = univ := univ_subset_iff.1 hg,
   use coe ∘ g,
-  rw [range_comp, this],
-  simp
+  simp only [range_comp, this, image_univ, subtype.range_coe]
 end
 
 @[simp] lemma countable_empty : countable (∅ : set α) :=
@@ -102,12 +102,46 @@ lemma countable.mono {s₁ s₂ : set α} (h : s₁ ⊆ s₂) : countable s₂ �
 | ⟨H⟩ := ⟨@of_inj _ _ H _ (embedding_of_subset _ _ h).2⟩
 
 lemma countable.image {s : set α} (hs : countable s) (f : α → β) : countable (f '' s) :=
-let f' : s → f '' s := λ⟨a, ha⟩, ⟨f a, mem_image_of_mem f ha⟩ in
-have hf' : surjective f', from assume ⟨b, a, ha, hab⟩, ⟨⟨a, ha⟩, subtype.eq hab⟩,
-⟨@encodable.of_inj _ _ hs.to_encodable (surj_inv hf') (injective_surj_inv hf')⟩
+have surjective ((maps_to_image f s).restrict _ _ _), from surjective_maps_to_image_restrict f s,
+⟨@encodable.of_inj _ _ hs.to_encodable (surj_inv this) (injective_surj_inv this)⟩
 
 lemma countable_range [encodable α] (f : α → β) : countable (range f) :=
 by rw ← image_univ; exact (countable_encodable _).image _
+
+lemma maps_to.countable_of_inj_on {s : set α} {t : set β} {f : α → β}
+  (hf : maps_to f s t) (hf' : inj_on f s) (ht : countable t) :
+  countable s :=
+have injective (hf.restrict f s t), from (inj_on_iff_injective.1 hf').cod_restrict _,
+⟨@encodable.of_inj _ _ ht.to_encodable _ this⟩
+
+lemma countable.preimage_of_inj_on {s : set β} (hs : countable s) {f : α → β}
+  (hf : inj_on f (f ⁻¹' s)) : countable (f ⁻¹' s) :=
+(maps_to_preimage f s).countable_of_inj_on hf hs
+
+protected lemma countable.preimage {s : set β} (hs : countable s) {f : α → β} (hf : injective f) :
+  countable (f ⁻¹' s) :=
+hs.preimage_of_inj_on (hf.inj_on _)
+
+lemma exists_seq_supr_eq_top_iff_countable [complete_lattice α] {p : α → Prop} (h : ∃ x, p x) :
+  (∃ s : ℕ → α, (∀ n, p (s n)) ∧ (⨆ n, s n) = ⊤) ↔
+    ∃ S : set α, countable S ∧ (∀ s ∈ S, p s) ∧ Sup S = ⊤ :=
+begin
+  split,
+  { rintro ⟨s, hps, hs⟩,
+    refine ⟨range s, countable_range s, forall_range_iff.2 hps, _⟩, rwa Sup_range },
+  { rintro ⟨S, hSc, hps, hS⟩,
+    rcases eq_empty_or_nonempty S with rfl|hne,
+    { rw [Sup_empty] at hS, haveI := subsingleton_of_bot_eq_top hS,
+      rcases h with ⟨x, hx⟩, exact ⟨λ n, x, λ n, hx, subsingleton.elim _ _⟩ },
+    { rcases (countable_iff_exists_surjective_to_subtype hne).1 hSc with ⟨s, hs⟩,
+      refine ⟨λ n, s n, λ n, hps _ (s n).coe_prop, _⟩,
+      rwa [hs.supr_comp, ← Sup_eq_supr'] } }
+end
+
+lemma exists_seq_cover_iff_countable {p : set α → Prop} (h : ∃ s, p s) :
+  (∃ s : ℕ → set α, (∀ n, p (s n)) ∧ (⋃ n, s n) = univ) ↔
+    ∃ S : set (set α), countable S ∧ (∀ s ∈ S, p s) ∧ ⋃₀ S = univ :=
+exists_seq_supr_eq_top_iff_countable h
 
 lemma countable_of_injective_of_countable_image {s : set α} {f : α → β}
   (hf : inj_on f s) (hs : countable (f '' s)) : countable s :=
@@ -119,8 +153,9 @@ lemma countable_Union {t : α → set β} [encodable α] (ht : ∀a, countable (
 by haveI := (λ a, (ht a).to_encodable);
    rw Union_eq_range_sigma; apply countable_range
 
-lemma countable.bUnion {s : set α} {t : α → set β} (hs : countable s) (ht : ∀a∈s, countable (t a)) :
-  countable (⋃a∈s, t a) :=
+lemma countable.bUnion
+  {s : set α} {t : Π x ∈ s, set β} (hs : countable s) (ht : ∀a∈s, countable (t a ‹_›)) :
+  countable (⋃a∈s, t a ‹_›) :=
 begin
   rw bUnion_eq_Union,
   haveI := hs.to_encodable,
@@ -135,7 +170,8 @@ lemma countable_Union_Prop {p : Prop} {t : p → set β} (ht : ∀h:p, countable
   countable (⋃h:p, t h) :=
 by by_cases p; simp [h, ht]
 
-lemma countable.union {s₁ s₂ : set α} (h₁ : countable s₁) (h₂ : countable s₂) : countable (s₁ ∪ s₂) :=
+lemma countable.union
+  {s₁ s₂ : set α} (h₁ : countable s₁) (h₂ : countable s₂) : countable (s₁ ∪ s₂) :=
 by rw union_eq_Union; exact
 countable_Union (bool.forall_bool.2 ⟨h₂, h₁⟩)
 
@@ -143,7 +179,16 @@ lemma countable.insert {s : set α} (a : α) (h : countable s) : countable (inse
 by { rw [set.insert_eq], exact (countable_singleton _).union h }
 
 lemma finite.countable {s : set α} : finite s → countable s
-| ⟨h⟩ := nonempty_of_trunc (by exactI trunc_encodable_of_fintype s)
+| ⟨h⟩ := trunc.nonempty (by exactI trunc_encodable_of_fintype s)
+
+lemma subsingleton.countable {s : set α} (hs : s.subsingleton) : countable s :=
+hs.finite.countable
+
+lemma countable_is_top (α : Type*) [partial_order α] : countable {x : α | is_top x} :=
+(finite_is_top α).countable
+
+lemma countable_is_bot (α : Type*) [partial_order α] : countable {x : α | is_bot x} :=
+(finite_is_bot α).countable
 
 /-- The set of finite subsets of a countable set is countable. -/
 lemma countable_set_of_finite_subset {s : set α} : countable s →
@@ -152,7 +197,7 @@ begin
   resetI,
   refine countable.mono _ (countable_range
     (λ t : finset s, {a | ∃ h:a ∈ s, subtype.mk a h ∈ t})),
-  rintro t ⟨⟨ht⟩, ts⟩,
+  rintro t ⟨⟨ht⟩, ts⟩, resetI,
   refine ⟨finset.univ.map (embedding_of_subset _ _ ts),
     set.ext $ λ a, _⟩,
   suffices : a ∈ s ∧ a ∈ t ↔ a ∈ t, by simpa,
@@ -169,25 +214,21 @@ have trunc (encodable (Π (a : α), s a)), from
 trunc.induction_on this $ assume h,
 @countable_range _ _ h _
 
-lemma countable_prod {s : set α} {t : set β} (hs : countable s) (ht : countable t) :
+protected lemma countable.prod {s : set α} {t : set β} (hs : countable s) (ht : countable t) :
   countable (set.prod s t) :=
 begin
   haveI : encodable s := hs.to_encodable,
   haveI : encodable t := ht.to_encodable,
-  haveI : encodable (s × t) := by apply_instance,
-  have : range (λp, ⟨p.1, p.2⟩ : s × t → α × β) = set.prod s t,
-  { ext z,
-    rcases z with ⟨x, y⟩,
-    simp only [exists_prop, set.mem_range, set_coe.exists, prod.mk.inj_iff,
-               set.prod_mk_mem_set_prod_eq, subtype.coe_mk, prod.exists],
-    split,
-    { rintros ⟨x', x's, y', y't, x'x, y'y⟩,
-      simp [x'x.symm, y'y.symm, x's, y't] },
-    { rintros ⟨xs, yt⟩,
-      exact ⟨x, xs, y, yt, rfl, rfl⟩ }},
+  haveI : encodable (s × t), { apply_instance },
+  have : range (prod.map coe coe : s × t → α × β) = set.prod s t,
+    by rw [range_prod_map, subtype.range_coe, subtype.range_coe],
   rw ← this,
   exact countable_range _
 end
+
+lemma countable.image2 {s : set α} {t : set β} (hs : countable s) (ht : countable t)
+  (f : α → β → γ) : countable (image2 f s t) :=
+by { rw ← image_prod, exact (hs.prod ht).image _ }
 
 section enumerate
 
