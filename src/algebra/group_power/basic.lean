@@ -453,6 +453,7 @@ by rwa [not_iff_not, pow_eq_zero_iff]
 mt pow_eq_zero h
 
 section semiring
+
 variables [semiring R]
 
 lemma min_pow_dvd_add {n m : ℕ} {a b c : R} (ha : c ^ n ∣ a) (hb : c ^ m ∣ b) :

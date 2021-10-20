@@ -1660,8 +1660,9 @@ lemma div_surjective (z : K) : ∃ (x y : A) (hy : y ∈ non_zero_divisors A),
 let ⟨x, ⟨y, hy⟩, h⟩ := mk'_surjective (non_zero_divisors A) z
 in ⟨x, y, hy, by rwa mk'_eq_div at h⟩
 
-lemma is_unit_map_of_injective {L : Type*} [division_ring L] {g : A →+* L}
-  (hg : function.injective g) (y : non_zero_divisors A) : is_unit (g y) :=
+lemma is_unit_map_of_injective {L : Type*} [division_ring L] {g : A →+* L} (hg : injective g)
+  (y : non_zero_divisors A) :
+  is_unit (g y) :=
 is_unit.mk0 (g y) $ show g.to_monoid_with_zero_hom y ≠ 0,
   from g.map_ne_zero_of_mem_non_zero_divisors hg y.2
 

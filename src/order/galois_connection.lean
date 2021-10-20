@@ -145,10 +145,11 @@ le_antisymm (gc.l_le $ (hu (l' a)).symm ▸ gc'.le_u_l _)
 
 end partial_order
 
-section partial_order'
-variables [partial_order α] [preorder β] {l : α → β} {u : β → α} (gc : galois_connection l u)
+section order_top
+variables [order_top α] [order_top β] {l : α → β} {u : β → α} (gc : galois_connection l u)
 include gc
 
+lemma u_top : u ⊤ = ⊤ := top_unique $ gc.le_u le_top
 
 end order_top
 

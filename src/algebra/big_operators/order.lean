@@ -42,6 +42,9 @@ begin
   refl,
 end
 
+/-- Let `{x | p x}` be an additive subsemigroup of an additive commutative monoid `M`. Let
+`f : M → N` be a map subadditive on `{x | p x}`, i.e., `p x → p y → f (x + y) ≤ f x + f y`. Let
+`g i`, `i ∈ s`, be a nonempty finite family of elements of `M` such that `∀ i ∈ s, p (g i)`. Then
 `f (∑ i in s, g i) ≤ ∑ i in s, f (g i)`. -/
 add_decl_doc le_sum_nonempty_of_subadditive_on_pred
 
@@ -111,12 +114,9 @@ begin
 end
 
 /-- In an ordered additive commutative monoid, if each summand `f i` of one finite sum is less than
+or equal to the corresponding summand `g i` of another finite sum, then
 `∑ i in s, f i ≤ ∑ i in s, g i`. -/
 add_decl_doc sum_le_sum
-
-lemma abs_sum_le_sum_abs [linear_ordered_comm_ring α] {f : β → α} {s : finset β} :
-  abs (∑ x in s, f x) ≤ ∑ x in s, abs (f x) :=
-le_sum_of_subadditive _ abs_zero abs_add s f
 
 @[to_additive sum_nonneg]  lemma one_le_prod' (h : ∀i ∈ s, 1 ≤ f i) : 1 ≤ (∏ i in s, f i) :=
 le_trans (by rw prod_const_one) (prod_le_prod'' h)

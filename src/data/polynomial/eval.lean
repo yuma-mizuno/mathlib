@@ -701,7 +701,7 @@ section comm_semiring
 
 section eval
 
-lemma eval₂_comp {[semiring R] [comm_semiring S] {p q : polynomial R} (f : R →+* S) {x : S} :
+lemma eval₂_comp [semiring R] [comm_semiring S] {p q : polynomial R} (f : R →+* S) {x : S} :
   eval₂ f x (p.comp q) = eval₂ f (eval₂ f x q) p :=
 by rw [comp, p.as_sum_range]; simp [eval₂_finset_sum, eval₂_pow]
 

@@ -348,8 +348,6 @@ end linear_ordered_add_comm_group
 section ordered_cancel_add_comm_monoid
 variable [ordered_cancel_add_comm_monoid A]
 
-theorem nsmul_le_nsmul_iff {a : A} {n m : ℕ} (ha : 0 < a) : n •ℕ a ≤ m •ℕ a ↔ n ≤ m :=
-
 theorem nsmul_le_nsmul_iff {a : A} {n m : ℕ} (ha : 0 < a) : n • a ≤ m • a ↔ n ≤ m :=
 begin
   refine ⟨λ h, _, nsmul_le_nsmul $ le_of_lt ha⟩,

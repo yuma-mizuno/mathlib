@@ -283,10 +283,10 @@ by rw [nat_degree_neg, coeff_neg, show q.coeff q.nat_degree = -1, from hq, neg_n
 by { rw sub_eq_add_neg, apply monic_add_of_right this, rwa degree_neg }
 
 end ring
+
 section injective
-variables [semiring R] {p : polynomial R}
 open function
-variables [semiring S] {f : R →+* S} (hf : injective f)
+variables [semiring R] [semiring S] {p : polynomial R} {f : R →+* S} (hf : injective f)
 include hf
 
 lemma degree_map_eq_of_injective (p : polynomial R) : degree (p.map f) = degree p :=

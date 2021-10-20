@@ -140,7 +140,7 @@ lemma inverse_add_nth_order (x : units R) (n : ℕ) :
 begin
   refine (inverse_add x).mp _,
   have hzero : tendsto (λ (t : R), - ↑x⁻¹ * t) (𝓝 0) (𝓝 0),
-  { convert ((continuous_mul_left (- (↑x⁻¹ : R))).tendsto 0).comp tendsto_id,
+  { convert ((mul_left_continuous (- (↑x⁻¹ : R))).tendsto 0).comp tendsto_id,
     simp },
   refine (hzero.eventually (inverse_one_sub_nth_order n)).mp (eventually_of_forall _),
   simp only [neg_mul_eq_neg_mul_symm, sub_neg_eq_add],
@@ -180,7 +180,7 @@ begin
   cases is_O_iff.mp (@inverse_one_sub_norm R _ _) with C hC,
   use C * ∥((x⁻¹:units R):R)∥,
   have hzero : tendsto (λ t, - (↑x⁻¹ : R) * t) (𝓝 0) (𝓝 0),
-  { convert ((continuous_mul_left (-↑x⁻¹ : R)).tendsto 0).comp tendsto_id,
+  { convert ((mul_left_continuous (-↑x⁻¹ : R)).tendsto 0).comp tendsto_id,
     simp },
   refine (inverse_add x).mp ((hzero.eventually hC).mp (eventually_of_forall _)),
   intros t bound iden,

@@ -33,7 +33,8 @@ open_locale big_operators nat
 variables {R : Type*} {G : Type*} [comm_ring R] [integral_domain R] [fintype G]
 
 lemma card_nth_roots_subgroup_units [monoid G] (f : G →* R) (hf : injective f) {n : ℕ} (hn : 0 < n)
-  (g₀ : G) : ({g ∈ univ | g ^ n = g₀} : finset G).card ≤ (nth_roots n (f g₀)).card :=
+  (g₀ : G) :
+  ({g ∈ univ | g ^ n = g₀} : finset G).card ≤ (nth_roots n (f g₀)).card :=
 begin
   haveI : decidable_eq R := classical.dec_eq _,
   refine le_trans _ (nth_roots n (f g₀)).to_finset_card_le,
@@ -47,8 +48,7 @@ end
 variables [group G]
 
 /-- A finite subgroup of the unit group of an integral domain is cyclic. -/
-lemma is_cyclic_of_subgroup_integral_domain (f : G →* R) (hf : injective f) :
-  is_cyclic G :=
+lemma is_cyclic_of_subgroup_integral_domain (f : G →* R) (hf : injective f) : is_cyclic G :=
 begin
   classical,
   apply is_cyclic_of_card_pow_eq_one_le,
@@ -86,7 +86,7 @@ end
 
 end
 
-lemma card_fiber_eq_of_mem_range [group G] {H : Type*} [group H] [decidable_eq H]
+lemma card_fiber_eq_of_mem_range {H : Type*} [group H] [decidable_eq H]
   (f : G →* H) {x y : H} (hx : x ∈ set.range f) (hy : y ∈ set.range f) :
   (univ.filter $ λ g, f g = x).card = (univ.filter $ λ g, f g = y).card :=
 begin
