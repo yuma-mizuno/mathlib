@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aaron Anderson
 -/
 import data.finsupp.basic
-import algebra.ordered_group
 
 /-!
 # Lattice structure on finsupps
@@ -38,10 +37,7 @@ lemma support_inf {f g : α →₀ γ} : (f ⊓ g).support = f.support ∩ g.sup
 begin
   ext, simp only [inf_apply, mem_support_iff,  ne.def,
     finset.mem_union, finset.mem_filter, finset.mem_inter],
-  rw [← decidable.not_or_iff_and_not, ← not_congr],
-  rw inf_eq_min, unfold min, split_ifs;
-  { try {apply or_iff_left_of_imp}, try {apply or_iff_right_of_imp}, intro con, rw con at h,
-    revert h, simp, }
+  simp only [inf_eq_min, ← nonpos_iff_eq_zero, min_le_iff, not_or_distrib]
 end
 
 instance [semilattice_sup β] : semilattice_sup (α →₀ β) :=
@@ -82,7 +78,7 @@ variable [partial_order β]
 def order_embedding_to_fun :
   (α →₀ β) ↪o (α → β) :=
 ⟨⟨λ (f : α →₀ β) (a : α), f a,  λ f g h, finsupp.ext (λ a, by { dsimp at h, rw h,} )⟩,
-  λ a b, le_def⟩
+  λ a b, (@le_def _ _ _ _ a b).symm⟩
 
 @[simp] lemma order_embedding_to_fun_apply {f : α →₀ β} {a : α} :
   order_embedding_to_fun f a = f a := rfl

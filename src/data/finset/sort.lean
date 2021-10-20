@@ -1,9 +1,9 @@
 /-
 Copyright (c) 2017 Mario Carneiro. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Author: Mario Carneiro
+Authors: Mario Carneiro
 -/
-import data.finset.lattice
+import data.fintype.basic
 import data.multiset.sort
 import data.list.nodup_equiv_fin
 
@@ -43,6 +43,9 @@ multiset.mem_sort _
 @[simp] theorem length_sort {s : finset α} : (sort r s).length = s.card :=
 multiset.length_sort _
 
+lemma sort_perm_to_list (s : finset α) : sort r s ~ s.to_list :=
+by { rw ←multiset.coe_eq_coe, simp only [coe_to_list, sort_eq] }
+
 end sort
 
 section sort_linear_order
@@ -61,7 +64,7 @@ begin
     obtain ⟨i, i_lt, hi⟩ : ∃ i (hi : i < l.length), l.nth_le i hi = s.min' H :=
       list.mem_iff_nth_le.1 this,
     rw ← hi,
-    exact list.nth_le_of_sorted_of_le (s.sort_sorted (≤)) (nat.zero_le i) },
+    exact (s.sort_sorted (≤)).rel_nth_le_of_le _ _ (nat.zero_le i) },
   { have : l.nth_le 0 h ∈ s := (finset.mem_sort (≤)).1 (list.nth_le_mem l 0 h),
     exact s.min'_le _ this }
 end
@@ -87,7 +90,7 @@ begin
       list.mem_iff_nth_le.1 this,
     rw ← hi,
     have : i ≤ l.length - 1 := nat.le_pred_of_lt i_lt,
-    exact list.nth_le_of_sorted_of_le (s.sort_sorted (≤)) (nat.le_pred_of_lt i_lt) },
+    exact (s.sort_sorted (≤)).rel_nth_le_of_le _ _ (nat.le_pred_of_lt i_lt) },
 end
 
 lemma sorted_last_eq_max' {s : finset α} {h : (s.sort (≤)).length - 1 < (s.sort (≤)).length} :
@@ -97,14 +100,14 @@ sorted_last_eq_max'_aux _ _ _
 
 lemma max'_eq_sorted_last {s : finset α} {h : s.nonempty} :
   s.max' h = (s.sort (≤)).nth_le ((s.sort (≤)).length - 1)
-    (by simpa using sub_lt (card_pos.mpr h) zero_lt_one) :=
+    (by simpa using nat.sub_lt (card_pos.mpr h) zero_lt_one) :=
 (sorted_last_eq_max'_aux _ _ _).symm
 
 /-- Given a finset `s` of cardinality `k` in a linear order `α`, the map `order_iso_of_fin s h`
 is the increasing bijection between `fin k` and `s` as an `order_iso`. Here, `h` is a proof that
 the cardinality of `s` is `k`. We use this instead of an iso `fin s.card ≃o s` to avoid
 casting issues in further uses of this function. -/
-def order_iso_of_fin (s : finset α) {k : ℕ} (h : s.card = k) : fin k ≃o (s : set α) :=
+def order_iso_of_fin (s : finset α) {k : ℕ} (h : s.card = k) : fin k ≃o s :=
 order_iso.trans (fin.cast ((length_sort (≤)).trans h).symm) $
   (s.sort_sorted_lt.nth_le_iso _).trans $ order_iso.set_congr _ _ $
     set.ext $ λ x, mem_sort _
@@ -120,13 +123,17 @@ def order_emb_of_fin (s : finset α) {k : ℕ} (h : s.card = k) : fin k ↪o α 
   ↑(order_iso_of_fin s h i) = order_emb_of_fin s h i :=
 rfl
 
-lemma order_iso_of_fin_symm_apply (s : finset α) {k : ℕ} (h : s.card = k) (x : (s : set α)) :
+lemma order_iso_of_fin_symm_apply (s : finset α) {k : ℕ} (h : s.card = k) (x : s) :
   ↑((s.order_iso_of_fin h).symm x) = (s.sort (≤)).index_of x :=
 rfl
 
 lemma order_emb_of_fin_apply (s : finset α) {k : ℕ} (h : s.card = k) (i : fin k) :
   s.order_emb_of_fin h i = (s.sort (≤)).nth_le i (by { rw [length_sort, h], exact i.2 }) :=
 rfl
+
+@[simp] lemma order_emb_of_fin_mem (s : finset α) {k : ℕ} (h : s.card = k) (i : fin k) :
+  s.order_emb_of_fin h i ∈ s :=
+(s.order_iso_of_fin h i).2
 
 @[simp] lemma range_order_emb_of_fin (s : finset α) {k : ℕ} (h : s.card = k) :
   set.range (s.order_emb_of_fin h) = s :=
@@ -173,7 +180,33 @@ and only if `i = j`. Since they can be defined on a priori not defeq types `fin 
   s.order_emb_of_fin h i = s.order_emb_of_fin h' j ↔ (i : ℕ) = (j : ℕ) :=
 begin
   substs k l,
-  exact (s.order_emb_of_fin rfl).apply_eq_apply.trans (fin.ext_iff _ _)
+  exact (s.order_emb_of_fin rfl).eq_iff_eq.trans (fin.ext_iff _ _)
+end
+
+lemma card_le_of_interleaved {s t : finset α} (h : ∀ x y ∈ s, x < y → ∃ z ∈ t, x < z ∧ z < y) :
+  s.card ≤ t.card + 1 :=
+begin
+  have h1 : ∀ i : fin (s.card - 1), ↑i + 1 < (s.sort (≤)).length,
+  { intro i,
+    rw [finset.length_sort, ←lt_sub_iff_right],
+    exact i.2 },
+  have h0 : ∀ i : fin (s.card - 1), ↑i < (s.sort (≤)).length :=
+  λ i, lt_of_le_of_lt (nat.le_succ i) (h1 i),
+  have p := λ i : fin (s.card - 1), h ((s.sort (≤)).nth_le i (h0 i))
+    ((s.sort (≤)).nth_le (i + 1) (h1 i))
+    ((finset.mem_sort (≤)).mp (list.nth_le_mem _ _ (h0 i)))
+    ((finset.mem_sort (≤)).mp (list.nth_le_mem _ _ (h1 i)))
+    (s.sort_sorted_lt.rel_nth_le_of_lt (h0 i) (h1 i) (nat.lt_succ_self i)),
+  let f : fin (s.card - 1) → t :=
+  λ i, ⟨classical.some (p i), (exists_prop.mp (classical.some_spec (p i))).1⟩,
+  have hf : ∀ i j : fin (s.card - 1), i < j → f i < f j :=
+  λ i j hij, subtype.coe_lt_coe.mp ((exists_prop.mp (classical.some_spec (p i))).2.2.trans
+    (lt_of_le_of_lt ((s.sort_sorted (≤)).rel_nth_le_of_le (h1 i) (h0 j) (nat.succ_le_iff.mpr hij))
+    (exists_prop.mp (classical.some_spec (p j))).2.1)),
+  have key := fintype.card_le_of_embedding (function.embedding.mk f (λ i j hij, le_antisymm
+    (not_lt.mp (mt (hf j i) (not_lt.mpr (le_of_eq hij))))
+    (not_lt.mp (mt (hf i j) (not_lt.mpr (ge_of_eq hij)))))),
+  rwa [fintype.card_fin, fintype.card_coe, sub_le_iff_right] at key,
 end
 
 end sort_linear_order
