@@ -460,31 +460,28 @@ protected lemma caratheodory {m : measurable_space α} (μ : measure α) (hs : m
   μ (t ∩ s) + μ (t \ s) = μ t :=
 (le_to_outer_measure_caratheodory μ s hs t).symm
 
-/-- If `c` is a measurable superset of a non-measurable set `b`, with the same measure, then for any
-measurable set `a` one also has `μ (b ∩ a) = μ (c ∩ a)`. -/
-lemma measure_inter_eq_of_measure_eq
-  {a b c : set α} (ha : measurable_set a) (hc : measurable_set c) (h : μ b = μ c)
-  (hbc : b ⊆ c) (hc_ne_top : μ c ≠ ∞) :
-  μ (b ∩ a) = μ (c ∩ a) :=
+/-- If `c` is a superset of `b` with the same measure (both sets possibly non-measurable), then
+for any measurable set `a` one also has `μ (b ∩ a) = μ (c ∩ a)`. -/
+lemma measure_inter_eq_of_measure_eq {s t u : set α} (hs : measurable_set s)
+  (h : μ t = μ u) (htu : t ⊆ u) (ht_ne_top : μ t ≠ ∞) :
+  μ (t ∩ s) = μ (u ∩ s) :=
 begin
-  refine le_antisymm (measure_mono (inter_subset_inter_left _ hbc)) _,
-  have A : μ (c ∩ a) + μ (c \ a) ≤ μ (b ∩ a) + μ (c \ a) := calc
-    μ (c ∩ a) + μ (c \ a) = μ c : measure.caratheodory μ ha
-    ... = μ b : h.symm
-    ... = μ (b ∩ a) + μ (b \ a) : (measure.caratheodory μ ha).symm
-    ... ≤ μ (b ∩ a) + μ (c \ a) :
-      add_le_add le_rfl (measure_mono (diff_subset_diff hbc subset.rfl)),
-  have B : μ (c \ a) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) hc_ne_top.lt_top).ne,
+  rw h at ht_ne_top,
+  refine le_antisymm (measure_mono (inter_subset_inter_left _ htu)) _,
+  have A : μ (u ∩ s) + μ (u \ s) ≤ μ (t ∩ s) + μ (u \ s) := calc
+    μ (u ∩ s) + μ (u \ s) = μ u : measure.caratheodory μ hs
+    ... = μ t : h.symm
+    ... = μ (t ∩ s) + μ (t \ s) : (measure.caratheodory μ hs).symm
+    ... ≤ μ (t ∩ s) + μ (u \ s) :
+      add_le_add le_rfl (measure_mono (diff_subset_diff htu subset.rfl)),
+  have B : μ (u \ s) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) ht_ne_top.lt_top).ne,
   exact ennreal.le_of_add_le_add_right B A
 end
 
-lemma measure_to_measurable_inter {a b : set α} (c : set α) (ha : measurable_set a) (hb : μ b ≠ ∞) :
-  μ (to_measurable μ b ∩ a) = μ (b ∩ a) :=
-begin
-  apply (measure_inter_eq_of_measure_eq ha (measurable_set_to_measurable μ b)
-    (measure_to_measurable b).symm (subset_to_measurable μ b) _).symm,
-  rwa measure_to_measurable b,
-end
+lemma measure_to_measurable_inter {s t : set α} (hs : measurable_set s) (ht : μ t ≠ ∞) :
+  μ (to_measurable μ t ∩ s) = μ (t ∩ s) :=
+(measure_inter_eq_of_measure_eq hs (measure_to_measurable t).symm
+  (subset_to_measurable μ t) ht).symm
 
 /-! ### The `ℝ≥0∞`-module of measures -/
 
@@ -549,6 +546,52 @@ injective.module ℝ≥0∞ ⟨to_outer_measure, zero_to_outer_measure, add_to_o
 @[simp, norm_cast] theorem coe_nnreal_smul {m : measurable_space α} (c : ℝ≥0) (μ : measure α) :
   ⇑(c • μ) = c • μ :=
 rfl
+
+@[simp] theorem coe_nnreal_smul_apply {m : measurable_space α} (c : ℝ≥0) (μ : measure α)
+  (s : set α) :
+  (c • μ) s = c * μ s :=
+rfl
+
+lemma measure_eq_left_of_subset_of_measure_add_eq {s t : set α}
+  (h : (μ + ν) t ≠ ∞) (h' : s ⊆ t) (h'' : (μ + ν) s = (μ + ν) t) :
+  μ s = μ t :=
+begin
+  refine le_antisymm (measure_mono h') _,
+  have : μ t + ν t ≤ μ s + ν t := calc
+    μ t + ν t = μ s + ν s : h''.symm
+    ... ≤ μ s + ν t : add_le_add le_rfl (measure_mono h'),
+  apply ennreal.le_of_add_le_add_right _ this,
+  simp only [not_or_distrib, ennreal.add_eq_top, pi.add_apply, ne.def, coe_add] at h,
+  exact h.2
+end
+
+lemma measure_eq_right_of_subset_of_measure_add_eq {s t : set α}
+  (h : (μ + ν) t ≠ ∞) (h' : s ⊆ t) (h'' : (μ + ν) s = (μ + ν) t) :
+  ν s = ν t :=
+begin
+  rw add_comm at h'' h,
+  exact measure_eq_left_of_subset_of_measure_add_eq h h' h''
+end
+
+lemma measure_to_measurable_add_inter_left {s t : set α}
+  (hs : measurable_set s) (ht : (μ + ν) t ≠ ∞) :
+  μ (to_measurable (μ + ν) t ∩ s) = μ (t ∩ s) :=
+begin
+  refine (measure_inter_eq_of_measure_eq hs _ (subset_to_measurable _ _) _).symm,
+  { refine measure_eq_left_of_subset_of_measure_add_eq _ (subset_to_measurable _ _)
+      (measure_to_measurable t).symm,
+    rwa measure_to_measurable t,  },
+  { simp only [not_or_distrib, ennreal.add_eq_top, pi.add_apply, ne.def, coe_add] at ht,
+    exact ht.1 }
+end
+
+lemma measure_to_measurable_add_inter_right {s t : set α}
+  (hs : measurable_set s) (ht : (μ + ν) t ≠ ∞) :
+  ν (to_measurable (μ + ν) t ∩ s) = ν (t ∩ s) :=
+begin
+  rw add_comm at ht ⊢,
+  exact measure_to_measurable_add_inter_left hs ht
+end
 
 /-! ### The complete lattice of measures -/
 
@@ -1305,6 +1348,9 @@ else by simp only [map_of_not_measurable hf]
 
 protected lemma smul (h : μ ≪ ν) (c : ℝ≥0∞) : c • μ ≪ ν :=
 mk (λ s hs hνs, by simp only [h hνs, algebra.id.smul_eq_mul, coe_smul, pi.smul_apply, mul_zero])
+
+protected lemma coe_nnreal_smul (h : μ ≪ ν) (c : ℝ≥0) : c • μ ≪ ν :=
+h.smul c
 
 end absolutely_continuous
 

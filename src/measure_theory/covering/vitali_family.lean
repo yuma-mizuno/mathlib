@@ -22,7 +22,7 @@ differentiations of measure that apply in both contexts.
 This file defines Vitali families and proves its basic properties.
 -/
 
-open measure_theory metric set filter topological_space
+open measure_theory metric set filter topological_space measure_theory.measure
 open_locale filter ennreal measure_theory nnreal topological_space
 
 local attribute [instance] emetric.second_countable_of_sigma_compact
@@ -53,7 +53,7 @@ structure vitali_family {m : measurable_space α} (μ : measure α) :=
 
 namespace vitali_family
 
-variables {m : measurable_space α} {μ : measure α}
+variables {m0 : measurable_space α} {μ : measure α}
 include μ
 
 /-- A Vitali family for a measure `μ` is also a Vitali family for any measure absolutely continuous
@@ -286,8 +286,7 @@ begin
     ... ≤ μ (s ∩ o) + μ (oᶜ) : measure_union_le _ _
     ... = μ (s ∩ o) : by rw [μo, add_zero]
     ... = ε⁻¹ * (ε • μ) (s ∩ o) : begin
-      simp only [measure.coe_nnreal_smul, algebra.mul_smul_comm, pi.smul_apply],
-      simp only [has_scalar.smul, has_scalar.comp.smul, ennreal.coe_of_nnreal_hom, ← mul_assoc],
+      simp only [coe_nnreal_smul_apply, ← mul_assoc, mul_comm _ (ε : ℝ≥0∞)],
       rw [ennreal.mul_inv_cancel (ennreal.coe_pos.2 εpos).ne' ennreal.coe_ne_top, one_mul],
     end
     ... ≤ ε⁻¹ * ρ (s ∩ o) : begin
@@ -318,46 +317,6 @@ begin
   exact ha.trans_le (ennreal.mul_le_mul ((ennreal.coe_le_coe.2 hn.le).trans w_lt.le) le_rfl)
 end
 
-lemma ae_not_tendsto_top [sigma_compact_space α] [borel_space α]
-  (ρ : measure α) [is_locally_finite_measure ρ] :
-  μ {x | tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (∞))} = 0 :=
-begin
-  refine null_of_locally_null _ (λ x hx, _),
-  obtain ⟨o, xo, o_open, μo⟩ : ∃ o : set α, x ∈ o ∧ is_open o ∧ ρ o < ∞ :=
-    measure.exists_is_open_measure_lt_top ρ x,
-  refine ⟨o, mem_nhds_within_of_mem_nhds (o_open.mem_nhds xo), le_antisymm _ bot_le⟩,
-  apply ennreal.le_of_forall_pos_le_add (λ ε εpos hzero, _),
-  rw zero_add,
-  set δ : ℝ≥0 := ε / (1 + (ρ o).to_nnreal) with hδ,
-  have δpos : 0 < δ := nnreal.div_pos εpos (add_pos_of_pos_of_nonneg zero_lt_one bot_le),
-  set s := {x : α | tendsto (λ (a : set α), ρ a / μ a) (v.filter_at x) (𝓝 ∞)} ∩ o with hs,
-  have A : μ s ≤ (δ • ρ) s,
-  { refine v.measure_le_of_frequently_le (δ • ρ) measure.absolutely_continuous.rfl s (λ x hx, _),
-    apply eventually.frequently,
-    simp only [mem_inter_eq, mem_set_of_eq] at hx,
-    filter_upwards [(tendsto_order.1 hx.1).1 (δ⁻¹ : ℝ≥0) ennreal.coe_lt_top],
-    assume a ha,
-    have : ((δ⁻¹ : ℝ≥0) : ℝ≥0∞) * μ a < ρ a,
-    { apply (ennreal.lt_div_iff_mul_lt _ _).1 ha,
-      { simp only [ennreal.coe_ne_top, ne.def, or_true, not_false_iff] },
-      { simp only [div_eq_zero_iff, inv_eq_zero, or_false, ennreal.coe_eq_zero, add_eq_zero_iff,
-          ne.def, one_ne_zero, false_and, εpos.ne', or_true, not_false_iff] } },
-    rw [ennreal.coe_inv δpos.ne', mul_comm, ← div_eq_mul_inv, ennreal.div_lt_iff, mul_comm] at this,
-    { exact this.le },
-    { simp only [δpos.ne', true_or, ennreal.coe_eq_zero, ne.def, not_false_iff] },
-    { simp only [ennreal.coe_ne_top, ne.def, true_or, not_false_iff] } },
-  calc μ s ≤ δ * ρ s : A
-  ... ≤ δ * ρ o : ennreal.mul_le_mul le_rfl (measure_mono (inter_subset_right _ _))
-  ... ≤ ε : begin
-    have I : 1 + (ρ o).to_nnreal ≠ 0,
-      by simp only [add_eq_zero_iff, ne.def, not_false_iff, one_ne_zero, false_and],
-    rw [(ennreal.coe_to_nnreal μo.ne).symm, ← ennreal.coe_mul, ennreal.coe_le_coe, hδ,
-         mul_comm, ← mul_div_assoc, nnreal.div_le_iff I, mul_comm, mul_add, mul_one,
-         le_add_iff_nonneg_left],
-    exact zero_le'
-  end
-end
-
 /-- A set of points `s` satisfying both `ρ a ≤ c * μ a` and `ρ a ≥ d * μ a` at arbitrarily small
 sets in a Vitali family has measure `0` if `c < d`. Indeed, the first inequality should imply
 that `ρ s ≤ c * μ s`, and the second one that `ρ s ≥ d * μ s`, a contradiction if `0 < μ s`. -/
@@ -377,37 +336,19 @@ begin
   apply lt_irrefl (ρ s'),
   calc ρ s' ≤ c * μ s' : v.measure_le_of_frequently_le (c • μ) hρ s' (λ x hx, hc x hx.1)
   ... < d * μ s' : begin
-    apply (ennreal.mul_lt_mul_right _ _).2 (ennreal.coe_lt_coe.2 hcd),
-    { assume h', exact h h' },
-    { exact (lt_of_le_of_lt (measure_mono (inter_subset_right _ _)) μo).ne },
+    apply (ennreal.mul_lt_mul_right h _).2 (ennreal.coe_lt_coe.2 hcd),
+    exact (lt_of_le_of_lt (measure_mono (inter_subset_right _ _)) μo).ne,
   end
   ... ≤ ρ s' : v.measure_le_of_frequently_le ρ
     ((measure.absolutely_continuous.refl μ).smul d) s' (λ x hx, hd x hx.1)
 end
-
-lemma measure_inter_eq_of_measure_eq
-  (a b c : set α) (ha : measurable_set a) (hc : measurable_set c) (h : μ b = μ c)
-  (h' : b ⊆ c) (h'' : μ c ≠ ∞) :
-  μ (b ∩ a) = μ (c ∩ a) :=
-begin
-  refine le_antisymm (measure_mono (inter_subset_inter_left _ h')) _,
-  have A : μ (c ∩ a) + μ (c \ a) ≤ μ (b ∩ a) + μ (c \ a) := calc
-    μ (c ∩ a) + μ (c \ a) = μ c : measure.caratheodory μ ha
-    ... = μ b : h.symm
-    ... = μ (b ∩ a) + μ (b \ a) : (measure.caratheodory μ ha).symm
-    ... ≤ μ (b ∩ a) + μ (c \ a) : add_le_add le_rfl (measure_mono (diff_subset_diff h' subset.rfl)),
-  have B : μ (c \ a) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) h''.lt_top).ne,
-  exact ennreal.le_of_add_le_add_right B A
-end
-
-#exit
 
 /-- If `ρ` is absolutely continuous with respect to `μ`, then for almost every `x`, the
 ratio `ρ a / μ a` converges to a finite limit as `a` shrinks to `x` along a
 Vitali family for `μ`. -/
 theorem ae_tendsto_div [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
   {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ] :
-  ∀ᵐ x ∂μ, ∃ (c : ℝ≥0), tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
+  ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
 begin
   let w : set ℝ≥0∞ := {x | ∃ a : ℚ, x = ennreal.of_real a},
   have w_count : countable w,
@@ -442,21 +383,161 @@ begin
   have B : ∀ᵐ x ∂μ, ∀ (c ∈ w) (d ∈ w), (c < d) →
     ¬((∃ᶠ a in v.filter_at x, ρ a / μ a < c) ∧ (∃ᶠ a in v.filter_at x, d < ρ a / μ a)),
     by simpa only [ae_ball_iff w_count, ae_imp_iff],
-  have C : ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c),
-  { filter_upwards [B],
-    assume x hx,
-    exact tendsto_of_no_upcrossings w_dense hx },
-  have D : ∀ᵐ x ∂μ, ¬(tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 ∞)),
-  { change μ _ = 0,
-    convert v.ae_not_tendsto_top ρ,
-    ext x,
-    simp only [not_not, mem_set_of_eq, mem_compl_eq], },
-  filter_upwards [C, D],
-  rintros x ⟨c, hxc⟩ hx,
-  have : c ≠ ∞, by { rintros rfl, exact hx hxc },
-  refine ⟨c.to_nnreal, _⟩,
-  convert hxc,
-  exact ennreal.coe_to_nnreal this
+  filter_upwards [B],
+  assume x hx,
+  exact tendsto_of_no_upcrossings w_dense hx,
+end
+
+open_locale classical
+noncomputable theory
+
+/-- The limit along a Vitali family of `ρ a / μ a` where it makes sense, and garbage otherwise.
+Do *not* use this definition: it is only a temporary device to show that this ratio tends almost
+everywhere to the Radon-Nikodym derivative. -/
+def lim_ratio (ρ : measure α) (x : α) : ℝ≥0∞ :=
+lim (v.filter_at x) (λ a, ρ a / μ a)
+
+/-- Given two thresholds `p < q`, the sets `{x | v.lim_ratio ρ x < p}`
+and `{x | q < v.lim_ratio ρ x}` are obviously disjoint. The key to proving that `v.lim_ratio ρ` is
+almost everywhere measurable is to show that these sets have measurable supersets which are also
+disjoint, up to zero measure. This is the content of this lemma. -/
+lemma exists_measurable_separation_lim_ratio
+  [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
+  {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ]
+  {p q : ℝ≥0} (hpq : p < q) :
+  ∃ a b, measurable_set a ∧ measurable_set b ∧ {x | v.lim_ratio ρ x < p} ⊆ a
+    ∧ {x | (q : ℝ≥0∞) < v.lim_ratio ρ x} ⊆ b ∧ μ (a ∩ b) = 0 :=
+begin
+  /- Here is a rough sketch, assuming that the measure is finite and the limit is well defined
+  everywhere. Let `u := {x | v.lim_ratio ρ x < p}` and `w := {x | q < v.lim_ratio ρ x}`. They
+  have measurable supersets `u'` and `w'` of the same measure. We will show that these satisfy
+  the conclusion of the theorem, i.e., `μ (u' ∩ w') = 0`. For this, note that
+  `ρ (u' ∩ w') = ρ (u ∩ w')` (as `w'` is measurable, see `measure_to_measurable_add_inter_left`).
+  The latter set is included in the set where the limit of the ratios is `< p`, and therefore
+  its measure is `≤ p * μ (u ∩ w')`. Using the same trick in the other direction gives that this is
+  `p * μ (u' ∩ w')`. We have shown that `ρ (u' ∩ w') ≤ p * μ (u' ∩ w')`. Arguing in the same way but
+  using the `w` part gives `q * μ (u' ∩ w') ≤ ρ (u' ∩ w')`. If `μ (u' ∩ w')` were nonzero, this
+  would be a contradiction as `p < q`.
+
+  For the rigorous proof, we need to work on a part of the space where the measure is finite
+  (provided by `spanning_sets (ρ + μ)`) and to restrict to the set where the limit is well defined
+  (called `s` below, of full measure). Otherwise, the argument goes through.
+  -/
+  let s := {x | ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c)},
+  let o : ℕ → set α := spanning_sets (ρ + μ),
+  let u := λ n, (s ∩ {x | v.lim_ratio ρ x < p} ∩ o n),
+  let w := λ n, (s ∩ {x | (q : ℝ≥0∞) < v.lim_ratio ρ x} ∩ o n),
+  -- the supersets are obtained by restricting to the set `s` where the limit is well defined, to
+  -- a finite measure part `o n`, taking a measurable superset here, and then taking the union over
+  -- `n`.
+  refine ⟨to_measurable μ sᶜ ∪ (⋃ n, to_measurable (ρ + μ) (u n)),
+    to_measurable μ sᶜ ∪ (⋃ n, to_measurable (ρ + μ) (w n)), _, _, _, _, _⟩,
+  -- check that these sets are measurable supersets as required
+  { exact (measurable_set_to_measurable _ _).union
+      (measurable_set.Union (λ n, (measurable_set_to_measurable _ _))) },
+  { exact (measurable_set_to_measurable _ _).union
+      (measurable_set.Union (λ n, (measurable_set_to_measurable _ _))) },
+  { assume x hx,
+    by_cases h : x ∈ s,
+    { refine or.inr (mem_Union.2 ⟨spanning_sets_index (ρ + μ) x, _⟩),
+      exact subset_to_measurable _ _ ⟨⟨h, hx⟩, mem_spanning_sets_index _ _⟩ },
+    { exact or.inl (subset_to_measurable μ sᶜ h) } },
+  { assume x hx,
+    by_cases h : x ∈ s,
+    { refine or.inr (mem_Union.2 ⟨spanning_sets_index (ρ + μ) x, _⟩),
+      exact subset_to_measurable _ _ ⟨⟨h, hx⟩, mem_spanning_sets_index _ _⟩ },
+    { exact or.inl (subset_to_measurable μ sᶜ h) } },
+  -- it remains to check the nontrivial part that these sets have zero measure intersection
+  -- it suffices to do it for fixed `m` and `n`, as one is taking countable unions.
+  suffices H : ∀ (m n : ℕ), μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) = 0,
+  { have A : (to_measurable μ sᶜ ∪ (⋃ n, to_measurable (ρ + μ) (u n))) ∩
+      (to_measurable μ sᶜ ∪ (⋃ n, to_measurable (ρ + μ) (w n))) ⊆
+      to_measurable μ sᶜ ∪ (⋃ m n, (to_measurable (ρ + μ) (u m)) ∩ (to_measurable (ρ + μ) (w n))),
+    { simp only [inter_distrib_left, inter_distrib_right, true_and, subset_union_left,
+        union_subset_iff, inter_self],
+      refine ⟨_, _, _⟩,
+      { exact (inter_subset_left _ _).trans (subset_union_left _ _) },
+      { exact (inter_subset_right _ _).trans (subset_union_left _ _) },
+      { simp_rw [Union_inter, inter_Union], exact subset_union_right _ _ } },
+    refine le_antisymm ((measure_mono A).trans _) bot_le,
+    calc
+    μ (to_measurable μ sᶜ ∪ (⋃ m n, (to_measurable (ρ + μ) (u m)) ∩ (to_measurable (ρ + μ) (w n))))
+    ≤ μ (to_measurable μ sᶜ)
+        + μ (⋃ m n, (to_measurable (ρ + μ) (u m)) ∩ (to_measurable (ρ + μ) (w n))) :
+      measure_union_le _ _
+    ... = μ (⋃ m n, (to_measurable (ρ + μ) (u m)) ∩ (to_measurable (ρ + μ) (w n))) :
+      by { have : μ sᶜ = 0 := v.ae_tendsto_div hρ, rw [measure_to_measurable, this, zero_add] }
+    ... ≤ ∑' m n, μ ((to_measurable (ρ + μ) (u m)) ∩ (to_measurable (ρ + μ) (w n))) :
+      (measure_Union_le _).trans (ennreal.tsum_le_tsum (λ m, measure_Union_le _))
+    ... = 0 : by simp only [H, tsum_zero] },
+  -- now starts the nontrivial part of the argument. We fix `m` and `n`, and show that the
+  -- measurable supersets of `u m` and `w n` have zero measure intersection by using the lemmas
+  -- `measure_to_measurable_add_inter_left` (to reduce to `u m` or `w n` instead of the measurable
+  -- superset) and `measure_le_of_frequently_le` to compare their measures for `ρ` and `μ`.
+  assume m n,
+  have I : (ρ + μ) (u m) ≠ ∞,
+  { apply (lt_of_le_of_lt (measure_mono _) (measure_spanning_sets_lt_top (ρ + μ) m)).ne,
+    exact inter_subset_right _ _ },
+  have J : (ρ + μ) (w n) ≠ ∞,
+  { apply (lt_of_le_of_lt (measure_mono _) (measure_spanning_sets_lt_top (ρ + μ) n)).ne,
+    exact inter_subset_right _ _ },
+  have A : ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))
+            ≤ p * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) := calc
+    ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))
+        = ρ (u m ∩ to_measurable (ρ + μ) (w n)) :
+          measure_to_measurable_add_inter_left (measurable_set_to_measurable _ _) I
+    ... ≤ (p • μ) (u m ∩ to_measurable (ρ + μ) (w n)) : begin
+        refine v.measure_le_of_frequently_le _ hρ _ (λ x hx, _),
+        have L : tendsto (λ (a : set α), ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio ρ x)) :=
+          tendsto_nhds_lim hx.1.1.1,
+        have I : ∀ᶠ (b : set α) in v.filter_at x, ρ b / μ b < p :=
+          (tendsto_order.1 L).2 _ hx.1.1.2,
+        apply I.frequently.mono (λ a ha, _),
+        rw [coe_nnreal_smul_apply],
+        refine (ennreal.div_le_iff_le_mul _ (or.inr (bot_le.trans_lt ha).ne')).1 ha.le,
+        simp only [ennreal.coe_ne_top, ne.def, or_true, not_false_iff]
+      end
+    ... = p * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) :
+       by simp only [coe_nnreal_smul_apply,
+          (measure_to_measurable_add_inter_right (measurable_set_to_measurable _ _) I)],
+  have B : (q : ℝ≥0∞) * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))
+              ≤ ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) := calc
+    (q : ℝ≥0∞) * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))
+        = (q : ℝ≥0∞) * μ (to_measurable (ρ + μ) (u m) ∩ w n) : begin
+        conv_rhs { rw inter_comm }, rw inter_comm,
+        rw measure_to_measurable_add_inter_right (measurable_set_to_measurable _ _) J,
+      end
+    ... ≤ ρ (to_measurable (ρ + μ) (u m) ∩ w n) : begin
+        rw [← coe_nnreal_smul_apply],
+        refine v.measure_le_of_frequently_le _ (absolutely_continuous.rfl.coe_nnreal_smul _) _ _,
+        assume x hx,
+        have L : tendsto (λ (a : set α), ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio ρ x)) :=
+          tendsto_nhds_lim hx.2.1.1,
+        have I : ∀ᶠ (b : set α) in v.filter_at x, (q : ℝ≥0∞) < ρ b / μ b :=
+          (tendsto_order.1 L).1 _ hx.2.1.2,
+        apply I.frequently.mono (λ a ha, _),
+        rw [coe_nnreal_smul_apply],
+        exact ennreal.mul_le_of_le_div ha.le
+      end
+    ... = ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : begin
+        rw inter_comm, conv_rhs { rw inter_comm },
+        exact (measure_to_measurable_add_inter_left (measurable_set_to_measurable _ _) J).symm,
+      end,
+  by_contra,
+  apply lt_irrefl (ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))),
+  calc ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n))
+      ≤ p * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : A
+  ... < q * μ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : begin
+    apply (ennreal.mul_lt_mul_right h _).2 (ennreal.coe_lt_coe.2 hpq),
+    suffices H : (ρ + μ) (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) ≠ ∞,
+    { simp only [not_or_distrib, ennreal.add_eq_top, pi.add_apply, ne.def, coe_add] at H,
+      exact H.2 },
+    apply (lt_of_le_of_lt (measure_mono (inter_subset_left _ _)) _).ne,
+    rw measure_to_measurable,
+    apply lt_of_le_of_lt (measure_mono _) (measure_spanning_sets_lt_top (ρ + μ) m),
+    exact inter_subset_right _ _
+  end
+  ... ≤ ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : B
 end
 
 end vitali_family
