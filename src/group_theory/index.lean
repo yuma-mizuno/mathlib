@@ -108,17 +108,20 @@ begin
   convert fintype.card_of_subsingleton (1 : quotient_group.quotient (⊤ : subgroup G)),
 end
 
-@[to_additive] lemma rel_index_bot_left [fintype H] : rel_index ⊥ H = fintype.card H :=
+@[to_additive] lemma relindex_bot_left [fintype H] : relindex ⊥ H = fintype.card H :=
 by rw [rel_index, bot_subgroup_of, index_bot]
 
-@[to_additive] lemma rel_index_bot_right : rel_index H ⊥ = 1 :=
+@[to_additive] lemma relindex_bot_right : relindex H ⊥ = 1 :=
 by rw [rel_index, subgroup_of_bot_eq_top, index_top]
 
-@[to_additive] lemma rel_index_top_left : rel_index ⊤ H = 1 :=
+@[to_additive] lemma relindex_top_left : relindex ⊤ H = 1 :=
 index_top
 
-@[to_additive] lemma rel_index_top_right : rel_index H ⊤ = index H :=
+@[to_additive] lemma relindex_top_right : relindex H ⊤ = index H :=
 sorry
+
+@[to_additive] lemma relindex_self : relindex H H = 1 :=
+(congr_arg index H.subgroup_of_self).trans index_top
 
 --TODO: Use previous stuff
 
