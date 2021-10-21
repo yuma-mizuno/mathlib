@@ -6,6 +6,7 @@ Authors: Yaël Dillies, Bhavik Mehta
 import algebra.big_operators.basic
 import data.finset.lattice
 import data.finset.pairwise
+import order.atoms
 
 /-!
 # Finite partitions
@@ -42,13 +43,132 @@ Link `finpartition` and `setoid.is_partition`.
 open finset function
 open_locale big_operators
 
-variables {α : Type*}
+variables {α β ι ι' : Type*}
+
+lemma function.embedding.ne_apply_iff (f : α ↪ β) {a b : α} : f a ≠ f b ↔ a ≠ b :=
+by rw [ne.def, f.apply_eq_iff_eq]
+
+alias function.embedding.ne_apply_iff ↔ _ function.embedding.ne_apply
+
+@[simp] lemma finset.erase_singleton [decidable_eq α] (a : α) : ({a} : finset α).erase a = ∅ :=
+begin
+  ext x,
+  rw [mem_erase, mem_singleton, not_and_self],
+  refl,
+end
+
+@[simp] lemma finset.map_erase [decidable_eq α] [decidable_eq β] (f : α ↪ β) (s : finset α)
+  (a : α) :
+  (s.erase a).map f = (s.image f).erase (f a) :=
+begin
+  ext b,
+  simp only [mem_image, exists_prop, mem_erase, mem_map],
+  split,
+  { rintro ⟨a', ⟨haa', ha'⟩, rfl⟩,
+    exact ⟨f.ne_apply haa', a', ha', rfl⟩ },
+  { rintro ⟨h, a', ha', rfl⟩,
+    exact ⟨a', ⟨ne_of_apply_ne _ h, ha'⟩, rfl⟩ }
+end
+
+@[simp] lemma finset.image_erase [decidable_eq α] [decidable_eq β] {f : α → β} (hf : injective f)
+  (s : finset α) (a : α) :
+  (s.erase a).image f = (s.image f).erase (f a) :=
+begin
+  convert finset.map_erase ⟨f, hf⟩ s a,
+  rw map_eq_image,
+  refl,
+end
+
+lemma disjoint.elim_finset [decidable_eq α] {s t : finset α} (h : disjoint s t) {a : α}
+  (has : a ∈ s) :
+  a ∉ t :=
+begin
+  sorry
+end
+
+lemma disjoint_sup_right' [distrib_lattice_bot α] [decidable_eq ι] {a : α} {s : finset ι}
+  {f : ι → α} :
+  disjoint a (s.sup f) ↔ ∀ i ∈ s, disjoint a (f i) :=
+begin
+  refine ⟨λ h i hi, h.mono_right (le_sup hi), λ h, _⟩,
+  induction s using finset.induction with i s _ ih,
+  { exact disjoint_bot_right },
+  { rw sup_insert,
+    exact disjoint.sup_right (h _ $ mem_insert_self _ _) (ih $ λ j hj, h _ (mem_insert_of_mem hj)) }
+end
+
+namespace finset
+variables [distrib_lattice_bot α] [decidable_eq ι] [decidable_eq ι']
+
+def sup_indep (s : finset ι) (f : ι → α) : Prop :=
+∀ ⦃a⦄, a ∈ s → disjoint (f a) ((s.erase a).sup f)
+
+variables {s t : finset ι} {f : ι → α}
+
+lemma sup_indep.subset (ht : t.sup_indep f) (h : s ⊆ t) :
+  s.sup_indep f :=
+λ a ha, (ht $ h ha).mono_right $ sup_mono $ erase_subset_erase _ h
+
+lemma sup_indep_empty (f : ι → α) : (∅ : finset ι).sup_indep f := λ a ha, ha.elim
+
+lemma sup_indep_singleton (i : ι) (f : ι → α) : ({i} : finset ι).sup_indep f :=
+λ j hj, by { rw [mem_singleton.1 hj, erase_singleton, sup_empty], exact disjoint_bot_right }
+
+lemma sup_indep.attach (hs : s.sup_indep f) : s.attach.sup_indep (f ∘ subtype.val) :=
+λ i _,
+  by { rw [←finset.sup_image, image_erase subtype.val_injective, attach_image_val], exact hs i.2 }
+
+-- This really is a `set.pairwise_disjoint` lemma, but we can't state it that way
+/-- Bind operation for `sup_indep`. -/
+lemma sup_indep.sup {s : finset ι'} {g : ι' → finset ι} {f : ι → α}
+  (hs : s.sup_indep (λ i, (g i).sup f)) (hg : ∀ i' ∈ s, (g i').sup_indep f) :
+  (s.sup g).sup_indep f :=
+begin
+  rintro i hi,
+  rw disjoint_sup_right',
+  refine λ j hj, _,
+  rw mem_sup at hi,
+  obtain ⟨i', hi', hi⟩ := hi,
+  rw [mem_erase, mem_sup] at hj,
+  obtain ⟨hij, j', hj', hj⟩ := hj,
+  obtain hij' | hij' := eq_or_ne j' i',
+  { exact disjoint_sup_right'.1 (hg i' hi' hi) _ (mem_erase.2 ⟨hij, hij'.subst hj⟩) },
+  { exact (hs hi').mono (le_sup hi) ((le_sup hj).trans $ le_sup $ mem_erase.2 ⟨hij', hj'⟩) }
+end
+
+/-- Bind operation for `sup_indep`. -/
+lemma sup_indep.bUnion {s : finset ι'} {g : ι' → finset ι} {f : ι → α}
+  (hs : s.sup_indep (λ i, (g i).sup f)) (hg : ∀ i' ∈ s, (g i').sup_indep f) :
+  (s.bUnion g).sup_indep f :=
+by { rw ←sup_eq_bUnion, exact hs.sup hg }
+
+-- Could be generalized if `set.pairwise_disjoint` were about indexed sets
+lemma sup_indep.pairwise_disjoint {s : finset α} [decidable_eq α] (hs : s.sup_indep id) :
+  (s : set α).pairwise_disjoint :=
+λ a ha b hb hab, (hs ha).mono_right $ le_sup $ mem_erase.2 ⟨hab.symm, hb⟩
+
+-- Could be generalized if `set.pairwise_disjoint` were about indexed sets
+-- Once `finset.sup_indep` will have been generalized to non distributive lattices, we can state
+-- this lemma for nondistributive atomic lattices. This setting makes the `←` implication much
+-- harder.
+lemma sup_inded_iff_pairwise_disjoint {s : finset α} [decidable_eq α] :
+  s.sup_indep id ↔ (s : set α).pairwise_disjoint :=
+begin
+  refine ⟨sup_indep.pairwise_disjoint, λ hs a ha, _⟩,
+  rw disjoint_sup_right',
+  exact λ b hb, hs a ha b (mem_of_mem_erase hb) (ne_of_mem_erase hb).symm,
+end
+
+
+end finset
+
+open finset lattice
 
 /-- A finite partition of `a : α` is a pairwise disjoint finite set of elements whose supremum is
 `a`. We forbid `⊥` as a part. -/
-@[ext] structure finpartition {α : Type*} [distrib_lattice_bot α] (a : α) :=
+@[ext] structure finpartition {α : Type*} [distrib_lattice_bot α] [decidable_eq α] (a : α) :=
 (parts : finset α)
-(disjoint : (parts : set α).pairwise_disjoint)
+(disjoint : parts.sup_indep id)
 (sup_parts : parts.sup id = a)
 (not_bot_mem : ⊥ ∉ parts)
 
@@ -56,11 +176,11 @@ attribute [protected] finpartition.disjoint
 
 namespace finpartition
 section distrib_lattice_bot
-variables [distrib_lattice_bot α]
+variables [distrib_lattice_bot α] [decidable_eq α]
 
 /-- A `finpartition` constructor which does not insist on `⊥` not being a part. -/
 @[simps] def of_erase [decidable_eq α] {a : α} (parts : finset α)
-  (disjoint : (parts : set α).pairwise_disjoint) (sup_parts : parts.sup id = a) :
+  (disjoint : parts.sup_indep id) (sup_parts : parts.sup id = a) :
   finpartition a :=
 { parts := parts.erase ⊥,
   disjoint := disjoint.subset (erase_subset _ _),
@@ -81,7 +201,7 @@ variables (α)
 /-- The empty finpartition. -/
 @[simps] protected def empty : finpartition (⊥ : α) :=
 { parts := ∅,
-  disjoint := coe_empty.symm.subst set.pairwise_disjoint_empty,
+  disjoint := sup_indep_empty id,
   sup_parts := finset.sup_empty,
   not_bot_mem := not_mem_empty ⊥ }
 
@@ -90,7 +210,7 @@ variables {α} {a : α}
 /-- The finpartition in one part, aka indiscrete finpartition. -/
 @[simps] def indiscrete (ha : a ≠ ⊥) : finpartition a :=
 { parts := {a},
-  disjoint := (coe_singleton a).symm.subst (set.pairwise_disjoint_singleton _),
+  disjoint := sup_indep_singleton a id,
   sup_parts := finset.sup_singleton,
   not_bot_mem := λ h, ha (mem_singleton.1 h).symm }
 
@@ -125,19 +245,15 @@ lemma parts_nonempty_iff : P.parts.nonempty ↔ a ≠ ⊥ :=
 by rw [nonempty_iff_ne_empty, not_iff_not, parts_eq_empty_iff]
 
 section bind
-variables [decidable_eq α]
 
 /-- Given a finpartition `P` of `a` and finpartitions of each part of `P`, this yields the
 finpartition of `a` obtained by juxtaposing all the subpartitions. -/
 @[simps] def bind (P : finpartition a) (Q : Π i ∈ P.parts, finpartition i) : finpartition a :=
 { parts := P.parts.attach.bUnion (λ i, (Q i.1 i.2).parts),
-  disjoint := λ a ha b hb h, begin
-    rw [finset.mem_coe, finset.mem_bUnion] at ha hb,
-    obtain ⟨⟨A, hA⟩, -, ha⟩ := ha,
-    obtain ⟨⟨B, hB⟩, -, hb⟩ := hb,
-    obtain rfl | hAB := eq_or_ne A B,
-    { exact (Q A hA).disjoint _ ha _ hb h },
-    { exact (P.disjoint _ hA _ hB hAB).mono ((Q A hA).le ha) ((Q B hB).le hb) }
+  disjoint := begin
+    refine sup_indep.bUnion _ (λ i _, (Q i.1 i.2).disjoint),
+    simp_rw finpartition.sup_parts,
+    exact P.disjoint.attach,
   end,
   sup_parts := begin
     simp_rw [sup_bUnion, ←P.sup_parts],
