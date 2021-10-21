@@ -5,6 +5,7 @@ Authors: Sébastien Gouëzel
 -/
 import topology.metric_space.basic
 import measure_theory.measure.regular
+import measure_theory.function.ae_measurable_order
 
 /-!
 # Vitali families
@@ -147,6 +148,12 @@ possible to express limiting behavior when sets in `v.sets_at x` shrink to `x`. 
 def filter_at (x : α) : filter (set α) :=
 ⨅ (ε ∈ Ioi (0 : ℝ)), 𝓟 {a ∈ v.sets_at x | a ⊆ closed_ball x ε}
 
+/-- The limit along a Vitali family of `ρ a / μ a` where it makes sense, and garbage otherwise.
+Do *not* use this definition: it is only a temporary device to show that this ratio tends almost
+everywhere to the Radon-Nikodym derivative. -/
+noncomputable def lim_ratio (ρ : measure α) (x : α) : ℝ≥0∞ :=
+lim (v.filter_at x) (λ a, ρ a / μ a)
+
 lemma mem_filter_at_iff {x : α} {s : set (set α)} :
   (s ∈ v.filter_at x) ↔ ∃ (ε > (0 : ℝ)), ∀ a ∈ v.sets_at x, a ⊆ closed_ball x ε → a ∈ s :=
 begin
@@ -266,11 +273,15 @@ begin
   ... ≤ ν s + ε : νU
 end
 
+section
+
+variables [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
+  {ρ : measure α} [is_locally_finite_measure ρ]
+
 /-- If a measure `ρ` is singular with respect to `μ`, then for `μ` almost every `x`, the ratio
 `ρ a / μ a` tends to zero when `a` shrinks to `x` along the Vitali family. This makes sense
 as `μ a` is eventually positive by `ae_eventually_measure_pos`. -/
-lemma ae_eventually_measure_zero_of_singular [sigma_compact_space α] [borel_space α]
-  {ρ : measure α} (hρ : ρ ⊥ₘ μ) [is_locally_finite_measure ρ] [is_locally_finite_measure μ] :
+lemma ae_eventually_measure_zero_of_singular (hρ : ρ ⊥ₘ μ) :
   ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 0) :=
 begin
   have A : ∀ ε > (0 : ℝ≥0), ∀ᵐ x ∂μ, ∀ᶠ a in v.filter_at x, ρ a < ε * μ a,
@@ -320,9 +331,7 @@ end
 /-- A set of points `s` satisfying both `ρ a ≤ c * μ a` and `ρ a ≥ d * μ a` at arbitrarily small
 sets in a Vitali family has measure `0` if `c < d`. Indeed, the first inequality should imply
 that `ρ s ≤ c * μ s`, and the second one that `ρ s ≥ d * μ s`, a contradiction if `0 < μ s`. -/
-theorem null_of_frequently_le_of_frequently_ge [sigma_compact_space α] [borel_space α]
-  {ρ : measure α} [is_locally_finite_measure ρ] [is_locally_finite_measure μ]
-  (hρ : ρ ≪ μ) {c d : ℝ≥0} (hcd : c < d) (s : set α)
+theorem null_of_frequently_le_of_frequently_ge (hρ : ρ ≪ μ) {c d : ℝ≥0} (hcd : c < d) (s : set α)
   (hc : ∀ x ∈ s, ∃ᶠ a in v.filter_at x, ρ a ≤ c * μ a)
   (hd : ∀ x ∈ s, ∃ᶠ a in v.filter_at x, (d : ℝ≥0∞) * μ a ≤ ρ a) :
   μ s = 0 :=
@@ -346,8 +355,7 @@ end
 /-- If `ρ` is absolutely continuous with respect to `μ`, then for almost every `x`, the
 ratio `ρ a / μ a` converges to a finite limit as `a` shrinks to `x` along a
 Vitali family for `μ`. -/
-theorem ae_tendsto_div [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
-  {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ] :
+theorem ae_tendsto_div (hρ : ρ ≪ μ) :
   ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
 begin
   let w : set ℝ≥0∞ := {x | ∃ a : ℚ, x = ennreal.of_real a},
@@ -388,23 +396,19 @@ begin
   exact tendsto_of_no_upcrossings w_dense hx,
 end
 
-open_locale classical
-noncomputable theory
-
-/-- The limit along a Vitali family of `ρ a / μ a` where it makes sense, and garbage otherwise.
-Do *not* use this definition: it is only a temporary device to show that this ratio tends almost
-everywhere to the Radon-Nikodym derivative. -/
-def lim_ratio (ρ : measure α) (x : α) : ℝ≥0∞ :=
-lim (v.filter_at x) (λ a, ρ a / μ a)
+lemma ae_tendsto_lim_ratio (hρ : ρ ≪ μ) :
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio ρ x)) :=
+begin
+  filter_upwards [v.ae_tendsto_div hρ],
+  assume x hx,
+  exact tendsto_nhds_lim hx,
+end
 
 /-- Given two thresholds `p < q`, the sets `{x | v.lim_ratio ρ x < p}`
 and `{x | q < v.lim_ratio ρ x}` are obviously disjoint. The key to proving that `v.lim_ratio ρ` is
 almost everywhere measurable is to show that these sets have measurable supersets which are also
 disjoint, up to zero measure. This is the content of this lemma. -/
-lemma exists_measurable_separation_lim_ratio
-  [sigma_compact_space α] [borel_space α] [is_locally_finite_measure μ]
-  {ρ : measure α} (hρ : ρ ≪ μ) [is_locally_finite_measure ρ]
-  {p q : ℝ≥0} (hpq : p < q) :
+lemma exists_measurable_supersets_lim_ratio (hρ : ρ ≪ μ) {p q : ℝ≥0} (hpq : p < q) :
   ∃ a b, measurable_set a ∧ measurable_set b ∧ {x | v.lim_ratio ρ x < p} ⊆ a
     ∧ {x | (q : ℝ≥0∞) < v.lim_ratio ρ x} ⊆ b ∧ μ (a ∩ b) = 0 :=
 begin
@@ -538,6 +542,15 @@ begin
     exact inter_subset_right _ _
   end
   ... ≤ ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : B
+end
+
+theorem ae_measurable_lim_ratio (hρ : ρ ≪ μ) :
+  ae_measurable (v.lim_ratio ρ) μ :=
+begin
+  apply ennreal.ae_measurable_of_exist_almost_disjoint_supersets _ _ (λ p q hpq, _),
+  exact v.exists_measurable_supersets_lim_ratio hρ hpq,
+end
+
 end
 
 end vitali_family
