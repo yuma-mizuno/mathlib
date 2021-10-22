@@ -124,37 +124,6 @@ by rw [relindex, subgroup_of_self, index_top]
   H.index = fintype.card (quotient_group.quotient H) :=
 nat.card_eq_fintype_card
 
-@[to_additive] lemma index_bot [fintype G] : index (⊥ : subgroup G) = fintype.card G :=
-begin
-  classical,
-  exact (index_eq_card ⊥).trans (fintype.card_congr quotient_group.quotient_bot.to_equiv),
-end
-
-@[to_additive] lemma index_top : index (⊤ : subgroup G) = 1 :=
-begin
-  haveI : subsingleton (quotient_group.quotient (⊤ : subgroup G)) :=
-    quotient_group.subsingleton_quotient_top,
-  refine (index_eq_card (⊤ : subgroup G)).trans _,
-  convert fintype.card_of_subsingleton (1 : quotient_group.quotient (⊤ : subgroup G)),
-end
-
-@[to_additive] lemma relindex_bot_left [fintype H] : relindex ⊥ H = fintype.card H :=
-by rw [rel_index, bot_subgroup_of, index_bot]
-
-@[to_additive] lemma relindex_bot_right : relindex H ⊥ = 1 :=
-by rw [rel_index, subgroup_of_bot_eq_top, index_top]
-
-@[to_additive] lemma relindex_top_left : relindex ⊤ H = 1 :=
-index_top
-
-@[to_additive] lemma relindex_top_right : relindex H ⊤ = index H :=
-sorry
-
-@[to_additive] lemma relindex_self : relindex H H = 1 :=
-(congr_arg index H.subgroup_of_self).trans index_top
-
---TODO: Use previous stuff
-
 @[to_additive] lemma index_mul_card [fintype G] [hH : fintype H] :
   H.index * fintype.card H = fintype.card G :=
 by rw [←relindex_bot_left_eq_card, ←index_bot_eq_card, mul_comm]; exact relindex_mul_index bot_le

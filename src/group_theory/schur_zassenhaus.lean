@@ -171,82 +171,94 @@ nonempty_of_inhabited.elim
 
 end schur_zassenhaus_abelian
 
-namespace schur_zassenhaus_induction
+lemma fintype.card_pos {G : Type*} [fintype G] [hG : nonempty G] : 0 < fintype.card G :=
+fintype.card_pos_iff.mpr hG
 
-/- All of the results in this namespace assume:
-  - `ih`: Schur-Zassenhaus is true for smaller groups G (induction hypothesis),
-  - `ch`: Schur-Zassenhaus is false for G (contradiction hypothesis).
-  The full Schur-Zassenhaus theorem shows that these results are all vacuously true.
-  Therefore, none of these results should be used outside this file. -/
+lemma fintype.card_ne_zero {G : Type*} [fintype G] [hG : nonempty G] : fintype.card G ≠ 0 :=
+ne_of_gt fintype.card_pos
+
+lemma index_eq_one {G : Type*} [group G] {H : subgroup G} : H.index = 1 ↔ H = ⊤ :=
+⟨λ h, quotient_group.subgroup_eq_top_of_subsingleton H (cardinal.to_nat_eq_one_iff_unique.mp h).1,
+  λ h, (congr_arg index h).trans index_top⟩
+
+lemma index_ne_one_of_ne_top {G : Type*} [group G] {H : subgroup G} (hH : H ≠ ⊤) : H.index ≠ 1 :=
+mt index_eq_one.mp hH
+
+lemma index_ne_zero_of_fintype {G : Type*} [group G] {H : subgroup G}
+  [hH : fintype (quotient_group.quotient H)] : H.index ≠ 0 :=
+by rw index_eq_card; exact fintype.card_ne_zero
+
+lemma one_lt_index_of_ne_top {G : Type*} [group G] {H : subgroup G}
+  [fintype (quotient_group.quotient H)] (hH : H ≠ ⊤) : 1 < H.index :=
+nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨index_ne_zero_of_fintype, index_ne_one_of_ne_top hH⟩
 
 open_locale classical
 
 universe u
 
-variables {G : Type u} [group G] [fintype G]
-  {N : subgroup G} [normal N] (hN : nat.coprime (fintype.card N) N.index)
-  (ih : ∀ (G' : Type u) [group G'] [fintype G'], by exactI
+namespace schur_zassenhaus_induction
+
+variables {G : Type u} [group G] [fintype G] {N : subgroup G} [normal N]
+  (h1 : nat.coprime (fintype.card N) N.index)
+  (h2 : ∀ (G' : Type u) [group G'] [fintype G'], by exactI
     ∀ (hG'3 : fintype.card G' < fintype.card G)
     {N' : subgroup G'} [N'.normal] (hN : nat.coprime (fintype.card N') N'.index),
     ∃ H' : subgroup G', is_complement (N' : set G') (H' : set G'))
-  (ch : ∀ H : subgroup G, ¬ is_complement (N : set G) (H : set G))
+  (h3 : ∀ H : subgroup G, ¬ is_complement (N : set G) (H : set G))
 
-include hN ih ch
+include h1 h2 h3
 
 lemma N_ne_bot : N ≠ ⊥ :=
 begin
   tactic.unfreeze_local_instances,
   rintro rfl,
-  exact ch ⊤ is_complement_singleton_top,
+  exact h3 ⊤ is_complement_singleton_top,
 end
 
 lemma N_ne_top : N ≠ ⊤ :=
 begin
   tactic.unfreeze_local_instances,
   rintro rfl,
-  exact ch ⊥ is_complement_top_singleton,
+  exact h3 ⊥ is_complement_top_singleton,
 end
 
 lemma step1 (K : subgroup G) (hK1 : K ⊔ N = ⊤) : K = ⊤ :=
 begin
-  contrapose! ch with hK2,
+  contrapose! h3 with hK2,
   have h31 : fintype.card K < fintype.card G,
-  { sorry },
+  { rw ← K.index_mul_card,
+    exact lt_mul_of_one_lt_left fintype.card_pos (one_lt_index_of_ne_top hK2) },
   have h32 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
-  {
-    sorry },
-  obtain ⟨H, hH⟩ := ih K h31 h32,
+  { sorry },
+  obtain ⟨H, hH⟩ := h2 K h31 h32,
   refine ⟨H.map K.subtype, _⟩,
-  refine is_complement_of_coprime _ _,
+  suffices : fintype.card N * fintype.card (H.map K.subtype) = fintype.card G,
+  { refine is_complement_of_coprime this _,
+    rw [mul_comm, ←N.index_mul_card] at this,
+    rwa mul_right_cancel₀ fintype.card_ne_zero this },
   sorry
 end
 
 lemma step2 (K : subgroup G) [K.normal] (hK1 : K ≤ N) : K = ⊥ ∨ K = N :=
 begin
-  have h3 := step1 hN ih ch,
+  have h3 := step1 h1 h2 h3,
   contrapose! h3 with hK2,
     have h41 : fintype.card (quotient_group.quotient K) < fintype.card G,
     { sorry },
     have h42 : nat.coprime (fintype.card (N.map (quotient_group.mk' K)))
       (N.map (quotient_group.mk' K)).index,
     { sorry },
-    obtain ⟨H, hh⟩ := ih (quotient_group.quotient K) h41 h42,
+    obtain ⟨H, hh⟩ := h2 (quotient_group.quotient K) h41 h42,
     refine ⟨H.comap (quotient_group.mk' K), _, _⟩,
     { sorry },
     { sorry }
 end
 
+lemma step10 : false := sorry
+
 end schur_zassenhaus_induction
 
-end subgroup
-
-namespace subgroup
-
-universe u
-
--- maybe add section with all the below hypotheses, and then split proof into series of lemmas?
-
-lemma exists_right_complement_of_coprime_aux5 {G : Type u} [group G] [fintype G]
+/-lemma exists_right_complement_of_coprime_aux5 {G : Type u} [group G] [fintype G]
   {N : subgroup G} [N.normal] (hN1 : nat.coprime (fintype.card N) N.index)
   (ih : ∀ (G' : Type u) [hG'1 : group G'] [hG'2 : fintype G'], by exactI
     ∀ (hG' : fintype.card G' < fintype.card G) {N' : subgroup G'} [N'.normal]
@@ -296,7 +308,7 @@ begin
   haveI h7 : is_commutative N,
   { sorry },
   exact not_exists_of_forall_not ic (exists_right_complement_of_coprime_aux0 hN1),
-end
+end-/
 
 lemma exists_right_complement_of_coprime_aux4
   {n : ℕ} {G : Type u} [group G] [fintype G] (hG : fintype.card G = n)
@@ -307,7 +319,7 @@ begin
   revert G,
   apply nat.strong_induction_on n,
   rintros n ih G _ _ rfl N _ hN,
-  refine not_forall_not.mp (exists_right_complement_of_coprime_aux5 hN (λ G' _ _ hG', _)),
+  refine not_forall_not.mp (schur_zassenhaus_induction.step10 hN (λ G' _ _ hG', _)),
   apply ih _ hG',
   refl,
 end
