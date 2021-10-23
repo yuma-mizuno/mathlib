@@ -458,12 +458,11 @@ by simp only [nonpos_iff_eq_zero.symm, max_le_iff]
 @[simp] lemma max_zero_left : max 0 a = a := max_eq_right (zero_le a)
 @[simp] lemma max_zero_right : max a 0 = a := max_eq_left (zero_le a)
 
--- TODO: why this is not a `rfl`? There is some hidden diamond here.
 @[simp] lemma sup_eq_max : a ⊔ b = max a b :=
-eq_of_forall_ge_iff $ λ c, sup_le_iff.trans max_le_iff.symm
+rfl
 
 protected lemma pow_pos : 0 < a → ∀ n : ℕ, 0 < a^n :=
-  canonically_ordered_comm_semiring.pow_pos
+canonically_ordered_comm_semiring.pow_pos
 
 protected lemma pow_ne_zero : a ≠ 0 → ∀ n : ℕ, a^n ≠ 0 :=
 by simpa only [pos_iff_ne_zero] using ennreal.pow_pos

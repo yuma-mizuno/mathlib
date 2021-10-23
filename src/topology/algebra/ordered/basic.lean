@@ -874,6 +874,21 @@ lemma exists_Ico_subset_of_mem_nhds {a : α} {s : set α} (hs : s ∈ 𝓝 a) (h
   ∃ u (_ : a < u), Ico a u ⊆ s :=
 let ⟨l', hl'⟩ := h in let ⟨l, hl⟩ := exists_Ico_subset_of_mem_nhds' hs hl' in ⟨l, hl.fst.1, hl.snd⟩
 
+lemma is_open.exists_Ioo_subset [nontrivial α] {s : set α} (hs : is_open s) (h : s.nonempty) :
+  ∃ a b, a < b ∧ Ioo a b ⊆ s :=
+begin
+  obtain ⟨x, hx⟩ : ∃ x, x ∈ s := h,
+  obtain ⟨y, hy⟩ : ∃ y, y ≠ x := exists_ne x,
+  rcases lt_trichotomy x y with H|rfl|H,
+  { obtain ⟨u, xu, hu⟩ : ∃ (u : α) (hu : x < u), Ico x u ⊆ s :=
+      exists_Ico_subset_of_mem_nhds (hs.mem_nhds hx) ⟨y, H⟩,
+    exact ⟨x, u, xu, Ioo_subset_Ico_self.trans hu⟩ },
+  { exact (hy rfl).elim },
+  { obtain ⟨l, lx, hl⟩ : ∃ (l : α) (hl : l < x), Ioc l x ⊆ s :=
+      exists_Ioc_subset_of_mem_nhds (hs.mem_nhds hx) ⟨y, H⟩,
+    exact ⟨l, x, lx, Ioo_subset_Ioc_self.trans hl⟩ }
+end
+
 lemma order_separated {a₁ a₂ : α} (h : a₁ < a₂) :
   ∃u v : set α, is_open u ∧ is_open v ∧ a₁ ∈ u ∧ a₂ ∈ v ∧ (∀b₁∈u, ∀b₂∈v, b₁ < b₂) :=
 match dense_or_discrete a₁ a₂ with
@@ -2116,21 +2131,6 @@ section densely_ordered
 
 variables [topological_space α] [linear_order α] [order_topology α] [densely_ordered α]
 {a b : α} {s : set α}
-
-lemma is_open.exists_Ioo_subset [nontrivial α] {s : set α} (hs : is_open s) (h : s.nonempty) :
-  ∃ a b, a < b ∧ Ioo a b ⊆ s :=
-begin
-  obtain ⟨x, hx⟩ : ∃ x, x ∈ s := h,
-  obtain ⟨y, hy⟩ : ∃ y, y ≠ x := exists_ne x,
-  rcases lt_trichotomy x y with H|rfl|H,
-  { obtain ⟨u, xu, hu⟩ : ∃ (u : α) (hu : x < u), Ico x u ⊆ s :=
-      exists_Ico_subset_of_mem_nhds (hs.mem_nhds hx) ⟨y, H⟩,
-    exact ⟨x, u, xu, Ioo_subset_Ico_self.trans hu⟩ },
-  { exact (hy rfl).elim },
-  { obtain ⟨l, lx, hl⟩ : ∃ (l : α) (hl : l < x), Ioc l x ⊆ s :=
-      exists_Ioc_subset_of_mem_nhds (hs.mem_nhds hx) ⟨y, H⟩,
-    exact ⟨l, x, lx, Ioo_subset_Ioc_self.trans hl⟩ }
-end
 
 /-- The closure of the interval `(a, +∞)` is the closed interval `[a, +∞)`, unless `a` is a top
 element. -/

@@ -187,6 +187,9 @@ example : comm_group_with_zero ℝ≥0 := by apply_instance
 @[simp, norm_cast] lemma coe_pow (r : ℝ≥0) (n : ℕ) : ((r^n : ℝ≥0) : ℝ) = r^n :=
 to_real_hom.map_pow r n
 
+@[simp, norm_cast] lemma coe_fpow (r : ℝ≥0) (n : ℤ) : ((r^n : ℝ≥0) : ℝ) = r^n :=
+by cases n; simp
+
 @[norm_cast] lemma coe_list_sum (l : list ℝ≥0) :
   ((l.sum : ℝ≥0) : ℝ) = (l.map coe).sum :=
 to_real_hom.map_list_sum l
@@ -477,6 +480,26 @@ begin
   rw [← mul_one (a ^ m), pow_add],
   refine mul_le_mul rfl.le (pow_le_one _ (zero_le a) a1) _ _;
   exact pow_nonneg (zero_le _) _,
+end
+
+lemma exists_int_pow_near
+  {x : ℝ≥0} {y : ℝ≥0} (hx : x ≠ 0) (hy : 1 < y) :
+  ∃ n : ℤ, y ^ n ≤ x ∧ x < y ^ (n + 1) :=
+begin
+  obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, (y : ℝ) ^ n ≤ x ∧ (x : ℝ) < y ^ (n + 1) :=
+    exists_int_pow_near (bot_lt_iff_ne_bot.mpr hx) hy,
+  rw ← nnreal.coe_fpow at hn h'n,
+  exact ⟨n, hn, h'n⟩,
+end
+
+lemma exists_int_pow_near'
+  {x : ℝ≥0} {y : ℝ≥0} (hx : x ≠ 0) (hy : 1 < y) :
+  ∃ n : ℤ, y ^ n < x ∧ x ≤ y ^ (n + 1) :=
+begin
+  obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, (y : ℝ) ^ n < x ∧ (x : ℝ) ≤ y ^ (n + 1) :=
+    exists_int_pow_near' (bot_lt_iff_ne_bot.mpr hx) hy,
+  rw ← nnreal.coe_fpow at hn h'n,
+  exact ⟨n, hn, h'n⟩,
 end
 
 end pow

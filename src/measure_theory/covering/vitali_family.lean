@@ -6,6 +6,7 @@ Authors: Sébastien Gouëzel
 import topology.metric_space.basic
 import measure_theory.measure.regular
 import measure_theory.function.ae_measurable_order
+import measure_theory.integral.lebesgue
 
 /-!
 # Vitali families
@@ -328,10 +329,13 @@ begin
   exact ha.trans_le (ennreal.mul_le_mul ((ennreal.coe_le_coe.2 hn.le).trans w_lt.le) le_rfl)
 end
 
+variable (hρ : ρ ≪ μ)
+include hρ
+
 /-- A set of points `s` satisfying both `ρ a ≤ c * μ a` and `ρ a ≥ d * μ a` at arbitrarily small
 sets in a Vitali family has measure `0` if `c < d`. Indeed, the first inequality should imply
 that `ρ s ≤ c * μ s`, and the second one that `ρ s ≥ d * μ s`, a contradiction if `0 < μ s`. -/
-theorem null_of_frequently_le_of_frequently_ge (hρ : ρ ≪ μ) {c d : ℝ≥0} (hcd : c < d) (s : set α)
+theorem null_of_frequently_le_of_frequently_ge {c d : ℝ≥0} (hcd : c < d) (s : set α)
   (hc : ∀ x ∈ s, ∃ᶠ a in v.filter_at x, ρ a ≤ c * μ a)
   (hd : ∀ x ∈ s, ∃ᶠ a in v.filter_at x, (d : ℝ≥0∞) * μ a ≤ ρ a) :
   μ s = 0 :=
@@ -355,7 +359,7 @@ end
 /-- If `ρ` is absolutely continuous with respect to `μ`, then for almost every `x`, the
 ratio `ρ a / μ a` converges to a finite limit as `a` shrinks to `x` along a
 Vitali family for `μ`. -/
-theorem ae_tendsto_div (hρ : ρ ≪ μ) :
+theorem ae_tendsto_div :
   ∀ᵐ x ∂μ, ∃ c, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 c) :=
 begin
   let w : set ℝ≥0∞ := {x | ∃ a : ℚ, x = ennreal.of_real a},
@@ -396,7 +400,7 @@ begin
   exact tendsto_of_no_upcrossings w_dense hx,
 end
 
-lemma ae_tendsto_lim_ratio (hρ : ρ ≪ μ) :
+lemma ae_tendsto_lim_ratio :
   ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio ρ x)) :=
 begin
   filter_upwards [v.ae_tendsto_div hρ],
@@ -408,7 +412,7 @@ end
 and `{x | q < v.lim_ratio ρ x}` are obviously disjoint. The key to proving that `v.lim_ratio ρ` is
 almost everywhere measurable is to show that these sets have measurable supersets which are also
 disjoint, up to zero measure. This is the content of this lemma. -/
-lemma exists_measurable_supersets_lim_ratio (hρ : ρ ≪ μ) {p q : ℝ≥0} (hpq : p < q) :
+lemma exists_measurable_supersets_lim_ratio {p q : ℝ≥0} (hpq : p < q) :
   ∃ a b, measurable_set a ∧ measurable_set b ∧ {x | v.lim_ratio ρ x < p} ⊆ a
     ∧ {x | (q : ℝ≥0∞) < v.lim_ratio ρ x} ⊆ b ∧ μ (a ∩ b) = 0 :=
 begin
@@ -544,11 +548,176 @@ begin
   ... ≤ ρ (to_measurable (ρ + μ) (u m) ∩ to_measurable (ρ + μ) (w n)) : B
 end
 
-theorem ae_measurable_lim_ratio (hρ : ρ ≪ μ) :
-  ae_measurable (v.lim_ratio ρ) μ :=
+theorem ae_measurable_lim_ratio : ae_measurable (v.lim_ratio ρ) μ :=
 begin
   apply ennreal.ae_measurable_of_exist_almost_disjoint_supersets _ _ (λ p q hpq, _),
   exact v.exists_measurable_supersets_lim_ratio hρ hpq,
+end
+
+/-- A measurable version of `v.lim_ratio ρ`. Do *not* use this definition: it is only a temporary
+device to show that `v.lim_ratio` is almost everywhere equal to the Radon-Nikodym derivative. -/
+noncomputable def lim_ratio_meas : α → ℝ≥0∞ :=
+(v.ae_measurable_lim_ratio hρ).mk _
+
+lemma lim_ratio_meas_measurable : measurable (v.lim_ratio_meas hρ) :=
+ae_measurable.measurable_mk _
+
+lemma ae_tendsto_lim_ratio_meas :
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio_meas hρ x)) :=
+begin
+  filter_upwards [v.ae_tendsto_lim_ratio hρ, ae_measurable.ae_eq_mk (v.ae_measurable_lim_ratio hρ)],
+  assume x hx h'x,
+  rwa h'x at hx,
+end
+
+lemma measure_le_mul_of_subset_lim_ratio_meas_lt
+  {p : ℝ≥0} {s : set α} (h : s ⊆ {x | v.lim_ratio_meas hρ x < p}) :
+  ρ s ≤ p * μ s :=
+begin
+  let t := {x : α | tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio_meas hρ x))},
+  have A : μ tᶜ = 0 := v.ae_tendsto_lim_ratio_meas hρ,
+  suffices H : ρ (s ∩ t) ≤ (p • μ) (s ∩ t), from calc
+    ρ s = ρ ((s ∩ t) ∪ (s ∩ tᶜ)) : by rw inter_union_compl
+    ... ≤ ρ (s ∩ t) + ρ (s ∩ tᶜ) : measure_union_le _ _
+    ... ≤ p * μ (s ∩ t) + 0 :
+      add_le_add H ((measure_mono (inter_subset_right _ _)).trans (hρ A).le)
+    ... ≤ p * μ s :
+      by { rw add_zero, exact ennreal.mul_le_mul le_rfl (measure_mono (inter_subset_left _ _)) },
+  refine v.measure_le_of_frequently_le _ hρ _ (λ x hx, _),
+  have I : ∀ᶠ (b : set α) in v.filter_at x, ρ b / μ b < p := (tendsto_order.1 hx.2).2 _ (h hx.1),
+  apply I.frequently.mono (λ a ha, _),
+  rw [coe_nnreal_smul_apply],
+  refine (ennreal.div_le_iff_le_mul _ (or.inr (bot_le.trans_lt ha).ne')).1 ha.le,
+  simp only [ennreal.coe_ne_top, ne.def, or_true, not_false_iff]
+end
+
+lemma mul_measure_le_of_subset_lt_lim_ratio_meas
+  {q : ℝ≥0} {s : set α} (h : s ⊆ {x | (q : ℝ≥0∞) < v.lim_ratio_meas hρ x}) :
+  (q : ℝ≥0∞) * μ s ≤ ρ s :=
+begin
+  let t := {x : α | tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (v.lim_ratio_meas hρ x))},
+  have A : μ tᶜ = 0 := v.ae_tendsto_lim_ratio_meas hρ,
+  suffices H : (q • μ) (s ∩ t) ≤ ρ (s ∩ t), from calc
+    (q • μ) s = (q • μ) ((s ∩ t) ∪ (s ∩ tᶜ)) : by rw inter_union_compl
+    ... ≤ (q • μ) (s ∩ t) + (q • μ) (s ∩ tᶜ) : measure_union_le _ _
+    ... ≤ ρ (s ∩ t) + q * μ tᶜ : begin
+        apply add_le_add H,
+        rw [coe_nnreal_smul_apply],
+        exact ennreal.mul_le_mul le_rfl (measure_mono (inter_subset_right _ _)),
+      end
+    ... ≤ ρ s :
+      by { rw [A, mul_zero, add_zero], exact measure_mono (inter_subset_left _ _) },
+  refine v.measure_le_of_frequently_le _ (absolutely_continuous.rfl.coe_nnreal_smul _) _ _,
+  assume x hx,
+  have I : ∀ᶠ a in v.filter_at x, (q : ℝ≥0∞) < ρ a / μ a := (tendsto_order.1 hx.2).1 _ (h hx.1),
+  apply I.frequently.mono (λ a ha, _),
+  rw [coe_nnreal_smul_apply],
+  exact ennreal.mul_le_of_le_div ha.le
+end
+
+lemma measure_lim_ratio_meas_top : μ {x | v.lim_ratio_meas hρ x = ∞} = 0 :=
+begin
+  refine null_of_locally_null _ (λ x hx, _),
+  obtain ⟨o, xo, o_open, μo⟩ : ∃ o : set α, x ∈ o ∧ is_open o ∧ ρ o < ∞ :=
+    measure.exists_is_open_measure_lt_top ρ x,
+  refine ⟨o, mem_nhds_within_of_mem_nhds (o_open.mem_nhds xo), le_antisymm _ bot_le⟩,
+  let s := {x : α | v.lim_ratio_meas hρ x = ∞} ∩ o,
+  have ρs : ρ s ≠ ∞ := ((measure_mono (inter_subset_right _ _)).trans_lt μo).ne,
+  have A : ∀ (q : ℝ≥0), 1 ≤ q → μ s ≤ q⁻¹ * ρ s,
+  { assume q hq,
+    rw [mul_comm, ← div_eq_mul_inv, ennreal.le_div_iff_mul_le _ (or.inr ρs), mul_comm],
+    { apply v.mul_measure_le_of_subset_lt_lim_ratio_meas hρ,
+      assume y hy,
+      have : v.lim_ratio_meas hρ y = ∞ := hy.1,
+      simp only [this, ennreal.coe_lt_top, mem_set_of_eq], },
+    { simp only [(zero_lt_one.trans_le hq).ne', true_or, ennreal.coe_eq_zero, ne.def,
+        not_false_iff] } },
+  have B : tendsto (λ (q : ℝ≥0), (q : ℝ≥0∞)⁻¹ * ρ s) at_top (𝓝 (∞⁻¹ * ρ s)),
+  { apply ennreal.tendsto.mul_const _ (or.inr ρs),
+    apply ennreal.tendsto_inv_iff.2 (ennreal.tendsto_coe_nhds_top.2 tendsto_id) },
+  simp only [zero_mul, ennreal.inv_top] at B,
+  apply ge_of_tendsto B,
+  exact eventually_at_top.2 ⟨1, A⟩,
+end
+
+lemma measure_lim_ratio_meas_zero : ρ {x | v.lim_ratio_meas hρ x = 0} = 0 :=
+begin
+  refine null_of_locally_null _ (λ x hx, _),
+  obtain ⟨o, xo, o_open, μo⟩ : ∃ o : set α, x ∈ o ∧ is_open o ∧ μ o < ∞ :=
+    measure.exists_is_open_measure_lt_top μ x,
+  refine ⟨o, mem_nhds_within_of_mem_nhds (o_open.mem_nhds xo), le_antisymm _ bot_le⟩,
+  let s := {x : α | v.lim_ratio_meas hρ x = 0} ∩ o,
+  have μs : μ s ≠ ∞ := ((measure_mono (inter_subset_right _ _)).trans_lt μo).ne,
+  have A : ∀ (q : ℝ≥0), 0 < q → ρ s ≤ q * μ s,
+  { assume q hq,
+    apply v.measure_le_mul_of_subset_lim_ratio_meas_lt hρ,
+    assume y hy,
+    have : v.lim_ratio_meas hρ y = 0 := hy.1,
+    simp only [this, mem_set_of_eq, hq, ennreal.coe_pos], },
+  have B : tendsto (λ (q : ℝ≥0), (q : ℝ≥0∞) * μ s) (𝓝[Ioi (0 : ℝ≥0)] 0) (𝓝 ((0 : ℝ≥0) * μ s)),
+  { apply ennreal.tendsto.mul_const _ (or.inr μs),
+    rw ennreal.tendsto_coe,
+    exact nhds_within_le_nhds },
+  simp only [zero_mul, ennreal.coe_zero] at B,
+  apply ge_of_tendsto B,
+  filter_upwards [self_mem_nhds_within],
+  exact A
+end
+
+lemma measure_eq_measure_preimage_add_measure_tsum_Ico_pow
+  (f : α → ℝ≥0∞) (hf : measurable f) (s : set α) (hs : measurable_set s) (t : ℝ≥0)
+  (ht : 1 < t) :
+  μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :=
+begin
+  have A : μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' (Ioi 0)), sorry,
+  /-{ rw ← measure_union,
+    { congr' 1,
+      ext x,
+      have : 0 = f x ∨ 0 < f x := eq_or_lt_of_le bot_le,
+      rw eq_comm at this,
+      simp only [←and_or_distrib_left, this, mem_singleton_iff, mem_inter_eq, and_true,
+        mem_union_eq, mem_Ioi, mem_preimage], },
+    { apply disjoint_left.2 (λ x hx h'x, _),
+      have : 0 < f x := h'x.2,
+      exact lt_irrefl 0 (this.trans_le hx.2.le) },
+    { exact hs.inter (hf (measurable_set_singleton _)) },
+    { exact hs.inter (hf measurable_set_Ioi) } },-/
+  have B : μ (s ∩ f⁻¹' (Ioi 0)) = μ (s ∩ f⁻¹' {∞}) + μ (s ∩ f⁻¹' (Ioo 0 ∞)), sorry,
+  /-{ rw ← measure_union,
+    { rw ← inter_union_distrib_left,
+      congr,
+      ext x,
+      simp only [mem_singleton_iff, mem_union_eq, mem_Ioo, mem_Ioi, mem_preimage],
+      have H : f x = ∞ ∨ f x < ∞ := eq_or_lt_of_le le_top,
+      cases H,
+      { simp only [H, eq_self_iff_true, or_false, with_top.zero_lt_top, not_top_lt, and_false] },
+      { simp only [H, H.ne, and_true, false_or] } },
+    { apply disjoint_left.2 (λ x hx h'x, _),
+      have : f x < ∞ := h'x.2.2,
+      exact lt_irrefl _ (this.trans_le (le_of_eq hx.2.symm)) },
+    { exact hs.inter (hf (measurable_set_singleton _)) },
+    { exact hs.inter (hf measurable_set_Ioo) } },-/
+  have C : μ (s ∩ f⁻¹' (Ioo 0 ∞)) = ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
+  { rw ← measure_Union,
+    { congr' 1,
+      ext x,
+      simp only [mem_Union, mem_inter_eq, mem_Ioo, mem_preimage, exists_and_distrib_left,
+                 mem_Ico, and.congr_right_iff],
+      assume hx,
+      split,
+      sorry,
+      { rintros ⟨n, hn, h'n⟩,
+        split,
+        apply lt_of_lt_of_le _ hn,
+        apply ennreal.pow_pos
+
+      }
+
+
+    }
+
+  },
+  rw [A, B, C, add_assoc],
 end
 
 end
