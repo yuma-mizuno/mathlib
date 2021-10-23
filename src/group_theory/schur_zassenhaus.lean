@@ -189,14 +189,9 @@ lemma one_lt_index_of_ne_top {G : Type*} [group G] {H : subgroup G}
   [fintype (quotient_group.quotient H)] (hH : H ≠ ⊤) : 1 < H.index :=
 nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨index_ne_zero_of_fintype, mt index_eq_one.mp hH⟩
 
-#check map_le_range
-
 lemma map_subtype_le {G : Type*} [group G] {H : subgroup G} (K : subgroup H) :
   K.map H.subtype ≤ H :=
-begin
-  have key := K.map_le_range H.subtype,
-  refine key.trans (le_of_eq H.subtype_range),
-end
+(K.map_le_range H.subtype).trans (le_of_eq H.subtype_range)
 
 open_locale classical
 
