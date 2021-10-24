@@ -664,60 +664,55 @@ begin
   exact A
 end
 
-lemma measure_eq_measure_preimage_add_measure_tsum_Ico_pow
-  (f : α → ℝ≥0∞) (hf : measurable f) (s : set α) (hs : measurable_set s) (t : ℝ≥0)
-  (ht : 1 < t) :
-  μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :=
+lemma zoug {s : set α} (hs : measurable_set s) (t : ℝ≥0) (ht : 1 < t) :
+  μ.with_density (v.lim_ratio_meas hρ) s ≤ t^2 * ρ s :=
 begin
-  have A : μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' (Ioi 0)), sorry,
-  /-{ rw ← measure_union,
-    { congr' 1,
-      ext x,
-      have : 0 = f x ∨ 0 < f x := eq_or_lt_of_le bot_le,
-      rw eq_comm at this,
-      simp only [←and_or_distrib_left, this, mem_singleton_iff, mem_inter_eq, and_true,
-        mem_union_eq, mem_Ioi, mem_preimage], },
-    { apply disjoint_left.2 (λ x hx h'x, _),
-      have : 0 < f x := h'x.2,
-      exact lt_irrefl 0 (this.trans_le hx.2.le) },
-    { exact hs.inter (hf (measurable_set_singleton _)) },
-    { exact hs.inter (hf measurable_set_Ioi) } },-/
-  have B : μ (s ∩ f⁻¹' (Ioi 0)) = μ (s ∩ f⁻¹' {∞}) + μ (s ∩ f⁻¹' (Ioo 0 ∞)), sorry,
-  /-{ rw ← measure_union,
-    { rw ← inter_union_distrib_left,
-      congr,
-      ext x,
-      simp only [mem_singleton_iff, mem_union_eq, mem_Ioo, mem_Ioi, mem_preimage],
-      have H : f x = ∞ ∨ f x < ∞ := eq_or_lt_of_le le_top,
-      cases H,
-      { simp only [H, eq_self_iff_true, or_false, with_top.zero_lt_top, not_top_lt, and_false] },
-      { simp only [H, H.ne, and_true, false_or] } },
-    { apply disjoint_left.2 (λ x hx h'x, _),
-      have : f x < ∞ := h'x.2.2,
-      exact lt_irrefl _ (this.trans_le (le_of_eq hx.2.symm)) },
-    { exact hs.inter (hf (measurable_set_singleton _)) },
-    { exact hs.inter (hf measurable_set_Ioo) } },-/
-  have C : μ (s ∩ f⁻¹' (Ioo 0 ∞)) = ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
-  { rw ← measure_Union,
-    { congr' 1,
-      ext x,
-      simp only [mem_Union, mem_inter_eq, mem_Ioo, mem_preimage, exists_and_distrib_left,
-                 mem_Ico, and.congr_right_iff],
-      assume hx,
-      split,
-      sorry,
-      { rintros ⟨n, hn, h'n⟩,
-        split,
-        apply lt_of_lt_of_le _ hn,
-        apply ennreal.pow_pos
-
-      }
+  have t_ne_zero : (t : ℝ≥0∞) ≠ 0,
+    by simpa only [ennreal.coe_eq_zero, ne.def] using (zero_lt_one.trans ht).ne',
+  let ν := μ.with_density (v.lim_ratio_meas hρ),
+  let f := v.lim_ratio_meas hρ,
+  have f_meas : measurable f := v.lim_ratio_meas_measurable hρ,
+  have A : ν (s ∩ f ⁻¹' ({0})) ≤ t^2 * ρ (s ∩ f⁻¹' {0}),
+  { apply le_trans _ (zero_le _),
+    have M : measurable_set (s ∩ f ⁻¹' ({0})) := hs.inter (f_meas (measurable_set_singleton _)),
+    simp only [ν, f, nonpos_iff_eq_zero, M, with_density_apply, lintegral_eq_zero_iff f_meas],
+    apply (ae_restrict_iff' M).2,
+    exact eventually_of_forall (λ x hx, hx.2) },
+  have B : ν (s ∩ f ⁻¹' ({∞})) ≤ t^2 * ρ (s ∩ f⁻¹' {∞}),
+  { apply le_trans _ (zero_le _),
+    rw nonpos_iff_eq_zero,
+    apply with_density_absolutely_continuous μ _,
+    rw ← nonpos_iff_eq_zero,
+    exact (measure_mono (inter_subset_right _ _)).trans (v.measure_lim_ratio_meas_top hρ).le },
+  have C : ∀ (n : ℤ), ν (s ∩ f⁻¹' (Ico (t^n) (t^(n+1))))
+                        ≤ t^2 * ρ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
+  { assume n,
+    let I := Ico ((t : ℝ≥0∞)^n) (t^(n+1)),
+    have M : measurable_set (s ∩ f ⁻¹' I) := hs.inter (f_meas measurable_set_Ico),
+    simp only [f, M, with_density_apply, coe_nnreal_smul_apply],
+    calc
+    ∫⁻ x in s ∩ f⁻¹' I, f x ∂μ
+        ≤ ∫⁻ x in s ∩ f⁻¹' I, t^(n+1) ∂μ :
+          lintegral_mono_ae ((ae_restrict_iff' M).2 (eventually_of_forall (λ x hx, hx.2.2.le)))
+    ... = t^(n+1) * μ (s ∩ f⁻¹' I) :
+          by simp only [lintegral_const, measurable_set.univ, measure.restrict_apply, univ_inter]
+    ... = t^(2 : ℤ) * (t^(n-1) * μ (s ∩ f⁻¹' I)) : begin
+        rw [← mul_assoc, ← ennreal.fpow_add t_ne_zero ennreal.coe_ne_top],
+        congr' 2,
+        abel,
+      end
+    ... ≤ t^2 * ρ (s ∩ f ⁻¹' I) : begin
+        apply ennreal.mul_le_mul le_rfl _,
+        rw ← ennreal.coe_fpow (zero_lt_one.trans ht).ne',
+        apply v.mul_measure_le_of_subset_lt_lim_ratio_meas hρ,
+        assume x hx,
+        apply lt_of_lt_of_le _ hx.2.1,
+        rw [← ennreal.coe_fpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe],
 
 
-    }
+      end
 
-  },
-  rw [A, B, C, add_assoc],
+  }
 end
 
 end
