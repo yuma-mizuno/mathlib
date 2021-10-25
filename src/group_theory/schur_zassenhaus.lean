@@ -193,6 +193,10 @@ lemma map_subtype_le {G : Type*} [group G] {H : subgroup G} (K : subgroup H) :
   K.map H.subtype ≤ H :=
 (K.map_le_range H.subtype).trans (le_of_eq H.subtype_range)
 
+lemma normalizer_eq_top {G : Type*} [group G] {H : subgroup G} : H.normalizer = ⊤ ↔ H.normal :=
+eq_top_iff.trans ⟨λ h, ⟨λ a ha b, (h (mem_top b) a).mp ha⟩, λ h a ha b,
+  ⟨λ hb, h.conj_mem b hb a, λ hb, by rwa [h.mem_comm_iff, inv_mul_cancel_left] at hb⟩⟩
+
 open_locale classical
 
 lemma silly_lemma {G : Type*} [group G] [fintype G] {H : subgroup G} {n : ℕ} :
@@ -208,6 +212,10 @@ cardinal.to_nat_congr (quotient_group.quotient_inf_equiv_prod_normal_quotient H 
 lemma tada2 {G : Type*} [group G] (H N : subgroup G) [N.normal] :
   N.relindex H = N.relindex (H ⊔ N) :=
 sorry
+
+@[to_additive] lemma one_lt_card_iff_ne_bot {G : Type*} [group G] (H : subgroup G) [fintype H] :
+  1 < fintype.card H ↔ H ≠ ⊥ :=
+lt_iff_not_ge'.trans (not_iff_not.mpr H.card_le_one_iff_eq_bot)
 
 universe u
 
@@ -262,8 +270,9 @@ begin
   have h4 := step1 h1 h2 h3,
   contrapose! h4 with hK2,
   have h41 : fintype.card (quotient_group.quotient K) < fintype.card G,
-  { -- hK2.1
-    sorry },
+  { rw [←index_eq_card, ←K.index_mul_card],
+    refine lt_mul_of_one_lt_right (nat.pos_of_ne_zero index_ne_zero_of_fintype)
+      (K.one_lt_card_iff_ne_bot.mpr hK2.1) },
   have h42 : nat.coprime (fintype.card (N.map (quotient_group.mk' K)))
     (N.map (quotient_group.mk' K)).index,
   { -- card goes down, index stays the same
@@ -274,37 +283,50 @@ begin
     { refine comap_map_eq_self _,
       rwa quotient_group.ker_mk },
     rw [←key, comap_sup_eq],
-    sorry,
-    exact quotient.surjective_quotient_mk' },
+    { -- is_complement.sup_eq_top
+      -- comap_top (already in library)
+      sorry },
+    { exact quotient.surjective_quotient_mk' } },
   { sorry }
 end
 
-lemma step3 : (fintype.card N).min_fac.prime := sorry
+lemma step3 : (fintype.card N).min_fac.prime :=
+(nat.min_fac_prime (N.one_lt_card_iff_ne_bot.mpr (N_ne_bot h1 h2 h3)).ne')
 
-lemma step4 : is_p_group (fintype.card N).min_fac N :=
+lemma step4 {P : sylow (fintype.card N).min_fac N} : P.1 ≠ ⊥ :=
+begin
+  sorry
+end
+
+lemma step5 : is_p_group (fintype.card N).min_fac N :=
 begin
   let p := (fintype.card N).min_fac,
   haveI : fact (p.prime) := ⟨step3 h1 h2 h3⟩,
-  refine sylow.nonempty.elim (λ P : sylow p N, _),
-  have key := step1 h1 h2 h3 (P.1.map N.subtype).normalizer P.normalizer_sup_eq_top,
+  refine sylow.nonempty.elim (λ P : sylow p N, P.2.of_surjective P.1.subtype _),
+  rw [←monoid_hom.range_top_iff_surjective, subtype_range],
 
-  haveI : (P.1.map N.subtype).normal := sorry,
-  have key' := step2 h1 h2 h3 (P.1.map N.subtype) sorry, -- add lemma `map_subtype_le`
-  rw ← map_bot N.subtype at key',
-  conv at key' { congr, skip, to_rhs, rw [←N.subtype_range, monoid_hom.range_eq_map] },
+  haveI : (P.1.map N.subtype).normal := normalizer_eq_top.mp
+    (step1 h1 h2 h3 (P.1.map N.subtype).normalizer P.normalizer_sup_eq_top),
+  have key := step2 h1 h2 h3 (P.1.map N.subtype) P.1.map_subtype_le,
+  rw ← map_bot N.subtype at key,
+  conv at key { congr, skip, to_rhs, rw [←N.subtype_range, monoid_hom.range_eq_map] },
   have inj := map_injective (show function.injective N.subtype, from subtype.coe_injective),
-  rw [inj.eq_iff, inj.eq_iff] at key',
+  rw [inj.eq_iff, inj.eq_iff] at key,
+  exact key.resolve_left (step4 h1 h2 h3),
+end
+
+lemma step6 : is_commutative N :=
+begin
+  haveI : ((center N).map N.subtype).normal,
+  { -- characteristic subgroups
+    sorry },
+  have key := step2 h1 h2 h3,
   sorry,
 end
 
-lemma step5 : is_commutative N :=
+lemma step7 : false :=
 begin
-  sorry,
-end
-
-lemma step6 : false :=
-begin
-  haveI := step5 h1 h2 h3,
+  haveI := step6 h1 h2 h3,
   exact not_exists_of_forall_not h3 (exists_right_complement_of_coprime_aux h1),
 end
 
