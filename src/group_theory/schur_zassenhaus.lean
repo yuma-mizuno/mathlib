@@ -171,18 +171,6 @@ nonempty_of_inhabited.elim
 
 end schur_zassenhaus_abelian
 
-lemma index_eq_one {G : Type*} [group G] {H : subgroup G} : H.index = 1 ↔ H = ⊤ :=
-⟨λ h, quotient_group.subgroup_eq_top_of_subsingleton H (cardinal.to_nat_eq_one_iff_unique.mp h).1,
-  λ h, (congr_arg index h).trans index_top⟩
-
-lemma index_ne_zero_of_fintype {G : Type*} [group G] {H : subgroup G}
-  [hH : fintype (quotient_group.quotient H)] : H.index ≠ 0 :=
-by rw index_eq_card; exact fintype.card_ne_zero
-
-lemma one_lt_index_of_ne_top {G : Type*} [group G] {H : subgroup G}
-  [fintype (quotient_group.quotient H)] (hH : H ≠ ⊤) : 1 < H.index :=
-nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨index_ne_zero_of_fintype, mt index_eq_one.mp hH⟩
-
 lemma _root_.is_p_group.bot_lt_center {p : ℕ} [fact p.prime]
   {G : Type*} [group G] [fintype G] (hG : is_p_group p G) :
   ⊥ < center G :=
