@@ -171,12 +171,6 @@ nonempty_of_inhabited.elim
 
 end schur_zassenhaus_abelian
 
-lemma fintype.card_pos {G : Type*} [fintype G] [hG : nonempty G] : 0 < fintype.card G :=
-fintype.card_pos_iff.mpr hG
-
-lemma fintype.card_ne_zero {G : Type*} [fintype G] [hG : nonempty G] : fintype.card G ≠ 0 :=
-ne_of_gt fintype.card_pos
-
 lemma index_eq_one {G : Type*} [group G] {H : subgroup G} : H.index = 1 ↔ H = ⊤ :=
 ⟨λ h, quotient_group.subgroup_eq_top_of_subsingleton H (cardinal.to_nat_eq_one_iff_unique.mp h).1,
   λ h, (congr_arg index h).trans index_top⟩
@@ -189,13 +183,20 @@ lemma one_lt_index_of_ne_top {G : Type*} [group G] {H : subgroup G}
   [fintype (quotient_group.quotient H)] (hH : H ≠ ⊤) : 1 < H.index :=
 nat.one_lt_iff_ne_zero_and_ne_one.mpr ⟨index_ne_zero_of_fintype, mt index_eq_one.mp hH⟩
 
-lemma map_subtype_le {G : Type*} [group G] {H : subgroup G} (K : subgroup H) :
-  K.map H.subtype ≤ H :=
-(K.map_le_range H.subtype).trans (le_of_eq H.subtype_range)
-
-lemma normalizer_eq_top {G : Type*} [group G] {H : subgroup G} : H.normalizer = ⊤ ↔ H.normal :=
-eq_top_iff.trans ⟨λ h, ⟨λ a ha b, (h (mem_top b) a).mp ha⟩, λ h a ha b,
-  ⟨λ hb, h.conj_mem b hb a, λ hb, by rwa [h.mem_comm_iff, inv_mul_cancel_left] at hb⟩⟩
+lemma _root_.is_p_group.bot_lt_center {p : ℕ} [fact p.prime]
+  {G : Type*} [group G] [fintype G] (hG : is_p_group p G) :
+  ⊥ < center G :=
+begin
+  classical,
+  have hG' := hG.of_equiv conj_act.to_conj_act,
+  have need : p ∣ fintype.card G := sorry,
+  have key' : (1 : G) ∈ mul_action.fixed_points (conj_act G) G,
+  { intro g,
+    exact mul_distrib_mul_action.smul_one g, },
+  obtain ⟨g, hg⟩ := hG'.exists_fixed_point_of_prime_dvd_card_of_fixed_point G need key',
+  replace hg : g ∈ center G,
+  { intro h, },
+end
 
 open_locale classical
 
@@ -204,18 +205,6 @@ lemma silly_lemma {G : Type*} [group G] [fintype G] {H : subgroup G} {n : ℕ} :
 begin
   sorry,
 end
-
-lemma tada1 {G : Type*} [group G] (H N : subgroup G) [N.normal] :
-  (H ⊓ N).relindex H = N.relindex (H ⊔ N) :=
-cardinal.to_nat_congr (quotient_group.quotient_inf_equiv_prod_normal_quotient H N).to_equiv
-
-lemma tada2 {G : Type*} [group G] (H N : subgroup G) [N.normal] :
-  N.relindex H = N.relindex (H ⊔ N) :=
-sorry
-
-@[to_additive] lemma one_lt_card_iff_ne_bot {G : Type*} [group G] (H : subgroup G) [fintype H] :
-  1 < fintype.card H ↔ H ≠ ⊥ :=
-lt_iff_not_ge'.trans (not_iff_not.mpr H.card_le_one_iff_eq_bot)
 
 universe u
 
@@ -253,7 +242,7 @@ begin
     exact lt_mul_of_one_lt_left fintype.card_pos (one_lt_index_of_ne_top hK2) },
   have h32 : (N.comap K.subtype).index = N.index,
   { rw [←N.relindex_top_right, ←hK1],
-    exact tada2 K N },
+    exact relindex_eq_relindex_sup K N },
   have h33 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
   { rw h32,
     exact h1.coprime_dvd_left (card_comap_dvd_of_injective N K.subtype subtype.coe_injective) },
@@ -320,7 +309,7 @@ begin
   haveI : ((center N).map N.subtype).normal,
   { -- characteristic subgroups
     sorry },
-  have key := step2 h1 h2 h3,
+  have key := step2 h1 h2 h3 ((center N).map N.subtype) (center N).map_subtype_le,
   sorry,
 end
 
@@ -341,9 +330,8 @@ begin
   revert G,
   apply nat.strong_induction_on n,
   rintros n ih G _ _ rfl N _ hN,
-  refine not_forall_not.mp (schur_zassenhaus_induction.step6 hN (λ G' _ _ hG', _)),
-  apply ih _ hG',
-  refl,
+  exact not_forall_not.mp
+    (schur_zassenhaus_induction.step7 hN (λ G' _ _ hG', by { apply ih _ hG', refl })),
 end
 
 lemma card_mul_index {G : Type*} [group G] (H : subgroup G) : nat.card H * H.index = nat.card G :=
