@@ -664,28 +664,27 @@ begin
   exact A
 end
 
-lemma zoug {s : set α} (hs : measurable_set s) (t : ℝ≥0) (ht : 1 < t) :
+lemma with_density_le_mul {s : set α} (hs : measurable_set s) {t : ℝ≥0} (ht : 1 < t) :
   μ.with_density (v.lim_ratio_meas hρ) s ≤ t^2 * ρ s :=
 begin
-  have t_ne_zero : (t : ℝ≥0∞) ≠ 0,
-    by simpa only [ennreal.coe_eq_zero, ne.def] using (zero_lt_one.trans ht).ne',
+  have t_ne_zero' : t ≠ 0 := (zero_lt_one.trans ht).ne',
+  have t_ne_zero : (t : ℝ≥0∞) ≠ 0, by simpa only [ennreal.coe_eq_zero, ne.def] using t_ne_zero',
   let ν := μ.with_density (v.lim_ratio_meas hρ),
   let f := v.lim_ratio_meas hρ,
   have f_meas : measurable f := v.lim_ratio_meas_measurable hρ,
-  have A : ν (s ∩ f ⁻¹' ({0})) ≤ t^2 * ρ (s ∩ f⁻¹' {0}),
+  have A : ν (s ∩ f ⁻¹' ({0})) ≤ ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' {0}),
   { apply le_trans _ (zero_le _),
     have M : measurable_set (s ∩ f ⁻¹' ({0})) := hs.inter (f_meas (measurable_set_singleton _)),
     simp only [ν, f, nonpos_iff_eq_zero, M, with_density_apply, lintegral_eq_zero_iff f_meas],
     apply (ae_restrict_iff' M).2,
     exact eventually_of_forall (λ x hx, hx.2) },
-  have B : ν (s ∩ f ⁻¹' ({∞})) ≤ t^2 * ρ (s ∩ f⁻¹' {∞}),
-  { apply le_trans _ (zero_le _),
-    rw nonpos_iff_eq_zero,
+  have B : ν (s ∩ f ⁻¹' ({∞})) ≤ ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' {∞}),
+  { apply le_trans (le_of_eq _) (zero_le _),
     apply with_density_absolutely_continuous μ _,
     rw ← nonpos_iff_eq_zero,
     exact (measure_mono (inter_subset_right _ _)).trans (v.measure_lim_ratio_meas_top hρ).le },
   have C : ∀ (n : ℤ), ν (s ∩ f⁻¹' (Ico (t^n) (t^(n+1))))
-                        ≤ t^2 * ρ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
+                        ≤ ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
   { assume n,
     let I := Ico ((t : ℝ≥0∞)^n) (t^(n+1)),
     have M : measurable_set (s ∩ f ⁻¹' I) := hs.inter (f_meas measurable_set_Ico),
@@ -707,10 +706,80 @@ begin
         apply v.mul_measure_le_of_subset_lt_lim_ratio_meas hρ,
         assume x hx,
         apply lt_of_lt_of_le _ hx.2.1,
-        rw [← ennreal.coe_fpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe],
+        rw [← ennreal.coe_fpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe, sub_eq_add_neg,
+          fpow_add t_ne_zero'],
+        conv_rhs { rw ← mul_one (t^ n) },
+        refine mul_lt_mul' le_rfl _ (zero_le _) (nnreal.fpow_pos t_ne_zero' _),
+        rw fpow_neg_one,
+        exact nnreal.inv_lt_one ht,
+      end },
+  calc ν s = ν (s ∩ f⁻¹' {0}) + ν (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), ν (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
+    measure_eq_measure_preimage_add_measure_tsum_Ico_pow ν f_meas hs ht
+  ... ≤ ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' {0}) + ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' {∞})
+          + ∑' (n : ℤ), ((t : ℝ≥0∞)^2 • ρ) (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
+            add_le_add (add_le_add A B) (ennreal.tsum_le_tsum C)
+  ... = ((t : ℝ≥0∞)^2 • ρ) s :
+    (measure_eq_measure_preimage_add_measure_tsum_Ico_pow ((t : ℝ≥0∞)^2 • ρ) f_meas hs ht).symm
+end
 
-
+lemma le_mul_with_density {s : set α} (hs : measurable_set s) {t : ℝ≥0} (ht : 1 < t) :
+  ρ s ≤ t * μ.with_density (v.lim_ratio_meas hρ) s :=
+begin
+  have t_ne_zero' : t ≠ 0 := (zero_lt_one.trans ht).ne',
+  have t_ne_zero : (t : ℝ≥0∞) ≠ 0, by simpa only [ennreal.coe_eq_zero, ne.def] using t_ne_zero',
+  let ν := μ.with_density (v.lim_ratio_meas hρ),
+  let f := v.lim_ratio_meas hρ,
+  have f_meas : measurable f := v.lim_ratio_meas_measurable hρ,
+  have A : ρ (s ∩ f ⁻¹' ({0})) ≤ (t • ν) (s ∩ f⁻¹' {0}),
+  { refine le_trans (measure_mono (inter_subset_right _ _)) (le_trans (le_of_eq _) (zero_le _)),
+    exact v.measure_lim_ratio_meas_zero hρ },
+  have B : ρ (s ∩ f ⁻¹' ({∞})) ≤ (t • ν) (s ∩ f⁻¹' {∞}),
+  { apply le_trans (le_of_eq _) (zero_le _),
+    apply hρ,
+    rw ← nonpos_iff_eq_zero,
+    exact (measure_mono (inter_subset_right _ _)).trans (v.measure_lim_ratio_meas_top hρ).le },
+  have C : ∀ (n : ℤ), ρ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1))))
+                        ≤ (t • ν) (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
+  { assume n,
+    let I := Ico ((t : ℝ≥0∞)^n) (t^(n+1)),
+    have M : measurable_set (s ∩ f ⁻¹' I) := hs.inter (f_meas measurable_set_Ico),
+    simp only [f, M, with_density_apply, coe_nnreal_smul_apply],
+    calc ρ (s ∩ f ⁻¹' I) ≤ t^ (n+1) * μ (s ∩ f ⁻¹' I) : begin
+        rw ← ennreal.coe_fpow t_ne_zero',
+        apply v.measure_le_mul_of_subset_lim_ratio_meas_lt hρ,
+        assume x hx,
+        apply hx.2.2.trans_le (le_of_eq _),
+        rw ennreal.coe_fpow t_ne_zero',
       end
+    ... = ∫⁻ x in s ∩ f⁻¹' I, t^(n+1) ∂μ :
+      by simp only [lintegral_const, measurable_set.univ, measure.restrict_apply, univ_inter]
+    ... ≤ ∫⁻ x in s ∩ f⁻¹' I, t * f x ∂μ : begin
+        apply lintegral_mono_ae ((ae_restrict_iff' M).2 (eventually_of_forall (λ x hx, _))),
+        rw [add_comm, ennreal.fpow_add t_ne_zero ennreal.coe_ne_top, gpow_one],
+        exact ennreal.mul_le_mul le_rfl hx.2.1,
+      end
+    ... = t * ∫⁻ x in s ∩ f⁻¹' I, f x ∂μ : lintegral_const_mul _ f_meas },
+  calc ρ s = ρ (s ∩ f⁻¹' {0}) + ρ (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), ρ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
+    measure_eq_measure_preimage_add_measure_tsum_Ico_pow ρ f_meas hs ht
+  ... ≤ (t • ν) (s ∩ f⁻¹' {0}) + (t • ν) (s ∩ f⁻¹' {∞})
+          + ∑' (n : ℤ), (t • ν) (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
+            add_le_add (add_le_add A B) (ennreal.tsum_le_tsum C)
+  ... = (t • ν) s :
+    (measure_eq_measure_preimage_add_measure_tsum_Ico_pow (t • ν) f_meas hs ht).symm
+end
+
+theorem zoug : μ.with_density (v.lim_ratio_meas hρ) = ρ :=
+begin
+  ext1 s hs,
+  refine le_antisymm _ _,
+  { have : tendsto (λ (t : ℝ≥0), (t^2 * ρ s : ℝ≥0∞)) (𝓝[Ioi 1] 1) (𝓝 ((1 : ℝ≥0)^2 * ρ s)),
+    { refine ennreal.tendsto.mul _ _ tendsto_const_nhds _, rotate,
+      { simp only [one_pow, ennreal.coe_one, true_or, ne.def, not_false_iff, one_ne_zero] },
+      { simp only [one_pow, ennreal.coe_one, ne.def, or_true, ennreal.one_ne_top, not_false_iff] },
+      have Z := gpow_two,
+      apply ennreal.tendsto_coe.2,
+
+    }
 
   }
 end
@@ -718,3 +787,9 @@ end
 end
 
 end vitali_family
+
+#exit
+
+lemma measure_eq_measure_preimage_add_measure_tsum_Ico_pow [measurable_space α] (μ : measure α)
+  {f : α → ℝ≥0∞} (hf : measurable f) {s : set α} (hs : measurable_set s) {t : ℝ≥0} (ht : 1 < t) :
+  μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1))))

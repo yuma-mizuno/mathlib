@@ -673,6 +673,19 @@ lemma _root_.real.to_nnreal_div' {x y : ℝ} (hy : 0 ≤ y) :
   real.to_nnreal (x / y) = real.to_nnreal x / real.to_nnreal y :=
 by rw [div_eq_inv_mul, div_eq_inv_mul, real.to_nnreal_mul (inv_nonneg.2 hy), real.to_nnreal_inv]
 
+lemma inv_lt_one_iff {x : ℝ≥0} (hx : x ≠ 0) : x⁻¹ < 1 ↔ 1 < x :=
+by rwa [← one_div, div_lt_iff hx, one_mul]
+
+lemma inv_lt_one {x : ℝ≥0} (hx : 1 < x) : x⁻¹ < 1 :=
+(inv_lt_one_iff (zero_lt_one.trans hx).ne').2 hx
+
+lemma fpow_pos {x : ℝ≥0} (hx : x ≠ 0) (n : ℤ) : 0 < x ^ n :=
+begin
+  cases n,
+  { exact pow_pos hx.bot_lt _ },
+  { simp [pow_pos hx.bot_lt _] }
+end
+
 end inv
 
 @[simp] lemma abs_eq (x : ℝ≥0) : |(x : ℝ)| = x :=
