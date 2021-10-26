@@ -6,79 +6,83 @@ Authors: Yaël Dillies
 import data.finset.interval
 
 /-!
-# Intervals as multisets
+# Intervals of multisets as finsets
 
-This file provides basic results about all the `multiset.Ixx`, which are defined in
-`order.locally_finite`.
-
-## TODO
-
-Bring the lemmas about `multiset.Ico` in `data.multiset.intervals` here and in `data.nat.interval`.
+This file provides the `locally_finite_order` instance for `multiset α`.
 -/
+
+open finset
+open_locale big_operators
+
+lemma multiset.card_powerset_to_finset {α : Type*} [decidable_eq α] (s : multiset α) :
+  s.powerset.to_finset.card = ∏ x in s.to_finset, (s.count x + 1) :=
+sorry
 
 variables {α : Type*}
 
 namespace multiset
-section preorder
-variables [preorder α] [locally_finite_order α] {a b : α}
+variables [decidable_eq α] (s t : multiset α)
 
-@[simp] lemma Icc_eq_zero_iff : Icc a b = 0 ↔ ¬a ≤ b :=
-by rw [Icc, finset.val_eq_zero, finset.Icc_eq_empty_iff]
+instance {α : Type*} [decidable_eq α] : decidable_rel ((⊆) : multiset α → multiset α → Prop) :=
+λ s t, multiset.decidable_forall_multiset
 
-@[simp] lemma Ioc_eq_zero_iff : Ioc a b = 0 ↔ ¬a < b :=
-by rw [Ioc, finset.val_eq_zero, finset.Ioc_eq_empty_iff]
+instance {α : Type*} [decidable_eq α] : decidable_rel ((≤) : multiset α → multiset α → Prop) :=
+λ s t, multiset.decidable_forall_multiset
 
-@[simp] lemma Ioo_eq_zero_iff [densely_ordered α] : Ioo a b = 0 ↔ ¬a < b :=
-by rw [Ioo, finset.val_eq_zero, finset.Ioo_eq_empty_iff]
+instance {α : Type*} [decidable_eq α] : decidable_rel ((<) : multiset α → multiset α → Prop) :=
+λ s t, multiset.decidable_forall_multiset
 
-alias Icc_eq_zero_iff ↔ _ multiset.Icc_eq_zero
-alias Ioc_eq_zero_iff ↔ _ multiset.Ioc_eq_zero
+-- If we had `multiset.ssubsets` (akin to `finset.ssubsets`), we could provide `Ico` and `Ioo` more
+-- cleanly.
+instance : locally_finite_order (multiset α) :=
+{ finset_Ioc := λ s t, t.powerset.to_finset.filter ((<) s),
+  finset_mem_Ioc := λ s t u,
+    by {rw [finset.mem_filter, mem_to_finset, mem_powerset], exact and_comm _ _ },
+  ..locally_finite_order.of_Icc (multiset α)
+    (λ s t, t.powerset.to_finset.filter ((≤) s))
+    (λ s t u, by { rw [finset.mem_filter, mem_to_finset, mem_powerset], exact and_comm _ _ }) }
 
-@[simp] lemma Ioo_eq_zero (h : ¬a < b) : Ioo a b = 0 :=
-eq_zero_iff_forall_not_mem.2 $ λ x hx, h ((mem_Ioo.1 hx).1.trans (mem_Ioo.1 hx).2)
+lemma Icc_eq_filter_powerset : finset.Icc s t = t.powerset.to_finset.filter ((≤) s) := rfl
 
-@[simp] lemma Icc_eq_zero_of_lt (h : b < a) : Icc a b = 0 :=
-Icc_eq_zero h.not_le
+lemma Ioc_eq_filter_powerset : finset.Ioc s t = t.powerset.to_finset.filter ((<) s) := rfl
 
-@[simp] lemma Ioc_eq_zero_of_le (h : b ≤ a) : Ioc a b = 0 :=
-Ioc_eq_zero h.not_lt
+lemma Iic_eq_powerset : finset.Iic s = s.powerset.to_finset := filter_true_of_mem $ λ t _, bot_le
 
-@[simp] lemma Ioo_eq_zero_of_le (h : b ≤ a) : Ioo a b = 0 :=
-Ioo_eq_zero h.not_lt
+variables {s t}
 
-variables (a)
+lemma Icc_eq_image_powerset (h : s ≤ t) :
+  finset.Icc s t = (t - s).powerset.to_finset.image ((+) s) :=
+begin
+  ext u,
+  simp_rw [finset.mem_Icc, finset.mem_image, exists_prop, mem_to_finset, mem_powerset],
+  split,
+  { rintro ⟨hs, ht⟩,
+    exact ⟨u - s, tsub_le_tsub_right ht _, add_tsub_cancel_of_le hs⟩ },
+  { rintro ⟨v, hv, rfl⟩,
+    exact ⟨le_add_right _ _, add_le_of_le_tsub_left_of_le h hv⟩ }
+end
 
-@[simp] lemma Ioc_self : Ioc a a = 0 :=
-by rw [Ioc, finset.Ioc_self, finset.empty_val]
+/-- Cardinality of a non-empty `Icc` of finsets. -/
+lemma card_Icc_finset (h : s ⊆ t) : (Icc s t).card = 2 ^ (t.card - s.card) :=
+begin
+  rw [←card_sdiff h, ←card_powerset, Icc_eq_image_powerset h, finset.card_image_eq_iff_inj_on],
+  rintro u hu v hv (huv : s ⊔ u = s ⊔ v),
+  rw [mem_coe, mem_powerset] at hu hv,
+  rw [←(disjoint_sdiff.mono_right hu : disjoint s u).sup_sdiff_cancel_left,
+    ←(disjoint_sdiff.mono_right hv : disjoint s v).sup_sdiff_cancel_left, huv],
+end
 
-@[simp] lemma Ioo_self : Ioo a a = 0 :=
-by rw [Ioo, finset.Ioo_self, finset.empty_val]
+/-- Cardinality of an `Ico` of finsets. -/
+lemma card_Ico_finset (h : s ⊆ t) : (Ico s t).card = 2 ^ (t.card - s.card) - 1 :=
+by rw [card_Ico_eq_card_Icc_sub_one (le_iff_subset.2 h), card_Icc_finset h]
 
-end preorder
+/-- Cardinality of an `Ioc` of finsets. -/
+lemma card_Ioc_finset (h : s ⊆ t) : (Ioc s t).card = 2 ^ (t.card - s.card) - 1 :=
+by rw [card_Ioc_eq_card_Icc_sub_one (le_iff_subset.2 h), card_Icc_finset h]
 
-section partial_order
-variables [partial_order α] [locally_finite_order α] {a b : α}
+/-- Cardinality of an `Ioo` of finsets. -/
+lemma card_Ioo_finset (h : s ⊆ t) : (Ioo s t).card = 2 ^ (t.card - s.card) - 2 :=
+by rw [card_Ioo_eq_card_Icc_sub_two (le_iff_subset.2 h), card_Icc_finset h]
 
-@[simp] lemma Icc_self (a : α) : Icc a a = {a} :=
-by rw [Icc, finset.Icc_self, finset.singleton_val]
 
-end partial_order
-
-section ordered_cancel_add_comm_monoid
-variables [ordered_cancel_add_comm_monoid α] [has_exists_add_of_le α]
-  [locally_finite_order α]
-
-lemma map_add_const_Icc (a b c : α) : (Icc a b).map ((+) c) = Icc (a + c) (b + c) :=
-by { classical, rw [Icc, Icc, ←finset.image_add_const_Icc, finset.image_val,
-    multiset.nodup.erase_dup (multiset.nodup_map (add_right_injective c) (finset.nodup _))] }
-
-lemma map_add_const_Ioc (a b c : α) : (Ioc a b).map ((+) c) = Ioc (a + c) (b + c) :=
-by { classical, rw [Ioc, Ioc, ←finset.image_add_const_Ioc, finset.image_val,
-    multiset.nodup.erase_dup (multiset.nodup_map (add_right_injective c) (finset.nodup _))] }
-
-lemma map_add_const_Ioo (a b c : α) : (Ioo a b).map ((+) c) = Ioo (a + c) (b + c) :=
-by { classical, rw [Ioo, Ioo, ←finset.image_add_const_Ioo, finset.image_val,
-    multiset.nodup.erase_dup (multiset.nodup_map (add_right_injective c) (finset.nodup _))] }
-
-end ordered_cancel_add_comm_monoid
 end multiset
