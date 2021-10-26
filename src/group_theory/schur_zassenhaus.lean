@@ -172,18 +172,20 @@ nonempty_of_inhabited.elim
 end schur_zassenhaus_abelian
 
 lemma _root_.is_p_group.bot_lt_center {p : ℕ} [fact p.prime]
-  {G : Type*} [group G] [fintype G] (hG : is_p_group p G) :
+  {G : Type*} [group G] [fintype G] [nontrivial G] (hG : is_p_group p G) :
   ⊥ < center G :=
 begin
   classical,
-  have hG' := hG.of_equiv conj_act.to_conj_act,
-  have need : p ∣ fintype.card G := sorry,
-  have key' : (1 : G) ∈ mul_action.fixed_points (conj_act G) G,
-  { intro g,
-    exact mul_distrib_mul_action.smul_one g, },
-  obtain ⟨g, hg⟩ := hG'.exists_fixed_point_of_prime_dvd_card_of_fixed_point G need key',
-  replace hg : g ∈ center G,
-  { intro h, },
+  have := (hG.of_equiv conj_act.to_conj_act).exists_fixed_point_of_prime_dvd_card_of_fixed_point G,
+  rw conj_act.fixed_points_eq_center at this,
+  obtain ⟨g, hg⟩ := this _ (center G).one_mem,
+  { rw [bot_lt_iff_ne_bot, ne, set_like.ext_iff, not_forall],
+    exact ⟨g, λ h, hg.2 (h.mp hg.1).symm⟩ },
+  { obtain ⟨n, hn⟩ := is_p_group.iff_card.mp hG,
+    rw hn,
+    apply dvd_pow_self,
+    rintro rfl,
+    exact (fintype.one_lt_card).ne' hn },
 end
 
 open_locale classical
