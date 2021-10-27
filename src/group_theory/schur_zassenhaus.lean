@@ -21,6 +21,14 @@ In this file we prove the Schur-Zassenhaus theorem.
   its index, then there exists a subgroup `K` which is a (left) complement of `H`.
 -/
 
+instance normal_of_characteristic_of_normal
+  {G : Type*} [group G] {H : subgroup G} [hH : H.normal] {K : subgroup H} [h : K.characteristic] :
+  (K.map H.subtype).normal :=
+⟨λ a ha b, by
+{ obtain ⟨a, ha, rfl⟩ := ha,
+  exact K.apply_coe_mem_map H.subtype
+    ⟨_, ((set_like.ext_iff.mp (h.fixed (mul_aut.conj_normal b)) a).mpr ha)⟩ }⟩
+
 open_locale big_operators
 
 namespace subgroup
@@ -171,23 +179,6 @@ nonempty_of_inhabited.elim
 
 end schur_zassenhaus_abelian
 
-lemma _root_.is_p_group.bot_lt_center {p : ℕ} [fact p.prime]
-  {G : Type*} [group G] [fintype G] [nontrivial G] (hG : is_p_group p G) :
-  ⊥ < center G :=
-begin
-  classical,
-  have := (hG.of_equiv conj_act.to_conj_act).exists_fixed_point_of_prime_dvd_card_of_fixed_point G,
-  rw conj_act.fixed_points_eq_center at this,
-  obtain ⟨g, hg⟩ := this _ (center G).one_mem,
-  { rw [bot_lt_iff_ne_bot, ne, set_like.ext_iff, not_forall],
-    exact ⟨g, λ h, hg.2 (h.mp hg.1).symm⟩ },
-  { obtain ⟨n, hn⟩ := is_p_group.iff_card.mp hG,
-    rw hn,
-    apply dvd_pow_self,
-    rintro rfl,
-    exact (fintype.one_lt_card).ne' hn },
-end
-
 open_locale classical
 
 lemma silly_lemma {G : Type*} [group G] [fintype G] {H : subgroup G} {n : ℕ} :
@@ -269,6 +260,15 @@ begin
   { sorry }
 end
 
+lemma step2a (K : subgroup N) [(K.map N.subtype).normal] : K = ⊥ ∨ K = ⊤ :=
+begin
+  have key := step2 h1 h2 h3 (K.map N.subtype) K.map_subtype_le,
+  rw ← map_bot N.subtype at key,
+  conv at key { congr, skip, to_rhs, rw [←N.subtype_range, N.subtype.range_eq_map] },
+  have inj := map_injective (show function.injective N.subtype, from subtype.coe_injective),
+  rwa [inj.eq_iff, inj.eq_iff] at key,
+end
+
 lemma step3 : (fintype.card N).min_fac.prime :=
 (nat.min_fac_prime (N.one_lt_card_iff_ne_bot.mpr (N_ne_bot h1 h2 h3)).ne')
 
@@ -279,28 +279,20 @@ end
 
 lemma step5 : is_p_group (fintype.card N).min_fac N :=
 begin
-  let p := (fintype.card N).min_fac,
-  haveI : fact (p.prime) := ⟨step3 h1 h2 h3⟩,
-  refine sylow.nonempty.elim (λ P : sylow p N, P.2.of_surjective P.1.subtype _),
+  haveI : fact ((fintype.card N).min_fac.prime) := ⟨step3 h1 h2 h3⟩,
+  refine sylow.nonempty.elim (λ P, P.2.of_surjective P.1.subtype _),
   rw [←monoid_hom.range_top_iff_surjective, subtype_range],
-
   haveI : (P.1.map N.subtype).normal := normalizer_eq_top.mp
     (step1 h1 h2 h3 (P.1.map N.subtype).normalizer P.normalizer_sup_eq_top),
-  have key := step2 h1 h2 h3 (P.1.map N.subtype) P.1.map_subtype_le,
-  rw ← map_bot N.subtype at key,
-  conv at key { congr, skip, to_rhs, rw [←N.subtype_range, monoid_hom.range_eq_map] },
-  have inj := map_injective (show function.injective N.subtype, from subtype.coe_injective),
-  rw [inj.eq_iff, inj.eq_iff] at key,
-  exact key.resolve_left (step4 h1 h2 h3),
+  exact (step2a h1 h2 h3 P.1).resolve_left (step4 h1 h2 h3),
 end
 
 lemma step6 : is_commutative N :=
 begin
-  haveI : ((center N).map N.subtype).normal,
-  { -- characteristic subgroups
-    sorry },
-  have key := step2 h1 h2 h3 ((center N).map N.subtype) (center N).map_subtype_le,
-  sorry,
+  haveI := N.bot_or_nontrivial.resolve_left (N_ne_bot h1 h2 h3),
+  haveI : fact ((fintype.card N).min_fac.prime) := ⟨step3 h1 h2 h3⟩,
+  exact ⟨⟨λ g h, eq_top_iff.mp ((step2a h1 h2 h3 N.center).resolve_left
+    (step5 h1 h2 h3).bot_lt_center.ne') (mem_top h) g⟩⟩,
 end
 
 lemma step7 : false :=
