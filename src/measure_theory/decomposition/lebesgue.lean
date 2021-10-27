@@ -5,6 +5,7 @@ Authors: Kexing Ying
 -/
 import measure_theory.decomposition.jordan
 import measure_theory.measure.with_density_vector_measure
+import measure_theory.function.ae_eq_of_integral
 
 /-!
 # Lebesgue decomposition
@@ -18,7 +19,7 @@ The Lebesgue decomposition provides the Radon-Nikodym theorem readily.
 ## Main definitions
 
 * `measure_theory.measure.have_lebesgue_decomposition` : A pair of measures `μ` and `ν` is said
-  to `have_lebesgue_decomposition` if there exists a measure `ξ` and a measurable function `f`,
+  to `have_lebesgue_decomposition` if there exist a measure `ξ` and a measurable function `f`,
   such that `ξ` is mutually singular with respect to `ν` and `μ = ξ + ν.with_density f`
 * `measure_theory.measure.singular_part` : If a pair of measures `have_lebesgue_decomposition`,
   then `singular_part` chooses the measure from `have_lebesgue_decomposition`, otherwise it
@@ -73,13 +74,15 @@ class have_lebesgue_decomposition (μ ν : measure α) : Prop :=
   ∃ (p : measure α × (α → ℝ≥0∞)), measurable p.2 ∧ p.1 ⊥ₘ ν ∧ μ = p.1 + ν.with_density p.2)
 
 /-- If a pair of measures `have_lebesgue_decomposition`, then `singular_part` chooses the
-measure from `have_lebesgue_decomposition`, otherwise it returns the zero measure. -/
+measure from `have_lebesgue_decomposition`, otherwise it returns the zero measure. For sigma-finite
+measures, `μ = (singular_part μ ν) + ν.with_density (rn_deriv μ ν)`. -/
 @[irreducible]
 def singular_part (μ ν : measure α) : measure α :=
 if h : have_lebesgue_decomposition μ ν then (classical.some h.lebesgue_decomposition).1 else 0
 
 /-- If a pair of measures `have_lebesgue_decomposition`, then `rn_deriv` chooses the
-measurable function from `have_lebesgue_decomposition`, otherwise it returns the zero function. -/
+measurable function from `have_lebesgue_decomposition`, otherwise it returns the zero function.
+For sigma-finite measures, `μ = (singular_part μ ν) + ν.with_density (rn_deriv μ ν)`.-/
 @[irreducible]
 def rn_deriv (μ ν : measure α) : α → ℝ≥0∞ :=
 if h : have_lebesgue_decomposition μ ν then (classical.some h.lebesgue_decomposition).2 else 0
@@ -284,8 +287,9 @@ measurable function such that `μ = s + fν`, then `f = rn_deriv μ ν`.
 
 This theorem provides the uniqueness of the `rn_deriv` in the Lebesgue decomposition
 theorem, while `measure_theory.measure.eq_singular_part` provides the uniqueness of the
-`singular_part`. -/
-theorem eq_rn_deriv {s : measure α} {f : α → ℝ≥0∞} (hf : measurable f)
+`singular_part`. Here, the uniqueness is given in terms of the measures, while the uniqueness in
+terms of the functions is given in `eq_rn_deriv`. -/
+theorem eq_with_density_rn_deriv {s : measure α} {f : α → ℝ≥0∞} (hf : measurable f)
   (hs : s ⊥ₘ ν) (hadd : μ = s + ν.with_density f) :
   ν.with_density f = ν.with_density (μ.rn_deriv ν) :=
 begin
@@ -335,6 +339,30 @@ begin
   { measurability },
   { measurability }
 end
+
+/-- Given measures `μ` and `ν`, if `s` is a measure mutually singular to `ν` and `f` is a
+measurable function such that `μ = s + fν`, then `f = rn_deriv μ ν`.
+
+This theorem provides the uniqueness of the `rn_deriv` in the Lebesgue decomposition
+theorem, while `measure_theory.measure.eq_singular_part` provides the uniqueness of the
+`singular_part`. Here, the uniqueness is given in terms of the functions, while the uniqueness in
+terms of the functions is given in `eq_with_density_rn_deriv`. -/
+theorem eq_rn_deriv [sigma_finite ν] {s : measure α} {f : α → ℝ≥0∞} (hf : measurable f)
+  (hs : s ⊥ₘ ν) (hadd : μ = s + ν.with_density f) :
+  f =ᵐ[ν] μ.rn_deriv ν :=
+begin
+  refine ae_eq_of_forall_set_lintegral_eq_of_sigma_finite hf (measurable_rn_deriv μ ν) (λ a ha, _),
+  calc ∫⁻ (x : α) in a, f x ∂ν = ν.with_density f a : (with_density_apply f ha).symm
+  ... = ν.with_density (μ.rn_deriv ν) a : by rw eq_with_density_rn_deriv hf hs hadd
+  ... = ∫⁻ (x : α) in a, μ.rn_deriv ν x ∂ν : with_density_apply _ ha
+end
+
+/-- Given measures `μ` and `ν`, if `f` is a measurable function such that `μ = f ν`,
+then `f = rn_deriv μ ν`. -/
+theorem eq_rn_deriv' [sigma_finite ν] {f : α → ℝ≥0∞} (hf : measurable f)
+  (hadd : μ = ν.with_density f) :
+  f =ᵐ[ν] μ.rn_deriv ν :=
+eq_rn_deriv hf mutually_singular.zero_left (by rwa [zero_add])
 
 open vector_measure signed_measure
 

@@ -1460,6 +1460,9 @@ lemma symm (h : ν ⊥ₘ μ) : μ ⊥ₘ ν :=
 let ⟨i, hi, his, hit⟩ := h in
   ⟨iᶜ, measurable_set.compl hi, hit, (compl_compl i).symm ▸ his⟩
 
+lemma zero_left : 0 ⊥ₘ μ :=
+zero.symm
+
 lemma add (h₁ : ν₁ ⊥ₘ μ) (h₂ : ν₂ ⊥ₘ μ) : ν₁ + ν₂ ⊥ₘ μ :=
 begin
   obtain ⟨s, hs, hs0, hs0'⟩ := h₁,
@@ -2021,6 +2024,15 @@ lemma mem_disjointed_spanning_sets_index (μ : measure α) [sigma_finite μ] (x 
 lemma mem_spanning_sets_index (μ : measure α) [sigma_finite μ] (x : α) :
   x ∈ spanning_sets μ (spanning_sets_index μ x) :=
 disjointed_subset _ _ (mem_disjointed_spanning_sets_index μ x)
+
+lemma mem_spanning_sets_of_index_le (μ : measure α) [sigma_finite μ] (x : α)
+  {n : ℕ} (hn : spanning_sets_index μ x ≤ n) :
+  x ∈ spanning_sets μ n :=
+monotone_spanning_sets μ hn (mem_spanning_sets_index μ x)
+
+lemma eventually_mem_spanning_sets (μ : measure α) [sigma_finite μ] (x : α) :
+  ∀ᶠ n in at_top, x ∈ spanning_sets μ n :=
+eventually_at_top.2 ⟨spanning_sets_index μ x, λ b, mem_spanning_sets_of_index_le μ x⟩
 
 omit m0
 

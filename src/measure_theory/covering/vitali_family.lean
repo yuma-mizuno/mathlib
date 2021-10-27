@@ -7,6 +7,7 @@ import topology.metric_space.basic
 import measure_theory.measure.regular
 import measure_theory.function.ae_measurable_order
 import measure_theory.integral.lebesgue
+import measure_theory.decomposition.radon_nikodym
 
 /-!
 # Vitali families
@@ -21,7 +22,20 @@ Vitali families are provided by covering theorems such as the Besicovitch coveri
 Vitali covering theorem. They make it possible to formulate general versions of theorems on
 differentiations of measure that apply in both contexts.
 
-This file defines Vitali families and proves its basic properties.
+This file defines Vitali families and proves the main differentiation theorem for measures along
+Vitali families: for almost every `x`, the ratio `ρ a / μ a` tends (when `a` shrinks to `x` along
+the Vitali family) towards the Radon-Nikodym derivative of `ρ` with respect to `μ` at `x`.
+
+## Main definitions
+
+* `vitali_family μ` is a structure made, for each `x : X`, of a family of sets around `x`, such that
+one can extract an almost everywhere disjoint covering from any subfamily containing sets of
+arbitrarily small diameters.
+
+Let `v` be such a Vitali family.
+* `v.filter_at x` is a filter on sets of `X`, such that convergence with respect to this filter
+means convergence when sets in the Vitali family shrink towards `x`.
+
 -/
 
 open measure_theory metric set filter topological_space measure_theory.measure
@@ -328,6 +342,8 @@ begin
   rw ennreal.div_lt_iff (or.inl μa_pos.ne') (or.inl μa_lt_top.ne),
   exact ha.trans_le (ennreal.mul_le_mul ((ennreal.coe_le_coe.2 hn.le).trans w_lt.le) le_rfl)
 end
+
+section absolutely_continuous
 
 variable (hρ : ρ ≪ μ)
 include hρ
@@ -768,18 +784,51 @@ begin
     (measure_eq_measure_preimage_add_measure_tsum_Ico_pow (t • ν) f_meas hs ht).symm
 end
 
-theorem zoug : μ.with_density (v.lim_ratio_meas hρ) = ρ :=
+theorem with_density_lim_ratio_meas_eq : μ.with_density (v.lim_ratio_meas hρ) = ρ :=
 begin
   ext1 s hs,
   refine le_antisymm _ _,
   { have : tendsto (λ (t : ℝ≥0), (t^2 * ρ s : ℝ≥0∞)) (𝓝[Ioi 1] 1) (𝓝 ((1 : ℝ≥0)^2 * ρ s)),
-    { refine ennreal.tendsto.mul _ _ tendsto_const_nhds _, rotate,
+    { refine ennreal.tendsto.mul _ _ tendsto_const_nhds _,
+      { exact ennreal.tendsto.pow (ennreal.tendsto_coe.2 nhds_within_le_nhds) },
       { simp only [one_pow, ennreal.coe_one, true_or, ne.def, not_false_iff, one_ne_zero] },
-      { simp only [one_pow, ennreal.coe_one, ne.def, or_true, ennreal.one_ne_top, not_false_iff] },
-      have Z := gpow_two,
-      apply ennreal.tendsto_coe.2,
+      { simp only [one_pow, ennreal.coe_one, ne.def, or_true, ennreal.one_ne_top,
+                   not_false_iff] } },
+    simp only [one_pow, one_mul, ennreal.coe_one] at this,
+    refine ge_of_tendsto this _,
+    filter_upwards [self_mem_nhds_within],
+    assume t ht,
+    exact v.with_density_le_mul hρ hs ht },
+  { have : tendsto (λ (t : ℝ≥0), (t : ℝ≥0∞) * μ.with_density (v.lim_ratio_meas hρ) s) (𝓝[Ioi 1] 1)
+            (𝓝 ((1 : ℝ≥0) * μ.with_density (v.lim_ratio_meas hρ) s)),
+    { refine ennreal.tendsto.mul_const (ennreal.tendsto_coe.2 nhds_within_le_nhds) _,
+      simp only [ennreal.coe_one, true_or, ne.def, not_false_iff, one_ne_zero], },
+    simp only [one_mul, ennreal.coe_one] at this,
+    refine ge_of_tendsto this _,
+    filter_upwards [self_mem_nhds_within],
+    assume t ht,
+    exact v.le_mul_with_density hρ hs ht }
+end
 
-    }
+theorem ae_tendsto_rn_deriv_of_absolutely_continuous :
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (rn_deriv ρ μ x)) :=
+begin
+  have A : v.lim_ratio_meas hρ =ᵐ[μ] rn_deriv ρ μ :=
+    eq_rn_deriv' (v.lim_ratio_meas_measurable hρ) (v.with_density_lim_ratio_meas_eq hρ).symm,
+  filter_upwards [v.ae_tendsto_lim_ratio_meas hρ, A],
+  assume x hx h'x,
+  rwa h'x at hx
+end
+
+end absolutely_continuous
+
+theorem ae_tendsto_rn_deriv :
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (rn_deriv ρ μ x)) :=
+begin
+  have : ρ = (singular_part ρ μ) + μ.with_density (rn_deriv ρ μ) :=
+    have_lebesgue_decomposition_add _ _,
+  have A : ∀ᵐ x ∂μ, tendsto (λ a, singular_part ρ μ a / μ a) (v.filter_at x) (𝓝 0),
+  { refine v.ae_eventually_measure_zero_of_singular _,
 
   }
 end
@@ -787,9 +836,3 @@ end
 end
 
 end vitali_family
-
-#exit
-
-lemma measure_eq_measure_preimage_add_measure_tsum_Ico_pow [measurable_space α] (μ : measure α)
-  {f : α → ℝ≥0∞} (hf : measurable f) {s : set α} (hs : measurable_set s) {t : ℝ≥0} (ht : 1 < t) :
-  μ s = μ (s ∩ f⁻¹' {0}) + μ (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1))))
