@@ -41,16 +41,6 @@ begin
   exact subgroup.mul_mem_sup h.2 k.2,
 end
 
-lemma is_complement'.top_right {G : Type*} [group G] {H : subgroup G} :
-  subgroup.is_complement' H ⊤ ↔ H = ⊥ :=
-begin
-  split,
-  { intro h,
-    sorry },
-  { rintro rfl,
-    exact subgroup.is_complement'_bot_top },
-end
-
 open_locale big_operators
 
 namespace subgroup
@@ -278,7 +268,7 @@ begin
     rwa [←key, comap_sup_eq, hH.symm.sup_eq_top, comap_top] },
   { rw ← comap_top (quotient_group.mk' K),
     intro hH',
-    rw [comap_injective surj hH', is_complement'.top_right,
+    rw [comap_injective surj hH', is_complement'_top_right,
         map_eq_bot_iff, quotient_group.ker_mk] at hH,
     exact hK2.2 (le_antisymm hK1 hH) }
 end

@@ -27,6 +27,25 @@ In this file we define the complement of a subgroup.
 - `is_complement_of_coprime` : Subgroups of coprime order are complements.
 -/
 
+lemma _root_.set.exists_eq_singleton {α : Type*} {S : set α} :
+  (∃ a : α, S = {a}) ↔ (S.nonempty ∧ ∀ a b ∈ S, a = b) :=
+begin
+  refine ⟨_, λ h, _⟩,
+  { rintros ⟨a, rfl⟩,
+    refine ⟨set.singleton_nonempty a, λ b c hb hc, hb.trans hc.symm⟩ },
+  { obtain ⟨a, ha⟩ := h.1,
+    refine ⟨a, set.eq_singleton_iff_unique_mem.mpr ⟨ha, λ b hb, (h.2 b a hb ha)⟩⟩ },
+end
+
+@[to_additive] lemma _root_.subgroup.coe_eq_top {G : Type*} [group G] {H : subgroup G} :
+  (H : set G) = ⊤ ↔ H = ⊤ :=
+(set_like.ext'_iff.trans (by refl)).symm
+
+@[to_additive] lemma _root_.subgroup.coe_eq_singleton {G : Type*} [group G] {H : subgroup G} :
+  (∃ g : G, (H : set G) = {g}) ↔ H = ⊥ :=
+⟨λ ⟨g, hg⟩, by { haveI : subsingleton (H : set G) := by { rw hg, apply_instance },
+  exact H.eq_bot_of_subsingleton }, λ h, ⟨1, set_like.ext'_iff.mp h⟩⟩
+
 open_locale big_operators
 
 namespace subgroup
@@ -80,16 +99,70 @@ end
 ⟨λ ⟨x, _, rfl⟩ ⟨y, _, rfl⟩ h, prod.ext (subtype.ext (mul_right_cancel h)) rfl,
   λ x, ⟨⟨⟨x * g⁻¹, ⟨⟩⟩, g, rfl⟩, inv_mul_cancel_right x g⟩⟩
 
-@[to_additive] lemma is_complement_singleton_top {g : G} :
-  is_complement ({g} : set G) (⊤ : set G) :=
+@[to_additive] lemma is_complement_singleton_top {g : G} : is_complement ({g} : set G) ⊤ :=
 ⟨λ ⟨⟨_, rfl⟩, x⟩ ⟨⟨_, rfl⟩, y⟩ h, prod.ext rfl (subtype.ext (mul_left_cancel h)),
   λ x, ⟨⟨⟨g, rfl⟩, g⁻¹ * x, ⟨⟩⟩, mul_inv_cancel_left g x⟩⟩
+
+@[to_additive] lemma is_complement_singleton_left {g : G} : is_complement {g} S ↔ S = ⊤ :=
+begin
+  refine ⟨λ h, top_le_iff.mp (λ x hx, _), λ h, (congr_arg _ h).mpr is_complement_singleton_top⟩,
+  obtain ⟨y, hy⟩ := h.2 (g * x),
+  conv_rhs at hy { rw ← (show y.1.1 = g, from y.1.2) },
+  rw ← mul_left_cancel hy,
+  exact y.2.2,
+end
+
+@[to_additive] lemma is_complement_singleton_right {g : G} : is_complement S {g} ↔ S = ⊤ :=
+begin
+  refine ⟨λ h, top_le_iff.mp (λ x hx, _), λ h, (congr_arg _ h).mpr is_complement_top_singleton⟩,
+  obtain ⟨y, hy⟩ := h.2 (x * g),
+  conv_rhs at hy { rw ← (show y.2.1 = g, from y.2.2) },
+  rw ← mul_right_cancel hy,
+  exact y.1.2,
+end
+
+@[to_additive] lemma is_complement_top_left : is_complement ⊤ S ↔ ∃ g : G, S = {g} :=
+begin
+  refine ⟨λ h, set.exists_eq_singleton.mpr ⟨_, λ a b ha hb, _⟩, _⟩,
+  { obtain ⟨a, ha⟩ := h.2 1,
+    exact ⟨a.2.1, a.2.2⟩ },
+  { have : (⟨⟨_, mem_top a⁻¹⟩, ⟨a, ha⟩⟩ : (⊤ : set G) × S) = ⟨⟨_, mem_top b⁻¹⟩, ⟨b, hb⟩⟩ :=
+    h.1 ((inv_mul_self a).trans (inv_mul_self b).symm),
+    exact subtype.ext_iff.mp ((prod.ext_iff.mp this).2) },
+  { rintro ⟨g, rfl⟩,
+    exact is_complement_top_singleton },
+end
+
+@[to_additive] lemma is_complement_top_right :
+  is_complement S ⊤ ↔ ∃ g : G, S = {g} :=
+begin
+  refine ⟨λ h, set.exists_eq_singleton.mpr ⟨_, λ a b ha hb, _⟩, _⟩,
+  { obtain ⟨a, ha⟩ := h.2 1,
+    exact ⟨a.1.1, a.1.2⟩ },
+  { have : (⟨⟨a, ha⟩, ⟨_, mem_top a⁻¹⟩⟩ : S × (⊤ : set G)) = ⟨⟨b, hb⟩, ⟨_, mem_top b⁻¹⟩⟩ :=
+    h.1 ((mul_inv_self a).trans (mul_inv_self b).symm),
+    exact subtype.ext_iff.mp ((prod.ext_iff.mp this).1) },
+  { rintro ⟨g, rfl⟩,
+    exact is_complement_singleton_top },
+end
 
 @[to_additive] lemma is_complement'_top_bot : is_complement' (⊤ : subgroup G) ⊥ :=
 is_complement_top_singleton
 
 @[to_additive] lemma is_complement'_bot_top : is_complement' (⊥ : subgroup G) ⊤ :=
 is_complement_singleton_top
+
+@[to_additive] lemma is_complement'_bot_left : is_complement' ⊥ H ↔ H = ⊤ :=
+is_complement_singleton_left.trans coe_eq_top
+
+@[to_additive] lemma is_complement'_bot_right : is_complement' H ⊥ ↔ H = ⊤ :=
+is_complement_singleton_right.trans coe_eq_top
+
+@[to_additive] lemma is_complement'_top_left : is_complement' ⊤ H ↔ H = ⊥ :=
+is_complement_top_left.trans coe_eq_singleton
+
+@[to_additive] lemma is_complement'_top_right : is_complement' H ⊤ ↔ H = ⊥ :=
+is_complement_top_right.trans coe_eq_singleton
 
 @[to_additive] lemma mem_left_transversals_iff_exists_unique_inv_mul_mem :
   S ∈ left_transversals T ↔ ∀ g : G, ∃! s : S, (s : G)⁻¹ * g ∈ T :=
