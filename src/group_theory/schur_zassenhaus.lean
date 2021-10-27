@@ -29,6 +29,28 @@ instance normal_of_characteristic_of_normal
   exact K.apply_coe_mem_map H.subtype
     ⟨_, ((set_like.ext_iff.mp (h.fixed (mul_aut.conj_normal b)) a).mpr ha)⟩ }⟩
 
+@[to_additive]
+lemma subgroup.mul_mem_sup {G : Type*} [group G] {H K : subgroup G} {h k : G} (hh : h ∈ H) (hk : k ∈ K) : h * k ∈ H ⊔ K :=
+(H ⊔ K).mul_mem (subgroup.mem_sup_left hh) (subgroup.mem_sup_right hk)
+
+lemma subgroup.is_complement.sup_eq_top {G : Type*} [group G] {H K : subgroup G}
+  (h : subgroup.is_complement (H : set G) (K : set G)) : H ⊔ K = ⊤ :=
+begin
+  refine top_le_iff.mp (λ g hg, _),
+  obtain ⟨⟨h, k⟩, rfl⟩ := h.2 g,
+  exact subgroup.mul_mem_sup h.2 k.2,
+end
+
+lemma is_complement.top_right {G : Type*} [group G] {H : subgroup G} :
+  subgroup.is_complement (H : set G) ((⊤ : subgroup G) : set G) ↔ H = ⊥ :=
+begin
+  split,
+  { intro h,
+    sorry },
+  { rintro rfl,
+    exact subgroup.is_complement_singleton_top },
+end
+
 open_locale big_operators
 
 namespace subgroup
@@ -247,17 +269,18 @@ begin
     (N.map (quotient_group.mk' K)).index,
   { -- card goes down, index stays the same
     sorry },
-  obtain ⟨H, hh⟩ := h2 (quotient_group.quotient K) h41 h42,
+  obtain ⟨H, hH⟩ := h2 (quotient_group.quotient K) h41 h42,
+  have surj : function.surjective (quotient_group.mk' K) := quotient.surjective_quotient_mk',
   refine ⟨H.comap (quotient_group.mk' K), _, _⟩,
   { have key : (N.map (quotient_group.mk' K)).comap (quotient_group.mk' K) = N,
     { refine comap_map_eq_self _,
       rwa quotient_group.ker_mk },
-    rw [←key, comap_sup_eq],
-    { -- is_complement.sup_eq_top
-      -- comap_top (already in library)
-      sorry },
-    { exact quotient.surjective_quotient_mk' } },
-  { sorry }
+    rwa [←key, comap_sup_eq, hH.symm.sup_eq_top, comap_top] },
+  { rw ← comap_top (quotient_group.mk' K),
+    intro hH',
+    rw [comap_injective surj hH', is_complement.top_right,
+        map_eq_bot_iff, quotient_group.ker_mk] at hH,
+    exact hK2.2 (le_antisymm hK1 hH) }
 end
 
 lemma step2a (K : subgroup N) [(K.map N.subtype).normal] : K = ⊥ ∨ K = ⊤ :=
