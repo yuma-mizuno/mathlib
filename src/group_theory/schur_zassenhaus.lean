@@ -29,10 +29,6 @@ instance normal_of_characteristic_of_normal
   exact K.apply_coe_mem_map H.subtype
     ⟨_, ((set_like.ext_iff.mp (h.fixed (mul_aut.conj_normal b)) a).mpr ha)⟩ }⟩
 
-@[to_additive]
-lemma subgroup.mul_mem_sup {G : Type*} [group G] {H K : subgroup G} {h k : G} (hh : h ∈ H) (hk : k ∈ K) : h * k ∈ H ⊔ K :=
-(H ⊔ K).mul_mem (subgroup.mem_sup_left hh) (subgroup.mem_sup_right hk)
-
 lemma subgroup.is_complement'.sup_eq_top {G : Type*} [group G] {H K : subgroup G}
   (h : subgroup.is_complement' H K) : H ⊔ K = ⊤ :=
 begin
