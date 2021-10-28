@@ -181,13 +181,6 @@ end schur_zassenhaus_abelian
 
 open_locale classical
 
-lemma silly_lemma {G : Type*} [group G] [fintype G] {H : subgroup G} {n : ℕ} :
-  fintype.card H * n = fintype.card G ↔ H.index = n :=
-begin
-  rw [mul_comm, eq_comm, ←H.index_mul_card],
-  exact nat.mul_left_inj fintype.card_pos,
-end
-
 universe u
 
 namespace schur_zassenhaus_induction
@@ -219,21 +212,24 @@ end
 lemma step1 (K : subgroup G) (hK1 : K ⊔ N = ⊤) : K = ⊤ :=
 begin
   contrapose! h3 with hK2,
-  have h31 : fintype.card K < fintype.card G,
+  have h3 : fintype.card K < fintype.card G,
   { rw ← K.index_mul_card,
     exact lt_mul_of_one_lt_left fintype.card_pos (one_lt_index_of_ne_top hK2) },
-  have h32 : (N.comap K.subtype).index = N.index,
+  have h4 : (N.comap K.subtype).index = N.index,
   { rw [←N.relindex_top_right, ←hK1],
     exact relindex_eq_relindex_sup K N },
-  have h33 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
-  { rw h32,
+  have h5 : nat.coprime (fintype.card (N.comap K.subtype)) (N.comap K.subtype).index,
+  { rw h4,
     exact h1.coprime_dvd_left (card_comap_dvd_of_injective N K.subtype subtype.coe_injective) },
-  obtain ⟨H, hH⟩ := h2 K h31 h33,
-  replace hH := h32.symm.trans (silly_lemma.mp (hH.card_mul)),
-  replace hH : N.index = fintype.card (H.map K.subtype) :=
-  hH.trans (set.card_image_of_injective _ subtype.coe_injective).symm,
-  refine ⟨H.map K.subtype, is_complement'_of_coprime (silly_lemma.mpr hH) _⟩,
-  by rwa ← hH,
+  obtain ⟨H, hH⟩ := h2 K h3 h5,
+  replace hH : fintype.card (H.map K.subtype) = N.index :=
+  ((set.card_image_of_injective _ subtype.coe_injective).trans (nat.mul_left_injective
+    fintype.card_pos (hH.symm.card_mul.trans (N.comap K.subtype).index_mul_card.symm))).trans h4,
+  have h6 : fintype.card N * fintype.card (H.map K.subtype) = fintype.card G,
+  { rw [hH, ←N.index_mul_card, mul_comm] },
+  have h7 : (fintype.card N).coprime (fintype.card (H.map K.subtype)),
+  { rwa hH },
+  exact ⟨H.map K.subtype, is_complement'_of_coprime h6 h7⟩,
 end
 
 lemma step2 (K : subgroup G) [K.normal] (hK1 : K ≤ N) : K = ⊥ ∨ K = N :=
