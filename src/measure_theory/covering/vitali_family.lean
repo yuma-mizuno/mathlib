@@ -712,21 +712,21 @@ begin
     ... = t^(n+1) * μ (s ∩ f⁻¹' I) :
           by simp only [lintegral_const, measurable_set.univ, measure.restrict_apply, univ_inter]
     ... = t^(2 : ℤ) * (t^(n-1) * μ (s ∩ f⁻¹' I)) : begin
-        rw [← mul_assoc, ← ennreal.fpow_add t_ne_zero ennreal.coe_ne_top],
+        rw [← mul_assoc, ← ennreal.zpow_add t_ne_zero ennreal.coe_ne_top],
         congr' 2,
         abel,
       end
     ... ≤ t^2 * ρ (s ∩ f ⁻¹' I) : begin
         apply ennreal.mul_le_mul le_rfl _,
-        rw ← ennreal.coe_fpow (zero_lt_one.trans ht).ne',
+        rw ← ennreal.coe_zpow (zero_lt_one.trans ht).ne',
         apply v.mul_measure_le_of_subset_lt_lim_ratio_meas hρ,
         assume x hx,
         apply lt_of_lt_of_le _ hx.2.1,
-        rw [← ennreal.coe_fpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe, sub_eq_add_neg,
-          fpow_add t_ne_zero'],
+        rw [← ennreal.coe_zpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe, sub_eq_add_neg,
+          zpow_add t_ne_zero'],
         conv_rhs { rw ← mul_one (t^ n) },
-        refine mul_lt_mul' le_rfl _ (zero_le _) (nnreal.fpow_pos t_ne_zero' _),
-        rw fpow_neg_one,
+        refine mul_lt_mul' le_rfl _ (zero_le _) (nnreal.zpow_pos t_ne_zero' _),
+        rw zpow_neg_one,
         exact nnreal.inv_lt_one ht,
       end },
   calc ν s = ν (s ∩ f⁻¹' {0}) + ν (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), ν (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
@@ -761,17 +761,17 @@ begin
     have M : measurable_set (s ∩ f ⁻¹' I) := hs.inter (f_meas measurable_set_Ico),
     simp only [f, M, with_density_apply, coe_nnreal_smul_apply],
     calc ρ (s ∩ f ⁻¹' I) ≤ t^ (n+1) * μ (s ∩ f ⁻¹' I) : begin
-        rw ← ennreal.coe_fpow t_ne_zero',
+        rw ← ennreal.coe_zpow t_ne_zero',
         apply v.measure_le_mul_of_subset_lim_ratio_meas_lt hρ,
         assume x hx,
         apply hx.2.2.trans_le (le_of_eq _),
-        rw ennreal.coe_fpow t_ne_zero',
+        rw ennreal.coe_zpow t_ne_zero',
       end
     ... = ∫⁻ x in s ∩ f⁻¹' I, t^(n+1) ∂μ :
       by simp only [lintegral_const, measurable_set.univ, measure.restrict_apply, univ_inter]
     ... ≤ ∫⁻ x in s ∩ f⁻¹' I, t * f x ∂μ : begin
         apply lintegral_mono_ae ((ae_restrict_iff' M).2 (eventually_of_forall (λ x hx, _))),
-        rw [add_comm, ennreal.fpow_add t_ne_zero ennreal.coe_ne_top, gpow_one],
+        rw [add_comm, ennreal.zpow_add t_ne_zero ennreal.coe_ne_top, zpow_one],
         exact ennreal.mul_le_mul le_rfl hx.2.1,
       end
     ... = t * ∫⁻ x in s ∩ f⁻¹' I, f x ∂μ : lintegral_const_mul _ f_meas },

@@ -1270,27 +1270,27 @@ begin
   exact n.lt_two_pow
 end
 
-@[simp, norm_cast] lemma coe_fpow (hr : r ≠ 0) (n : ℤ) : (↑(r^n) : ℝ≥0∞) = r^n :=
+@[simp, norm_cast] lemma coe_zpow (hr : r ≠ 0) (n : ℤ) : (↑(r^n) : ℝ≥0∞) = r^n :=
 begin
   cases n,
-  { simp only [int.of_nat_eq_coe, coe_pow, gpow_coe_nat] },
+  { simp only [int.of_nat_eq_coe, coe_pow, zpow_coe_nat] },
   { have : r ^ n.succ ≠ 0 := pow_ne_zero (n+1) hr,
-    simp only [gpow_neg_succ_of_nat, coe_inv this, coe_pow] }
+    simp only [zpow_neg_succ_of_nat, coe_inv this, coe_pow] }
 end
 
-lemma fpow_pos (ha : a ≠ 0) (h'a : a ≠ ∞) (n : ℤ) : 0 < a ^ n :=
+lemma zpow_pos (ha : a ≠ 0) (h'a : a ≠ ∞) (n : ℤ) : 0 < a ^ n :=
 begin
   cases n,
   { exact ennreal.pow_pos ha.bot_lt n },
-  { simp only [h'a, pow_eq_top_iff, gpow_neg_succ_of_nat, ne.def, not_false_iff,
+  { simp only [h'a, pow_eq_top_iff, zpow_neg_succ_of_nat, ne.def, not_false_iff,
                inv_pos, false_and] }
 end
 
-lemma fpow_lt_top (ha : a ≠ 0) (h'a : a ≠ ∞) (n : ℤ) : a ^ n < ∞ :=
+lemma zpow_lt_top (ha : a ≠ 0) (h'a : a ≠ ∞) (n : ℤ) : a ^ n < ∞ :=
 begin
   cases n,
   { exact ennreal.pow_lt_top h'a.lt_top _ },
-  { simp only [ennreal.pow_pos ha.bot_lt (n + 1), gpow_neg_succ_of_nat, inv_lt_top] }
+  { simp only [ennreal.pow_pos ha.bot_lt (n + 1), zpow_neg_succ_of_nat, inv_lt_top] }
 end
 
 lemma exists_int_pow_near
@@ -1304,8 +1304,8 @@ begin
   { refine nnreal.exists_int_pow_near _  (one_lt_coe_iff.1 hy),
     simpa only [ne.def, coe_eq_zero] using hx },
   refine ⟨n, _, _⟩,
-  { rwa [← ennreal.coe_fpow A, ennreal.coe_le_coe] },
-  { rwa [← ennreal.coe_fpow A, ennreal.coe_lt_coe] }
+  { rwa [← ennreal.coe_zpow A, ennreal.coe_le_coe] },
+  { rwa [← ennreal.coe_zpow A, ennreal.coe_lt_coe] }
 end
 
 lemma exists_int_pow_near'
@@ -1319,11 +1319,11 @@ begin
   { refine nnreal.exists_int_pow_near' _  (one_lt_coe_iff.1 hy),
     simpa only [ne.def, coe_eq_zero] using hx },
   refine ⟨n, _, _⟩,
-  { rwa [← ennreal.coe_fpow A, ennreal.coe_lt_coe] },
-  { rwa [← ennreal.coe_fpow A, ennreal.coe_le_coe] }
+  { rwa [← ennreal.coe_zpow A, ennreal.coe_lt_coe] },
+  { rwa [← ennreal.coe_zpow A, ennreal.coe_le_coe] }
 end
 
-lemma Ioo_zero_top_eq_Union_Ico_fpow {y : ℝ≥0∞} (hy : 1 < y) (h'y : y ≠ ⊤) :
+lemma Ioo_zero_top_eq_Union_Ico_zpow {y : ℝ≥0∞} (hy : 1 < y) (h'y : y ≠ ⊤) :
   Ioo (0 : ℝ≥0∞) (∞ : ℝ≥0∞) = ⋃ (n : ℤ), Ico (y^n) (y^(n+1)) :=
 begin
   ext x,
@@ -1334,12 +1334,12 @@ begin
   { rintros ⟨n, hn, h'n⟩,
     split,
     { apply lt_of_lt_of_le _ hn,
-      exact ennreal.fpow_pos (ennreal.zero_lt_one.trans hy).ne' h'y _ },
+      exact ennreal.zpow_pos (ennreal.zero_lt_one.trans hy).ne' h'y _ },
     { apply lt_trans h'n _,
-      exact ennreal.fpow_lt_top (ennreal.zero_lt_one.trans hy).ne' h'y _ } }
+      exact ennreal.zpow_lt_top (ennreal.zero_lt_one.trans hy).ne' h'y _ } }
 end
 
-lemma fpow_le_of_le {x : ℝ≥0∞} (hx : 1 ≤ x) {a b : ℤ} (h : a ≤ b) : x ^ a ≤ x ^ b :=
+lemma zpow_le_of_le {x : ℝ≥0∞} (hx : 1 ≤ x) {a b : ℤ} (h : a ≤ b) : x ^ a ≤ x ^ b :=
 begin
   induction a with a a; induction b with b b,
   { simp,
@@ -1348,10 +1348,10 @@ begin
   { apply absurd h,
     apply not_le_of_gt,
     exact lt_of_lt_of_le (int.neg_succ_lt_zero _) (int.of_nat_nonneg _) },
-  { simp only [gpow_neg_succ_of_nat, int.of_nat_eq_coe, gpow_coe_nat],
+  { simp only [zpow_neg_succ_of_nat, int.of_nat_eq_coe, zpow_coe_nat],
     refine le_trans (inv_le_one.2 _) _;
     apply ennreal.one_le_pow_of_one_le hx, },
-  { simp only [gpow_neg_succ_of_nat],
+  { simp only [zpow_neg_succ_of_nat],
     apply inv_le_inv.2,
     { apply pow_le_pow hx,
       have : -(↑(a+1) : ℤ) ≤ -(↑(b+1) : ℤ), from h,
@@ -1360,12 +1360,12 @@ begin
     repeat { apply pow_pos (lt_of_lt_of_le zero_lt_one hx) } }
 end
 
-lemma fpow_add {x : ℝ≥0∞} (hx : x ≠ 0) (h'x : x ≠ ∞) (m n : ℤ) :
+lemma zpow_add {x : ℝ≥0∞} (hx : x ≠ 0) (h'x : x ≠ ∞) (m n : ℤ) :
   x ^ (m + n) = x ^ m * x ^ n :=
 begin
   lift x to ℝ≥0 using h'x,
   replace hx : x ≠ 0, by simpa only [ne.def, coe_eq_zero] using hx,
-  simp only [← coe_fpow hx, fpow_add hx, coe_mul]
+  simp only [← coe_zpow hx, zpow_add hx, coe_mul]
 end
 
 end inv

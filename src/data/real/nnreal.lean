@@ -190,7 +190,7 @@ noncomputable example : comm_group_with_zero ℝ≥0 := by apply_instance
 @[simp, norm_cast] lemma coe_pow (r : ℝ≥0) (n : ℕ) : ((r^n : ℝ≥0) : ℝ) = r^n :=
 to_real_hom.map_pow r n
 
-@[simp, norm_cast] lemma coe_fpow (r : ℝ≥0) (n : ℤ) : ((r^n : ℝ≥0) : ℝ) = r^n :=
+@[simp, norm_cast] lemma coe_zpow (r : ℝ≥0) (n : ℤ) : ((r^n : ℝ≥0) : ℝ) = r^n :=
 by cases n; simp
 
 @[norm_cast] lemma coe_list_sum (l : list ℝ≥0) :
@@ -491,7 +491,7 @@ lemma exists_int_pow_near
 begin
   obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, (y : ℝ) ^ n ≤ x ∧ (x : ℝ) < y ^ (n + 1) :=
     exists_int_pow_near (bot_lt_iff_ne_bot.mpr hx) hy,
-  rw ← nnreal.coe_fpow at hn h'n,
+  rw ← nnreal.coe_zpow at hn h'n,
   exact ⟨n, hn, h'n⟩,
 end
 
@@ -501,7 +501,7 @@ lemma exists_int_pow_near'
 begin
   obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, (y : ℝ) ^ n < x ∧ (x : ℝ) ≤ y ^ (n + 1) :=
     exists_int_pow_near' (bot_lt_iff_ne_bot.mpr hx) hy,
-  rw ← nnreal.coe_fpow at hn h'n,
+  rw ← nnreal.coe_zpow at hn h'n,
   exact ⟨n, hn, h'n⟩,
 end
 
@@ -682,7 +682,7 @@ by rwa [← one_div, div_lt_iff hx, one_mul]
 lemma inv_lt_one {x : ℝ≥0} (hx : 1 < x) : x⁻¹ < 1 :=
 (inv_lt_one_iff (zero_lt_one.trans hx).ne').2 hx
 
-lemma fpow_pos {x : ℝ≥0} (hx : x ≠ 0) (n : ℤ) : 0 < x ^ n :=
+lemma zpow_pos {x : ℝ≥0} (hx : x ≠ 0) (n : ℤ) : 0 < x ^ n :=
 begin
   cases n,
   { exact pow_pos hx.bot_lt _ },

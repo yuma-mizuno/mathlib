@@ -1025,7 +1025,7 @@ begin
     { exact hs.inter (hf (measurable_set_singleton _)) },
     { exact hs.inter (hf measurable_set_Ioo) } },
   have C : μ (s ∩ f⁻¹' (Ioo 0 ∞)) = ∑' (n : ℤ), μ (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))),
-  { rw [← measure_Union, ennreal.Ioo_zero_top_eq_Union_Ico_fpow (ennreal.one_lt_coe_iff.2 ht)
+  { rw [← measure_Union, ennreal.Ioo_zero_top_eq_Union_Ico_zpow (ennreal.one_lt_coe_iff.2 ht)
          ennreal.coe_ne_top, preimage_Union, inter_Union],
     { assume i j,
       simp only [function.on_fun],
@@ -1034,7 +1034,7 @@ begin
         replace hij : i + 1 ≤ j := lt_of_le_of_ne h hij,
         apply disjoint_left.2 (λ x hx h'x, lt_irrefl (f x) _),
         calc f x < t ^ (i + 1) : hx.2.2
-        ... ≤ t ^ j : ennreal.fpow_le_of_le (ennreal.one_le_coe_iff.2 ht.le) hij
+        ... ≤ t ^ j : ennreal.zpow_le_of_le (ennreal.one_le_coe_iff.2 ht.le) hij
         ... ≤ f x : h'x.2.1 },
       { assume hij,
         rw disjoint.comm,
