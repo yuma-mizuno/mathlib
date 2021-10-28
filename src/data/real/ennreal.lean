@@ -1365,7 +1365,7 @@ lemma zpow_add {x : ℝ≥0∞} (hx : x ≠ 0) (h'x : x ≠ ∞) (m n : ℤ) :
 begin
   lift x to ℝ≥0 using h'x,
   replace hx : x ≠ 0, by simpa only [ne.def, coe_eq_zero] using hx,
-  simp only [← coe_zpow hx, zpow_add hx, coe_mul]
+  simp only [← coe_zpow hx, zpow_add₀ hx, coe_mul]
 end
 
 end inv
