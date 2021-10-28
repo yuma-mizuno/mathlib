@@ -21,14 +21,6 @@ In this file we prove the Schur-Zassenhaus theorem.
   its index, then there exists a subgroup `K` which is a (left) complement of `H`.
 -/
 
-instance normal_of_characteristic_of_normal
-  {G : Type*} [group G] {H : subgroup G} [hH : H.normal] {K : subgroup H} [h : K.characteristic] :
-  (K.map H.subtype).normal :=
-⟨λ a ha b, by
-{ obtain ⟨a, ha, rfl⟩ := ha,
-  exact K.apply_coe_mem_map H.subtype
-    ⟨_, ((set_like.ext_iff.mp (h.fixed (mul_aut.conj_normal b)) a).mpr ha)⟩ }⟩
-
 lemma subgroup.is_complement'.sup_eq_top {G : Type*} [group G] {H K : subgroup G}
   (h : subgroup.is_complement' H K) : H ⊔ K = ⊤ :=
 begin
@@ -192,7 +184,8 @@ open_locale classical
 lemma silly_lemma {G : Type*} [group G] [fintype G] {H : subgroup G} {n : ℕ} :
   fintype.card H * n = fintype.card G ↔ H.index = n :=
 begin
-  sorry,
+  rw [mul_comm, eq_comm, ←H.index_mul_card],
+  exact nat.mul_left_inj fintype.card_pos,
 end
 
 universe u
