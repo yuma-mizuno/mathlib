@@ -155,21 +155,25 @@ begin
     exact measure.zero_le μ }
 end
 
-instance  [is_finite_measure μ] :
-  is_finite_measure (singular_part μ ν) :=
+instance [is_finite_measure μ] : is_finite_measure (singular_part μ ν) :=
 is_finite_measure_of_le μ $ singular_part_le μ ν
 
-instance [sigma_finite μ] :
-  sigma_finite (singular_part μ ν) :=
+instance [sigma_finite μ] : sigma_finite (singular_part μ ν) :=
 sigma_finite_of_le μ $ singular_part_le μ ν
 
-instance [is_finite_measure μ] :
-  is_finite_measure (ν.with_density $ rn_deriv μ ν) :=
+instance [topological_space α] [is_locally_finite_measure μ] :
+  is_locally_finite_measure (singular_part μ ν) :=
+is_locally_finite_measure_of_le $ singular_part_le μ ν
+
+instance [is_finite_measure μ] : is_finite_measure (ν.with_density $ rn_deriv μ ν) :=
 is_finite_measure_of_le μ $ with_density_rn_deriv_le μ ν
 
-instance [sigma_finite μ] :
-  sigma_finite (ν.with_density $ rn_deriv μ ν) :=
+instance [sigma_finite μ] : sigma_finite (ν.with_density $ rn_deriv μ ν) :=
 sigma_finite_of_le μ $ with_density_rn_deriv_le μ ν
+
+instance [topological_space α] [is_locally_finite_measure μ] :
+  is_locally_finite_measure (ν.with_density $ rn_deriv μ ν) :=
+is_locally_finite_measure_of_le $ with_density_rn_deriv_le μ ν
 
 lemma lintegral_rn_deriv_lt_top
   (μ ν : measure α) [is_finite_measure μ] :
@@ -282,6 +286,13 @@ begin
       ← have_lebesgue_decomposition_add μ₂ ν]
 end
 
+lemma singular_part_with_density (ν : measure α) {f : α → ℝ≥0∞} (hf : measurable f) :
+  (ν.with_density f).singular_part ν = 0 :=
+begin
+  have : ν.with_density f = 0 + ν.with_density f, by rw zero_add,
+  exact (eq_singular_part hf mutually_singular.zero_left this).symm,
+end
+
 /-- Given measures `μ` and `ν`, if `s` is a measure mutually singular to `ν` and `f` is a
 measurable function such that `μ = s + fν`, then `f = rn_deriv μ ν`.
 
@@ -357,12 +368,13 @@ begin
   ... = ∫⁻ (x : α) in a, μ.rn_deriv ν x ∂ν : with_density_apply _ ha
 end
 
-/-- Given measures `μ` and `ν`, if `f` is a measurable function such that `μ = f ν`,
-then `f = rn_deriv μ ν`. -/
-theorem eq_rn_deriv' [sigma_finite ν] {f : α → ℝ≥0∞} (hf : measurable f)
-  (hadd : μ = ν.with_density f) :
-  f =ᵐ[ν] μ.rn_deriv ν :=
-eq_rn_deriv hf mutually_singular.zero_left (by rwa [zero_add])
+/-- The Radon-Nikodym derivative of `f ν` with respect to `ν` is `f`. -/
+theorem rn_deriv_with_density (ν : measure α) [sigma_finite ν] {f : α → ℝ≥0∞} (hf : measurable f) :
+  (ν.with_density f).rn_deriv ν =ᵐ[ν] f :=
+begin
+  have : ν.with_density f = 0 + ν.with_density f, by rw zero_add,
+  exact (eq_rn_deriv hf mutually_singular.zero_left this).symm,
+end
 
 open vector_measure signed_measure
 

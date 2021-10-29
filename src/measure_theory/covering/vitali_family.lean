@@ -723,10 +723,10 @@ begin
         assume x hx,
         apply lt_of_lt_of_le _ hx.2.1,
         rw [← ennreal.coe_zpow (zero_lt_one.trans ht).ne', ennreal.coe_lt_coe, sub_eq_add_neg,
-          zpow_add t_ne_zero'],
+          zpow_add₀ t_ne_zero'],
         conv_rhs { rw ← mul_one (t^ n) },
         refine mul_lt_mul' le_rfl _ (zero_le _) (nnreal.zpow_pos t_ne_zero' _),
-        rw zpow_neg_one,
+        rw zpow_neg_one₀,
         exact nnreal.inv_lt_one ht,
       end },
   calc ν s = ν (s ∩ f⁻¹' {0}) + ν (s ∩ f⁻¹' {∞}) + ∑' (n : ℤ), ν (s ∩ f⁻¹' (Ico (t^n) (t^(n+1)))) :
@@ -811,24 +811,35 @@ begin
 end
 
 theorem ae_tendsto_rn_deriv_of_absolutely_continuous :
-  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (rn_deriv ρ μ x)) :=
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (ρ.rn_deriv μ x)) :=
 begin
-  have A : v.lim_ratio_meas hρ =ᵐ[μ] rn_deriv ρ μ :=
-    eq_rn_deriv' (v.lim_ratio_meas_measurable hρ) (v.with_density_lim_ratio_meas_eq hρ).symm,
+  have A : (μ.with_density (v.lim_ratio_meas hρ)).rn_deriv μ =ᵐ[μ] v.lim_ratio_meas hρ :=
+    rn_deriv_with_density μ (v.lim_ratio_meas_measurable hρ),
+  rw v.with_density_lim_ratio_meas_eq hρ at A,
   filter_upwards [v.ae_tendsto_lim_ratio_meas hρ, A],
   assume x hx h'x,
-  rwa h'x at hx
+  rwa h'x,
 end
 
 end absolutely_continuous
 
 theorem ae_tendsto_rn_deriv :
-  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (rn_deriv ρ μ x)) :=
+  ∀ᵐ x ∂μ, tendsto (λ a, ρ a / μ a) (v.filter_at x) (𝓝 (ρ.rn_deriv μ x)) :=
 begin
-  have : ρ = (singular_part ρ μ) + μ.with_density (rn_deriv ρ μ) :=
-    have_lebesgue_decomposition_add _ _,
-  have A : ∀ᵐ x ∂μ, tendsto (λ a, singular_part ρ μ a / μ a) (v.filter_at x) (𝓝 0),
-  { refine v.ae_eventually_measure_zero_of_singular _,
+  let t := μ.with_density (ρ.rn_deriv μ),
+  have eq_add : ρ = singular_part ρ μ + t := have_lebesgue_decomposition_add _ _,
+  have A : ∀ᵐ x ∂μ, tendsto (λ a, singular_part ρ μ a / μ a) (v.filter_at x) (𝓝 0) :=
+    v.ae_eventually_measure_zero_of_singular (mutually_singular_singular_part ρ μ),
+  have B : ∀ᵐ x ∂μ, t.rn_deriv μ x = ρ.rn_deriv μ x :=
+    rn_deriv_with_density μ (measurable_rn_deriv ρ μ),
+  have C : ∀ᵐ x ∂μ, tendsto (λ a, t a / μ a) (v.filter_at x) (𝓝 (t.rn_deriv μ x)) :=
+    v.ae_tendsto_rn_deriv_of_absolutely_continuous (with_density_absolutely_continuous _ _),
+  filter_upwards [A, B, C],
+  assume x Ax Bx Cx,
+  convert Ax.add Cx,
+  { ext1 a,
+    conv_lhs { rw [eq_add] },
+    simp only [pi.add_apply, coe_add, ennreal.add_div],
 
   }
 end

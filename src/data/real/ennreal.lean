@@ -1167,6 +1167,9 @@ le_of_forall_nnreal_lt $ λ r hr, (zero_le r).eq_or_lt.elim (λ h, h ▸ zero_le
 lemma eq_top_of_forall_nnreal_le {x : ℝ≥0∞} (h : ∀ r : ℝ≥0, ↑r ≤ x) : x = ∞ :=
 top_unique $ le_of_forall_nnreal_lt $ λ r hr, h r
 
+lemma add_div {a b c : ℝ≥0∞} : (a + b) / c = a / c + b / c :=
+right_distrib a b (c⁻¹)
+
 lemma div_add_div_same {a b c : ℝ≥0∞} : a / c + b / c = (a + b) / c :=
 eq.symm $ right_distrib a b (c⁻¹)
 
