@@ -839,9 +839,8 @@ begin
   convert Ax.add Cx,
   { ext1 a,
     conv_lhs { rw [eq_add] },
-    simp only [pi.add_apply, coe_add, ennreal.add_div],
-
-  }
+    simp only [pi.add_apply, coe_add, ennreal.add_div] },
+  { simp only [Bx, zero_add] }
 end
 
 end
