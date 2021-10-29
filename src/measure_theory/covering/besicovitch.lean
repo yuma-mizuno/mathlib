@@ -858,17 +858,11 @@ protected def vitali_family [second_countable_topology α] [has_besicovitch_cove
   [measurable_space α] [opens_measurable_space α] (μ : measure α) [sigma_finite μ] :
   vitali_family μ :=
 { sets_at := λ x, (λ (r : ℝ), closed_ball x r) '' (Ioi (0 : ℝ)),
-  center_mem := begin
+  measurable_set' := begin
     assume x y hy,
     obtain ⟨r, rpos, rfl⟩ : ∃ (r : ℝ), 0 < r ∧ closed_ball x r = y,
       by simpa only [mem_image, mem_Ioi] using hy,
-    simp only [rpos.le, mem_closed_ball, dist_self],
-  end,
-  is_closed := begin
-    assume x y hy,
-    obtain ⟨r, rpos, rfl⟩ : ∃ (r : ℝ), 0 < r ∧ closed_ball x r = y,
-      by simpa only [mem_image, mem_Ioi] using hy,
-    exact is_closed_ball
+    exact is_closed_ball.measurable_set
   end,
   nonempty_interior := begin
     assume x y hy,

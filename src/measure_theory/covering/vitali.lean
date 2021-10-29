@@ -446,8 +446,7 @@ protected def vitali_family [metric_space α] [measurable_space α] [opens_measu
   vitali_family μ :=
 { sets_at := λ x, {a | x ∈ a ∧ is_closed a ∧ (interior a).nonempty ∧
                       μ (closed_ball x (3 * diam a)) ≤ C * μ a},
-  center_mem := λ x a ha, ha.1,
-  is_closed := λ x a ha, ha.2.1,
+  measurable_set' := λ x a ha, ha.2.1.measurable_set,
   nonempty_interior := λ x a ha, ha.2.2.1,
   nontrivial := λ x ε εpos, begin
     obtain ⟨r, ⟨rpos, rε⟩, μr⟩ : ∃ r ∈ Ioc (0 : ℝ) ε,
