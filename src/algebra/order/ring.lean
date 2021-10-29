@@ -73,7 +73,7 @@ immediate predecessors and what conditions are added to each of them.
 * `linear_ordered_comm_ring`
   - `ordered_comm_ring` & totality of the order & nontriviality
   - `linear_ordered_ring` & commutativity of multiplication
-  - `integral_domain` & linear order structure
+  - `is_domain` & linear order structure
 * `canonically_ordered_comm_semiring`
   - `canonically_ordered_add_monoid` & multiplication & `*` respects `<` & no zero divisors
   - `comm_semiring` & `a ≤ b ↔ ∃ c, b = a + c` & no zero divisors
@@ -758,12 +758,10 @@ section mono
 variables {β : Type*} [ordered_semiring α] [preorder β] {f g : β → α} {a : α}
 
 lemma monotone_mul_left_of_nonneg (ha : 0 ≤ a) : monotone (λ x, a*x) :=
-by haveI := @linear_order.decidable_le α _; exact
-assume b c b_le_c, decidable.mul_le_mul_of_nonneg_left b_le_c ha
+λ b c b_le_c, mul_le_mul_of_nonneg_left b_le_c ha
 
 lemma monotone_mul_right_of_nonneg (ha : 0 ≤ a) : monotone (λ x, x*a) :=
-by haveI := @linear_order.decidable_le α _; exact
-assume b c b_le_c, decidable.mul_le_mul_of_nonneg_right b_le_c ha
+λ b c b_le_c, mul_le_mul_of_nonneg_right b_le_c ha
 
 lemma monotone.mul_const (hf : monotone f) (ha : 0 ≤ a) :
   monotone (λ x, (f x) * a) :=
@@ -775,26 +773,22 @@ lemma monotone.const_mul (hf : monotone f) (ha : 0 ≤ a) :
 
 lemma monotone.mul (hf : monotone f) (hg : monotone g) (hf0 : ∀ x, 0 ≤ f x) (hg0 : ∀ x, 0 ≤ g x) :
   monotone (λ x, f x * g x) :=
-by haveI := @linear_order.decidable_le α _; exact
-λ x y h, decidable.mul_le_mul (hf h) (hg h) (hg0 x) (hf0 y)
+λ x y h, mul_le_mul (hf h) (hg h) (hg0 x) (hf0 y)
 
 lemma strict_mono.mul_monotone (hf : strict_mono f) (hg : monotone g) (hf0 : ∀ x, 0 ≤ f x)
   (hg0 : ∀ x, 0 < g x) :
   strict_mono (λ x, f x * g x) :=
-by haveI := @linear_order.decidable_le α _; exact
-λ x y h, decidable.mul_lt_mul (hf h) (hg h.le) (hg0 x) (hf0 y)
+λ x y h, mul_lt_mul (hf h) (hg h.le) (hg0 x) (hf0 y)
 
 lemma monotone.mul_strict_mono (hf : monotone f) (hg : strict_mono g) (hf0 : ∀ x, 0 < f x)
   (hg0 : ∀ x, 0 ≤ g x) :
   strict_mono (λ x, f x * g x) :=
-by haveI := @linear_order.decidable_le α _; exact
-λ x y h, decidable.mul_lt_mul' (hf h.le) (hg h) (hg0 x) (hf0 y)
+λ x y h, mul_lt_mul' (hf h.le) (hg h) (hg0 x) (hf0 y)
 
 lemma strict_mono.mul (hf : strict_mono f) (hg : strict_mono g) (hf0 : ∀ x, 0 ≤ f x)
   (hg0 : ∀ x, 0 ≤ g x) :
   strict_mono (λ x, f x * g x) :=
-by haveI := @linear_order.decidable_le α _; exact
-λ x y h, decidable.mul_lt_mul'' (hf h) (hg h) (hf0 x) (hg0 x)
+λ x y h, mul_lt_mul'' (hf h) (hg h) (hf0 x) (hg0 x)
 
 end mono
 
@@ -1018,7 +1012,7 @@ instance linear_ordered_ring.to_linear_ordered_semiring : linear_ordered_semirin
   ..‹linear_ordered_ring α› }
 
 @[priority 100] -- see Note [lower instance priority]
-instance linear_ordered_ring.to_domain : domain α :=
+instance linear_ordered_ring.is_domain : is_domain α :=
 { eq_zero_or_eq_zero_of_mul_eq_zero :=
     begin
       intros a b hab,
@@ -1240,11 +1234,6 @@ instance linear_ordered_comm_ring.to_ordered_comm_ring [d : linear_ordered_comm_
 { ..d }
 
 @[priority 100] -- see Note [lower instance priority]
-instance linear_ordered_comm_ring.to_integral_domain [s : linear_ordered_comm_ring α] :
-  integral_domain α :=
-{ ..linear_ordered_ring.to_domain, ..s }
-
-@[priority 100] -- see Note [lower instance priority]
 instance linear_ordered_comm_ring.to_linear_ordered_semiring [d : linear_ordered_comm_ring α] :
    linear_ordered_semiring α :=
 { .. d, ..linear_ordered_ring.to_linear_ordered_semiring }
@@ -1419,35 +1408,29 @@ section sub
 variables [canonically_ordered_comm_semiring α] {a b c : α}
 variables [has_sub α] [has_ordered_sub α]
 
-lemma sub_mul_ge : a * c - b * c ≤ (a - b) * c :=
-by { rw [sub_le_iff_right, ← add_mul], exact mul_le_mul_right' le_sub_add c }
-
-lemma mul_sub_ge : a * b - a * c ≤ a * (b - c) :=
-by simp only [mul_comm a, sub_mul_ge]
-
 variables [is_total α (≤)]
 
 namespace add_le_cancellable
-protected lemma mul_sub (h : add_le_cancellable (a * c)) :
+protected lemma mul_tsub (h : add_le_cancellable (a * c)) :
   a * (b - c) = a * b - a * c :=
 begin
   cases total_of (≤) b c with hbc hcb,
-  { rw [sub_eq_zero_iff_le.2 hbc, mul_zero, sub_eq_zero_iff_le.2 (mul_le_mul_left' hbc a)] },
-  { apply h.eq_sub_of_add_eq, rw [← mul_add, sub_add_cancel_of_le hcb] }
+  { rw [tsub_eq_zero_iff_le.2 hbc, mul_zero, tsub_eq_zero_iff_le.2 (mul_le_mul_left' hbc a)] },
+  { apply h.eq_tsub_of_add_eq, rw [← mul_add, tsub_add_cancel_of_le hcb] }
 end
 
-protected lemma sub_mul (h : add_le_cancellable (b * c)) : (a - b) * c = a * c - b * c :=
-by { simp only [mul_comm _ c] at *, exact h.mul_sub }
+protected lemma tsub_mul (h : add_le_cancellable (b * c)) : (a - b) * c = a * c - b * c :=
+by { simp only [mul_comm _ c] at *, exact h.mul_tsub }
 
 end add_le_cancellable
 
 variables [contravariant_class α α (+) (≤)]
 
-lemma mul_sub' (a b c : α) : a * (b - c) = a * b - a * c :=
-contravariant.add_le_cancellable.mul_sub
+lemma mul_tsub (a b c : α) : a * (b - c) = a * b - a * c :=
+contravariant.add_le_cancellable.mul_tsub
 
-lemma sub_mul' (a b c : α) : (a - b) * c = a * c - b * c :=
-contravariant.add_le_cancellable.sub_mul
+lemma tsub_mul (a b c : α) : (a - b) * c = a * c - b * c :=
+contravariant.add_le_cancellable.tsub_mul
 
 end sub
 
