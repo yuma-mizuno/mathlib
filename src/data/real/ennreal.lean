@@ -1296,7 +1296,7 @@ begin
   { simp only [ennreal.pow_pos ha.bot_lt (n + 1), zpow_neg_succ_of_nat, inv_lt_top] }
 end
 
-lemma exists_int_pow_near
+lemma exists_zpow_near
   {x y : ℝ≥0∞} (hx : x ≠ 0) (h'x : x ≠ ∞) (hy : 1 < y) (h'y : y ≠ ⊤) :
   ∃ n : ℤ, y ^ n ≤ x ∧ x < y ^ (n + 1) :=
 begin
@@ -1304,14 +1304,14 @@ begin
   lift y to ℝ≥0 using h'y,
   have A : y ≠ 0, by simpa only [ne.def, coe_eq_zero] using (ennreal.zero_lt_one.trans hy).ne',
   obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, y ^ n ≤ x ∧ x < y ^ (n + 1),
-  { refine nnreal.exists_int_pow_near _  (one_lt_coe_iff.1 hy),
+  { refine nnreal.exists_zpow_near _  (one_lt_coe_iff.1 hy),
     simpa only [ne.def, coe_eq_zero] using hx },
   refine ⟨n, _, _⟩,
   { rwa [← ennreal.coe_zpow A, ennreal.coe_le_coe] },
   { rwa [← ennreal.coe_zpow A, ennreal.coe_lt_coe] }
 end
 
-lemma exists_int_pow_near'
+lemma exists_zpow_near'
   {x y : ℝ≥0∞} (hx : x ≠ 0) (h'x : x ≠ ∞) (hy : 1 < y) (h'y : y ≠ ⊤) :
   ∃ n : ℤ, y ^ n < x ∧ x ≤ y ^ (n + 1) :=
 begin
@@ -1319,7 +1319,7 @@ begin
   lift y to ℝ≥0 using h'y,
   have A : y ≠ 0, by simpa only [ne.def, coe_eq_zero] using (ennreal.zero_lt_one.trans hy).ne',
   obtain ⟨n, hn, h'n⟩ : ∃ n : ℤ, y ^ n < x ∧ x ≤ y ^ (n + 1),
-  { refine nnreal.exists_int_pow_near' _  (one_lt_coe_iff.1 hy),
+  { refine nnreal.exists_zpow_near' _  (one_lt_coe_iff.1 hy),
     simpa only [ne.def, coe_eq_zero] using hx },
   refine ⟨n, _, _⟩,
   { rwa [← ennreal.coe_zpow A, ennreal.coe_lt_coe] },
@@ -1333,7 +1333,7 @@ begin
   simp only [mem_Union, mem_Ioo, mem_Ico],
   split,
   { rintros ⟨hx, h'x⟩,
-    exact exists_int_pow_near hx.ne' h'x.ne hy h'y },
+    exact exists_zpow_near hx.ne' h'x.ne hy h'y },
   { rintros ⟨n, hn, h'n⟩,
     split,
     { apply lt_of_lt_of_le _ hn,
