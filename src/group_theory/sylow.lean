@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Hughes, Thomas Browning
 -/
 
+import data.set_like.fintype
 import group_theory.group_action.conj_act
 import group_theory.p_group
 
@@ -172,6 +173,19 @@ begin
 end
 
 variables {p} {G}
+
+/-- Sylow subgroups are isomorphic -/
+noncomputable def sylow.mul_equiv [fact p.prime] [fintype (sylow p G)] (P Q : sylow p G) :
+  P ≃* Q :=
+let ϕ := mul_aut.conj (classical.some (exists_smul_eq G P Q)),
+hϕ1 : ∀ g : G, g ∈ P ↔ ϕ g ∈ Q := λ g, by { rw ← classical.some_spec (exists_smul_eq G P Q),
+  exact (mem_map_iff_mem (show function.injective ϕ.to_monoid_hom, from ϕ.injective)).symm },
+hϕ2 : ∀ g : G, g ∈ Q ↔ ϕ.symm g ∈ P := λ g, by rw [hϕ1, ϕ.apply_symm_apply] in
+{ to_fun := λ g, ⟨_, (hϕ1 g).mp g.2⟩,
+  inv_fun := λ g, ⟨_, (hϕ2 g).mp g.2⟩,
+  left_inv := λ g, subtype.ext (ϕ.symm_apply_apply g),
+  right_inv := λ g, subtype.ext (ϕ.apply_symm_apply g),
+  map_mul' := λ g h, subtype.ext (ϕ.map_mul g h) }
 
 @[simp] lemma sylow.orbit_eq_top [fact p.prime] [fintype (sylow p G)] (P : sylow p G) :
   orbit G P = ⊤ :=
@@ -387,5 +401,32 @@ theorem exists_subgroup_card_pow_prime [fintype G] (p : ℕ) {n : ℕ} [fact p.p
   (hdvd : p ^ n ∣ card G) : ∃ K : subgroup G, fintype.card K = p ^ n :=
 let ⟨K, hK⟩ := exists_subgroup_card_pow_prime_le p hdvd ⊥ (by simp) n.zero_le in
 ⟨K, hK.1⟩
+
+lemma pow_dvd_of_pow_dvd [fintype G] {p n : ℕ} [fact p.prime] (P : sylow p G)
+  (hdvd : p ^ n ∣ card G) : p ^ n ∣ card P :=
+begin
+  obtain ⟨Q, hQ⟩ := exists_subgroup_card_pow_prime p hdvd,
+  obtain ⟨R, hR⟩ := (is_p_group.of_card hQ).exists_le_sylow,
+  obtain ⟨g, hg⟩ := exists_smul_eq G R P,
+  calc p ^ n = card Q : hQ.symm
+  ... ∣ card R : card_dvd_of_le hR
+  ... = card (g • R) : card_congr (R.mul_equiv (g • R)).to_equiv
+  ... = card P : by rw hg,
+end
+
+lemma dvd_of_dvd [fintype G] {p : ℕ} [fact p.prime] (P : sylow p G)
+  (hdvd : p ∣ card G) : p ∣ card P :=
+begin
+  rw ← pow_one p at hdvd,
+  have key := P.pow_dvd_of_pow_dvd hdvd,
+  rwa pow_one at key,
+end
+
+lemma bot_lt_of_dvd [fintype G] {p : ℕ} [fact p.prime] (P : sylow p G) (hdvd : p ∣ card G) :
+  (P : subgroup G) ≠ ⊥ :=
+begin
+  have key := P.dvd_of_dvd hdvd,
+  sorry,
+end
 
 end sylow
