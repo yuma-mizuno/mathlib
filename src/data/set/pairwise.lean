@@ -193,7 +193,7 @@ lemma pairwise_disjoint_fiber (f : ι → α) : pairwise (disjoint on (λ a : α
 set.pairwise_on_univ.1 $ set.pairwise_on_disjoint_fiber f univ
 
 lemma pairwise_subtype_iff_pairwise_on {α : Type*} (s : set α) (r : α → α → Prop) :
-  pairwise (λ (x : s) (y : s), r x y) ↔ pairwise_on s r :=
+  pairwise (λ (x : s) (y : s), r x y) ↔ s.pairwise_on r :=
 begin
   split,
   { assume h x hx y hy hxy,

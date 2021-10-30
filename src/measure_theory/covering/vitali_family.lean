@@ -23,7 +23,7 @@ notion are deferred to other files:
 * constructions of specific Vitali families are provided by the Besicovitch covering theorem, in
 `besicovitch.vitali_family`, and by the Vitali covering theorem, in `vitali.vitali_family`.
 * The main theorem on differentiation of measures along a Vitali family is proved in
-`vitali_fmaily.ae_tendsto_rn_deriv`.
+`vitali_family.ae_tendsto_rn_deriv`.
 
 ## Main definitions
 
