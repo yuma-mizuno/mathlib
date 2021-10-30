@@ -3,8 +3,7 @@ Copyright (c) 2021 Sébastien Gouëzel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Sébastien Gouëzel
 -/
-import topology.metric_space.basic
-import measure_theory.constructions.borel_space
+import measure_theory.measure.measure_space
 
 /-!
 # Vitali families
@@ -142,8 +141,7 @@ countable_of_nonempty_interior_of_disjoint h.u (λ x hx, v.nonempty_interior _ _
 protected lemma measurable_set_u {x : α} (hx : x ∈ h.t) : _root_.measurable_set (h.u x) :=
 v.measurable_set' x _ (h.u_mem_v hx)
 
-lemma measure_le_tsum_of_absolutely_continuous
-  [second_countable_topology α] [opens_measurable_space α]
+lemma measure_le_tsum_of_absolutely_continuous [second_countable_topology α]
   {ρ : measure α} (hρ : ρ ≪ μ) :
   ρ s ≤ ∑' (x : h.t), ρ (h.u x) :=
 calc ρ s ≤ ρ ((s \ ⋃ (x ∈ h.t), h.u x) ∪ (⋃ (x ∈ h.t), h.u x)) :
@@ -152,7 +150,7 @@ calc ρ s ≤ ρ ((s \ ⋃ (x ∈ h.t), h.u x) ∪ (⋃ (x ∈ h.t), h.u x)) :
   ... = ∑' (x : h.t), ρ (h.u x) : by rw [hρ h.measure_diff_bUnion,
     measure_bUnion h.t_countable h.u_disjoint (λ x hx, h.measurable_set_u hx), zero_add]
 
-lemma measure_le_tsum [second_countable_topology α] [opens_measurable_space α] :
+lemma measure_le_tsum [second_countable_topology α] :
   μ s ≤ ∑' (x : h.t), μ (h.u x) :=
 h.measure_le_tsum_of_absolutely_continuous measure.absolutely_continuous.rfl
 
