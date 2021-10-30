@@ -471,9 +471,9 @@ begin
   rw h at ht_ne_top,
   refine le_antisymm (measure_mono (inter_subset_inter_left _ htu)) _,
   have A : μ (u ∩ s) + μ (u \ s) ≤ μ (t ∩ s) + μ (u \ s) := calc
-    μ (u ∩ s) + μ (u \ s) = μ u : measure.caratheodory μ hs
+    μ (u ∩ s) + μ (u \ s) = μ u : measure_inter_add_diff _ hs
     ... = μ t : h.symm
-    ... = μ (t ∩ s) + μ (t \ s) : (measure.caratheodory μ hs).symm
+    ... = μ (t ∩ s) + μ (t \ s) : (measure_inter_add_diff _ hs).symm
     ... ≤ μ (t ∩ s) + μ (u \ s) :
       add_le_add le_rfl (measure_mono (diff_subset_diff htu subset.rfl)),
   have B : μ (u \ s) ≠ ∞ := (lt_of_le_of_lt (measure_mono (diff_subset _ _)) ht_ne_top.lt_top).ne,
