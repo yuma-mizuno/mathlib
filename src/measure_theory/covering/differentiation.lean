@@ -74,7 +74,7 @@ lim (v.filter_at x) (λ a, ρ a / μ a)
 
 /-- For almost every point `x`, sufficiently small sets in a Vitali family around `x` have positive
 measure. (This is a nontrivial result, following from the covering property of Vitali families). -/
-theorem ae_eventually_measure_pos [second_countable_topology α] [opens_measurable_space α] :
+theorem ae_eventually_measure_pos [second_countable_topology α] :
   ∀ᵐ x ∂μ, ∀ᶠ a in v.filter_at x, 0 < μ a :=
 begin
   set s := {x | ¬ (∀ᶠ a in v.filter_at x, 0 < μ a)} with hs,
