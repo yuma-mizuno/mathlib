@@ -109,10 +109,13 @@ def trop_rec {F : Π (X : tropical R), Sort v} (h : Π X, F (trop X)) : Π X, F 
 
 section order
 
+instance [has_le R] : has_le (tropical R) :=
+{ le := λ x y, untrop x ≤ untrop y }
+
 instance [preorder R] : preorder (tropical R) :=
-{ le := λ x y, untrop x ≤ untrop y,
-  le_refl := λ _, le_refl _,
-  le_trans := λ _ _ _ h h', le_trans h h', }
+{ le_refl := λ _, le_refl _,
+  le_trans := λ _ _ _ h h', le_trans h h',
+  ..tropical.has_le }
 
 @[simp] lemma untrop_le_iff [preorder R] {x y : tropical R} :
   untrop x ≤ untrop y ↔ x ≤ y := iff.rfl
@@ -141,8 +144,7 @@ instance [has_top R] : has_top (tropical R) := ⟨0⟩
 @[simp] lemma trop_coe_ne_zero (x : R) : trop (x : with_top R) ≠ 0 .
 @[simp] lemma zero_ne_trop_coe (x : R) : (0 : tropical (with_top R)) ≠ trop x .
 
--- TODO: generalize to `has_le`
-@[simp] lemma le_zero [preorder R] [order_top R] (x : tropical R) : x ≤ 0 := le_top
+@[simp] lemma le_zero [has_le R] [order_top R] (x : tropical R) : x ≤ 0 := le_top
 
 instance [partial_order R] : order_top (tropical (with_top R)) :=
 { le_top := λ a a' h, option.no_confusion h,
@@ -169,6 +171,10 @@ instance : linear_order (tropical R) :=
 
 lemma trop_add_def (x y : tropical R) : x + y = trop (min (untrop x) (untrop y)) := rfl
 
+@[simp] lemma trop_min (x y : R) : trop (min x y) = trop x + trop y := rfl
+
+@[simp] lemma trop_inf (x y : R) : trop (x ⊓ y) = trop x + trop y := rfl
+
 @[simp] lemma add_eq_left ⦃x y : tropical R⦄ (h : x ≤ y) :
   x + y = x := untrop_injective (by simpa using h)
 
@@ -181,7 +187,10 @@ lemma trop_add_def (x y : tropical R) : x + y = trop (min (untrop x) (untrop y))
 
 lemma add_eq_iff {x y z : tropical R} :
   x + y = z ↔ x = z ∧ x ≤ y ∨ y = z ∧ y ≤ x :=
-by simp [trop_add_def, trop_eq_iff_eq_untrop, min_eq_iff]
+begin
+  rw [trop_add_def, trop_eq_iff_eq_untrop],
+  simp [min_eq_iff],
+end
 
 @[simp] lemma add_eq_zero_iff {a b : tropical (with_top R)} :
   a + b = 0 ↔ a = 0 ∧ b = 0 :=
@@ -195,8 +204,11 @@ begin
     simp }
 end
 
--- We cannot define `add_comm_monoid` here because there is no class that is solely
--- `[linear_order R] [order_top R]`
+instance [order_top R] : add_comm_monoid (tropical R) :=
+{ zero_add := λ _, add_eq_right (le_zero _),
+  add_zero := λ _, add_eq_left (le_zero _),
+  ..tropical.has_zero,
+  ..tropical.add_comm_semigroup }
 
 end order
 
@@ -213,9 +225,13 @@ instance [has_add R] : has_mul (tropical R) := ⟨tropical.mul⟩
 lemma trop_mul_def [has_add R] (x y : tropical R) :
   x * y = trop (untrop x + untrop y) := rfl
 
+@[simp] lemma trop_add [has_add R] (x y : R) : trop (x + y) = trop x * trop y := rfl
+
 instance [has_zero R] : has_one (tropical R) := ⟨trop 0⟩
 instance [has_zero R] : nontrivial (tropical (with_top R)) :=
 ⟨⟨0, 1, trop_injective.ne with_top.top_ne_coe⟩⟩
+
+@[simp] lemma trop_zero [has_zero R] : trop (0 : R) = 1 := rfl
 
 instance [has_neg R] : has_inv (tropical R) := ⟨λ x, trop (- untrop x)⟩
 
@@ -300,7 +316,35 @@ end distrib
 
 section semiring
 
-variable [linear_ordered_add_comm_monoid_with_top R]
+section
+
+variables {α : Type u} [linear_order α] [order_top α]
+
+@[simp] lemma min_top_left (a : α) : min (⊤ : α) a = a := min_eq_right le_top
+@[simp] lemma min_top_right (a : α) : min a ⊤ = a := min_eq_left le_top
+
+@[simp] lemma succ_nsmul (x : tropical α) (n : ℕ) :
+  (n + 1) • x = x :=
+begin
+  induction n with n IH,
+  { simp },
+  { rw [add_nsmul, IH, one_nsmul, add_self] }
+end
+
+-- lemma blah {α : Type u} [linear_ordered_add_comm_monoid α] [order_top α] (x : α) :
+--   ⊤ + x = ⊤ :=
+-- begin
+--   refine le_antisymm le_top _,
+--   cases le_or_lt 0 x with hx hx,
+--   { have := add_le_add_left hx ⊤,
+--     simpa using this },
+--   { contrapose! hx,
+--   },
+-- end
+
+end
+
+variables [linear_ordered_add_comm_monoid_with_top R]
 
 instance : comm_semiring (tropical R) :=
 { zero_add := λ _, untrop_injective (min_top_left _),
@@ -311,15 +355,6 @@ instance : comm_semiring (tropical R) :=
   ..tropical.distrib,
   ..tropical.add_comm_semigroup,
   ..tropical.comm_monoid  }
-
--- This could be stated on something like `linear_order_with_top α` if that existed
-@[simp] lemma succ_nsmul (x : tropical R) (n : ℕ) :
-  (n + 1) • x = x :=
-begin
-  induction n with n IH,
-  { simp },
-  { rw [add_nsmul, IH, one_nsmul, add_self] }
-end
 
 -- TODO: find/create the right classes to make this hold (for enat, ennreal, etc)
 -- Requires `zero_eq_bot` to be true
