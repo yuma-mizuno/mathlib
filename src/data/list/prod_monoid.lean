@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2021 Alex J. Best. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Alex J. Best
+Authors: Alex J. Best, Ethan Pronovost
 -/
 import data.list.basic
 import algebra.group_power.basic
@@ -17,8 +17,8 @@ open nat
 
 namespace list
 
-universes u v
-variables {α : Type u}
+universes u v w
+variables {α : Type u} {β : Type v} {γ : Type w}
 
 @[simp, priority 500, to_additive]
 theorem prod_repeat [monoid α] (a : α) (n : ℕ) : (repeat a n).prod = a ^ n :=
@@ -40,7 +40,7 @@ begin
 end
 
 @[simp, to_additive]
-theorem prod_map_mul {α β : Type*} [comm_monoid β] {f g : α → β} :
+theorem prod_map_mul [comm_monoid β] {f g : α → β} :
   ∀ {l : list α}, prod (l.map $ λa, f a * g a) = prod (l.map f) * prod (l.map g)
 | []         := by simp only [mul_one, map_nil, prod_nil]
 | (hd :: tl) :=
@@ -50,7 +50,7 @@ begin
 end
 
 @[to_additive]
-lemma prod_map_prod_map {α β γ : Type*} [comm_monoid γ] {f : α → β → γ} {t : list β} :
+lemma prod_map_prod_map [comm_monoid γ] {f : α → β → γ} {t : list β} :
   ∀ {s : list α}, (prod $ s.map $ λ (a : α), prod $ t.map (f a)) =
                   (prod $ t.map $ λ (b : β), prod $ s.map (λ (a : α), f a b))
 | []         := by simp only [prod_repeat, one_pow, map_nil, prod_nil, map_const]
