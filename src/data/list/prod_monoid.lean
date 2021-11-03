@@ -39,4 +39,21 @@ begin
     simpa [pow_succ] using mul_le_mul' hy IH }
 end
 
+@[simp, to_additive]
+theorem prod_map_mul {α β : Type*} [comm_monoid β] {f g : α → β} :
+  ∀ {l : list α}, prod (l.map $ λa, f a * g a) = prod (l.map f) * prod (l.map g)
+| []         := by simp only [mul_one, map_nil, prod_nil]
+| (hd :: tl) :=
+begin
+  simp only [map_cons, prod_cons, prod_map_mul],
+  rw [mul_assoc, ←mul_assoc (g hd), mul_assoc (f hd), ←mul_assoc _ (g hd), mul_comm _ (g hd)],
+end
+
+@[to_additive]
+lemma prod_map_prod_map {α β γ : Type*} [comm_monoid γ] {f : α → β → γ} {t : list β} :
+  ∀ {s : list α}, (prod $ s.map $ λ (a : α), prod $ t.map (f a)) =
+                  (prod $ t.map $ λ (b : β), prod $ s.map (λ (a : α), f a b))
+| []         := by simp only [prod_repeat, one_pow, map_nil, prod_nil, map_const]
+| (hd :: tl) := by simp only [map_cons, prod_cons, prod_map_mul, prod_map_prod_map]
+
 end list
