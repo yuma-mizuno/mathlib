@@ -57,7 +57,9 @@ variables {G : Type*} [group G] (H K : subgroup G) (S T : set G)
 @[to_additive "`S` and `T` are complements if `(*) : S × T → G` is a bijection"]
 def is_complement : Prop := function.bijective (λ x : S × T, x.1.1 * x.2.1)
 
-@[to_additive] abbreviation is_complement' := is_complement (H : set G) (K : set G)
+/-- `H` and `K` are complements if `(*) : H × K → G` is a bijection -/
+@[to_additive "`H` and `K` are complements if `(*) : H × K → G` is a bijection"]
+abbreviation is_complement' := is_complement (H : set G) (K : set G)
 
 /-- The set of left-complements of `T : set G` -/
 @[to_additive "The set of left-complements of `T : set G`"]
@@ -69,8 +71,8 @@ def right_transversals : set (set G) := {T : set G | is_complement S T}
 
 variables {H K S T}
 
-@[to_additive] lemma is_complement'_def : is_complement' H K ↔
-  is_complement (H : set G) (K : set G) := iff.rfl
+@[to_additive] lemma is_complement'_def :
+  is_complement' H K ↔ is_complement (H : set G) (K : set G) := iff.rfl
 
 @[to_additive] lemma is_complement_iff_exists_unique :
   is_complement S T ↔ ∀ g : G, ∃! x : S × T, x.1.1 * x.2.1 = g :=
@@ -90,8 +92,7 @@ begin
   exact funext (λ x, mul_inv_rev _ _),
 end
 
-@[to_additive] lemma is_complement'_comm :
-  is_complement' H K ↔ is_complement' K H :=
+@[to_additive] lemma is_complement'_comm : is_complement' H K ↔ is_complement' K H :=
 ⟨is_complement'.symm, is_complement'.symm⟩
 
 @[to_additive] lemma is_complement_top_singleton {g : G} :
@@ -232,8 +233,7 @@ mem_right_transversals_iff_exists_unique_quotient_mk'_eq.trans
 { rintros ⟨_, q₁, rfl⟩ ⟨_, q₂, rfl⟩ hg,
   rw (q₁.out_eq'.symm.trans hg).trans q₂.out_eq' }, λ q, ⟨⟨q.out', q, rfl⟩, quotient.out_eq' q⟩⟩⟩⟩
 
-lemma is_complement'.card_mul [fintype G] [fintype H] [fintype K]
-  (h : is_complement' H K) :
+lemma is_complement'.card_mul [fintype G] [fintype H] [fintype K] (h : is_complement' H K) :
   fintype.card H * fintype.card K = fintype.card G :=
 (fintype.card_prod _ _).symm.trans (fintype.card_of_bijective h)
 
