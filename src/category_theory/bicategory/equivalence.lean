@@ -61,14 +61,14 @@ calc
   ...    ≅ g ≫ f                : whisker_left_iso g (λ_ f)
   ...    ≅ 𝟙 b                   : ε
 
-example :
-  (λ_ f).symm ≪≫ whisker_right_iso η f ≪≫ α_ _ _ _
-  ≪≫ whisker_left_iso f (adjointify_ε η ε) ≪≫ ρ_ f
-  = iso.refl f :=
-begin
-  ext, dsimp [adjointify_ε], simp,
-  sorry
-end
+-- example :
+--   (λ_ f).symm ≪≫ whisker_right_iso η f ≪≫ α_ _ _ _
+--   ≪≫ whisker_left_iso f (adjointify_ε η ε) ≪≫ ρ_ f
+--   = iso.refl f :=
+-- begin
+--   ext, dsimp [adjointify_ε], simp,
+--   sorry
+-- end
 
 -- lemma adjointify_ε_η :
 --     (ρ_ g).symm ≪≫ whisker_left_iso g η ≪≫ (α_ _ _ _).symm
